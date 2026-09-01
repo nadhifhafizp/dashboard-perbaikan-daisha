@@ -1,284 +1,318 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line
-} from 'recharts';
-import * as XLSX from 'xlsx';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Ticket, RawTicketData } from '@/types/ticket';
+import { processRawTicketData } from '@/lib/ticketParser';
+import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
 
-// URL GET POWER AUTOMATE
-const API_URL = "/api/repair"; // Endpoint API internal Next.js
+// Modular Dashboard Components
+import KpiCards from '@/components/dashboard/KpiCards';
+import VisualFilterTabs, { TabType } from '@/components/dashboard/VisualFilterTabs';
+import FilterPanel from '@/components/dashboard/FilterPanel';
+import DaishaCharts from '@/components/dashboard/DaishaCharts';
+import DamageCharts from '@/components/dashboard/DamageCharts';
+import ThroughputCharts from '@/components/dashboard/ThroughputCharts';
+import SectionCharts from '@/components/dashboard/SectionCharts';
+import TicketTable from '@/components/dashboard/TicketTable';
 
-const relasiSeksiDaisha: Record<string, string[]> = {
-  'Bead': ['Bead Preset', 'Covering'],
-  'Building': ['Transfer reproses', 'Vertical'],
-  'Bunbury': ['Can Auto Pigmen', 'Can Chemical Omny', 'Daisha auto pigmen', 'Palet B/B'],
-  'Cutt/Cal': ['Inner Liner', 'Omakitan (A-truck)', 'Omakitan (B-truck)', 'Ply', 'Reel Belt'],
-  'Extruding': ['Box roll side', 'Box roll top', "Daisha Comp' Kiriage", 'Nagara Filler', 'Reel Filler', 'Reel Side', 'Reel Top', 'Transfer box roll'],
-  'Polyfilm': ['Daisha chip polyfilm'],
-  'All seksi': ['Battery car']
-};
+const API_URL = "/api/repair";
 
-const daftarSeksi = Object.keys(relasiSeksiDaisha);
-const daftarSemuaDaisha = Object.values(relasiSeksiDaisha).flat().sort();
-
-const STATUS_COLORS: Record<string, string> = {
-  'Done': '#16a34a', 'Progress': '#2563eb', 'Open': '#dc2626', 'Scrap': '#475569'
-};
+// Global cache in-memory untuk navigasi cepat antar halaman
+let cachedTickets: Ticket[] | null = null;
 
 export default function DashboardPage() {
-  const [dataRaw, setDataRaw] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dataRaw, setDataRaw] = useState<Ticket[]>(() => cachedTickets || []);
+  const [loading, setLoading] = useState<boolean>(() => !cachedTickets);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Tab Visual Switcher State
+  const [activeVisualTab, setActiveVisualTab] = useState<TabType>('all');
+
+  // Filter States
+  const [search, setSearch] = useState('');
+  const [filterSeksi, setFilterSeksi] = useState('');
+  const [filterDaisha, setFilterDaisha] = useState('');
+  const [filterNoDaisha, setFilterNoDaisha] = useState('');
+  const [filterKerusakan, setFilterKerusakan] = useState('');
+  const [filterDetail, setFilterDetail] = useState('');
+  const [filterPelapor, setFilterPelapor] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterHanyaBerulang, setFilterHanyaBerulang] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [filterSeksi, setFilterSeksi] = useState('');
-  const [filterNamaDaisha, setFilterNamaDaisha] = useState('');
-  const [filterJenisKerusakan, setFilterJenisKerusakan] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [searchNoDaisha, setSearchNoDaisha] = useState('');
-  
-  const [showAllDaisha, setShowAllDaisha] = useState(false);
 
-  const getValue = (obj: any, possibleKeys: string[]) => {
-    for (const key of possibleKeys) {
-      if (obj[key] !== undefined && obj[key] !== null) return obj[key];
-      const cleanKey = key.toLowerCase().replace(/[\s_]/g, "");
-      const found = Object.keys(obj).find(
-        (k) => k.toLowerCase().replace(/[\s_]/g, "") === cleanKey
-      );
-      if (found && obj[found] !== undefined && obj[found] !== null) return obj[found];
-    }
-    return null;
-  };
-
-  const fetchTiket = async () => {
+  // Fetch data dari API internal
+  const fetchData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsRefreshing(true);
     try {
-      setLoading(true);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const response = await fetch(API_URL, { cache: 'no-store' });
+      if (!response.ok) throw new Error("Gagal mengambil data dari API");
 
-      const response = await fetch(API_URL, { signal: controller.signal });
-      clearTimeout(timeoutId);
+      const jsonResult = await response.json();
+      let arrayData: RawTicketData[] = [];
 
-      if (!response.ok) throw new Error("Gagal mengambil data server");
-
-      const data = await response.json();
-      const hasilData = data.value || data;
-
-      if (Array.isArray(hasilData)) {
-        const formattedData = hasilData
-          .map((item, index) => {
-            const idTiket = getValue(item, ["idTiket", "ID Tiket", "ticketId"]) || "-";
-            
-            // Mengambil nama daisha & no daisha secara independen (mendukung format lama & baru)
-            const rawNamaDaisha = getValue(item, ["namaDaisha", "Nama Daisha", "daisha"]) || "-";
-            const rawNoDaisha = getValue(item, ["noDaisha", "No Daisha", "nomorDaisha", "noUnit"]);
-
-            let pureNama = String(rawNamaDaisha).trim();
-            let extractedNoDaisha = rawNoDaisha ? String(rawNoDaisha).trim() : "";
-
-            // Fallback jika format lama masih menggunakan kurung (misal: "Vertical (DAI-01)")
-            if (!extractedNoDaisha && rawNamaDaisha.includes("(")) {
-              pureNama = String(rawNamaDaisha).split(" (")[0].trim();
-              const noDaishaMatch = String(rawNamaDaisha).match(/\((.*?)\)/);
-              extractedNoDaisha = noDaishaMatch ? noDaishaMatch[1].trim() : "-";
-            }
-
-            return {
-              id: index + 1,
-              idTiketAsli: idTiket, 
-              pelapor: getValue(item, ["namaPelapor", "Nama Pelapor", "pelapor"]) || "-",
-              tglMasuk: getValue(item, ["waktuMasuk", "Waktu Masuk", "tanggalMasuk"]) || "-",
-              tglKeluar: getValue(item, ["waktuKeluar", "Waktu Keluar", "tanggalKeluar"]) || "-",
-              status: getValue(item, ["status", "Status"]) || "Open",
-              namaDaisha: pureNama,
-              seksi: getValue(item, ["seksi", "Seksi", "section"]) || "-",
-              noDaisha: extractedNoDaisha || "-", 
-              jenisKerusakan: getValue(item, ["kategori", "Kategori Kerusakan", "KategoriKerusakan", "jenisKerusakan", "jenis"]) || "-",
-              detail: getValue(item, ["detail", "Detail Kerusakan", "DetailKerusakan", "keluhan", "deskripsi"]) || "-",
-            };
-          })
-          .filter(t => !["-", "", "id tiket", "idtiket"].includes(String(t.idTiketAsli).toLowerCase().trim()));
-
-        setDataRaw(formattedData);
+      if (Array.isArray(jsonResult)) {
+        arrayData = jsonResult;
+      } else if (jsonResult && typeof jsonResult === 'object') {
+        const potentialKeys = ['data', 'value', 'd', 'items', 'records', 'result'];
+        for (const key of potentialKeys) {
+          if (Array.isArray(jsonResult[key])) {
+            arrayData = jsonResult[key];
+            break;
+          }
+        }
       }
-    } catch (error) {
-      console.error("Error saat fetch tiket:", error);
+
+      const hasilParsing = processRawTicketData(arrayData);
+      cachedTickets = hasilParsing;
+      setDataRaw(hasilParsing);
+    } catch (err) {
+      console.error("Fetch Error:", err);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
-  };
-
-  useEffect(() => {
-    fetchTiket();
   }, []);
 
-  // Pilihan Nama Daisha pada Dropdown yang otomatis menyesuaikan Seksi atau Mode Show All
-  const pilihanDaishaTersedia = useMemo(() => {
-    if (showAllDaisha || !filterSeksi) {
-      return daftarSemuaDaisha;
+  useEffect(() => {
+    let ignore = false;
+
+    async function initLoad() {
+      try {
+        const response = await fetch(API_URL, { cache: 'no-store' });
+        if (!response.ok) throw new Error("Gagal mengambil data");
+        const jsonResult = await response.json();
+        let arrayData: RawTicketData[] = [];
+
+        if (Array.isArray(jsonResult)) {
+          arrayData = jsonResult;
+        } else if (jsonResult && typeof jsonResult === 'object') {
+          const potentialKeys = ['data', 'value', 'd', 'items', 'records', 'result'];
+          for (const key of potentialKeys) {
+            if (Array.isArray(jsonResult[key])) {
+              arrayData = jsonResult[key];
+              break;
+            }
+          }
+        }
+
+        const hasilParsing = processRawTicketData(arrayData);
+        cachedTickets = hasilParsing;
+        if (!ignore) {
+          setDataRaw(hasilParsing);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error("Init load error:", err);
+          setLoading(false);
+        }
+      }
     }
-    return relasiSeksiDaisha[filterSeksi] || [];
-  }, [filterSeksi, showAllDaisha]);
 
-  const listJenisKerusakan = useMemo(() => Array.from(new Set(dataRaw.map(d => d.jenisKerusakan))), [dataRaw]);
+    initLoad();
 
-  // LOGIKA FILTER UTAMA YANG DISEMPURNAKAN
-  const filteredData = useMemo(() => {
-    return dataRaw.filter(item => {
-      const itemDate = item.tglMasuk.split(' ')[0];
-      const matchStart = startDate ? itemDate >= startDate : true;
-      const matchEnd = endDate ? itemDate <= endDate : true;
-      const matchSeksi = filterSeksi ? item.seksi === filterSeksi : true;
-      const matchNama = filterNamaDaisha ? item.namaDaisha.toLowerCase() === filterNamaDaisha.toLowerCase() : true;
-      const matchJenis = filterJenisKerusakan ? item.jenisKerusakan === filterJenisKerusakan : true;
-      const matchStatus = filterStatus ? item.status === filterStatus : true;
-      const matchUnit = searchNoDaisha ? item.noDaisha.toLowerCase().includes(searchNoDaisha.toLowerCase()) : true;
-      
-      return matchStart && matchEnd && matchSeksi && matchNama && matchJenis && matchStatus && matchUnit;
-    });
-  }, [dataRaw, startDate, endDate, filterSeksi, filterNamaDaisha, filterJenisKerusakan, filterStatus, searchNoDaisha]);
+    const interval = setInterval(() => {
+      fetchData(true);
+    }, 45000);
 
-  const aggregateData = (data: any[], key: string) => {
-    const counts = data.reduce<Record<string, number>>((acc, curr) => {
-      const groupKey = String(curr[key]);
-      acc[groupKey] = (acc[groupKey] || 0) + 1;
-      return acc;
-    }, {});
-    return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a: any, b: any) => b.value - a.value);
+    return () => {
+      ignore = true;
+      clearInterval(interval);
+    };
+  }, [fetchData]);
+
+  // Hook Analitik Terpusat (Simulasi SQL Engine: WHERE, GROUP BY, COUNT, AVG)
+  const { filteredData, filterOptions, kpi, charts } = useDashboardAnalytics(dataRaw, {
+    search,
+    filterSeksi,
+    filterDaisha,
+    filterNoDaisha,
+    filterKerusakan,
+    filterDetail,
+    filterPelapor,
+    filterStatus,
+    filterHanyaBerulang,
+    startDate,
+    endDate,
+  });
+
+  // Shortcut Preset Filter Tanggal Cepat
+  const handleQuickPreset = (days: number) => {
+    const today = new Date();
+    const formatDate = (d: Date) => d.toISOString().slice(0, 10);
+    const todayStr = formatDate(today);
+
+    if (days === 0) {
+      setStartDate(todayStr);
+      setEndDate(todayStr);
+    } else {
+      const past = new Date();
+      past.setDate(today.getDate() - days);
+      setStartDate(formatDate(past));
+      setEndDate(todayStr);
+    }
   };
 
-  const chartDaishaSeksi = useMemo(() => {
-    const counts = filteredData.reduce<Record<string, number>>((acc, curr) => {
-      const label = `${curr.namaDaisha} (${curr.seksi})`;
-      acc[label] = (acc[label] || 0) + 1;
-      return acc;
-    }, {});
-    return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a: any, b: any) => b.value - a.value).slice(0, 5); 
-  }, [filteredData]);
+  const handleResetFilter = () => {
+    setSearch('');
+    setFilterSeksi('');
+    setFilterDaisha('');
+    setFilterNoDaisha('');
+    setFilterKerusakan('');
+    setFilterDetail('');
+    setFilterPelapor('');
+    setFilterStatus('');
+    setFilterHanyaBerulang(false);
+    setStartDate('');
+    setEndDate('');
+  };
 
-  const dataTrenTanggal = useMemo(() => {
-    const counts = filteredData.reduce<Record<string, number>>((acc, curr) => {
-      const date = curr.tglMasuk.split(' ')[0];
-      acc[date] = (acc[date] || 0) + 1;
-      return acc;
-    }, {});
-    return Object.entries(counts).map(([tanggal, jumlah]) => ({ tanggal, jumlah })).sort((a: any, b: any) => a.tanggal.localeCompare(b.tanggal));
-  }, [filteredData]);
+  // Ekspor Excel (.csv)
+  const exportToExcel = () => {
+    if (!filteredData.length) return;
 
-  const chartSeksi = aggregateData(filteredData, 'seksi');
-  const chartNamaDaishaOnly = aggregateData(filteredData, 'namaDaisha').slice(0, 5);
-  const chartStatus = aggregateData(filteredData, 'status');
+    const headers = ["ID Tiket", "No Daisha", "Nama Daisha", "Seksi", "Komponen Kerusakan", "Detail Gejala", "Pelapor", "Tgl Masuk", "Tgl Keluar", "Status", "Catatan"];
+    const rows = filteredData.map(d => [
+      `"${d.idTiketAsli || d.id}"`,
+      `"${d.noDaisha}"`,
+      `"${d.namaDaisha}"`,
+      `"${d.seksi}"`,
+      `"${d.jenisKerusakan.replace(/"/g, '""')}"`,
+      `"${d.detail.replace(/"/g, '""')}"`,
+      `"${d.pelapor}"`,
+      `"${d.tglMasuk}"`,
+      `"${d.tglKeluar}"`,
+      `"${d.status}"`,
+      `"${(d.reason || '').replace(/"/g, '""')}"`
+    ]);
 
-  const handleExport = () => {
-    const dataUntukExcel = filteredData.map((row, index) => ({
-      'No': index + 1, 
-      'ID Tiket': row.idTiketAsli,
-      'Waktu Masuk': row.tglMasuk, 
-      'Nama Pelapor': row.pelapor, 
-      'Waktu Keluar': row.tglKeluar, 
-      'Nama Daisha': row.namaDaisha,
-      'Seksi': row.seksi, 
-      'No Unit': row.noDaisha, 
-      'Jenis Kerusakan': row.jenisKerusakan, 
-      'Status': row.status, 
-      'Detail Kerusakan': row.detail
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(dataUntukExcel);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Perbaikan");
-    XLSX.writeFile(workbook, "Laporan_Daisha_BS.xlsx");
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+      + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Rekap_Perbaikan_Daisha_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <div className="p-4 md:p-8 min-h-screen bg-gray-100">
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* Header Halaman */}
+      <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900">Advanced Analytics Dashboard</h1>
-          <p className="text-gray-700 font-medium mt-1">Pantau seluruh data perbaikan secara dinamis.</p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2.5">
+            <span>📊</span> Dashboard Analitik & Rekapitulasi Daisha
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+            Monitoring komprehensif seluruh data perbaikan, reliabilitas unit, pareto kerusakan, dan lead time
+          </p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={fetchTiket} disabled={loading} className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-lg shadow-md transition-colors disabled:opacity-50">
-            {loading ? "Memuat..." : "🔄 Refresh"}
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => fetchData(false)}
+            disabled={isRefreshing}
+            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            <span className={isRefreshing ? 'animate-spin' : ''}>🔄</span>
+            <span>{isRefreshing ? 'Memperbarui...' : 'Segarkan Data'}</span>
           </button>
-          <button onClick={handleExport} className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-md transition-colors">
-            Export Excel Data
-          </button>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-md border border-gray-300 mb-8">
-        <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider border-b pb-2">Filter Data Komprehensif</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-5 mb-4">
-          <div className="flex flex-col"><label className="text-xs font-semibold text-gray-800 mb-1">Mulai Tgl</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full p-2 border border-gray-300 rounded text-sm text-gray-900 bg-white focus:ring-2 focus:ring-red-500 outline-none" /></div>
-          <div className="flex flex-col"><label className="text-xs font-semibold text-gray-800 mb-1">Sampai Tgl</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full p-2 border border-gray-300 rounded text-sm text-gray-900 bg-white focus:ring-2 focus:ring-red-500 outline-none" /></div>
-          
-          <div className="flex flex-col">
-            <label className="text-xs font-semibold text-gray-800 mb-1">Seksi</label>
-            <select value={filterSeksi} onChange={(e) => { setFilterSeksi(e.target.value); setFilterNamaDaisha(''); }} className="w-full p-2 border border-gray-300 rounded text-sm text-gray-900 bg-white focus:ring-2 focus:ring-red-500 outline-none">
-              <option value="">Semua Seksi</option>
-              {daftarSeksi.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
+      {/* 1. 7 Kartu Metrik Ringkasan Eksekutif */}
+      <KpiCards
+        kpi={kpi}
+        filterHanyaBerulang={filterHanyaBerulang}
+        setFilterHanyaBerulang={setFilterHanyaBerulang}
+        setFilterStatus={setFilterStatus}
+      />
 
-          <div className="flex flex-col">
-            <label className="text-xs font-semibold text-gray-800 mb-1">Nama Daisha</label>
-            <select value={filterNamaDaisha} onChange={(e) => setFilterNamaDaisha(e.target.value)} className="w-full p-2 border border-gray-300 rounded text-sm text-gray-900 bg-white focus:ring-2 focus:ring-red-500 outline-none">
-              <option value="">Semua Daisha</option>
-              {pilihanDaishaTersedia.map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
-          </div>
+      {/* 2. Tab Switcher Visualisasi Interaktif */}
+      <VisualFilterTabs
+        activeTab={activeVisualTab}
+        setActiveTab={setActiveVisualTab}
+      />
 
-          <div className="flex flex-col"><label className="text-xs font-semibold text-gray-800 mb-1">Kategori Kerusakan</label><select value={filterJenisKerusakan} onChange={(e) => setFilterJenisKerusakan(e.target.value)} className="w-full p-2 border border-gray-300 rounded text-sm text-gray-900 bg-white focus:ring-2 focus:ring-red-500 outline-none"><option value="">Semua Jenis</option>{listJenisKerusakan.map(j => <option key={j as string} value={j as string}>{j as string}</option>)}</select></div>
-          <div className="flex flex-col"><label className="text-xs font-semibold text-gray-800 mb-1">Status</label><select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full p-2 border border-gray-300 rounded text-sm text-gray-900 bg-white focus:ring-2 focus:ring-red-500 outline-none"><option value="">Semua Status</option><option value="Open">Open</option><option value="Progress">Progress</option><option value="Done">Done</option><option value="Scrap">Scrap</option></select></div>
-          <div className="flex flex-col"><label className="text-xs font-semibold text-gray-800 mb-1">Cari No Unit</label><input type="text" placeholder="Cth: DAI-01" value={searchNoDaisha} onChange={(e) => setSearchNoDaisha(e.target.value)} className="w-full p-2 border border-gray-300 rounded text-sm text-gray-900 bg-white focus:ring-2 focus:ring-red-500 outline-none placeholder-gray-500" /></div>
-        </div>
-        <div className="flex items-center"><input type="checkbox" id="showAllDashboard" checked={showAllDaisha} onChange={(e) => setShowAllDaisha(e.target.checked)} className="mr-2 cursor-pointer" /><label htmlFor="showAllDashboard" className="text-xs text-gray-600 font-bold cursor-pointer">Tampilkan semua pilihan Nama Daisha di dropdown (Abaikan filter Seksi)</label></div>
-      </div>
+      {/* 3. Panel Filter & Pencarian Lengkap */}
+      <FilterPanel
+        search={search}
+        setSearch={setSearch}
+        filterSeksi={filterSeksi}
+        setFilterSeksi={setFilterSeksi}
+        filterDaisha={filterDaisha}
+        setFilterDaisha={setFilterDaisha}
+        filterNoDaisha={filterNoDaisha}
+        setFilterNoDaisha={setFilterNoDaisha}
+        filterKerusakan={filterKerusakan}
+        setFilterKerusakan={setFilterKerusakan}
+        filterDetail={filterDetail}
+        setFilterDetail={setFilterDetail}
+        filterPelapor={filterPelapor}
+        setFilterPelapor={setFilterPelapor}
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+        filterHanyaBerulang={filterHanyaBerulang}
+        setFilterHanyaBerulang={setFilterHanyaBerulang}
+        pilihanDaishaFiltered={filterOptions.pilihanDaisha}
+        pilihanKomponenFiltered={filterOptions.pilihanKomponen}
+        pilihanDetailFiltered={filterOptions.pilihanDetail}
+        pilihanNoDaisha={filterOptions.pilihanNoDaisha}
+        pilihanPelapor={filterOptions.pilihanPelapor}
+        handleQuickPreset={handleQuickPreset}
+        handleResetFilter={handleResetFilter}
+        filteredCount={filteredData.length}
+        totalCount={dataRaw.length}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-        <div className="xl:col-span-2 bg-white p-5 rounded-xl shadow border border-gray-200"><h2 className="text-base font-extrabold text-gray-900 mb-4">Tren Waktu Masuk Kerusakan Harian</h2><div className="h-64"><ResponsiveContainer width="100%" height="100%"><LineChart data={dataTrenTanggal}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" /><XAxis dataKey="tanggal" tick={{fontSize: 12, fill: '#374151'}} /><YAxis allowDecimals={false} tick={{fill: '#374151'}} /><RechartsTooltip contentStyle={{backgroundColor: '#fff', color: '#111827', borderColor: '#d1d5db'}} /><Line type="monotone" dataKey="jumlah" stroke="#dc2626" strokeWidth={3} dot={{ r: 5, fill: '#dc2626' }} name="Jumlah Tiket" /></LineChart></ResponsiveContainer></div></div>
-        <div className="bg-white p-5 rounded-xl shadow border border-gray-200"><h2 className="text-base font-extrabold text-gray-900 mb-4">Proporsi Status Perbaikan</h2><div className="h-64"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={chartStatus} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={{fill: '#111827', fontSize: 12, fontWeight: 'bold'}}>{chartStatus.map((entry, index) => <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || '#9ca3af'} />)}</Pie><RechartsTooltip /><Legend wrapperStyle={{ color: '#111827', paddingTop: '10px' }} /></PieChart></ResponsiveContainer></div></div>
-        <div className="bg-white p-5 rounded-xl shadow border border-gray-200"><h2 className="text-base font-extrabold text-gray-900 mb-4">Top 5 Daisha & Seksi (Sering Rusak)</h2><div className="h-64"><ResponsiveContainer width="100%" height="100%"><BarChart data={chartDaishaSeksi} layout="vertical"><CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" /><XAxis type="number" allowDecimals={false} tick={{fill: '#374151'}} /><YAxis dataKey="name" type="category" width={160} tick={{fontSize: 10, fontWeight: 'bold', fill: '#111827'}} /><RechartsTooltip /><Bar dataKey="value" fill="#b91c1c" radius={[0, 4, 4, 0]} name="Total Rusak" /></BarChart></ResponsiveContainer></div></div>
-        <div className="bg-white p-5 rounded-xl shadow border border-gray-200"><h2 className="text-base font-extrabold text-gray-900 mb-4">Kerusakan Berdasarkan Seksi</h2><div className="h-64"><ResponsiveContainer width="100%" height="100%"><BarChart data={chartSeksi}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" /><XAxis dataKey="name" tick={{fontSize: 12, fill: '#374151'}} /><YAxis allowDecimals={false} tick={{fill: '#374151'}} /><RechartsTooltip /><Bar dataKey="value" fill="#ea580c" radius={[4, 4, 0, 0]} name="Total Rusak" /></BarChart></ResponsiveContainer></div></div>
-        <div className="bg-white p-5 rounded-xl shadow border border-gray-200"><h2 className="text-base font-extrabold text-gray-900 mb-4">Top 5 Kategori Daisha Rusak</h2><div className="h-64"><ResponsiveContainer width="100%" height="100%"><BarChart data={chartNamaDaishaOnly} layout="vertical"><CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" /><XAxis type="number" allowDecimals={false} tick={{fill: '#374151'}} /><YAxis dataKey="name" type="category" width={110} tick={{fontSize: 11, fill: '#111827', fontWeight: '500'}} /><RechartsTooltip /><Bar dataKey="value" fill="#ca8a04" radius={[0, 4, 4, 0]} name="Total" /></BarChart></ResponsiveContainer></div></div>
-      </div>
+      {/* 4. Area Visualisasi Grafik Dinamis Sesuai Tab */}
+      {(activeVisualTab === 'all' || activeVisualTab === 'daisha') && (
+        <DaishaCharts
+          chartUnitFreq={charts.unitFreq}
+          chartSemuaDaisha={charts.semuaDaisha}
+        />
+      )}
 
-      <div className="bg-white p-6 rounded-xl shadow border border-gray-300">
-        <h2 className="text-xl font-extrabold text-gray-900 mb-4 border-b pb-3">Raw Data Transaksi ({filteredData.length} Data) {loading && <span className="text-sm font-medium text-red-500 ml-2">(Memuat data...)</span>}</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-200 text-gray-900 border-y-2 border-gray-400">
-                <th className="p-3 text-sm font-bold uppercase tracking-wide">ID Tiket</th>
-                <th className="p-3 text-sm font-bold uppercase tracking-wide">Waktu & Pelapor</th>
-                <th className="p-3 text-sm font-bold uppercase tracking-wide">Unit / Seksi</th>
-                <th className="p-3 text-sm font-bold uppercase tracking-wide">Jenis / Detail</th>
-                <th className="p-3 text-sm font-bold uppercase tracking-wide">Status / Tgl Keluar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.map((row) => (
-                <tr key={row.id} className="border-b border-gray-200 hover:bg-gray-100 transition duration-150">
-                  <td className="p-3 text-sm">
-                    <span className="font-mono font-bold text-gray-900">{row.idTiketAsli}</span>
-                  </td>
-                  <td className="p-3 text-sm"><span className="font-semibold text-gray-900">{row.tglMasuk}</span> <br/><span className="text-xs font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 inline-block mt-1">Pelapor: {row.pelapor}</span></td>
-                  <td className="p-3 text-sm"><span className="font-extrabold text-red-700">{row.noDaisha}</span> <br/><span className="text-xs font-medium text-gray-700">{row.namaDaisha} ({row.seksi})</span></td>
-                  <td className="p-3 text-sm"><span className="font-bold text-gray-900">{row.jenisKerusakan}</span> <br/><span className="text-xs font-medium text-gray-700">{row.detail}</span></td>
-                  <td className="p-3 text-sm">
-                    <span className={`px-2.5 py-1 rounded text-xs font-bold border inline-block ${row.status === 'Done' ? 'bg-green-100 text-green-800 border-green-300' : row.status === 'Progress' ? 'bg-blue-100 text-blue-800 border-blue-300' : row.status === 'Scrap' ? 'bg-gray-800 text-white border-gray-900' : 'bg-red-100 text-red-800 border-red-300'}`}>{row.status}</span>
-                    <div className="text-xs font-semibold text-gray-700 mt-2"><span className="text-gray-900">Keluar:</span> {row.tglKeluar}</div>
-                  </td>
-                </tr>
-              ))}
-              {filteredData.length === 0 && !loading && (<tr><td colSpan={5} className="p-8 text-center text-gray-700 font-bold text-base bg-gray-50">Tidak ada data yang sesuai dengan filter.</td></tr>)}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {(activeVisualTab === 'all' || activeVisualTab === 'damage') && (
+        <DamageCharts
+          chartKategori={charts.kategori}
+          chartDetailGejala={charts.detailGejala}
+          tindakanStats={charts.tindakanStats}
+        />
+      )}
+
+      {(activeVisualTab === 'all' || activeVisualTab === 'throughput') && (
+        <ThroughputCharts
+          chartTrenHarian={charts.trenHarian}
+          chartStatusData={charts.statusData}
+          chartLeadTime={charts.leadTime}
+          avgLeadTimeHours={kpi.avgLeadTimeHours}
+        />
+      )}
+
+      {(activeVisualTab === 'all' || activeVisualTab === 'seksi') && (
+        <SectionCharts
+          chartSeksiStacked={charts.seksiStacked}
+          chartPelapor={charts.pelapor}
+        />
+      )}
+
+      {(activeVisualTab === 'all' || activeVisualTab === 'table') && (
+        <TicketTable
+          filteredData={filteredData}
+          loading={loading}
+          exportToExcel={exportToExcel}
+        />
+      )}
     </div>
   );
 }
