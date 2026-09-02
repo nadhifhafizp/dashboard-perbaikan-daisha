@@ -17,7 +17,7 @@ export const masterDataDaisha: Record<string, DaishaMasterInfo> = {
       ],
       "Others": [
         "Others"
-      ]
+      ] 
     }
   },
   "Bead Preset": {
@@ -1073,9 +1073,13 @@ export const DAFTAR_SEMUA_KOMPONEN = Array.from(
 ).sort();
 
 export function getDaishaBySeksi(seksi?: string): string[] {
-  if (!seksi) return DAFTAR_SEMUA_DAISHA;
+  if (!seksi || seksi.toLowerCase() === 'all seksi') return DAFTAR_SEMUA_DAISHA;
   return Object.entries(masterDataDaisha)
-    .filter(([, data]) => data.seksi.toLowerCase() === seksi.toLowerCase())
+    .filter(
+      ([, data]) =>
+        data.seksi.toLowerCase() === seksi.toLowerCase() ||
+        data.seksi.toLowerCase() === 'all seksi'
+    )
     .map(([nama]) => nama)
     .sort();
 }

@@ -6,6 +6,8 @@ import {
   getKomponenKerusakan, 
   getDetailKerusakan 
 } from '@/lib/masterData';
+import { parseTicketDamageDetail } from '@/lib/damageParser';
+import { parseToISODate, parseToTimestamp, formatDisplayDate } from '@/lib/date';
 
 export interface DashboardFilters {
   search: string;
@@ -39,12 +41,26 @@ export interface DashboardChartsData {
   statusData: { name: string; value: number; color: string }[];
   unitFreq: { unit: string; total: number; jenis: string }[];
   semuaDaisha: { jenis: string; total: number }[];
-  kategori: { kategori: string; total: number }[];
-  detailGejala: { gejala: string; total: number }[];
+  kategori: { kategori: string; total: number; totalPcs: number }[];
+  detailGejala: { gejala: string; total: number; totalPcs: number; komponen?: string }[];
   seksiStacked: { seksi: string; Open: number; Progress: number; Done: number; Scrap: number; Total: number }[];
   pelapor: { pelapor: string; seksi: string; total: number }[];
   leadTime: { rentang: string; total: number; persen: number }[];
-  tindakanStats: { repairCount: number; gantiCount: number; total: number };
+  tindakanStats: {
+    repairCount: number;
+    gantiCount: number;
+    total: number;
+    repairPcs: number;
+    gantiPcs: number;
+    totalPcs: number;
+  };
+  sparepartKebutuhan: {
+    nama: string;
+    gejala: string;
+    gantiPcs: number;
+    repairPcs: number;
+    totalPcs: number;
+  }[];
 }
 
 export interface FilterOptions {
@@ -105,9 +121,9 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
         return false;
       }
 
-      const itemDate = item.tglMasuk ? item.tglMasuk.split(' ')[0] : '';
-      if (startDate && itemDate < startDate) return false;
-      if (endDate && itemDate > endDate) return false;
+      const itemDate = parseToISODate(item.tglMasuk);
+      if (startDate && itemDate && itemDate < startDate) return false;
+      if (endDate && itemDate && itemDate > endDate) return false;
 
       if (searchLower) {
         const matchUnit = item.noDaisha?.toLowerCase().includes(searchLower);
@@ -178,9 +194,9 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     let countedLeadTime = 0;
     filteredData.forEach(d => {
       if (d.status === 'Done' && d.tglMasuk && d.tglKeluar && d.tglKeluar !== '-') {
-        const masuk = new Date(d.tglMasuk.replace(' ', 'T')).getTime();
-        const keluar = new Date(d.tglKeluar.replace(' ', 'T')).getTime();
-        if (!isNaN(masuk) && !isNaN(keluar) && keluar >= masuk) {
+        const masuk = parseToTimestamp(d.tglMasuk);
+        const keluar = parseToTimestamp(d.tglKeluar);
+        if (masuk > 0 && keluar >= masuk) {
           const diffHours = (keluar - masuk) / (1000 * 60 * 60);
           totalLeadTimeHours += diffHours;
           countedLeadTime++;
@@ -220,24 +236,26 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     // 5.1 Throughput Masuk vs Selesai
     const datesMap: Record<string, { tanggal: string; Masuk: number; Selesai: number }> = {};
     filteredData.forEach(d => {
-      if (d.tglMasuk && d.tglMasuk !== '-') {
-        const tgl = d.tglMasuk.split(' ')[0];
-        if (tgl) {
-          if (!datesMap[tgl]) datesMap[tgl] = { tanggal: tgl, Masuk: 0, Selesai: 0 };
-          datesMap[tgl].Masuk++;
-        }
+      const tglMasukISO = parseToISODate(d.tglMasuk);
+      if (tglMasukISO) {
+        if (!datesMap[tglMasukISO]) datesMap[tglMasukISO] = { tanggal: tglMasukISO, Masuk: 0, Selesai: 0 };
+        datesMap[tglMasukISO].Masuk++;
       }
-      if (d.tglKeluar && d.tglKeluar !== '-' && d.status === 'Done') {
-        const tgl = d.tglKeluar.split(' ')[0];
-        if (tgl) {
-          if (!datesMap[tgl]) datesMap[tgl] = { tanggal: tgl, Masuk: 0, Selesai: 0 };
-          datesMap[tgl].Selesai++;
+      if (d.status === 'Done') {
+        const tglKeluarISO = parseToISODate(d.tglKeluar);
+        if (tglKeluarISO) {
+          if (!datesMap[tglKeluarISO]) datesMap[tglKeluarISO] = { tanggal: tglKeluarISO, Masuk: 0, Selesai: 0 };
+          datesMap[tglKeluarISO].Selesai++;
         }
       }
     });
     const trenHarian = Object.values(datesMap)
       .sort((a, b) => a.tanggal.localeCompare(b.tanggal))
-      .slice(-14);
+      .slice(-14)
+      .map(item => ({
+        ...item,
+        tanggal: formatDisplayDate(item.tanggal).split(' ')[0]
+      }));
 
     // 5.2 Status Donut Data
     const statusData = [
@@ -276,57 +294,84 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       .map(([jenis, total]) => ({ jenis, total }))
       .sort((a, b) => b.total - a.total);
 
-    // 5.5 Pareto Komponen Rusak
-    const katMap: Record<string, number> = {};
+    // 5.5 Pareto Komponen Rusak & 5.6 Detail Gejala Bersih & 5.10 Tindakan Stats
+    const katMap: Record<string, { total: number; totalPcs: number }> = {};
+    const gejMap: Record<string, { total: number; totalPcs: number; komponen: string }> = {};
+    const partNeedsMap: Record<string, { nama: string; gejala: string; gantiPcs: number; repairPcs: number; totalPcs: number }> = {};
+
+    let repairCount = 0;
+    let gantiCount = 0;
+    let repairPcs = 0;
+    let gantiPcs = 0;
+
     filteredData.forEach(d => {
-      if (d.jenisKerusakan && d.jenisKerusakan !== '-') {
-        const parts = d.jenisKerusakan.split(',').map(s => s.trim()).filter(Boolean);
-        parts.forEach(kat => {
-          katMap[kat] = (katMap[kat] || 0) + 1;
+      const parsed = parseTicketDamageDetail(d.detail);
+
+      gantiCount += parsed.gantiItems.length;
+      repairCount += parsed.repairItems.length;
+      gantiPcs += parsed.totalQtyGanti;
+      repairPcs += parsed.totalQtyRepair;
+
+      if (parsed.items.length > 0) {
+        parsed.items.forEach(item => {
+          const komp = item.komponen !== 'Umum' ? item.komponen : (d.jenisKerusakan && d.jenisKerusakan !== '-' ? d.jenisKerusakan : 'Umum');
+          if (!katMap[komp]) katMap[komp] = { total: 0, totalPcs: 0 };
+          katMap[komp].total += 1;
+          katMap[komp].totalPcs += item.qty || 1;
+
+          const gej = item.gejala || 'Kerusakan komponen';
+          if (!gejMap[gej]) gejMap[gej] = { total: 0, totalPcs: 0, komponen: komp };
+          gejMap[gej].total += 1;
+          gejMap[gej].totalPcs += item.qty || 1;
+
+          const partKey = `${komp}:::${gej}`;
+          if (!partNeedsMap[partKey]) {
+            partNeedsMap[partKey] = {
+              nama: komp,
+              gejala: gej,
+              gantiPcs: 0,
+              repairPcs: 0,
+              totalPcs: 0,
+            };
+          }
+          if (item.tindakan === 'Ganti') {
+            partNeedsMap[partKey].gantiPcs += item.qty || 1;
+          } else {
+            partNeedsMap[partKey].repairPcs += item.qty || 1;
+          }
+          partNeedsMap[partKey].totalPcs += item.qty || 1;
         });
       } else {
-        katMap['Lainnya'] = (katMap['Lainnya'] || 0) + 1;
+        const komp = d.jenisKerusakan && d.jenisKerusakan !== '-' ? d.jenisKerusakan : 'Umum';
+        if (!katMap[komp]) katMap[komp] = { total: 0, totalPcs: 0 };
+        katMap[komp].total += 1;
+        katMap[komp].totalPcs += 1;
+
+        const gej = d.detail && d.detail !== '-' ? d.detail : 'Kerusakan umum';
+        if (!gejMap[gej]) gejMap[gej] = { total: 0, totalPcs: 0, komponen: komp };
+        gejMap[gej].total += 1;
+        gejMap[gej].totalPcs += 1;
       }
     });
+
     const kategori = Object.entries(katMap)
-      .map(([kat, total]) => ({ kategori: kat, total }))
-      .sort((a, b) => b.total - a.total)
+      .map(([kat, val]) => ({ kategori: kat, total: val.total, totalPcs: val.totalPcs }))
+      .sort((a, b) => b.totalPcs - a.totalPcs || b.total - a.total)
       .slice(0, 12);
 
-    // 5.6 Top 10 Detail Gejala
-    const gejMap: Record<string, number> = {};
-    filteredData.forEach(d => {
-      if (d.detail && d.detail !== '-') {
-        const rawItems = d.detail.split(/[\n|;]+/).map(s => {
-          return s
-            .replace(/^\d+\.\s*/, '')
-            .replace(/^\[[^\]]+\]\s*/, '')
-            .replace(/\(Tindakan:.*\)/i, '')
-            .replace(/\(Catatan:.*\)/i, '')
-            .trim();
-        }).filter(Boolean);
-
-        if (rawItems.length > 0) {
-          rawItems.forEach(det => {
-            gejMap[det] = (gejMap[det] || 0) + 1;
-          });
-        } else {
-          const cleanDet = d.detail
-            .replace(/^\d+\.\s*/, '')
-            .replace(/^\[[^\]]+\]\s*/, '')
-            .replace(/\(Tindakan:.*\)/i, '')
-            .replace(/\(Catatan:.*\)/i, '')
-            .trim();
-          if (cleanDet) gejMap[cleanDet] = (gejMap[cleanDet] || 0) + 1;
-        }
-      } else {
-        gejMap['Gejala Umum'] = (gejMap['Gejala Umum'] || 0) + 1;
-      }
-    });
     const detailGejala = Object.entries(gejMap)
-      .map(([gejala, total]) => ({ gejala, total }))
-      .sort((a, b) => b.total - a.total)
+      .map(([gejala, val]) => ({
+        gejala,
+        total: val.total,
+        totalPcs: val.totalPcs,
+        komponen: val.komponen,
+      }))
+      .sort((a, b) => b.totalPcs - a.totalPcs || b.total - a.total)
       .slice(0, 10);
+
+    const sparepartKebutuhan = Object.values(partNeedsMap)
+      .sort((a, b) => b.gantiPcs - a.gantiPcs || b.totalPcs - a.totalPcs)
+      .slice(0, 8);
 
     // 5.7 Beban Seksi Stacked Bar
     const seksiMap: Record<string, { seksi: string; Open: number; Progress: number; Done: number; Scrap: number; Total: number }> = {};
@@ -369,9 +414,9 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     let totalDoneWithDate = 0;
     filteredData.forEach(d => {
       if (d.status === 'Done' && d.tglMasuk && d.tglKeluar && d.tglKeluar !== '-') {
-        const masuk = new Date(d.tglMasuk.replace(' ', 'T')).getTime();
-        const keluar = new Date(d.tglKeluar.replace(' ', 'T')).getTime();
-        if (!isNaN(masuk) && !isNaN(keluar) && keluar >= masuk) {
+        const masuk = parseToTimestamp(d.tglMasuk);
+        const keluar = parseToTimestamp(d.tglKeluar);
+        if (masuk > 0 && keluar >= masuk) {
           const diffHours = (keluar - masuk) / (1000 * 60 * 60);
           totalDoneWithDate++;
           if (diffHours < 4) buckets['< 4 Jam']++;
@@ -389,18 +434,6 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       persen: Math.round((total / totalAll) * 100)
     }));
 
-    // 5.10 Tindakan Repair vs Ganti Stats
-    let repairCount = 0;
-    let gantiCount = 0;
-    filteredData.forEach(d => {
-      if (d.detail && d.detail !== '-') {
-        const matchesGanti = (d.detail.match(/Tindakan:\s*Ganti/gi) || []).length;
-        const matchesRepair = (d.detail.match(/Tindakan:\s*Repair/gi) || []).length;
-        gantiCount += matchesGanti;
-        repairCount += matchesRepair;
-      }
-    });
-
     return {
       trenHarian,
       statusData,
@@ -411,7 +444,15 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       seksiStacked,
       pelapor,
       leadTime,
-      tindakanStats: { repairCount, gantiCount, total: repairCount + gantiCount }
+      tindakanStats: {
+        repairCount,
+        gantiCount,
+        total: repairCount + gantiCount,
+        repairPcs,
+        gantiPcs,
+        totalPcs: repairPcs + gantiPcs,
+      },
+      sparepartKebutuhan,
     };
   }, [filteredData, kpi]);
 

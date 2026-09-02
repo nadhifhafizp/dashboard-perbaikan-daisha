@@ -1,36 +1,41 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { Ticket, RawTicketData, UpdateTicketPayload, DeleteTicketPayload, TicketStatus } from '@/types/ticket';
-import { getInitialDateTime, cleanInputDateTime } from '@/lib/date';
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
+import { Ticket, UpdateTicketPayload, DeleteTicketPayload, TicketStatus } from '@/types/ticket';
+import { setStatusOverride } from '@/lib/ticketParser';
+import { useTickets } from '@/hooks/useTickets';
+import { parseTicketDamageDetail } from '@/lib/damageParser';
+import { exportTicketsToExcel } from '@/lib/excelExport';
 import ConfirmModal from '@/components/ConfirmModal';
 import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
-import { processRawTicketData, setStatusOverride, normalizeStatus } from '@/lib/ticketParser';
+import StatusBadge from '@/components/common/StatusBadge';
+import AdminTicketForm from '@/components/admin/AdminTicketForm';
+import PrintTicketTagModal from '@/components/common/PrintTicketTagModal';
+import { detectDaishaSize } from '@/lib/daishaSize';
+import { DAFTAR_SEKSI, getDaishaBySeksi, DAFTAR_SEMUA_DAISHA } from '@/lib/masterData';
 
-const API_URL = "/api/repair";
-
-let cachedAdminTickets: Ticket[] | null = null;
+const API_URL = '/api/repair';
 
 export default function AdminPage() {
-  const router = useRouter();
-  const [tickets, setTickets] = useState<Ticket[]>(() => cachedAdminTickets || []);
-  const [loading, setLoading] = useState<boolean>(() => !cachedAdminTickets);
+  const { tickets, loading, refresh, setTickets } = useTickets();
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterTab, setFilterTab] = useState<'all' | 'Open' | 'Progress' | 'Done' | 'Scrap'>('all');
-  
+  const [selectedSeksi, setSelectedSeksi] = useState<string>('all');
+  const [selectedDaisha, setSelectedDaisha] = useState<string>('all');
+  const [selectedSize, setSelectedSize] = useState<string>('all');
+
   // Selected Ticket Edit Form State
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [formStatus, setFormStatus] = useState('Progress');
-  const [formWaktuKeluar, setFormWaktuKeluar] = useState(getInitialDateTime());
-  const [formReason, setFormReason] = useState('');
 
-  // Interactive Modal States
+  // Modal Cetak Tag Fisik Daisha
+  const [ticketForTag, setTicketForTag] = useState<Ticket | null>(null);
+
+  // Modal Delete State
   const [ticketToDelete, setTicketToDelete] = useState<Ticket | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
@@ -49,259 +54,237 @@ export default function AdminPage() {
     setFeedback({ isOpen: true, type, title, message, detail });
   };
 
-  const fetchTiket = useCallback(async () => {
-    try {
-      setLoading(true);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
-      const response = await fetch(API_URL, { signal: controller.signal });
-      clearTimeout(timeoutId);
-
-      if (!response.ok) throw new Error("Gagal mengambil data server");
-
-      const data = await response.json();
-      const hasilData: RawTicketData[] = data.value || data;
-
-      if (Array.isArray(hasilData)) {
-        const processed = processRawTicketData(hasilData);
-        cachedAdminTickets = processed;
-        setTickets(processed);
-      }
-    } catch (error) {
-      console.error("Error saat fetch tiket:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let ignore = false;
-
-    async function loadData() {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
-        const response = await fetch(API_URL, { signal: controller.signal });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) throw new Error("Gagal mengambil data server");
-
-        const data = await response.json();
-        const hasilData: RawTicketData[] = data.value || data;
-
-        if (Array.isArray(hasilData) && !ignore) {
-          const processed = processRawTicketData(hasilData);
-          cachedAdminTickets = processed;
-          setTickets(processed);
-        }
-      } catch (error) {
-        if (!ignore) console.error("Error saat fetch tiket:", error);
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    }
-
-    loadData();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
-  // Logic Alur Pengerjaan (State Machine Transition)
-  const handleEdit = (ticket: Ticket) => {
-    setSelectedTicket(ticket);
-    const cleanStatus = normalizeStatus(ticket.status);
-    
-    // Alur Status Searah:
-    // Open -> Progress (Mulai Proses)
-    // Progress -> Done (Selesai Diperbaiki)
-    // Done / Scrap -> Status Terkunci
-    if (cleanStatus === 'Open') {
-      setFormStatus('Progress');
-    } else if (cleanStatus === 'Progress') {
-      setFormStatus('Done');
-    } else {
-      setFormStatus(cleanStatus);
-    }
-
-    setFormReason(ticket.reason || '');
-
-    // Set waktu selesai default ke saat ini
-    if (ticket.tglKeluar && ticket.tglKeluar !== '-') {
-      const formatted = ticket.tglKeluar.replace(' ', 'T').slice(0, 16);
-      setFormWaktuKeluar(formatted || getInitialDateTime());
-    } else {
-      setFormWaktuKeluar(getInitialDateTime());
-    }
-  };
-
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdate = async (data: {
+    status: string;
+    waktuKeluar: string;
+    catatan: string;
+  }) => {
     if (!selectedTicket) return;
 
-    // Strict Guard: Tidak boleh ada status Open yang terkirim di form update
-    if (formStatus === 'Open') {
-      showFeedback('error', 'Aksi Tidak Diizinkan', 'Tiket yang sedang atau sudah diproses tidak dapat dikembalikan ke status Open.');
+    if (data.status === 'Open') {
+      showFeedback(
+        'error',
+        'Aksi Tidak Diizinkan',
+        'Tiket yang sedang atau sudah diproses tidak dapat dikembalikan ke status Open.'
+      );
       return;
     }
 
     setIsProcessing(true);
 
-    let finalWaktuKeluar = '-';
-    if (formStatus === 'Done' || formStatus === 'Scrap') {
-      finalWaktuKeluar = cleanInputDateTime(formWaktuKeluar);
-    }
-
     const payload: UpdateTicketPayload = {
-      action: "UPDATE",
+      action: 'UPDATE',
       idTiket: selectedTicket.idTiketAsli,
-      status: formStatus,
-      waktuKeluar: finalWaktuKeluar,
-      catatan: formReason
+      status: data.status,
+      waktuKeluar: data.waktuKeluar,
+      catatan: data.catatan,
     };
 
     try {
       const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
       const resData = await response.json();
 
       if (response.ok) {
-        // Catat override lokal agar delay sync cloud Excel tidak merevert ke status Open
         setStatusOverride(
           selectedTicket.idTiketAsli,
-          formStatus as TicketStatus,
-          finalWaktuKeluar,
-          formReason
+          data.status as TicketStatus,
+          data.waktuKeluar,
+          data.catatan
         );
 
-        // Optimistic UI Update seketika agar status langsung terupdate di layar
-        const updated = tickets.map(t =>
-          t.idTiketAsli === selectedTicket.idTiketAsli
-            ? { ...t, status: formStatus as TicketStatus, tglKeluar: finalWaktuKeluar, reason: formReason }
-            : t
+        setTickets((prev) =>
+          prev.map((t) =>
+            t.idTiketAsli === selectedTicket.idTiketAsli
+              ? {
+                  ...t,
+                  status: data.status as TicketStatus,
+                  tglKeluar: data.waktuKeluar,
+                  reason: data.catatan,
+                }
+              : t
+          )
         );
-        setTickets(updated);
-        cachedAdminTickets = updated;
 
         showFeedback(
-          'success', 
-          'Status Berhasil Diperbarui', 
-          `Tiket ${selectedTicket.noTiket} telah diubah menjadi status ${formStatus}.`,
-          `Waktu Selesai: ${finalWaktuKeluar}`
+          'success',
+          'Status Berhasil Diperbarui',
+          `Tiket ${selectedTicket.noTiket || selectedTicket.idTiketAsli} telah diubah menjadi status ${data.status}.`,
+          `Waktu Selesai: ${data.waktuKeluar}`
         );
         setSelectedTicket(null);
-        fetchTiket();
+        refresh(true);
       } else {
         showFeedback(
-          'error', 
-          'Gagal Memperbarui Tiket', 
+          'error',
+          'Gagal Memperbarui Tiket',
           resData.error || 'Terjadi kesalahan saat memproses data ke server.'
         );
       }
     } catch (error) {
-      console.error("Gagal update tiket:", error);
+      console.error('Gagal update tiket:', error);
       showFeedback('error', 'Gangguan Koneksi', 'Gagal menghubungi server. Periksa koneksi internet Anda.');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Konfirmasi & Eksekusi Hapus Tiket
   const confirmDeleteTicket = async () => {
     if (!ticketToDelete) return;
 
     setIsDeleting(true);
 
     const payload: DeleteTicketPayload = {
-      action: "DELETE",
-      idTiket: ticketToDelete.idTiketAsli
+      action: 'DELETE',
+      idTiket: ticketToDelete.idTiketAsli,
     };
 
     try {
       const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
       const resData = await response.json();
 
       if (response.ok) {
         const deletedId = ticketToDelete.idTiketAsli;
-        const deletedNo = ticketToDelete.noTiket;
-        
-        // Optimistic UI update
-        const updated = tickets.filter(t => t.idTiketAsli !== deletedId);
-        setTickets(updated);
-        cachedAdminTickets = updated;
+        const deletedNo = ticketToDelete.noTiket || ticketToDelete.idTiketAsli;
+
+        setTickets((prev) => prev.filter((t) => t.idTiketAsli !== deletedId));
         if (selectedTicket?.idTiketAsli === deletedId) {
           setSelectedTicket(null);
         }
 
         setTicketToDelete(null);
         showFeedback('success', 'Data Berhasil Dihapus', `Tiket ${deletedNo} telah dihapus dari sistem.`);
-        fetchTiket();
+        refresh(true);
       } else {
-        showFeedback('error', 'Gagal Menghapus Data', resData.error || 'Terjadi kesalahan pada server saat menghapus data.');
+        showFeedback(
+          'error',
+          'Gagal Menghapus Data',
+          resData.error || 'Terjadi kesalahan pada server saat menghapus data.'
+        );
       }
     } catch (error) {
-      console.error("Gagal hapus tiket:", error);
+      console.error('Gagal hapus tiket:', error);
       showFeedback('error', 'Gangguan Koneksi', 'Gagal menghubungi server saat menghapus data.');
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const executeLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
-      router.refresh();
-    } catch (err) {
-      console.error("Logout error:", err);
-      router.push('/login');
-    } finally {
-      setIsLoggingOut(false);
-      setIsLogoutConfirmOpen(false);
+  // Daftar Seksi yang tersedia (master data + riwayat tiket)
+  const seksiList = useMemo(() => {
+    const fromMaster = DAFTAR_SEKSI.filter((s) => s.toLowerCase() !== 'all seksi');
+    const fromTickets = tickets.map((t) => t.seksi).filter(Boolean);
+    return Array.from(new Set([...fromMaster, ...fromTickets])).sort();
+  }, [tickets]);
+
+  // Daftar Jenis Daisha yang tersedia (dinamis menyesuaikan jika Seksi dipilih)
+  const daishaList = useMemo(() => {
+    if (selectedSeksi !== 'all') {
+      const bySeksi = getDaishaBySeksi(selectedSeksi);
+      const fromTickets = tickets
+        .filter((t) => t.seksi?.toLowerCase() === selectedSeksi.toLowerCase())
+        .map((t) => t.namaDaisha)
+        .filter(Boolean);
+      return Array.from(new Set([...bySeksi, ...fromTickets])).sort();
     }
+    const fromTickets = tickets.map((t) => t.namaDaisha).filter(Boolean);
+    return Array.from(new Set([...DAFTAR_SEMUA_DAISHA, ...fromTickets])).sort();
+  }, [selectedSeksi, tickets]);
+
+  const hasActiveFilters =
+    selectedSeksi !== 'all' ||
+    selectedDaisha !== 'all' ||
+    selectedSize !== 'all' ||
+    filterTab !== 'all' ||
+    Boolean(search.trim());
+
+  const resetAllFilters = () => {
+    setSelectedSeksi('all');
+    setSelectedDaisha('all');
+    setSelectedSize('all');
+    setFilterTab('all');
+    setSearch('');
   };
 
-  // Hitung jumlah tiket per kategori status
-  const countStats = {
-    all: tickets.length,
-    open: tickets.filter(t => t.status === 'Open').length,
-    progress: tickets.filter(t => t.status === 'Progress').length,
-    done: tickets.filter(t => t.status === 'Done').length,
-    scrap: tickets.filter(t => t.status === 'Scrap').length,
-  };
+  // Hitung KPI status dinamis berdasarkan filter Seksi, Daisha, Ukuran, dan Pencarian
+  const countStats = useMemo(() => {
+    const scopedTickets = tickets.filter((t) => {
+      if (selectedSeksi !== 'all' && t.seksi?.toLowerCase() !== selectedSeksi.toLowerCase()) {
+        return false;
+      }
+      if (selectedDaisha !== 'all' && t.namaDaisha?.toLowerCase() !== selectedDaisha.toLowerCase()) {
+        return false;
+      }
+      if (selectedSize !== 'all') {
+        const size = detectDaishaSize(t.noDaisha)?.size;
+        if (size !== selectedSize) return false;
+      }
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      return (
+        t.noTiket?.toLowerCase().includes(q) ||
+        t.idTiketAsli?.toLowerCase().includes(q) ||
+        t.noDaisha?.toLowerCase().includes(q) ||
+        t.namaDaisha?.toLowerCase().includes(q) ||
+        t.pelapor?.toLowerCase().includes(q) ||
+        t.seksi?.toLowerCase().includes(q) ||
+        t.detail?.toLowerCase().includes(q)
+      );
+    });
 
-  const filteredTickets = tickets.filter(t => {
-    // Filter tab status
-    if (filterTab !== 'all' && t.status !== filterTab) return false;
+    return {
+      all: scopedTickets.length,
+      open: scopedTickets.filter((t) => t.status === 'Open').length,
+      progress: scopedTickets.filter((t) => t.status === 'Progress').length,
+      done: scopedTickets.filter((t) => t.status === 'Done').length,
+      scrap: scopedTickets.filter((t) => t.status === 'Scrap').length,
+    };
+  }, [tickets, selectedSeksi, selectedDaisha, selectedSize, search]);
 
-    // Filter teks search
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      t.noTiket?.toLowerCase().includes(q) ||
-      t.noDaisha?.toLowerCase().includes(q) ||
-      t.namaDaisha?.toLowerCase().includes(q) ||
-      t.namaPelapor?.toLowerCase().includes(q) ||
-      t.seksi?.toLowerCase().includes(q)
-    );
-  });
+  const filteredTickets = useMemo(() => {
+    return tickets.filter((t) => {
+      if (filterTab !== 'all' && t.status !== filterTab) return false;
+
+      if (selectedSeksi !== 'all' && t.seksi?.toLowerCase() !== selectedSeksi.toLowerCase()) {
+        return false;
+      }
+
+      if (selectedDaisha !== 'all' && t.namaDaisha?.toLowerCase() !== selectedDaisha.toLowerCase()) {
+        return false;
+      }
+
+      if (selectedSize !== 'all') {
+        const size = detectDaishaSize(t.noDaisha)?.size;
+        if (size !== selectedSize) return false;
+      }
+
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return (
+        t.noTiket?.toLowerCase().includes(q) ||
+        t.idTiketAsli?.toLowerCase().includes(q) ||
+        t.noDaisha?.toLowerCase().includes(q) ||
+        t.namaDaisha?.toLowerCase().includes(q) ||
+        t.pelapor?.toLowerCase().includes(q) ||
+        t.seksi?.toLowerCase().includes(q) ||
+        t.detail?.toLowerCase().includes(q)
+      );
+    });
+  }, [tickets, filterTab, selectedSeksi, selectedDaisha, selectedSize, search]);
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-      
-      {/* Header Clean & Simple */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-sm">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-xs">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
             ⚙️ Panel Tindakan Admin Workshop
@@ -311,43 +294,208 @@ export default function AdminPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          {/* Tombol Ekspor Excel Berdasarkan Filter Aktif */}
           <button
-            onClick={fetchTiket}
-            disabled={loading || isProcessing}
-            className="flex-1 sm:flex-none px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-1.5"
+            type="button"
+            onClick={() =>
+              exportTicketsToExcel(
+                filteredTickets,
+                `Admin_Rekap_Daisha_${filterTab !== 'all' ? filterTab : 'Semua'}`
+              )
+            }
+            disabled={filteredTickets.length === 0}
+            className="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            title="Unduh data Excel (.xlsx) sesuai filter yang sedang aktif"
           >
-            <span className={loading ? "animate-spin inline-block" : ""}>🔄</span>
-            <span>{loading ? "Memuat..." : "Refresh"}</span>
+            <span>📥</span>
+            <span>Ekspor Excel ({filteredTickets.length})</span>
           </button>
-          
+
           <button
-            onClick={() => setIsLogoutConfirmOpen(true)}
-            className="flex-1 sm:flex-none px-4 py-2 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded-xl shadow-sm transition"
+            type="button"
+            onClick={() => refresh()}
+            disabled={loading}
+            className="flex-1 sm:flex-none px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
-            🚪 Logout
+            <span className={loading ? 'animate-spin' : ''}>🔄</span>
+            <span>Refresh</span>
           </button>
+
+          <Link
+            href="/"
+            className="flex-1 sm:flex-none px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2"
+          >
+            <span>📊</span>
+            <span>Dashboard</span>
+          </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Table Request Perbaikan (2 Kolom) */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-          
-          {/* Filter Status Tabs & Search Box */}
+      {/* KPI Cards Ringkas */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
+        <div
+          onClick={() => setFilterTab('all')}
+          className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs hover:border-gray-300 transition cursor-pointer"
+        >
+          <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
+            Total Tiket
+          </span>
+          <span className="text-2xl font-black text-gray-900 mt-1 block">{countStats.all}</span>
+        </div>
+
+        <div
+          onClick={() => setFilterTab('Open')}
+          className="bg-white p-4 rounded-2xl border border-red-200 shadow-xs hover:border-red-300 transition cursor-pointer"
+        >
+          <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider block flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-red-500"></span> Antrean
+          </span>
+          <span className="text-2xl font-black text-red-700 mt-1 block">{countStats.open}</span>
+        </div>
+
+        <div
+          onClick={() => setFilterTab('Progress')}
+          className="bg-white p-4 rounded-2xl border border-blue-200 shadow-xs hover:border-blue-300 transition cursor-pointer"
+        >
+          <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider block flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-blue-500"></span> Dikerjakan
+          </span>
+          <span className="text-2xl font-black text-blue-700 mt-1 block">{countStats.progress}</span>
+        </div>
+
+        <div
+          onClick={() => setFilterTab('Done')}
+          className="bg-white p-4 rounded-2xl border border-emerald-200 shadow-xs hover:border-emerald-300 transition cursor-pointer"
+        >
+          <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Selesai
+          </span>
+          <span className="text-2xl font-black text-emerald-700 mt-1 block">{countStats.done}</span>
+        </div>
+
+        <div
+          onClick={() => setFilterTab('Scrap')}
+          className="bg-white p-4 rounded-2xl border border-gray-300 shadow-xs hover:border-gray-400 transition cursor-pointer col-span-2 sm:col-span-1"
+        >
+          <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider block flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-gray-500"></span> Scrap
+          </span>
+          <span className="text-2xl font-black text-gray-800 mt-1 block">{countStats.scrap}</span>
+        </div>
+      </div>
+
+      {/* Tabel Tiket Antrean & Riwayat (Lebar Penuh) */}
+      <div className="w-full bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden flex flex-col">
           <div className="p-4 border-b border-gray-200 space-y-3">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <h2 className="text-sm font-bold text-gray-900">
-                Daftar Tiket ({filteredTickets.length})
-              </h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">Daftar Tiket Antrean Bengkel</h2>
+                <span className="text-[11px] text-gray-500">
+                  Menampilkan {filteredTickets.length} tiket
+                </span>
+              </div>
+
               <input
                 type="text"
-                placeholder="🔍 Cari Unit / Pelapor..."
+                placeholder="🔍 Cari Unit / Pelapor / Gejala..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full sm:w-64 p-2 border border-gray-300 rounded-xl text-xs text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none"
               />
+            </div>
+
+            {/* Filter Baris 2: Seksi Asal, Jenis Daisha, Ukuran Daisha, & Reset Button */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 pt-2 pb-1 border-t border-gray-100">
+              {/* Filter Seksi */}
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  🏢 Seksi Asal
+                </label>
+                <select
+                  value={selectedSeksi}
+                  onChange={(e) => {
+                    setSelectedSeksi(e.target.value);
+                    setSelectedDaisha('all');
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-xl text-xs font-bold text-gray-800 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none cursor-pointer"
+                >
+                  <option value="all">Semua Seksi ({tickets.length})</option>
+                  {seksiList.map((s) => {
+                    const count = tickets.filter((t) => t.seksi?.toLowerCase() === s.toLowerCase()).length;
+                    return (
+                      <option key={s} value={s}>
+                        {s} ({count})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* Filter Jenis Daisha */}
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  🛞 Jenis Daisha
+                </label>
+                <select
+                  value={selectedDaisha}
+                  onChange={(e) => setSelectedDaisha(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-xl text-xs font-bold text-gray-800 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none cursor-pointer"
+                >
+                  <option value="all">
+                    {selectedSeksi !== 'all' ? `Semua Jenis (${selectedSeksi})` : 'Semua Jenis Daisha'}
+                  </option>
+                  {daishaList.map((d) => {
+                    const count = tickets.filter((t) => {
+                      const matchSeksi =
+                        selectedSeksi === 'all' ||
+                        t.seksi?.toLowerCase() === selectedSeksi.toLowerCase();
+                      return matchSeksi && t.namaDaisha?.toLowerCase() === d.toLowerCase();
+                    }).length;
+                    return (
+                      <option key={d} value={d}>
+                        {d} {count > 0 ? `(${count})` : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* Filter Ukuran Daisha (S / M / L) */}
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  📐 Ukuran Daisha (S/M/L)
+                </label>
+                <select
+                  value={selectedSize}
+                  onChange={(e) => setSelectedSize(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-xl text-xs font-bold text-gray-800 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none cursor-pointer"
+                >
+                  <option value="all">Semua Ukuran (S, M, L)</option>
+                  <option value="Small">🟢 Small (S) - Unit Kecil</option>
+                  <option value="Medium">🔵 Medium (M) - Unit Sedang</option>
+                  <option value="Large">🟣 Large (L) - Unit Besar</option>
+                </select>
+              </div>
+
+              {/* Tombol Reset Filter */}
+              <div className="flex items-end">
+                {hasActiveFilters ? (
+                  <button
+                    type="button"
+                    onClick={resetAllFilters}
+                    className="w-full py-2 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                    title="Kembalikan semua filter ke default"
+                  >
+                    <span>✕</span>
+                    <span>Reset Filter</span>
+                  </button>
+                ) : (
+                  <div className="w-full py-2 px-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-[11px] text-gray-400 font-semibold text-center select-none">
+                    Filter Standar
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Quick Status Filter Tabs */}
@@ -355,8 +503,10 @@ export default function AdminPage() {
               <button
                 type="button"
                 onClick={() => setFilterTab('all')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
-                  filterTab === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap cursor-pointer ${
+                  filterTab === 'all'
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
                 Semua ({countStats.all})
@@ -364,8 +514,10 @@ export default function AdminPage() {
               <button
                 type="button"
                 onClick={() => setFilterTab('Open')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1 ${
-                  filterTab === 'Open' ? 'bg-red-600 text-white' : 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-100'
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1 cursor-pointer ${
+                  filterTab === 'Open'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-100'
                 }`}
               >
                 <span>🔴 Antrean ({countStats.open})</span>
@@ -373,8 +525,10 @@ export default function AdminPage() {
               <button
                 type="button"
                 onClick={() => setFilterTab('Progress')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1 ${
-                  filterTab === 'Progress' ? 'bg-blue-600 text-white' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100'
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1 cursor-pointer ${
+                  filterTab === 'Progress'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100'
                 }`}
               >
                 <span>🔵 Dikerjakan ({countStats.progress})</span>
@@ -382,8 +536,10 @@ export default function AdminPage() {
               <button
                 type="button"
                 onClick={() => setFilterTab('Done')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1 ${
-                  filterTab === 'Done' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100'
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1 cursor-pointer ${
+                  filterTab === 'Done'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100'
                 }`}
               >
                 <span>🟢 Selesai ({countStats.done})</span>
@@ -391,8 +547,10 @@ export default function AdminPage() {
               <button
                 type="button"
                 onClick={() => setFilterTab('Scrap')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1 ${
-                  filterTab === 'Scrap' ? 'bg-gray-800 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1 cursor-pointer ${
+                  filterTab === 'Scrap'
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
                 <span>⚫ Scrap ({countStats.scrap})</span>
@@ -415,11 +573,21 @@ export default function AdminPage() {
                 {loading && !tickets.length ? (
                   Array.from({ length: 4 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td className="p-3"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
-                      <td className="p-3"><div className="h-4 bg-gray-200 rounded w-28"></div></td>
-                      <td className="p-3"><div className="h-4 bg-gray-200 rounded w-32"></div></td>
-                      <td className="p-3"><div className="h-5 bg-gray-200 rounded-full w-16"></div></td>
-                      <td className="p-3"><div className="h-6 bg-gray-200 rounded w-20 mx-auto"></div></td>
+                      <td className="p-3">
+                        <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      </td>
+                      <td className="p-3">
+                        <div className="h-4 bg-gray-200 rounded w-28"></div>
+                      </td>
+                      <td className="p-3">
+                        <div className="h-4 bg-gray-200 rounded w-32"></div>
+                      </td>
+                      <td className="p-3">
+                        <div className="h-5 bg-gray-200 rounded-full w-16"></div>
+                      </td>
+                      <td className="p-3">
+                        <div className="h-6 bg-gray-200 rounded w-20 mx-auto"></div>
+                      </td>
                     </tr>
                   ))
                 ) : filteredTickets.length === 0 ? (
@@ -432,70 +600,119 @@ export default function AdminPage() {
                   filteredTickets.map((t) => (
                     <tr key={t.id} className="hover:bg-gray-50 transition">
                       <td className="p-3">
-                        <span className="font-mono font-bold text-gray-900 block">{t.noTiket}</span>
+                        <span className="font-mono font-bold text-gray-900 block">
+                          {t.idTiketAsli || t.noTiket}
+                        </span>
                         <span className="text-[11px] text-gray-500">{t.tglMasuk}</span>
                       </td>
 
                       <td className="p-3">
-                        <span className="font-bold text-red-700 block">{t.noDaisha}</span>
-                        <span className="text-[11px] text-gray-500">{t.namaDaisha} ({t.seksi})</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-red-700">{t.noDaisha}</span>
+                          {(() => {
+                            const sizeInfo = detectDaishaSize(t.noDaisha);
+                            return sizeInfo ? (
+                              <span
+                                className={`px-1.5 py-0.2 rounded text-[10px] font-black border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
+                                title={sizeInfo.description}
+                              >
+                                {sizeInfo.code}
+                              </span>
+                            ) : null;
+                          })()}
+                        </div>
+                        <span className="text-[11px] text-gray-500 block">
+                          {t.namaDaisha} ({t.seksi})
+                        </span>
                       </td>
 
-                      <td className="p-3 max-w-xs">
-                        <span className="font-semibold text-gray-900 block">{t.kategori}</span>
-                        <span className="text-[11px] text-gray-500 truncate block" title={t.detail}>{t.detail}</span>
+                      <td className="p-3 min-w-[240px] max-w-sm whitespace-normal">
+                        {(() => {
+                          const parsed = parseTicketDamageDetail(t.detail);
+                          if (parsed.items.length > 0) {
+                            return (
+                              <div className="space-y-1.5 py-0.5">
+                                {parsed.items.map((it, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-start justify-between gap-1.5 p-1.5 rounded-lg bg-gray-50 border border-gray-200/70 text-[11px]"
+                                  >
+                                    <div className="flex items-start gap-1 leading-snug">
+                                      <span className="text-gray-400 font-bold">•</span>
+                                      <div>
+                                        {it.komponen && it.komponen !== 'Umum' && (
+                                          <span className="font-bold text-gray-800 mr-1">
+                                            [{it.komponen}]
+                                          </span>
+                                        )}
+                                        <span className="text-gray-700">{it.gejala}</span>
+                                        {it.qty > 1 && (
+                                          <span className="ml-1 text-[10px] font-black text-slate-800 bg-slate-200/80 px-1.5 py-0.2 rounded">
+                                            {it.qty} pcs
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {it.tindakan && (
+                                      <span
+                                        className={`px-1.5 py-0.2 rounded text-[9px] font-black shrink-0 ${
+                                          it.tindakan === 'Ganti'
+                                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                            : 'bg-amber-100 text-amber-800 border border-amber-200'
+                                        }`}
+                                      >
+                                        {it.tindakan === 'Ganti' ? '🔄 Ganti' : '🔨 Repair'}
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                                {parsed.catatan && (
+                                  <div className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                    📌 Posisi: {parsed.catatan}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="text-[11px] text-gray-600">
+                              <span className="font-semibold text-gray-900 block">{t.jenisKerusakan}</span>
+                              <span>{t.detail && t.detail !== '-' ? t.detail : 'Kerusakan umum'}</span>
+                            </div>
+                          );
+                        })()}
+                        {t.reason && (
+                          <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 mt-1 inline-block">
+                            Catatan: {t.reason}
+                          </span>
+                        )}
                       </td>
 
                       <td className="p-3">
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                          t.status === 'Done' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          t.status === 'Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                          t.status === 'Scrap' ? 'bg-gray-800 text-white border-gray-900' :
-                          'bg-red-50 text-red-700 border-red-200'
-                        }`}>
-                          {t.status === 'Open' ? '🔴 Open' :
-                           t.status === 'Progress' ? '🔵 Progress' :
-                           t.status === 'Done' ? '🟢 Done' : '⚫ Scrap'}
-                        </span>
+                        <StatusBadge status={t.status} />
                       </td>
 
                       <td className="p-3 text-center">
                         <div className="flex items-center justify-center gap-1.5">
-                          
-                          {/* Tombol Proses Kontekstual Sesuai Alur */}
-                          {t.status === 'Open' ? (
-                            <button
-                              onClick={() => handleEdit(t)}
-                              disabled={isProcessing}
-                              className="px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-sm transition disabled:opacity-50 flex items-center gap-1"
-                              title="Mulai Pengerjaan Unit"
-                            >
-                              <span>Mulai ⚙️</span>
-                            </button>
-                          ) : t.status === 'Progress' ? (
-                            <button
-                              onClick={() => handleEdit(t)}
-                              disabled={isProcessing}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition disabled:opacity-50 flex items-center gap-1"
-                              title="Selesaikan Perbaikan Unit"
-                            >
-                              <span>Selesaikan 🛠️</span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleEdit(t)}
-                              disabled={isProcessing}
-                              className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 text-xs font-bold rounded-xl shadow-sm transition disabled:opacity-50 flex items-center gap-1"
-                              title="Lihat / Edit Catatan"
-                            >
-                              <span>Catatan 📝</span>
-                            </button>
-                          )}
-
+                          <button
+                            onClick={() => setTicketForTag(t)}
+                            className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
+                            title="Cetak Tag Fisik Daisha untuk digantungkan di unit"
+                          >
+                            <span>🏷️</span>
+                            <span>Tag</span>
+                          </button>
+                          <button
+                            onClick={() => setSelectedTicket(t)}
+                            className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                            title="Proses / Update Status Tiket"
+                          >
+                            Proses 🛠️
+                          </button>
                           <button
                             onClick={() => setTicketToDelete(t)}
                             disabled={isProcessing}
-                            className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold rounded-xl shadow-sm transition disabled:opacity-50"
+                            className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold rounded-xl shadow-xs transition disabled:opacity-50 cursor-pointer"
                             title="Hapus Data Tiket"
                           >
                             🗑️
@@ -510,194 +727,47 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Form Update Pekerjaan (1 Kolom) */}
-        <div className="lg:col-span-1 bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-sm h-fit">
-          <h2 className="text-sm font-bold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-            Form Update Perbaikan
-          </h2>
+      {/* Modal Popup Update Status Pengerjaan (Muncul di tengah layar saat klik Proses) */}
+      <AdminTicketForm
+        isOpen={!!selectedTicket}
+        selectedTicket={selectedTicket}
+        isProcessing={isProcessing}
+        onCancel={() => setSelectedTicket(null)}
+        onSubmit={handleUpdate}
+      />
 
-          {!selectedTicket ? (
-            <div className="py-12 px-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl text-center">
-              <span className="text-2xl mb-2 block">👆</span>
-              <p className="text-xs text-gray-500 font-semibold leading-relaxed">
-                Pilih tiket di tabel lalu klik tombol aksi <span className="text-blue-700 font-bold">&quot;Mulai ⚙️&quot;</span> atau <span className="text-emerald-700 font-bold">&quot;Selesaikan 🛠️&quot;</span> untuk memproses unit.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleUpdate} className="space-y-4">
-              
-              {/* Unit Info Box & Status Form */}
-              {(() => {
-                const currentStatus = normalizeStatus(selectedTicket.status);
-                return (
-                  <>
-                    <div className="p-3.5 bg-red-50/80 rounded-xl border border-red-100 text-xs space-y-1">
-                      <div className="flex justify-between items-center font-bold">
-                        <span className="text-red-800 font-mono">{selectedTicket.noTiket}</span>
-                        <span className={`px-2 py-0.5 rounded border text-[10px] ${
-                          currentStatus === 'Done' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
-                          currentStatus === 'Progress' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                          currentStatus === 'Scrap' ? 'bg-gray-200 text-gray-800 border-gray-300' :
-                          'bg-red-100 text-red-800 border-red-200'
-                        }`}>
-                          Status Saat Ini: {currentStatus}
-                        </span>
-                      </div>
-                      <p className="font-extrabold text-gray-900 pt-1">
-                        Unit {selectedTicket.noDaisha} ({selectedTicket.namaDaisha})
-                      </p>
-                      <p className="text-gray-600">Seksi: {selectedTicket.seksi} • Pelapor: {selectedTicket.namaPelapor}</p>
-                      <p className="text-gray-600 truncate">Keluhan: {selectedTicket.detail}</p>
-                    </div>
+      {/* Modal Cetak Tag Fisik Daisha */}
+      <PrintTicketTagModal
+        isOpen={!!ticketForTag}
+        ticket={
+          ticketForTag
+            ? {
+                idTiket: String(ticketForTag.idTiketAsli || ticketForTag.noTiket || ticketForTag.id),
+                noDaisha: ticketForTag.noDaisha,
+                namaDaisha: ticketForTag.namaDaisha,
+                seksi: ticketForTag.seksi,
+                namaPelapor: ticketForTag.pelapor,
+                waktuMasuk: ticketForTag.tglMasuk,
+                status: ticketForTag.status,
+                detail: ticketForTag.detail,
+                catatanTeknisi: ticketForTag.reason,
+              }
+            : null
+        }
+        onClose={() => setTicketForTag(null)}
+      />
 
-                    {/* Kontrol Status Dinamis Sesuai Alur Proses (State Machine) */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">
-                        Status Pengerjaan *
-                      </label>
-
-                      {currentStatus === 'Open' ? (
-                        <div>
-                          <select
-                            value={formStatus}
-                            onChange={(e) => setFormStatus(e.target.value)}
-                            className="w-full p-2.5 border border-gray-300 rounded-xl text-xs font-bold text-gray-900 bg-white focus:ring-2 focus:ring-blue-600 outline-none"
-                          >
-                            <option value="Progress">🔵 Mulai Kerjakan (Progress)</option>
-                            <option value="Scrap">⚫ Unit Rusak Berat (Scrap)</option>
-                          </select>
-                          <span className="text-[10px] text-blue-700 block mt-1">
-                            *Unit dalam antrean. Klik simpan untuk menandai pengerjaan sedang berlangsung.
-                          </span>
-                        </div>
-                      ) : currentStatus === 'Progress' ? (
-                        <div>
-                          <select
-                            value={formStatus}
-                            onChange={(e) => setFormStatus(e.target.value)}
-                            className="w-full p-2.5 border border-gray-300 rounded-xl text-xs font-bold text-gray-900 bg-white focus:ring-2 focus:ring-emerald-600 outline-none"
-                          >
-                            <option value="Done">🟢 Selesai Diperbaiki (Done)</option>
-                            <option value="Scrap">⚫ Tidak Bisa Diperbaiki (Scrap)</option>
-                          </select>
-                          <div className="mt-1.5 p-2 bg-amber-50 rounded-lg border border-amber-200 text-[11px] text-amber-800 flex items-center gap-1.5 font-semibold">
-                            <span>🚫</span>
-                            <span>Tiket sedang dikerjakan. Tidak dapat dikembalikan ke antrean (Open).</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          <div className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between ${
-                            currentStatus === 'Done'
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                              : 'bg-gray-100 text-gray-800 border-gray-300'
-                          }`}>
-                            <span>Status: {currentStatus === 'Done' ? '🟢 Selesai Diperbaiki (Done)' : '⚫ Unit Afkir (Scrap)'}</span>
-                            <span className="text-[10px] bg-white/90 px-2 py-0.5 rounded font-mono shadow-sm">🔒 Status Terkunci</span>
-                          </div>
-                          <span className="text-[10px] text-gray-500 block">
-                            *Tiket telah selesai dan tidak dapat dikembalikan ke status Open atau Progress.
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                );
-              })()}
-
-              {/* Input Waktu Selesai (Hanya muncul jika Done atau Scrap) */}
-              {(formStatus === 'Done' || formStatus === 'Scrap') && (
-                <div className="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200">
-                  <label className="block text-xs font-bold text-emerald-900 mb-1">
-                    Waktu Selesai Servis (Tanggal & Jam) *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={formWaktuKeluar}
-                    onChange={(e) => setFormWaktuKeluar(e.target.value)}
-                    required
-                    className="w-full p-2 border border-emerald-300 rounded-lg text-xs font-bold text-gray-900 bg-white focus:ring-2 focus:ring-emerald-600 outline-none"
-                  />
-                  <span className="text-[10px] text-emerald-700 block mt-1">
-                    *Waktu ini akan tercatat resmi sebagai Waktu Selesai unit bengkel.
-                  </span>
-                </div>
-              )}
-
-              {/* Catatan Tindakan */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Catatan Tindakan Teknisi {formStatus === 'Done' || formStatus === 'Scrap' ? '*' : '(Opsional)'}
-                </label>
-                <textarea
-                  value={formReason}
-                  onChange={(e) => setFormReason(e.target.value)}
-                  rows={3}
-                  placeholder={
-                    formStatus === 'Done'
-                      ? "Jelaskan perbaikan yang dilakukan (contoh: Penggantian bearing roda dan pelumasan bearing selesai)..."
-                      : formStatus === 'Scrap'
-                      ? "Alasan unit tidak dapat diperbaiki (contoh: Sasis patah bengkok parah)..."
-                      : "Catatan awal teknisi..."
-                  }
-                  className="w-full p-2.5 border border-gray-300 rounded-xl text-xs text-gray-900 bg-white focus:ring-2 focus:ring-red-600 outline-none"
-                  required={formStatus === 'Done' || formStatus === 'Scrap'}
-                ></textarea>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-2 space-y-2">
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  className={`w-full py-3 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow transition disabled:opacity-50 flex items-center justify-center gap-2 ${
-                    formStatus === 'Done' 
-                      ? 'bg-emerald-600 hover:bg-emerald-700' 
-                      : formStatus === 'Progress'
-                      ? 'bg-blue-600 hover:bg-blue-700'
-                      : 'bg-red-700 hover:bg-red-800'
-                  }`}
-                >
-                  {isProcessing ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span>Menyimpan ke Server...</span>
-                    </>
-                  ) : formStatus === 'Done' ? (
-                    "✅ Selesaikan & Simpan Servis"
-                  ) : formStatus === 'Progress' ? (
-                    "⚙️ Mulai Pengerjaan (Set Progress)"
-                  ) : (
-                    "💾 Simpan Perubahan"
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedTicket(null)}
-                  disabled={isProcessing}
-                  className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition"
-                >
-                  Batal
-                </button>
-              </div>
-
-            </form>
-          )}
-
-        </div>
-
-      </div>
-
-      {/* Interactive Confirm Delete Modal with Loading Buffering */}
+      {/* Confirm Delete Modal */}
       <ConfirmModal
         isOpen={!!ticketToDelete}
         isDestructive={true}
         title="Hapus Data Tiket Perbaikan"
-        message={`Apakah Anda yakin ingin menghapus data tiket ini secara permanen? Data yang telah dihapus tidak dapat dikembalikan.`}
-        detail={ticketToDelete ? `ID: ${ticketToDelete.noTiket} | Unit: ${ticketToDelete.noDaisha} (${ticketToDelete.namaDaisha} - ${ticketToDelete.seksi})` : undefined}
+        message="Apakah Anda yakin ingin menghapus data tiket ini secara permanen? Data yang telah dihapus tidak dapat dikembalikan."
+        detail={
+          ticketToDelete
+            ? `ID: ${ticketToDelete.noTiket || ticketToDelete.idTiketAsli} | Unit: ${ticketToDelete.noDaisha} (${ticketToDelete.namaDaisha} - ${ticketToDelete.seksi})`
+            : undefined
+        }
         confirmText="Ya, Hapus Data"
         cancelText="Batal"
         isLoading={isDeleting}
@@ -706,29 +776,15 @@ export default function AdminPage() {
         onCancel={() => !isDeleting && setTicketToDelete(null)}
       />
 
-      {/* Interactive Logout Confirm Modal */}
-      <ConfirmModal
-        isOpen={isLogoutConfirmOpen}
-        title="Konfirmasi Keluar (Logout)"
-        message="Apakah Anda yakin ingin mengakhiri sesi Admin Panel?"
-        confirmText="Ya, Keluar"
-        cancelText="Tetap Masuk"
-        isLoading={isLoggingOut}
-        loadingText="Keluar dari sesi..."
-        onConfirm={executeLogout}
-        onCancel={() => !isLoggingOut && setIsLogoutConfirmOpen(false)}
-      />
-
-      {/* Interactive Feedback Modal (Success/Error/Info) */}
+      {/* Interactive Feedback Modal */}
       <FeedbackModal
         isOpen={feedback.isOpen}
         type={feedback.type}
         title={feedback.title}
         message={feedback.message}
         detail={feedback.detail}
-        onClose={() => setFeedback(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setFeedback((prev) => ({ ...prev, isOpen: false }))}
       />
-
     </div>
   );
 }

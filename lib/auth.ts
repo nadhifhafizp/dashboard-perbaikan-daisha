@@ -1,42 +1,13 @@
 import { UserRole, findUserByUsername } from './users';
+import { constantTimeCompare, generateHmacSignature } from './crypto';
+
+// Re-export untuk backward compatibility jika ada file lain yang mengimpor dari auth
+export { constantTimeCompare } from './crypto';
 
 const DEFAULT_SECRET = 'daisha_bridgestone_secure_token_secret_key_2026';
 
 function getSecret(): string {
   return process.env.SESSION_SECRET || DEFAULT_SECRET;
-}
-
-// Perbandingan string waktu-konstan untuk mencegah timing attacks
-export function constantTimeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return diff === 0;
-}
-
-// Konversi ArrayBuffer ke Hex String
-function bufToHex(buffer: ArrayBuffer): string {
-  return Array.from(new Uint8Array(buffer))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-// Buat HMAC Signature menggunakan Web Crypto
-async function generateHmacSignature(data: string, secret: string): Promise<string> {
-  const secretBuffer = new TextEncoder().encode(secret) as unknown as BufferSource;
-  const dataBuffer = new TextEncoder().encode(data) as unknown as BufferSource;
-
-  const key = await crypto.subtle.importKey(
-    'raw',
-    secretBuffer,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  const signature = await crypto.subtle.sign('HMAC', key, dataBuffer);
-  return bufToHex(signature);
 }
 
 export const SESSION_COOKIE_NAME = 'daisha_auth_session';

@@ -15,7 +15,10 @@ export function getValue(obj: RawTicketData, possibleKeys: string[]): string | n
   for (const key of possibleKeys) {
     if (obj[key] !== undefined && obj[key] !== null) return String(obj[key]);
     const cleanKey = key.toLowerCase().replace(/[\s_]/g, "");
-    const found = Object.keys(obj).find((k) => k.toLowerCase().replace(/[\s_]/g, "") === cleanKey);
+    const found = Object.keys(obj).find((k) => {
+      const cleanK = k.toLowerCase().replace(/[\s_]/g, "");
+      return cleanK === cleanKey;
+    });
     if (found && obj[found] !== undefined && obj[found] !== null) return String(obj[found]);
   }
   return null;
@@ -40,20 +43,40 @@ export function setStatusOverride(idTiket: string, status: TicketStatus, waktuKe
   });
 }
 
+/**
+ * Ekstraksi array mentah dari berbagai bentuk respons Power Automate / SharePoint API
+ * (array langsung, atau objek dengan properti data, value, d, items, records, result)
+ */
+export function extractRawTicketArray(jsonResult: unknown): RawTicketData[] {
+  if (Array.isArray(jsonResult)) {
+    return jsonResult as RawTicketData[];
+  }
+  if (jsonResult && typeof jsonResult === 'object') {
+    const record = jsonResult as Record<string, unknown>;
+    const potentialKeys = ['data', 'value', 'd', 'items', 'records', 'result'];
+    for (const key of potentialKeys) {
+      if (Array.isArray(record[key])) {
+        return record[key] as RawTicketData[];
+      }
+    }
+  }
+  return [];
+}
+
 // Parser terpusat yang memetakan raw Excel/SharePoint JSON ke model domain Ticket
 export function processRawTicketData(hasilData: RawTicketData[]): Ticket[] {
   if (!Array.isArray(hasilData)) return [];
 
   return hasilData
     .map((item, index) => {
-      const idTiket = getValue(item, ["idTiket", "ID Tiket", "ticketId"]);
-      const extractedNoDaisha = getValue(item, ["noDaisha", "No Daisha", "nomorDaisha", "noUnit"]) || "-";
-      const extractedNamaDaisha = getValue(item, ["namaDaisha", "Nama Daisha", "daisha"]) || "-";
+      const idTiket = getValue(item, ["ID_Tiket", "idTiket", "ID Tiket", "ticketId", "id_tiket"]);
+      const extractedNoDaisha = getValue(item, ["No_Daisha", "noDaisha", "No Daisha", "nomorDaisha", "noUnit", "no_daisha"]) || "-";
+      const extractedNamaDaisha = getValue(item, ["Nama_Daisha", "namaDaisha", "Nama Daisha", "daisha", "nama_daisha"]) || "-";
 
-      const rawStatus = getValue(item, ["status", "Status"]);
+      const rawStatus = getValue(item, ["Status", "status"]);
       let cleanStatus = normalizeStatus(rawStatus);
-      let reason = getValue(item, ["catatan", "Catatan Teknisi", "CatatanTeknisi", "keterangan"]) || "";
-      let tglKeluar = formatDateTime(getValue(item, ["waktuKeluar", "Waktu Keluar", "tanggalKeluar"]));
+      let reason = getValue(item, ["Catatan", "catatan", "Catatan Teknisi", "CatatanTeknisi", "keterangan"]) || "";
+      let tglKeluar = formatDateTime(getValue(item, ["Waktu_Keluar", "waktuKeluar", "Waktu Keluar", "tanggalKeluar"]));
 
       // Pertahankan status lokal jika baru saja diupdate dalam 60 detik terakhir
       const override = localStatusOverrides.get(idTiket || "");
@@ -70,12 +93,39 @@ export function processRawTicketData(hasilData: RawTicketData[]): Ticket[] {
         idTiketAsli: idTiket || "-",
         noDaisha: extractedNoDaisha,
         namaDaisha: extractedNamaDaisha,
-        jenisKerusakan: getValue(item, ["kategori", "Kategori", "jenisKerusakan", "Kerusakan"]) || "-",
-        detail: getValue(item, ["detail", "Detail", "gejala", "Gejala", "rincian"]) || "-",
-        pelapor: getValue(item, ["namaPelapor", "Nama Pelapor", "pelapor", "Nama"]) || "-",
-        seksi: getValue(item, ["seksi", "Seksi", "departemen"]) || "-",
+        jenisKerusakan: getValue(item, [
+          "Kategori_Kerusakan",
+          "KategoriKerusakan",
+          "kategori_kerusakan",
+          "kategori",
+          "Kategori",
+          "jenisKerusakan",
+          "jenis_kerusakan",
+          "Kerusakan"
+        ]) || "-",
+        detail: getValue(item, [
+          "Detail_Kerusakan",
+          "DetailKerusakan",
+          "detail_kerusakan",
+          "detail",
+          "Detail",
+          "gejala",
+          "Gejala",
+          "rincian",
+          "rincian_kerusakan"
+        ]) || "-",
+        pelapor: getValue(item, [
+          "Nama_Pelapor",
+          "NamaPelapor",
+          "nama_pelapor",
+          "namaPelapor",
+          "Nama Pelapor",
+          "pelapor",
+          "Nama"
+        ]) || "-",
+        seksi: getValue(item, ["Seksi", "seksi", "departemen"]) || "-",
         status: cleanStatus,
-        tglMasuk: formatDateTime(getValue(item, ["waktuMasuk", "Waktu Masuk", "tanggalMasuk"])),
+        tglMasuk: formatDateTime(getValue(item, ["Waktu_Masuk", "waktuMasuk", "Waktu Masuk", "tanggalMasuk"])),
         tglKeluar,
         reason,
       };
@@ -83,7 +133,7 @@ export function processRawTicketData(hasilData: RawTicketData[]): Ticket[] {
     .filter(
       (item) =>
         item.namaDaisha !== "-" &&
-        item.namaDaisha !== "" &&
-        item.namaDaisha.toLowerCase() !== "nama daisha"
+        item.noDaisha !== "-" &&
+        item.idTiketAsli !== "-"
     );
 }

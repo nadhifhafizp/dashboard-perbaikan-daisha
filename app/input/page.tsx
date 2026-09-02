@@ -1,20 +1,41 @@
 'use client';
 
-import React, { useState, useRef, useMemo } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import React, { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { CreateTicketPayload } from '@/types/ticket';
 import { getInitialDateTime, cleanInputDateTime } from '@/lib/date';
 import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
-import { 
-  masterDataDaisha, 
-  DAFTAR_SEKSI, 
-  DAFTAR_SEMUA_DAISHA, 
-  getDaishaBySeksi
+import QrScannerModal from '@/components/input/QrScannerModal';
+import ReviewTicketModal from '@/components/input/ReviewTicketModal';
+import DamageCatalogSelector, { TindakanType } from '@/components/input/DamageCatalogSelector';
+import PrintTicketTagModal, { PrintableTicketData } from '@/components/common/PrintTicketTagModal';
+import IndoDateTimeInput from '@/components/common/IndoDateTimeInput';
+import { useTickets } from '@/hooks/useTickets';
+import { detectDaishaSize } from '@/lib/daishaSize';
+import {
+  masterDataDaisha,
+  DAFTAR_SEKSI,
+  DAFTAR_SEMUA_DAISHA,
+  getDaishaBySeksi,
 } from '@/lib/masterData';
 
-const API_URL = "/api/repair";
+const INVALID_OPERATOR_NAMES = [
+  'Staff Input / Teknisi Lapangan',
+  'Admin Maintenance & Rekap',
+  'staff input',
+  'operator',
+  'admin',
+  'null',
+  'undefined',
+];
 
-export type TindakanType = 'Repair' | 'Ganti';
+export function isInvalidOperatorName(name: string | null | undefined): boolean {
+  if (!name) return true;
+  const trimmed = name.trim().toLowerCase();
+  return !trimmed || INVALID_OPERATOR_NAMES.some((inv) => inv.toLowerCase() === trimmed);
+}
+
+const API_URL = '/api/repair';
 
 export default function InputKerusakanPage() {
   const [formData, setFormData] = useState({
@@ -23,34 +44,73 @@ export default function InputKerusakanPage() {
     seksi: '',
     jenisDaisha: '',
     noDaisha: '',
-    catatanTambahan: ''
+    catatanTambahan: '',
   });
 
-  // State Pilihan Kerusakan Multi-Select Cepat (koleksi "komponen:::detail")
+  // Hapus data sisa nama dari localStorage jika ada agar form selalu bersih dan tidak mengingat nama lama
+  useEffect(() => {
+    try {
+      localStorage.removeItem('daisha_operator_name');
+    } catch {
+      // Abaikan jika localStorage dibatasi browser
+    }
+  }, []);
+
+  // State Pilihan Kerusakan Multi-Select Cepat
   const [selectedKerusakan, setSelectedKerusakan] = useState<string[]>([]);
   const [customKerusakanList, setCustomKerusakanList] = useState<string[]>([]);
-  
-  // Pilihan Tindakan: Repair (Perbaiki) atau Ganti (Baru) untuk setiap item kerusakan
   const [tindakanMap, setTindakanMap] = useState<Record<string, TindakanType>>({});
   const [customTindakanMap, setCustomTindakanMap] = useState<Record<string, TindakanType>>({});
-
-  const [inputManualText, setInputManualText] = useState('');
-  const [searchGejala, setSearchGejala] = useState('');
+  const [qtyMap, setQtyMap] = useState<Record<string, number>>({});
+  const [customQtyMap, setCustomQtyMap] = useState<Record<string, number>>({});
 
   const [showAllDaisha, setShowAllDaisha] = useState(false);
   const [loading, setLoading] = useState(false);
-  
-  // State untuk kontrol Kamera Scanner
-  const [isScanning, setIsScanning] = useState(false);
-  const scannerRef = useRef<Html5Qrcode | null>(null);
 
-  // State untuk Pop-up Feedback Interaktif
+  // Modal States
+  const [isScanning, setIsScanning] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<CreateTicketPayload | null>(null);
+
+  const { tickets } = useTickets({ autoRefreshIntervalMs: 0 });
+
+  // State untuk Cetak Tag Fisik Daisha setelah submit
+  const [createdTicketForTag, setCreatedTicketForTag] = useState<PrintableTicketData | null>(null);
+  const [isPrintTagOpen, setIsPrintTagOpen] = useState(false);
+
+  // State untuk dismiss peringatan duplikat
+  const [dismissedDuplicateUnit, setDismissedDuplicateUnit] = useState<string | null>(null);
+
+  // Deteksi tiket aktif (Open / Progress) untuk unit daisha yang sedang diinput
+  const normalizedNoDaisha = formData.noDaisha.trim().toUpperCase();
+  const duplicateActiveTicket = useMemo(() => {
+    if (!normalizedNoDaisha || normalizedNoDaisha.length < 2) return null;
+    if (dismissedDuplicateUnit === normalizedNoDaisha) return null;
+    return (
+      tickets.find(
+        (t) =>
+          t.noDaisha.trim().toUpperCase() === normalizedNoDaisha &&
+          (t.status === 'Open' || t.status === 'Progress')
+      ) || null
+    );
+  }, [tickets, normalizedNoDaisha, dismissedDuplicateUnit]);
+
+  // Deteksi otomatis ukuran Daisha (S = Small, M = Medium, L = Large)
+  const detectedSize = useMemo(
+    () => detectDaishaSize(formData.noDaisha),
+    [formData.noDaisha]
+  );
+
+  // Pop-up Feedback
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
     type: FeedbackType;
     title: string;
     message: string;
     detail?: string;
+    buttonText?: string;
+    secondaryButtonText?: string;
+    onSecondaryClick?: () => void;
   }>({
     isOpen: false,
     type: 'success',
@@ -58,8 +118,25 @@ export default function InputKerusakanPage() {
     message: '',
   });
 
-  const showFeedback = (type: FeedbackType, title: string, message: string, detail?: string) => {
-    setFeedback({ isOpen: true, type, title, message, detail });
+  const showFeedback = (
+    type: FeedbackType,
+    title: string,
+    message: string,
+    detail?: string,
+    buttonText?: string,
+    secondaryButtonText?: string,
+    onSecondaryClick?: () => void
+  ) => {
+    setFeedback({
+      isOpen: true,
+      type,
+      title,
+      message,
+      detail,
+      buttonText,
+      secondaryButtonText,
+      onSecondaryClick,
+    });
   };
 
   // Pilihan dinamis berdasarkan Master Data
@@ -76,100 +153,60 @@ export default function InputKerusakanPage() {
 
   const totalDipilih = selectedKerusakan.length + customKerusakanList.length;
 
-  // Toggle pilihan kerusakan dalam 1 klik
   const toggleKerusakan = (komponen: string, detail: string) => {
     const key = `${komponen}:::${detail}`;
     if (selectedKerusakan.includes(key)) {
-      setSelectedKerusakan(prev => prev.filter(k => k !== key));
+      setSelectedKerusakan((prev) => prev.filter((k) => k !== key));
     } else {
-      setSelectedKerusakan(prev => [...prev, key]);
-      // Default tindakan: Repair
-      setTindakanMap(prev => ({
+      setSelectedKerusakan((prev) => [...prev, key]);
+      setTindakanMap((prev) => ({
         ...prev,
-        [key]: prev[key] || 'Repair'
+        [key]: prev[key] || 'Repair',
+      }));
+      setQtyMap((prev) => ({
+        ...prev,
+        [key]: prev[key] || 1,
       }));
     }
   };
 
   const setItemTindakan = (key: string, tindakan: TindakanType) => {
-    setTindakanMap(prev => ({
-      ...prev,
-      [key]: tindakan
-    }));
+    setTindakanMap((prev) => ({ ...prev, [key]: tindakan }));
+  };
+
+  const setItemQty = (key: string, qty: number) => {
+    setQtyMap((prev) => ({ ...prev, [key]: Math.max(1, qty) }));
   };
 
   const setCustomTindakan = (text: string, tindakan: TindakanType) => {
-    setCustomTindakanMap(prev => ({
-      ...prev,
-      [text]: tindakan
-    }));
+    setCustomTindakanMap((prev) => ({ ...prev, [text]: tindakan }));
   };
 
-  const handleAddManual = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const t = inputManualText.trim();
-    if (!t) return;
-    if (!customKerusakanList.includes(t)) {
-      setCustomKerusakanList(prev => [...prev, t]);
-      setCustomTindakanMap(prev => ({
-        ...prev,
-        [t]: 'Repair'
-      }));
+  const setCustomItemQty = (text: string, qty: number) => {
+    setCustomQtyMap((prev) => ({ ...prev, [text]: Math.max(1, qty) }));
+  };
+
+  const handleAddCustom = (text: string) => {
+    if (!customKerusakanList.includes(text)) {
+      setCustomKerusakanList((prev) => [...prev, text]);
+      setCustomTindakanMap((prev) => ({ ...prev, [text]: 'Repair' }));
+      setCustomQtyMap((prev) => ({ ...prev, [text]: 1 }));
     }
-    setInputManualText('');
   };
 
-  const handleRemoveManual = (t: string) => {
-    setCustomKerusakanList(prev => prev.filter(item => item !== t));
+  const handleRemoveCustom = (text: string) => {
+    setCustomKerusakanList((prev) => prev.filter((item) => item !== text));
   };
 
-  // Fungsi untuk Menyalakan Kamera Scanner
-  const startScanner = async () => {
-    setIsScanning(true);
-    setTimeout(async () => {
-      try {
-        const scanner = new Html5Qrcode("reader-camera");
-        scannerRef.current = scanner;
-        
-        await scanner.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 150 } },
-          (decodedText) => {
-            setFormData(prev => ({ ...prev, noDaisha: decodedText }));
-            stopScanner();
-            showFeedback('success', 'Barcode Terbaca', 'Nomor Unit Daisha berhasil terdeteksi otomatis.', decodedText);
-          },
-          () => {
-            // Frame error - abaikan
-          }
-        );
-      } catch (err) {
-        console.error("Gagal membuka kamera:", err);
-        showFeedback('error', 'Izin Kamera Diperlukan', 'Gagal membuka kamera. Pastikan izin kamera browser sudah diaktifkan.');
-        setIsScanning(false);
-      }
-    }, 100);
-  };
-
-  // Fungsi untuk Mematikan Kamera Scanner
-  const stopScanner = async () => {
-    if (scannerRef.current) {
-      try {
-        await scannerRef.current.stop();
-        scannerRef.current.clear();
-      } catch (e) {
-        console.error("Gagal menghentikan scanner:", e);
-      }
-      scannerRef.current = null;
-    }
-    setIsScanning(false);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    
-    if (name === 'seksi') {
-      setFormData(prev => ({
+
+    if (name === 'namaPelapor') {
+      setFormData((prev) => ({ ...prev, namaPelapor: value }));
+    } else if (name === 'seksi') {
+      setFormData((prev) => ({
         ...prev,
         seksi: value,
         jenisDaisha: '',
@@ -178,85 +215,93 @@ export default function InputKerusakanPage() {
       setCustomKerusakanList([]);
       setTindakanMap({});
       setCustomTindakanMap({});
-      setInputManualText('');
-      setShowAllDaisha(false);
-    } 
-    else if (name === 'showAll') {
+      setQtyMap({});
+      setCustomQtyMap({});
+    } else if (name === 'showAll') {
       const isChecked = (e.target as HTMLInputElement).checked;
       setShowAllDaisha(isChecked);
-    } 
-    else if (name === 'jenisDaisha') {
-      const autoSeksi = masterDataDaisha[value]?.seksi;
-      setFormData(prev => ({
+    } else if (name === 'jenisDaisha') {
+      const daishaSeksi = masterDataDaisha[value]?.seksi;
+      setFormData((prev) => ({
         ...prev,
         jenisDaisha: value,
-        seksi: autoSeksi || prev.seksi || '',
+        // Jangan timpa seksi jika user sudah memilih seksi asal unit
+        seksi: prev.seksi || (daishaSeksi !== 'All seksi' ? daishaSeksi : '') || prev.seksi,
       }));
       setSelectedKerusakan([]);
       setCustomKerusakanList([]);
       setTindakanMap({});
       setCustomTindakanMap({});
-      setInputManualText('');
-    }
-    else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setQtyMap({});
+      setCustomQtyMap({});
+    } else if (name === 'noDaisha') {
+      const upperVal = value.toUpperCase();
+      setFormData((prev) => ({ ...prev, noDaisha: upperVal }));
+      if (dismissedDuplicateUnit && upperVal.trim() !== dismissedDuplicateUnit) {
+        setDismissedDuplicateUnit(null);
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
-    if (!formData.namaPelapor.trim()) {
-      showFeedback('error', 'Nama Pelapor Diperlukan', 'Harap isi nama teknisi / operator pelapor.');
-      setLoading(false);
+    if (!formData.namaPelapor.trim() || isInvalidOperatorName(formData.namaPelapor)) {
+      showFeedback(
+        'error',
+        'Nama Pelapor Diperlukan',
+        'Harap isi nama Anda sebagai teknisi / operator pelapor.'
+      );
       return;
     }
     if (!formData.seksi) {
       showFeedback('error', 'Seksi Diperlukan', 'Harap pilih seksi asal unit Daisha.');
-      setLoading(false);
       return;
     }
     if (!formData.jenisDaisha) {
       showFeedback('error', 'Jenis Daisha Diperlukan', 'Harap pilih jenis atau tipe Daisha.');
-      setLoading(false);
       return;
     }
     if (!formData.noDaisha.trim()) {
       showFeedback('error', 'Nomor Unit Diperlukan', 'Harap isi atau scan nomor fisik unit Daisha.');
-      setLoading(false);
       return;
     }
-
     if (totalDipilih === 0) {
       showFeedback('error', 'Pilih Kerusakan', 'Harap klik/pilih minimal 1 kerusakan pada kartu di bawah.');
-      setLoading(false);
       return;
     }
 
-    // Susun string gabungan kategori & detail dengan tindakan (Repair vs Ganti)
-    const parsedItems = selectedKerusakan.map(key => {
+    const parsedItems = selectedKerusakan.map((key) => {
       const [komponen, detail] = key.split(':::');
       const tindakan = tindakanMap[key] || 'Repair';
-      return { komponen, detail, tindakan };
+      const qty = qtyMap[key] || 1;
+      return { komponen, detail, tindakan, qty };
     });
 
-    const listKomponenUnik = Array.from(new Set(parsedItems.map(p => p.komponen)));
-    if (customKerusakanList.length > 0) {
+    const listKomponenUnik = Array.from(new Set(parsedItems.map((p) => p.komponen)));
+    if (customKerusakanList.length > 0 && !listKomponenUnik.includes('Others')) {
       listKomponenUnik.push('Others');
     }
     const finalKategori = listKomponenUnik.join(', ');
 
     const detailList: string[] = [
       ...parsedItems.map((p, idx) => {
-        const num = (parsedItems.length + customKerusakanList.length > 1) ? `${idx + 1}. ` : '';
-        return `${num}[${p.komponen}] ${p.detail} (Tindakan: ${p.tindakan})`;
+        const num = parsedItems.length + customKerusakanList.length > 1 ? `${idx + 1}. ` : '';
+        const qtyStr = `(Qty: ${p.qty}, Tindakan: ${p.tindakan})`;
+        return `${num}[${p.komponen}] ${p.detail} ${qtyStr}`;
       }),
       ...customKerusakanList.map((c, idx) => {
         const tindakan = customTindakanMap[c] || 'Repair';
-        const num = (parsedItems.length + customKerusakanList.length > 1) ? `${parsedItems.length + idx + 1}. ` : '';
-        return `${num}[Others] ${c} (Tindakan: ${tindakan})`;
-      })
+        const qty = customQtyMap[c] || 1;
+        const num =
+          parsedItems.length + customKerusakanList.length > 1
+            ? `${parsedItems.length + idx + 1}. `
+            : '';
+        const qtyStr = `(Qty: ${qty}, Tindakan: ${tindakan})`;
+        return `${num}[Others] ${c} ${qtyStr}`;
+      }),
     ];
 
     let finalDetail = detailList.join(' | ');
@@ -264,117 +309,159 @@ export default function InputKerusakanPage() {
       finalDetail = `${finalDetail} (Catatan: ${formData.catatanTambahan.trim()})`;
     }
 
-    const cleanWaktuMasuk = cleanInputDateTime(formData.waktuMasuk);
-
     const payloadExcel: CreateTicketPayload = {
-      action: "CREATE",
-      idTiket: "TCK-" + Date.now(),
-      waktuMasuk: cleanWaktuMasuk,
-      waktuKeluar: "-",
-      status: "Open",
-      namaPelapor: formData.namaPelapor,
+      action: 'CREATE',
+      idTiket: 'TCK-' + Date.now(),
+      waktuMasuk: cleanInputDateTime(formData.waktuMasuk),
+      waktuKeluar: '-',
+      status: 'Open',
+      namaPelapor: formData.namaPelapor.trim(),
       seksi: formData.seksi,
       namaDaisha: formData.jenisDaisha,
       noDaisha: formData.noDaisha.trim().toUpperCase(),
       kategori: finalKategori,
-      detail: finalDetail
+      detail: finalDetail,
     };
+
+    setPendingPayload(payloadExcel);
+    setIsReviewModalOpen(true);
+  };
+
+  const executeSubmit = async () => {
+    if (!pendingPayload) return;
+    setLoading(true);
 
     try {
       const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payloadExcel),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pendingPayload),
       });
 
-      const resData = await response.json();
+      const resData = await response.json().catch(() => ({}));
 
       if (response.ok) {
+        setIsReviewModalOpen(false);
+
+        const printable: PrintableTicketData = {
+          idTiket: pendingPayload.idTiket,
+          noDaisha: pendingPayload.noDaisha,
+          namaDaisha: pendingPayload.namaDaisha,
+          seksi: pendingPayload.seksi,
+          namaPelapor: pendingPayload.namaPelapor,
+          waktuMasuk: pendingPayload.waktuMasuk,
+          status: pendingPayload.status,
+          detail: pendingPayload.detail,
+        };
+        setCreatedTicketForTag(printable);
+
         showFeedback(
           'success',
           'Laporan Berhasil Disimpan',
-          `Laporan unit ${formData.noDaisha} (${formData.jenisDaisha}) dengan ${totalDipilih} titik kerusakan berhasil dikirim ke antrean workshop.`,
-          `Seksi: ${formData.seksi} | Komponen: ${finalKategori} | Gejala: ${finalDetail}`
+          `Laporan unit ${pendingPayload.noDaisha} (${pendingPayload.namaDaisha}) berhasil dikirim ke antrean workshop. Anda dapat mencetak Tag Fisik Unit sekarang untuk digantungkan pada Daisha.`,
+          `Seksi: ${pendingPayload.seksi} | Komponen: ${pendingPayload.kategori} | Gejala: ${pendingPayload.detail}`,
+          'Tutup',
+          '🏷️ Cetak Tag Fisik Unit',
+          () => {
+            setFeedback((prev) => ({ ...prev, isOpen: false }));
+            setIsPrintTagOpen(true);
+          }
         );
+
         setFormData({
           waktuMasuk: getInitialDateTime(),
-          namaPelapor: formData.namaPelapor, // Pertahankan nama pelapor agar praktis untuk input berikutnya
+          namaPelapor: '', // Selalu kosongkan, tidak diingat
           seksi: '',
           jenisDaisha: '',
           noDaisha: '',
-          catatanTambahan: ''
+          catatanTambahan: '',
         });
         setSelectedKerusakan([]);
         setCustomKerusakanList([]);
         setTindakanMap({});
         setCustomTindakanMap({});
-        setInputManualText('');
+        setQtyMap({});
+        setCustomQtyMap({});
         setShowAllDaisha(false);
+        setPendingPayload(null);
       } else {
-        showFeedback('error', 'Gagal Mengirim Laporan', resData.error || 'Terjadi kesalahan saat menyimpan laporan.');
+        setIsReviewModalOpen(false); // Tutup review modal agar tidak tumpang tindih dengan popup error
+        showFeedback(
+          'error',
+          'Gagal Mengirim Laporan',
+          resData.error || 'Terjadi kesalahan saat menyimpan laporan.'
+        );
       }
     } catch (error) {
-      console.error("Error:", error);
-      showFeedback('error', 'Gangguan Jaringan', 'Gagal menghubungi server. Periksa koneksi internet Anda.');
+      setIsReviewModalOpen(false);
+      console.error('Error submit:', error);
+      showFeedback(
+        'error',
+        'Gangguan Jaringan',
+        'Gagal menghubungi server. Periksa koneksi internet Anda.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8 flex justify-center items-start">
-      <div className="bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-slate-200 w-full max-w-3xl">
-        
+    <div className="min-h-screen bg-slate-100 p-3 sm:p-5 md:p-8 flex justify-center items-start pb-24 md:pb-10">
+      <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200 w-full max-w-3xl">
         {/* Header Form */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-6 mb-8">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5 gap-2">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="px-3 py-1 bg-red-100 text-red-700 text-[11px] font-black rounded-full uppercase tracking-wider">
-                Workshop Intake Form
-              </span>
-              <span className="text-xs text-slate-400 font-medium">Input Lapangan & Bengkel</span>
-            </div>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-900">Form Laporan Daisha Rusak</h1>
-            <p className="text-xs md:text-sm text-slate-500 font-medium mt-0.5">
-              Catat data unit Daisha yang bermasalah sesuai katalog kerusakan master workshop.
+            <h1 className="text-base sm:text-2xl font-black text-slate-900 leading-tight">
+              Input Daisha Rusak
+            </h1>
+            <p className="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">
+              Catat laporan perbaikan unit sesuai katalog workshop
             </p>
           </div>
+          <Link
+            href="/riwayat"
+            className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl transition flex items-center gap-1.5 shrink-0"
+          >
+            <span>📋</span>
+            <span className="hidden sm:inline">Cek Riwayat Laporan</span>
+            <span className="sm:hidden">Riwayat</span>
+          </Link>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          
-          {/* Section 1: Data Pelapor & Waktu */}
+          {/* Section 1: Informasi Pelapor & Waktu */}
           <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200">
             <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span>👤</span> 1. Data Pelapor & Waktu Kejadian
+              <span>👤</span> 1. Informasi Pelapor & Waktu
             </h2>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Waktu Temuan / Masuk *
                 </label>
-                <input 
-                  type="datetime-local" 
-                  name="waktuMasuk" 
-                  value={formData.waktuMasuk} 
-                  onChange={handleChange} 
-                  required 
-                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-bold bg-white focus:ring-2 focus:ring-red-600 outline-none" 
+                <IndoDateTimeInput
+                  value={formData.waktuMasuk}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, waktuMasuk: val }))}
+                  required
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Nama Pelapor & NIK *
+                  Nama Pelapor / Teknisi *
                 </label>
-                <input 
-                  type="text" 
-                  name="namaPelapor" 
-                  value={formData.namaPelapor} 
-                  onChange={handleChange} 
-                  placeholder="Contoh: Budi Santoso - 10421" 
-                  required 
-                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-medium bg-white focus:ring-2 focus:ring-red-600 outline-none" 
+                <input
+                  type="text"
+                  name="namaPelapor"
+                  value={formData.namaPelapor}
+                  onChange={handleChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') e.preventDefault();
+                  }}
+                  placeholder="Ketik nama Anda..."
+                  required
+                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-bold bg-white focus:ring-2 focus:ring-red-600 outline-none placeholder-slate-400"
                 />
               </div>
             </div>
@@ -385,21 +472,25 @@ export default function InputKerusakanPage() {
             <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
               <span>🛒</span> 2. Identifikasi Unit Daisha
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Seksi Asal Unit *
                 </label>
-                <select 
-                  name="seksi" 
-                  value={formData.seksi} 
-                  onChange={handleChange} 
-                  required 
-                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-bold bg-white focus:ring-2 focus:ring-red-600 outline-none"
+                <select
+                  name="seksi"
+                  value={formData.seksi}
+                  onChange={handleChange}
+                  required
+                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-bold bg-white focus:ring-2 focus:ring-red-600 outline-none cursor-pointer"
                 >
                   <option value="">-- Pilih Seksi --</option>
-                  {DAFTAR_SEKSI.map((s) => <option key={s} value={s}>{s}</option>)}
+                  {DAFTAR_SEKSI.filter((s) => s !== 'All seksi').map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -407,392 +498,208 @@ export default function InputKerusakanPage() {
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Tipe / Jenis Daisha *
                 </label>
-                <select 
-                  name="jenisDaisha" 
-                  value={formData.jenisDaisha} 
-                  onChange={handleChange} 
-                  required 
-                  disabled={!formData.seksi && !showAllDaisha} 
-                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-medium bg-white focus:ring-2 focus:ring-red-600 outline-none disabled:bg-slate-100 disabled:text-slate-400"
+                <select
+                  name="jenisDaisha"
+                  value={formData.jenisDaisha}
+                  onChange={handleChange}
+                  required
+                  disabled={!formData.seksi && !showAllDaisha}
+                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-medium bg-white focus:ring-2 focus:ring-red-600 outline-none disabled:bg-slate-100 disabled:text-slate-400 cursor-pointer"
                 >
                   <option value="">
-                    {formData.seksi || showAllDaisha ? "-- Pilih Jenis Daisha --" : "Pilih Seksi Terlebih Dahulu"}
+                    {formData.seksi || showAllDaisha
+                      ? '-- Pilih Jenis Daisha --'
+                      : 'Pilih Seksi Terlebih Dahulu'}
                   </option>
-                  {pilihanDaishaTersedia.map((d) => <option key={d} value={d}>{d}</option>)}
+                  {pilihanDaishaTersedia.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
 
             <div className="flex items-center mb-4">
-              <input 
-                type="checkbox" 
-                name="showAll" 
-                id="showAll" 
+              <input
+                type="checkbox"
+                name="showAll"
+                id="showAll"
                 checked={showAllDaisha}
-                onChange={handleChange} 
-                className="mr-2 h-4 w-4 text-red-600 rounded accent-red-600 cursor-pointer" 
+                onChange={handleChange}
+                className="mr-2 h-4 w-4 text-red-600 rounded accent-red-600 cursor-pointer"
               />
-              <label htmlFor="showAll" className="text-xs text-slate-600 font-semibold cursor-pointer">
+              <label
+                htmlFor="showAll"
+                className="text-xs text-slate-600 font-semibold cursor-pointer select-none"
+              >
                 Tampilkan seluruh jenis Daisha di dropdown tanpa terikat filter Seksi
               </label>
             </div>
 
-            {/* Nomor Unit & Barcode Scanner */}
+            {/* Nomor Unit & Barcode Scanner Button */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end pt-3 border-t border-slate-200">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Nomor Unit Daisha *
-                </label>
-                <input 
-                  type="text" 
-                  name="noDaisha" 
-                  value={formData.noDaisha} 
-                  onChange={handleChange} 
-                  placeholder="Ketik atau scan barcode (Cth: DAI-01)" 
-                  required 
-                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-900 font-black bg-white focus:ring-2 focus:ring-red-600 outline-none uppercase placeholder-slate-400" 
-                />
-              </div>
-
-              <div>
-                {!isScanning ? (
-                  <button 
-                    type="button" 
-                    onClick={startScanner} 
-                    className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow transition flex items-center justify-center gap-2"
-                  >
-                    <span>📷</span>
-                    <span>Scan Barcode / QR Kamera</span>
-                  </button>
-                ) : (
-                  <button 
-                    type="button" 
-                    onClick={stopScanner} 
-                    className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-xl shadow transition flex items-center justify-center gap-2"
-                  >
-                    <span>✕</span>
-                    <span>Tutup Kamera Scanner</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Area Kamera Scanner */}
-            {isScanning && (
-              <div className="mt-4 p-4 bg-slate-900 rounded-2xl flex flex-col items-center border border-slate-700">
-                <div id="reader-camera" className="w-full max-w-sm rounded-xl overflow-hidden shadow-lg"></div>
-                <p className="text-slate-300 text-xs mt-3 font-semibold flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                  Arahkan kamera tepat ke barcode atau QR unit Daisha...
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Section 3: Analisis Kerusakan Cepat & Praktis (One-Click Chips) */}
-          <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-            <div className="flex flex-wrap justify-between items-center gap-2">
-              <div>
-                <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                  <span>⚠️</span> 3. Titik Kerusakan Unit Daisha
-                </h2>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Cukup klik / tap kerusakan di bawah (bisa pilih banyak sekaligus tanpa tambah baris)
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {formData.jenisDaisha && (
-                  <span className="text-[11px] font-bold px-2 py-0.5 bg-slate-200 text-slate-700 rounded-lg">
-                    {formData.jenisDaisha}
-                  </span>
-                )}
-                <span className={`text-xs font-black px-2.5 py-1 rounded-full transition ${
-                  totalDipilih > 0 
-                    ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-300' 
-                    : 'bg-slate-200 text-slate-500'
-                }`}>
-                  {totalDipilih} Dipilih
-                </span>
-              </div>
-            </div>
-
-            {/* Jika belum memilih jenis daisha */}
-            {!formData.jenisDaisha ? (
-              <div className="p-8 text-center bg-white rounded-xl border border-dashed border-slate-300 text-slate-400">
-                <span className="text-2xl block mb-1">🛒</span>
-                <p className="text-xs font-bold text-slate-600">Pilih Jenis Daisha di atas terlebih dahulu</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Katalog komponen dan daftar kerusakan akan otomatis muncul di sini</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {/* Search box mini untuk filter cepat chips gejala */}
-                {Object.keys(katalogKerusakan).length > 1 && (
-                  <input
-                    type="text"
-                    placeholder="🔍 Filter cepat gejala kerusakan (misal: aus, retak, lepas, baud)..."
-                    value={searchGejala}
-                    onChange={(e) => setSearchGejala(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-xl text-xs text-slate-800 bg-white focus:ring-2 focus:ring-red-600 outline-none font-medium"
-                  />
-                )}
-
-                {/* Grid Komponen dan Gejala Chips */}
-                <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1">
-                  {Object.entries(katalogKerusakan).map(([komponen, listGejala]) => {
-                    const filteredGejala = searchGejala.trim()
-                      ? listGejala.filter(g => 
-                          g.toLowerCase().includes(searchGejala.toLowerCase()) || 
-                          komponen.toLowerCase().includes(searchGejala.toLowerCase())
-                        )
-                      : listGejala;
-
-                    if (filteredGejala.length === 0) return null;
-
-                    return (
-                      <div key={komponen} className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-sm">
-                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-wider block mb-2">
-                          ⚙️ {komponen}
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {filteredGejala.map(gejala => {
-                            const isSelected = selectedKerusakan.includes(`${komponen}:::${gejala}`);
-                            const key = `${komponen}:::${gejala}`;
-                            const tindakan = tindakanMap[key] || 'Repair';
-
-                            return (
-                              <button
-                                key={gejala}
-                                type="button"
-                                onClick={() => toggleKerusakan(komponen, gejala)}
-                                className={`px-3 py-1.5 text-xs rounded-xl font-bold transition flex items-center gap-1.5 cursor-pointer text-left ${
-                                  isSelected 
-                                    ? tindakan === 'Ganti'
-                                      ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-400 scale-[1.02]'
-                                      : 'bg-red-600 text-white shadow-sm ring-2 ring-red-400 scale-[1.02]' 
-                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/80 hover:border-slate-300'
-                                }`}
-                              >
-                                <span>{isSelected ? '✓' : '+'}</span>
-                                <span>{gejala}</span>
-                                {isSelected && (
-                                  <span className="text-[10px] px-1.5 py-0.2 bg-black/25 rounded-md font-black">
-                                    {tindakan === 'Ganti' ? '🔄 Ganti' : '🔨 Repair'}
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Panel Tindakan: Pilih Repair atau Ganti untuk setiap item yang dicentang */}
-                {totalDipilih > 0 && (
-                  <div className="p-4 bg-white rounded-2xl border-2 border-red-200 shadow-sm space-y-3 animate-fade-in">
-                    <div className="flex flex-wrap justify-between items-center gap-2 border-b border-slate-100 pb-2.5">
-                      <div>
-                        <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                          <span>🛠️</span> Tentukan Tindakan (Repair atau Ganti)
-                        </span>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
-                          Tentukan apakah komponen diservis (Repair) atau diganti baru (Ganti)
-                        </p>
-                      </div>
-                      <span className="text-[11px] font-bold px-2.5 py-1 bg-red-100 text-red-800 rounded-lg">
-                        {totalDipilih} Item Dipilih
-                      </span>
-                    </div>
-
-                    <div className="space-y-2">
-                      {selectedKerusakan.map((key, idx) => {
-                        const [komponen, detail] = key.split(':::');
-                        const currentTindakan = tindakanMap[key] || 'Repair';
-                        return (
-                          <div 
-                            key={key} 
-                            className="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 flex flex-wrap justify-between items-center gap-3 transition"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[10px] flex items-center justify-center font-bold">
-                                {idx + 1}
-                              </span>
-                              <div>
-                                <span className="text-xs font-bold text-slate-800">
-                                  {komponen}
-                                </span>
-                                <span className="text-slate-400 mx-1.5">•</span>
-                                <span className="text-xs text-red-700 font-extrabold">
-                                  {detail}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
-                              <button
-                                type="button"
-                                onClick={() => setItemTindakan(key, 'Repair')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
-                                  currentTindakan === 'Repair'
-                                    ? 'bg-amber-500 text-white shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                              >
-                                <span>🔨</span>
-                                <span>Repair</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setItemTindakan(key, 'Ganti')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
-                                  currentTindakan === 'Ganti'
-                                    ? 'bg-blue-600 text-white shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                              >
-                                <span>🔄</span>
-                                <span>Ganti</span>
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {customKerusakanList.map((text, idx) => {
-                        const currentTindakan = customTindakanMap[text] || 'Repair';
-                        return (
-                          <div 
-                            key={text} 
-                            className="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 flex flex-wrap justify-between items-center gap-3 transition"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[10px] flex items-center justify-center font-bold">
-                                {selectedKerusakan.length + idx + 1}
-                              </span>
-                              <div>
-                                <span className="text-xs font-bold text-slate-800">
-                                  Others / Manual
-                                </span>
-                                <span className="text-slate-400 mx-1.5">•</span>
-                                <span className="text-xs text-red-700 font-extrabold">
-                                  {text}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
-                              <button
-                                type="button"
-                                onClick={() => setCustomTindakan(text, 'Repair')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
-                                  currentTindakan === 'Repair'
-                                    ? 'bg-amber-500 text-white shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                              >
-                                <span>🔨</span>
-                                <span>Repair</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setCustomTindakan(text, 'Ganti')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
-                                  currentTindakan === 'Ganti'
-                                    ? 'bg-blue-600 text-white shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                              >
-                                <span>🔄</span>
-                                <span>Ganti</span>
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Input Manual Tambahan Jika Kerusakan Tidak Ada di Daftar */}
-                <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
-                  <span className="text-[11px] font-bold text-slate-700 block">
-                    ✍️ Kerusakan Lainnya / Manual (Jika tidak ada pada pilihan di atas):
-                  </span>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={inputManualText}
-                      onChange={(e) => setInputManualText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddManual();
-                        }
-                      }}
-                      placeholder="Ketik kerusakan lainnya, lalu klik Tambah..."
-                      className="flex-1 p-2 border border-slate-300 rounded-xl text-xs text-slate-900 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddManual}
-                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition"
+                <div className="flex items-center justify-between mb-1.5 gap-2">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Nomor Unit Daisha *
+                  </label>
+                  {detectedSize && (
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-black border ${detectedSize.badgeBg} ${detectedSize.textColor} ${detectedSize.borderColor} animate-fade-in shadow-2xs`}
                     >
-                      + Tambah
-                    </button>
-                  </div>
-
-                  {customKerusakanList.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {customKerusakanList.map(text => (
-                        <span
-                          key={text}
-                          className="px-2.5 py-1 bg-red-100 text-red-800 border border-red-200 text-xs font-bold rounded-xl flex items-center gap-1.5"
-                        >
-                          <span>{text}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveManual(text)}
-                            className="text-red-600 hover:text-red-900 font-black text-xs cursor-pointer ml-1"
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      ))}
-                    </div>
+                      <span>📐</span>
+                      <span>Ukuran: {detectedSize.label}</span>
+                    </span>
                   )}
                 </div>
+                <input
+                  type="text"
+                  name="noDaisha"
+                  value={formData.noDaisha}
+                  onChange={handleChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') e.preventDefault();
+                  }}
+                  placeholder="Ketik atau scan barcode (Cth: M00287, S00064)"
+                  required
+                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-900 font-black bg-white focus:ring-2 focus:ring-red-600 outline-none uppercase placeholder-slate-400"
+                />
+                {detectedSize ? (
+                  <span className={`text-[10px] font-bold mt-1 block ${detectedSize.textColor}`}>
+                    Otomatis terdeteksi: <strong>{detectedSize.description}</strong> dari awalan &apos;{detectedSize.code}&apos;
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-slate-400 mt-1 block">
+                    Awalan kode: <strong>S</strong> = Small, <strong>M</strong> = Medium, <strong>L</strong> = Large
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setIsScanning(true)}
+                  className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>📷</span>
+                  <span>Scan Barcode / QR Kamera</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Warning Card Duplikasi Unit Aktif */}
+            {duplicateActiveTicket && (
+              <div className="mt-4 p-4 bg-amber-50 border border-amber-300 rounded-2xl shadow-xs animate-fade-in text-xs">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-2xl mt-0.5">⚠️</span>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-black text-amber-950 text-xs tracking-tight">
+                          PERINGATAN: Unit {duplicateActiveTicket.noDaisha} Sedang Dalam Antrean Bengkel!
+                        </h4>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-200 text-amber-900 border border-amber-300">
+                          Status: {duplicateActiveTicket.status}
+                        </span>
+                      </div>
+
+                      <p className="text-slate-600 mt-1 font-medium">
+                        Tiket ID: <strong className="font-mono text-slate-900">{duplicateActiveTicket.idTiketAsli}</strong> • Seksi:{' '}
+                        <strong>{duplicateActiveTicket.seksi}</strong> • Dilaporkan oleh:{' '}
+                        <strong>{duplicateActiveTicket.pelapor}</strong> ({duplicateActiveTicket.tglMasuk})
+                      </p>
+
+                      {duplicateActiveTicket.detail && duplicateActiveTicket.detail !== '-' && (
+                        <div className="mt-2 p-2.5 bg-white rounded-xl border border-amber-200/80 text-[11px] text-slate-700 font-medium leading-relaxed">
+                          <span className="font-bold text-amber-900 block mb-0.5">
+                            Rincian Kerusakan yang Sedang Berjalan:
+                          </span>
+                          {duplicateActiveTicket.detail}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setDismissedDuplicateUnit(normalizedNoDaisha)}
+                    className="text-slate-400 hover:text-slate-700 font-black text-xs p-1 rounded-lg hover:bg-amber-100 transition cursor-pointer shrink-0"
+                    title="Abaikan peringatan ini"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-amber-200/80 flex flex-wrap items-center justify-between gap-2">
+                  <Link
+                    href="/riwayat"
+                    className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>🔍</span>
+                    <span>Buka Tiket di Riwayat Laporan</span>
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => setDismissedDuplicateUnit(normalizedNoDaisha)}
+                    className="text-[11px] font-bold text-slate-600 hover:text-slate-900 underline cursor-pointer"
+                  >
+                    Abaikan & Tetap Buat Laporan Baru
+                  </button>
+                </div>
               </div>
             )}
-
-            {/* Catatan Tambahan Posisi / Detail Tambahan */}
-            <div className="pt-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Catatan Tambahan Lokasi / Keterangan Posisi (Opsional)
-              </label>
-              <textarea 
-                name="catatanTambahan" 
-                value={formData.catatanTambahan} 
-                onChange={handleChange} 
-                rows={2} 
-                placeholder="Contoh: Roda depan kiri aus parah, kait gandengan aus, unit tertahan di line..." 
-                className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-medium bg-white focus:ring-2 focus:ring-red-600 outline-none"
-              ></textarea>
-            </div>
           </div>
 
+          {/* Section 3: Titik Kerusakan Unit Daisha */}
+          <DamageCatalogSelector
+            jenisDaisha={formData.jenisDaisha}
+            katalogKerusakan={katalogKerusakan}
+            selectedKerusakan={selectedKerusakan}
+            tindakanMap={tindakanMap}
+            qtyMap={qtyMap}
+            customKerusakanList={customKerusakanList}
+            customTindakanMap={customTindakanMap}
+            customQtyMap={customQtyMap}
+            onToggleKerusakan={toggleKerusakan}
+            onSetTindakan={setItemTindakan}
+            onSetQty={setItemQty}
+            onAddCustom={handleAddCustom}
+            onRemoveCustom={handleRemoveCustom}
+            onSetCustomTindakan={setCustomTindakan}
+            onSetCustomQty={setCustomItemQty}
+            catatanTambahan={formData.catatanTambahan}
+            onCatatanChange={(val) => setFormData((prev) => ({ ...prev, catatanTambahan: val }))}
+          />
+
           {/* Submit Action Button */}
-          <button 
-            type="submit" 
-            disabled={loading} 
-            className="w-full py-4 bg-red-700 hover:bg-red-800 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-red-900/20 transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2"
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 bg-red-700 hover:bg-red-800 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-red-900/20 transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
           >
             {loading ? (
               <>
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 <span>Menyimpan ke Sistem Workshop...</span>
               </>
@@ -803,6 +710,37 @@ export default function InputKerusakanPage() {
         </form>
       </div>
 
+      {/* Camera QR/Barcode Scanner Modal */}
+      <QrScannerModal
+        isOpen={isScanning}
+        onScanSuccess={(decoded) => {
+          const upper = decoded.trim().toUpperCase();
+          setFormData((prev) => ({ ...prev, noDaisha: upper }));
+          setIsScanning(false);
+          setDismissedDuplicateUnit(null);
+          showFeedback(
+            'success',
+            'Barcode Terbaca',
+            `Nomor Unit Daisha ${upper} berhasil terdeteksi otomatis.`,
+            decoded
+          );
+        }}
+        onClose={() => setIsScanning(false)}
+        onError={(err) => {
+          showFeedback('error', 'Izin Kamera Diperlukan', err);
+          setIsScanning(false);
+        }}
+      />
+
+      {/* Review Ringkasan Sebelum Kirim */}
+      <ReviewTicketModal
+        isOpen={isReviewModalOpen}
+        payload={pendingPayload}
+        isLoading={loading}
+        onConfirm={executeSubmit}
+        onCancel={() => setIsReviewModalOpen(false)}
+      />
+
       {/* Interactive Feedback Modal */}
       <FeedbackModal
         isOpen={feedback.isOpen}
@@ -810,7 +748,17 @@ export default function InputKerusakanPage() {
         title={feedback.title}
         message={feedback.message}
         detail={feedback.detail}
-        onClose={() => setFeedback(prev => ({ ...prev, isOpen: false }))}
+        buttonText={feedback.buttonText}
+        secondaryButtonText={feedback.secondaryButtonText}
+        onSecondaryClick={feedback.onSecondaryClick}
+        onClose={() => setFeedback((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* Modal Cetak Tag Fisik Unit Daisha */}
+      <PrintTicketTagModal
+        isOpen={isPrintTagOpen}
+        ticket={createdTicketForTag}
+        onClose={() => setIsPrintTagOpen(false)}
       />
     </div>
   );

@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Ticket, RawTicketData } from '@/types/ticket';
-import { processRawTicketData } from '@/lib/ticketParser';
+import React, { useState } from 'react';
+import { useTickets } from '@/hooks/useTickets';
 import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
+import { exportTicketsToExcel } from '@/lib/excelExport';
 
 // Modular Dashboard Components
 import KpiCards from '@/components/dashboard/KpiCards';
@@ -15,15 +15,15 @@ import ThroughputCharts from '@/components/dashboard/ThroughputCharts';
 import SectionCharts from '@/components/dashboard/SectionCharts';
 import TicketTable from '@/components/dashboard/TicketTable';
 
-const API_URL = "/api/repair";
-
-// Global cache in-memory untuk navigasi cepat antar halaman
-let cachedTickets: Ticket[] | null = null;
-
 export default function DashboardPage() {
-  const [dataRaw, setDataRaw] = useState<Ticket[]>(() => cachedTickets || []);
-  const [loading, setLoading] = useState<boolean>(() => !cachedTickets);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const {
+    tickets: dataRaw,
+    loading,
+    isRefreshing,
+    refresh,
+  } = useTickets({
+    autoRefreshIntervalMs: 45000,
+  });
 
   // Tab Visual Switcher State
   const [activeVisualTab, setActiveVisualTab] = useState<TabType>('all');
@@ -40,87 +40,6 @@ export default function DashboardPage() {
   const [filterHanyaBerulang, setFilterHanyaBerulang] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-
-  // Fetch data dari API internal
-  const fetchData = useCallback(async (isSilent = false) => {
-    if (!isSilent) setIsRefreshing(true);
-    try {
-      const response = await fetch(API_URL, { cache: 'no-store' });
-      if (!response.ok) throw new Error("Gagal mengambil data dari API");
-
-      const jsonResult = await response.json();
-      let arrayData: RawTicketData[] = [];
-
-      if (Array.isArray(jsonResult)) {
-        arrayData = jsonResult;
-      } else if (jsonResult && typeof jsonResult === 'object') {
-        const potentialKeys = ['data', 'value', 'd', 'items', 'records', 'result'];
-        for (const key of potentialKeys) {
-          if (Array.isArray(jsonResult[key])) {
-            arrayData = jsonResult[key];
-            break;
-          }
-        }
-      }
-
-      const hasilParsing = processRawTicketData(arrayData);
-      cachedTickets = hasilParsing;
-      setDataRaw(hasilParsing);
-    } catch (err) {
-      console.error("Fetch Error:", err);
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let ignore = false;
-
-    async function initLoad() {
-      try {
-        const response = await fetch(API_URL, { cache: 'no-store' });
-        if (!response.ok) throw new Error("Gagal mengambil data");
-        const jsonResult = await response.json();
-        let arrayData: RawTicketData[] = [];
-
-        if (Array.isArray(jsonResult)) {
-          arrayData = jsonResult;
-        } else if (jsonResult && typeof jsonResult === 'object') {
-          const potentialKeys = ['data', 'value', 'd', 'items', 'records', 'result'];
-          for (const key of potentialKeys) {
-            if (Array.isArray(jsonResult[key])) {
-              arrayData = jsonResult[key];
-              break;
-            }
-          }
-        }
-
-        const hasilParsing = processRawTicketData(arrayData);
-        cachedTickets = hasilParsing;
-        if (!ignore) {
-          setDataRaw(hasilParsing);
-          setLoading(false);
-        }
-      } catch (err) {
-        if (!ignore) {
-          console.error("Init load error:", err);
-          setLoading(false);
-        }
-      }
-    }
-
-    initLoad();
-
-    const interval = setInterval(() => {
-      fetchData(true);
-    }, 45000);
-
-    return () => {
-      ignore = true;
-      clearInterval(interval);
-    };
-  }, [fetchData]);
 
   // Hook Analitik Terpusat (Simulasi SQL Engine: WHERE, GROUP BY, COUNT, AVG)
   const { filteredData, filterOptions, kpi, charts } = useDashboardAnalytics(dataRaw, {
@@ -168,41 +87,15 @@ export default function DashboardPage() {
     setEndDate('');
   };
 
-  // Ekspor Excel (.csv)
+  // Ekspor Excel (.xlsx) dengan pemecahan multi-kerusakan per baris
   const exportToExcel = () => {
-    if (!filteredData.length) return;
-
-    const headers = ["ID Tiket", "No Daisha", "Nama Daisha", "Seksi", "Komponen Kerusakan", "Detail Gejala", "Pelapor", "Tgl Masuk", "Tgl Keluar", "Status", "Catatan"];
-    const rows = filteredData.map(d => [
-      `"${d.idTiketAsli || d.id}"`,
-      `"${d.noDaisha}"`,
-      `"${d.namaDaisha}"`,
-      `"${d.seksi}"`,
-      `"${d.jenisKerusakan.replace(/"/g, '""')}"`,
-      `"${d.detail.replace(/"/g, '""')}"`,
-      `"${d.pelapor}"`,
-      `"${d.tglMasuk}"`,
-      `"${d.tglKeluar}"`,
-      `"${d.status}"`,
-      `"${(d.reason || '').replace(/"/g, '""')}"`
-    ]);
-
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
-      + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Rekap_Perbaikan_Daisha_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    exportTicketsToExcel(filteredData, 'Dashboard_Rekap_Daisha');
   };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header Halaman */}
-      <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2.5">
             <span>📊</span> Dashboard Analitik & Rekapitulasi Daisha
@@ -215,9 +108,9 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => fetchData(false)}
+            onClick={() => refresh()}
             disabled={isRefreshing}
-            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             <span className={isRefreshing ? 'animate-spin' : ''}>🔄</span>
             <span>{isRefreshing ? 'Memperbarui...' : 'Segarkan Data'}</span>
@@ -287,6 +180,7 @@ export default function DashboardPage() {
           chartKategori={charts.kategori}
           chartDetailGejala={charts.detailGejala}
           tindakanStats={charts.tindakanStats}
+          sparepartKebutuhan={charts.sparepartKebutuhan}
         />
       )}
 

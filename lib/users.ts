@@ -1,4 +1,4 @@
-import { constantTimeCompare } from './auth';
+import { constantTimeCompare } from './crypto';
 
 export type UserRole = 'ADMIN' | 'OPERATOR';
 

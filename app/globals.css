@@ -49,3 +49,26 @@ body {
   animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-tag-area,
+  .printable-tag-area * {
+    visibility: visible;
+  }
+  .printable-tag-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ffffff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+

@@ -11,6 +11,8 @@ interface FeedbackModalProps {
   message: string;
   detail?: string;
   buttonText?: string;
+  secondaryButtonText?: string;
+  onSecondaryClick?: () => void;
   autoCloseMs?: number;
   onClose: () => void;
 }
@@ -22,6 +24,8 @@ export default function FeedbackModal({
   message,
   detail,
   buttonText = "Tutup",
+  secondaryButtonText,
+  onSecondaryClick,
   autoCloseMs,
   onClose,
 }: FeedbackModalProps) {
@@ -36,7 +40,7 @@ export default function FeedbackModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in no-print">
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden transform transition-all animate-scale-up">
         
         <div className="p-6 text-center">
@@ -68,13 +72,22 @@ export default function FeedbackModal({
           )}
         </div>
 
-        <div className="p-4 bg-slate-50 border-t border-slate-100">
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-col gap-2">
+          {secondaryButtonText && onSecondaryClick && (
+            <button
+              type="button"
+              onClick={onSecondaryClick}
+              className="w-full py-2.5 px-4 font-black text-xs rounded-xl shadow transition bg-slate-900 hover:bg-slate-800 text-white cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              {secondaryButtonText}
+            </button>
+          )}
           <button
             type="button"
             onClick={onClose}
-            className={`w-full py-2.5 px-4 font-black text-xs rounded-xl shadow transition ${
+            className={`w-full py-2.5 px-4 font-black text-xs rounded-xl shadow transition cursor-pointer ${
               type === 'success' 
-                ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20' 
+                ? secondaryButtonText ? 'bg-slate-200 hover:bg-slate-300 text-slate-700' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20' 
                 : type === 'error'
                 ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-900/20'
                 : 'bg-slate-900 hover:bg-slate-800 text-white'

@@ -59,7 +59,15 @@ function LoginForm() {
         {/* Header Kartu */}
         <div className="bg-red-700 p-6 text-center text-white flex flex-col items-center justify-center">
           <div className="bg-white px-4 py-2 rounded-lg shadow-md mb-3">
-            <Image src="/logo-bs.png" alt="Logo Bridgestone" width={160} height={40} className="h-8 w-auto object-contain" priority />
+            <Image
+              src="/logo-bs.png"
+              alt="Logo Bridgestone"
+              width={160}
+              height={40}
+              className="h-8 w-auto object-contain"
+              style={{ width: 'auto', height: '2rem' }}
+              priority
+            />
           </div>
           <h1 className="text-xl font-black tracking-wide uppercase">Internal Maintenance Login</h1>
           <p className="text-xs text-red-100 mt-1 font-medium">Sistem Pencatatan & Monitoring Daisha</p>
