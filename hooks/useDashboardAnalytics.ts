@@ -61,6 +61,13 @@ export interface DashboardChartsData {
     repairPcs: number;
     totalPcs: number;
   }[];
+  sparepartKebutuhanSemua: {
+    nama: string;
+    gejala: string;
+    gantiPcs: number;
+    repairPcs: number;
+    totalPcs: number;
+  }[];
 }
 
 export interface FilterOptions {
@@ -297,7 +304,11 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     // 5.5 Pareto Komponen Rusak & 5.6 Detail Gejala Bersih & 5.10 Tindakan Stats
     const katMap: Record<string, { total: number; totalPcs: number }> = {};
     const gejMap: Record<string, { total: number; totalPcs: number; komponen: string }> = {};
-    const partNeedsMap: Record<string, { nama: string; gejala: string; gantiPcs: number; repairPcs: number; totalPcs: number }> = {};
+    
+    // Map untuk kebutuhan sparepart antrean aktif (Open & Progress)
+    const partNeedsActiveMap: Record<string, { nama: string; gejala: string; gantiPcs: number; repairPcs: number; totalPcs: number }> = {};
+    // Map untuk seluruh riwayat (All)
+    const partNeedsAllMap: Record<string, { nama: string; gejala: string; gantiPcs: number; repairPcs: number; totalPcs: number }> = {};
 
     let repairCount = 0;
     let gantiCount = 0;
@@ -306,6 +317,7 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
 
     filteredData.forEach(d => {
       const parsed = parseTicketDamageDetail(d.detail);
+      const isActive = d.status === 'Open' || d.status === 'Progress';
 
       gantiCount += parsed.gantiItems.length;
       repairCount += parsed.repairItems.length;
@@ -325,8 +337,10 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
           gejMap[gej].totalPcs += item.qty || 1;
 
           const partKey = `${komp}:::${gej}`;
-          if (!partNeedsMap[partKey]) {
-            partNeedsMap[partKey] = {
+          
+          // 1. Akumulasi untuk Seluruh Riwayat (Semua tiket pada filter saat ini)
+          if (!partNeedsAllMap[partKey]) {
+            partNeedsAllMap[partKey] = {
               nama: komp,
               gejala: gej,
               gantiPcs: 0,
@@ -335,11 +349,30 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
             };
           }
           if (item.tindakan === 'Ganti') {
-            partNeedsMap[partKey].gantiPcs += item.qty || 1;
+            partNeedsAllMap[partKey].gantiPcs += item.qty || 1;
           } else {
-            partNeedsMap[partKey].repairPcs += item.qty || 1;
+            partNeedsAllMap[partKey].repairPcs += item.qty || 1;
           }
-          partNeedsMap[partKey].totalPcs += item.qty || 1;
+          partNeedsAllMap[partKey].totalPcs += item.qty || 1;
+
+          // 2. Akumulasi untuk Antrean Aktif (Hanya Open & Progress, kecuali jika user sengaja memfilter status tertentu)
+          if (isActive || Boolean(filterStatus)) {
+            if (!partNeedsActiveMap[partKey]) {
+              partNeedsActiveMap[partKey] = {
+                nama: komp,
+                gejala: gej,
+                gantiPcs: 0,
+                repairPcs: 0,
+                totalPcs: 0,
+              };
+            }
+            if (item.tindakan === 'Ganti') {
+              partNeedsActiveMap[partKey].gantiPcs += item.qty || 1;
+            } else {
+              partNeedsActiveMap[partKey].repairPcs += item.qty || 1;
+            }
+            partNeedsActiveMap[partKey].totalPcs += item.qty || 1;
+          }
         });
       } else {
         const komp = d.jenisKerusakan && d.jenisKerusakan !== '-' ? d.jenisKerusakan : 'Umum';
@@ -369,7 +402,13 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       .sort((a, b) => b.totalPcs - a.totalPcs || b.total - a.total)
       .slice(0, 10);
 
-    const sparepartKebutuhan = Object.values(partNeedsMap)
+    // Prioritas kebutuhan suku cadang untuk antrean aktif (default)
+    const sparepartKebutuhan = Object.values(partNeedsActiveMap)
+      .sort((a, b) => b.gantiPcs - a.gantiPcs || b.totalPcs - a.totalPcs)
+      .slice(0, 8);
+
+    // Kebutuhan suku cadang seluruh riwayat (untuk referensi audit pengadaan)
+    const sparepartKebutuhanSemua = Object.values(partNeedsAllMap)
       .sort((a, b) => b.gantiPcs - a.gantiPcs || b.totalPcs - a.totalPcs)
       .slice(0, 8);
 
@@ -453,8 +492,9 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
         totalPcs: repairPcs + gantiPcs,
       },
       sparepartKebutuhan,
+      sparepartKebutuhanSemua,
     };
-  }, [filteredData, kpi]);
+  }, [filteredData, kpi, filterStatus]);
 
   return {
     filteredData,

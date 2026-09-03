@@ -18,11 +18,16 @@ export default function TicketTable({
   exportToExcel,
 }: TicketTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+  // Reset ke halaman 1 jika jumlah data berubah karena filter
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredData.length]);
+
+  const totalPages = itemsPerPage === -1 ? 1 : Math.ceil(filteredData.length / itemsPerPage) || 1;
+  const startIndex = itemsPerPage === -1 ? 0 : (currentPage - 1) * itemsPerPage;
+  const paginatedData = itemsPerPage === -1 ? filteredData : filteredData.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
@@ -37,15 +42,37 @@ export default function TicketTable({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={exportToExcel}
-          disabled={filteredData.length === 0}
-          className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-        >
-          <span>📥</span>
-          <span>Ekspor ke Excel (.xlsx)</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Selector Jumlah Baris per Halaman */}
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+            <span className="text-slate-400">📄 Tampilkan:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="bg-transparent font-black text-slate-800 focus:outline-none cursor-pointer border-none py-0.5"
+            >
+              <option value={10}>10 baris</option>
+              <option value={20}>20 baris</option>
+              <option value={30}>30 baris</option>
+              <option value={50}>50 baris</option>
+              <option value={100}>100 baris</option>
+              <option value={-1}>Semua ({filteredData.length})</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onClick={exportToExcel}
+            disabled={filteredData.length === 0}
+            className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <span>📥</span>
+            <span>Ekspor ke Excel (.xlsx)</span>
+          </button>
+        </div>
       </div>
 
       {/* Kontainer Tabel Responsif */}
@@ -169,32 +196,64 @@ export default function TicketTable({
         </table>
       </div>
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="p-3 border-t border-slate-100 flex justify-between items-center bg-slate-50/50 text-xs">
-          <span className="text-slate-500 font-medium">
-            Halaman <b>{currentPage}</b> dari <b>{totalPages}</b>
+      {/* Pagination Controls & Info Footer */}
+      <div className="p-3.5 border-t border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-slate-50/50 text-xs">
+        <div className="text-slate-500 font-medium flex items-center gap-2">
+          <span>
+            Menampilkan{' '}
+            <b>{filteredData.length === 0 ? 0 : startIndex + 1}</b> -{' '}
+            <b>{Math.min(startIndex + (itemsPerPage === -1 ? filteredData.length : itemsPerPage), filteredData.length)}</b>{' '}
+            dari <b>{filteredData.length}</b> tiket
           </span>
-          <div className="flex gap-1.5">
+          {itemsPerPage !== -1 && totalPages > 1 && (
+            <span className="text-slate-400 hidden sm:inline">• Halaman {currentPage} dari {totalPages}</span>
+          )}
+        </div>
+
+        {itemsPerPage !== -1 && totalPages > 1 && (
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(1)}
+              title="Halaman Pertama"
+              className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
+            >
+              ⇤
+            </button>
             <button
               type="button"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
             >
               ← Sebelumnya
             </button>
+
+            <span className="px-3 py-1.5 bg-slate-200/80 rounded-lg font-black text-slate-800 text-[11px]">
+              {currentPage} / {totalPages}
+            </span>
+
             <button
               type="button"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
             >
               Selanjutnya →
             </button>
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(totalPages)}
+              title="Halaman Terakhir"
+              className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
+            >
+              ⇥
+            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

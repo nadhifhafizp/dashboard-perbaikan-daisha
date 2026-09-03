@@ -181,6 +181,7 @@ export default function DashboardPage() {
           chartDetailGejala={charts.detailGejala}
           tindakanStats={charts.tindakanStats}
           sparepartKebutuhan={charts.sparepartKebutuhan}
+          sparepartKebutuhanSemua={charts.sparepartKebutuhanSemua}
         />
       )}
 
