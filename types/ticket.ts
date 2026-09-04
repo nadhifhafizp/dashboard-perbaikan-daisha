@@ -48,10 +48,3 @@ export interface DeleteTicketPayload {
   action: 'DELETE';
   idTiket: string;
 }
-
-export type TicketApiPayload = CreateTicketPayload | UpdateTicketPayload | DeleteTicketPayload;
-
-export interface AggregateItem {
-  name: string;
-  value: number;
-}

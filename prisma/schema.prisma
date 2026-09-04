@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL") // Otomatis mengarah ke file lokal
+}
+
+model MasterDaisha {
+  noDaisha   String   @id
+  namaDaisha String   
+  ukuran     String   
+  seksi      String   
+  tickets    Ticket[] 
+}
+
+model Ticket {
+  idTiket      String         @id 
+  noDaisha     String
+  daisha       MasterDaisha   @relation(fields: [noDaisha], references: [noDaisha])
+  namaPelapor  String
+  status       String         @default("Open") 
+  waktuMasuk   DateTime       @default(now())
+  waktuSelesai DateTime?
+  catatan      String?
+  details      TicketDetail[] 
+}
+
+model TicketDetail {
+  idDetail   Int      @id @default(autoincrement())
+  idTiket    String
+  ticket     Ticket   @relation(fields: [idTiket], references: [idTiket])
+  komponen   String   
+  gejala     String   
+  tindakan   String   
+  qty        Int
+}
+
+model Sparepart {
+  namaKomponen String @id 
+  stokGudang   Int    @default(0)
+  satuan       String 
+}

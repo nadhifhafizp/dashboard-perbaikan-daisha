@@ -1,13 +1,21 @@
 import { UserRole, findUserByUsername } from './users';
 import { constantTimeCompare, generateHmacSignature } from './crypto';
 
-// Re-export untuk backward compatibility jika ada file lain yang mengimpor dari auth
-export { constantTimeCompare } from './crypto';
 
-const DEFAULT_SECRET = 'daisha_bridgestone_secure_token_secret_key_2026';
-
+/**
+ * Mengambil SESSION_SECRET dari environment variable.
+ * Wajib diisi di .env.local — aplikasi akan error jika tidak ada.
+ * Ini mencegah secret hardcoded masuk ke source code / version control.
+ */
 function getSecret(): string {
-  return process.env.SESSION_SECRET || DEFAULT_SECRET;
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    throw new Error(
+      '[Auth] SESSION_SECRET tidak ditemukan di environment variables. ' +
+      'Pastikan variabel ini sudah diisi di .env.local sebelum menjalankan aplikasi.'
+    );
+  }
+  return secret;
 }
 
 export const SESSION_COOKIE_NAME = 'daisha_auth_session';
@@ -23,12 +31,18 @@ export interface VerificationResult {
   user?: SessionPayload;
 }
 
-// Buat signed session token
+/**
+ * Buat signed session token.
+ * Format: base64(username)|role|timestamp|hmac_signature
+ * Username di-encode Base64 untuk menghindari konflik karakter pemisah '|'.
+ */
 export async function createSessionToken(payload: SessionPayload): Promise<string> {
   const timestamp = Date.now().toString();
-  const data = `${payload.username}:${payload.role}:${timestamp}`;
+  // Encode username ke Base64 agar karakter apapun (termasuk '|') tidak merusak format token
+  const encodedUsername = Buffer.from(payload.username).toString('base64');
+  const data = `${encodedUsername}|${payload.role}|${timestamp}`;
   const signature = await generateHmacSignature(data, getSecret());
-  return `${data}:${signature}`;
+  return `${data}|${signature}`;
 }
 
 // Verifikasi session token
@@ -48,10 +62,10 @@ export async function parseAndVerifySession(token: string | undefined | null): P
   if (!token) return { valid: false };
 
   try {
-    const parts = token.split(':');
+    const parts = token.split('|');
     if (parts.length !== 4) return { valid: false };
 
-    const [username, role, timestampStr, providedSignature] = parts;
+    const [encodedUsername, role, timestampStr, providedSignature] = parts;
     const timestamp = parseInt(timestampStr, 10);
 
     if (isNaN(timestamp)) return { valid: false };
@@ -62,13 +76,15 @@ export async function parseAndVerifySession(token: string | undefined | null): P
       return { valid: false };
     }
 
-    const data = `${username}:${role}:${timestampStr}`;
+    const data = `${encodedUsername}|${role}|${timestampStr}`;
     const expectedSignature = await generateHmacSignature(data, getSecret());
 
     if (!constantTimeCompare(providedSignature, expectedSignature)) {
       return { valid: false };
     }
 
+    // Decode Base64 username
+    const username = Buffer.from(encodedUsername, 'base64').toString('utf8');
     const matchedUser = findUserByUsername(username);
 
     return {
@@ -80,7 +96,7 @@ export async function parseAndVerifySession(token: string | undefined | null): P
       },
     };
   } catch (err) {
-    console.error("Token verification error:", err);
+    console.error('Token verification error:', err);
     return { valid: false };
   }
 }

@@ -158,11 +158,7 @@ export default function TicketTable({
                               </div>
                               {it.tindakan && (
                                 <span
-                                  className={`px-1.5 py-0.2 rounded text-[9px] font-black shrink-0 ${
-                                    it.tindakan === 'Ganti'
-                                      ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                      : 'bg-amber-100 text-amber-800 border border-amber-200'
-                                  }`}
+                                  className={`px-1.5 py-0.2 rounded text-[9px] font-black shrink-0 ${it.tindakan === 'Ganti' ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-amber-100 text-amber-800 border border-amber-200'}`}
                                 >
                                   {it.tindakan === 'Ganti' ? '🔄 Ganti' : '🔨 Repair'}
                                 </span>

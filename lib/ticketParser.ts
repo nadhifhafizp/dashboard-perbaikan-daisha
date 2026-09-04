@@ -1,5 +1,5 @@
 import { Ticket, RawTicketData, TicketStatus } from '@/types/ticket';
-import { formatDateTime } from './date';
+import { formatDisplayDate } from './date';
 
 export function normalizeStatus(val: unknown): TicketStatus {
   if (!val) return 'Open';
@@ -76,7 +76,7 @@ export function processRawTicketData(hasilData: RawTicketData[]): Ticket[] {
       const rawStatus = getValue(item, ["Status", "status"]);
       let cleanStatus = normalizeStatus(rawStatus);
       let reason = getValue(item, ["Catatan", "catatan", "Catatan Teknisi", "CatatanTeknisi", "keterangan"]) || "";
-      let tglKeluar = formatDateTime(getValue(item, ["Waktu_Keluar", "waktuKeluar", "Waktu Keluar", "tanggalKeluar"]));
+      let tglKeluar = formatDisplayDate(getValue(item, ["Waktu_Keluar", "waktuKeluar", "Waktu Keluar", "tanggalKeluar"]));
 
       // Pertahankan status lokal jika baru saja diupdate dalam 60 detik terakhir
       const override = localStatusOverrides.get(idTiket || "");
@@ -125,7 +125,7 @@ export function processRawTicketData(hasilData: RawTicketData[]): Ticket[] {
         ]) || "-",
         seksi: getValue(item, ["Seksi", "seksi", "departemen"]) || "-",
         status: cleanStatus,
-        tglMasuk: formatDateTime(getValue(item, ["Waktu_Masuk", "waktuMasuk", "Waktu Masuk", "tanggalMasuk"])),
+        tglMasuk: formatDisplayDate(getValue(item, ["Waktu_Masuk", "waktuMasuk", "Waktu Masuk", "tanggalMasuk"])),
         tglKeluar,
         reason,
       };

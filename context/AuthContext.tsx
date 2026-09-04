@@ -28,6 +28,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  /**
+   * Verifikasi sesi ke server dan update state pengguna.
+   * Satu fungsi tunggal — dipakai oleh useEffect dan juga di-expose sebagai refreshAuth.
+   */
   const checkAuth = useCallback(async () => {
     if (pathname === '/login') {
       setIsLoading(false);
@@ -55,44 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
-    let isIgnored = false;
-
-    if (pathname === '/login') {
-      return;
+    if (pathname !== '/login') {
+      void checkAuth();
     }
-
-    const verifySession = async () => {
-      try {
-        const res = await fetch('/api/auth/me');
-        if (isIgnored) return;
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated && data.user) {
-            setCurrentUser(data.user);
-          } else {
-            setCurrentUser(null);
-          }
-        } else {
-          setCurrentUser(null);
-        }
-      } catch (err) {
-        if (!isIgnored) {
-          console.error('Auth check error:', err);
-          setCurrentUser(null);
-        }
-      } finally {
-        if (!isIgnored) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void verifySession();
-
-    return () => {
-      isIgnored = true;
-    };
-  }, [pathname]);
+  }, [pathname, checkAuth]);
 
   const executeLogout = async () => {
     setIsLoggingOut(true);

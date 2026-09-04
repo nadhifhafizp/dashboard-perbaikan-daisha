@@ -17,48 +17,38 @@ export interface DaishaSizeInfo {
  * - L = Large
  * Bekerja baik saat diketik manual maupun hasil scan barcode kamera
  */
+const SIZE_MAP: Record<string, DaishaSizeInfo> = {
+  S: {
+    size: 'Small',
+    code: 'S',
+    label: 'Small (S)',
+    badgeBg: 'bg-emerald-50',
+    textColor: 'text-emerald-800',
+    borderColor: 'border-emerald-300',
+    description: 'Unit Daisha Ukuran Kecil (Small)',
+  },
+  M: {
+    size: 'Medium',
+    code: 'M',
+    label: 'Medium (M)',
+    badgeBg: 'bg-blue-50',
+    textColor: 'text-blue-800',
+    borderColor: 'border-blue-300',
+    description: 'Unit Daisha Ukuran Sedang (Medium)',
+  },
+  L: {
+    size: 'Large',
+    code: 'L',
+    label: 'Large (L)',
+    badgeBg: 'bg-purple-50',
+    textColor: 'text-purple-800',
+    borderColor: 'border-purple-300',
+    description: 'Unit Daisha Ukuran Besar (Large)',
+  },
+};
+
 export function detectDaishaSize(noDaisha?: string | null): DaishaSizeInfo | null {
   if (!noDaisha) return null;
-  const clean = noDaisha.trim().toUpperCase();
-  if (!clean) return null;
-
-  const firstChar = clean.charAt(0);
-
-  if (firstChar === 'S') {
-    return {
-      size: 'Small',
-      code: 'S',
-      label: 'Small (S)',
-      badgeBg: 'bg-emerald-50',
-      textColor: 'text-emerald-800',
-      borderColor: 'border-emerald-300',
-      description: 'Unit Daisha Ukuran Kecil (Small)',
-    };
-  }
-
-  if (firstChar === 'M') {
-    return {
-      size: 'Medium',
-      code: 'M',
-      label: 'Medium (M)',
-      badgeBg: 'bg-blue-50',
-      textColor: 'text-blue-800',
-      borderColor: 'border-blue-300',
-      description: 'Unit Daisha Ukuran Sedang (Medium)',
-    };
-  }
-
-  if (firstChar === 'L') {
-    return {
-      size: 'Large',
-      code: 'L',
-      label: 'Large (L)',
-      badgeBg: 'bg-purple-50',
-      textColor: 'text-purple-800',
-      borderColor: 'border-purple-300',
-      description: 'Unit Daisha Ukuran Besar (Large)',
-    };
-  }
-
-  return null;
+  const firstChar = noDaisha.trim().toUpperCase().charAt(0);
+  return SIZE_MAP[firstChar] || null;
 }

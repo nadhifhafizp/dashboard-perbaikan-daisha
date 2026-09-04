@@ -1,22 +1,10 @@
 'use client';
 
 import React from 'react';
-
-interface KpiData {
-  total: number;
-  open: number;
-  progress: number;
-  done: number;
-  scrap: number;
-  doneRate: number;
-  scrapRate: number;
-  avgLeadTimeHours: number;
-  unitUnikCount: number;
-  repeatUnitCount: number;
-}
+import type { KpiSummary } from '@/hooks/useDashboardAnalytics';
 
 interface KpiCardsProps {
-  kpi: KpiData;
+  kpi: KpiSummary;
   filterHanyaBerulang: boolean;
   setFilterHanyaBerulang: (val: boolean) => void;
   setFilterStatus: (val: string) => void;

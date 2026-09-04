@@ -64,10 +64,6 @@ export function formatDisplayDate(value: unknown): string {
   return clean.slice(0, 16);
 }
 
-// Alias formatDateTime untuk backward compatibility yang langsung memformat DD/MM/YYYY HH:mm
-export function formatDateTime(value: unknown): string {
-  return formatDisplayDate(value);
-}
 
 // Konversi format tanggal apa pun ke ISO Date (YYYY-MM-DD) untuk filtering & sorting
 export function parseToISODate(value: unknown): string {

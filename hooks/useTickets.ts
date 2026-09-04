@@ -7,6 +7,10 @@ import { extractRawTicketArray, processRawTicketData } from '@/lib/ticketParser'
 
 const API_URL = '/api/repair';
 
+/** Timeout maksimal fetch data tiket sebelum dibatalkan (35 detik) */
+const FETCH_TIMEOUT_MS = 35_000;
+
+
 // Shared in-memory cache antar halaman (Dashboard, Admin, Riwayat)
 let sharedTicketCache: Ticket[] | null = null;
 
@@ -38,7 +42,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
         } catch {
           controller.abort();
         }
-      }, 35000);
+      }, FETCH_TIMEOUT_MS);
 
       try {
         const fetchUrl = forceFresh ? `${API_URL}?fresh=true` : API_URL;

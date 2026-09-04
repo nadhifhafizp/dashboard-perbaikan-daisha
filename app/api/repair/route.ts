@@ -2,22 +2,14 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { parseAndVerifySession, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { sanitizeString } from '@/lib/sanitize';
+import { prisma } from '@/lib/prisma';
+import { parseTicketDamageDetail } from '@/lib/damageParser';
+import { detectDaishaSize } from '@/lib/daishaSize';
 
-const POWER_AUTOMATE_GET_URL = process.env.POWER_AUTOMATE_GET_URL || "";
 const POWER_AUTOMATE_POST_URL = process.env.POWER_AUTOMATE_POST_URL || "";
 
-// In-Memory Server Cache untuk meniadakan lag Excel Online (18-30s menjadi 1ms)
-let serverTicketCache: unknown = null;
-let serverCacheTime = 0;
-const CACHE_TTL_MS = 60000; // Cache berlaku 60 detik selama tidak ada mutasi data
-
-function clearServerCache() {
-  serverTicketCache = null;
-  serverCacheTime = 0;
-}
-
-// 1. FUNGSI GET (Mengambil data dari Power Automate/Excel Online dengan Cache Cerdas)
-export async function GET(request: Request) {
+// 1. FUNGSI GET: Membaca data langsung dari SQLite via Prisma (Kecepatan Instan < 5ms)
+export async function GET() {
   // Proteksi: Wajib login (Admin atau Operator)
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
@@ -30,79 +22,62 @@ export async function GET(request: Request) {
     );
   }
 
-  // Cek apakah dipaksa bypass cache (?fresh=true)
-  const { searchParams } = new URL(request.url);
-  const forceFresh = searchParams.get('fresh') === 'true';
+  try {
+    const tickets = await prisma.ticket.findMany({
+      include: {
+        daisha: true,
+        details: true,
+      },
+      orderBy: {
+        waktuMasuk: 'desc',
+      },
+    });
 
-  // Jika ada cache valid dan tidak dipaksa fresh, kirim instan dalam 0.001 detik!
-  if (!forceFresh && serverTicketCache && Date.now() - serverCacheTime < CACHE_TTL_MS) {
-    return NextResponse.json(serverTicketCache, {
+    // Helper format tanggal ke format standar tampilan Indonesia: DD/MM/YYYY HH:mm
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const formatIndoDate = (d: Date | null) => {
+      if (!d) return '-';
+      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    // Format output 100% kompatibel dengan frontend tanpa merubah UI/komponen apa pun
+    const formattedData = tickets.map((t) => {
+      const kategoriList = Array.from(new Set(t.details.map((d) => d.komponen))).filter(Boolean);
+      const detailStr = t.details.length > 0
+        ? t.details.map((d, idx) => `${idx + 1}. [${d.komponen}] ${d.gejala} (Qty: ${d.qty}, Tindakan: ${d.tindakan})`).join(' | ')
+        : '-';
+
+      return {
+        ID_Tiket: t.idTiket,
+        Status: t.status,
+        Nama_Pelapor: t.namaPelapor,
+        Seksi: t.daisha?.seksi || '-',
+        No_Daisha: t.noDaisha,
+        Nama_Daisha: t.daisha?.namaDaisha || '-',
+        Kategori_Kerusakan: kategoriList.join(', ') || 'Umum',
+        Detail_Kerusakan: detailStr,
+        Catatan: t.catatan || '-',
+        Waktu_Masuk: formatIndoDate(t.waktuMasuk),
+        Waktu_Keluar: formatIndoDate(t.waktuSelesai),
+      };
+    });
+
+    return NextResponse.json(formattedData, {
       headers: {
-        'X-Cache': 'HIT',
+        'X-Database': 'SQLite-Prisma',
         'Cache-Control': 'no-store',
       },
     });
-  }
-
-  if (!POWER_AUTOMATE_GET_URL) {
-    return NextResponse.json(
-      { error: "Konfigurasi server belum lengkap (POWER_AUTOMATE_GET_URL tidak ditemukan)" },
-      { status: 500 }
-    );
-  }
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      try {
-        controller.abort(new DOMException('Power Automate request timeout (30s)', 'AbortError'));
-      } catch {
-        controller.abort();
-      }
-    }, 30000);
-
-    const response = await fetch(POWER_AUTOMATE_GET_URL, {
-      signal: controller.signal,
-      headers: {
-        'Accept': 'application/json',
-      },
-      next: { revalidate: 0 },
-    });
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      console.error(`Power Automate GET failed with status: ${response.status}`);
-      // Fallback ke cache sebelumnya jika ada, daripada melempar error 502
-      if (serverTicketCache) {
-        return NextResponse.json(serverTicketCache, {
-          headers: { 'X-Cache': 'STALE_FALLBACK' },
-        });
-      }
-      return NextResponse.json(
-        { error: `Gagal mengambil data dari server eksternal (Status: ${response.status})` },
-        { status: 502 }
-      );
-    }
-
-    const data = await response.json();
-    // Simpan ke in-memory cache server
-    serverTicketCache = data;
-    serverCacheTime = Date.now();
-
-    return NextResponse.json(data, {
-      headers: { 'X-Cache': 'MISS' },
-    });
   } catch (error: unknown) {
-    console.error("API GET Error:", error);
-    const isTimeout = error instanceof Error && error.name === 'AbortError';
+    console.error("Prisma GET Error:", error);
     return NextResponse.json(
-      { error: isTimeout ? "Koneksi ke server Power Automate timeout (30 detik). Silakan coba segarkan lagi." : "Gagal memuat data server" },
-      { status: isTimeout ? 504 : 500 }
+      { error: "Gagal memuat data tiket dari database lokal" },
+      { status: 500 }
     );
   }
 }
 
-// 2. FUNGSI POST (Create, Update, Delete tiket dengan RBAC Ketat)
+// 2. FUNGSI POST: Create, Update, Delete tiket langsung ke SQLite via Prisma
 export async function POST(request: Request) {
   // Proteksi Autentikasi Umum
   const cookieStore = await cookies();
@@ -113,13 +88,6 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Akses ditolak. Silakan login terlebih dahulu sebelum melakukan aksi." },
       { status: 401 }
-    );
-  }
-
-  if (!POWER_AUTOMATE_POST_URL) {
-    return NextResponse.json(
-      { error: "Konfigurasi server belum lengkap (POWER_AUTOMATE_POST_URL tidak ditemukan)" },
-      { status: 500 }
     );
   }
 
@@ -142,42 +110,111 @@ export async function POST(request: Request) {
       );
     }
 
-    let payload: Record<string, string> = {};
-
     // 2.1 CREATE (Bisa dilakukan oleh Operator maupun Admin)
     if (action === 'CREATE') {
-      const idTiket = sanitizeString(body.idTiket, 50);
+      const idTiket = sanitizeString(body.idTiket, 50) || `TCK-${Date.now()}`;
       const waktuMasuk = sanitizeString(body.waktuMasuk, 30);
       const namaPelapor = sanitizeString(body.namaPelapor, 100);
       const seksi = sanitizeString(body.seksi, 50);
       const namaDaisha = sanitizeString(body.namaDaisha, 100);
-      const noDaisha = sanitizeString(body.noDaisha, 50);
-      const kategori = sanitizeString(body.kategori, 500);
+      const noDaisha = sanitizeString(body.noDaisha, 50).toUpperCase();
       const detail = sanitizeString(body.detail, 2000);
 
       // Validasi kelengkapan data form laporan
-      if (!namaPelapor || !seksi || !namaDaisha || !noDaisha || !kategori) {
+      if (!namaPelapor || !seksi || !namaDaisha || !noDaisha) {
         return NextResponse.json(
-          { error: "Field wajib (Nama Pelapor, Seksi, Nama Daisha, No Daisha, Kategori) tidak boleh kosong." },
+          { error: "Field wajib (Nama Pelapor, Seksi, Nama Daisha, No Daisha) tidak boleh kosong." },
           { status: 400 }
         );
       }
 
-      payload = {
-        action: 'CREATE',
-        idTiket: idTiket || `TCK-${Date.now()}`,
-        waktuMasuk: waktuMasuk || new Date().toISOString().slice(0, 16).replace('T', ' '),
-        waktuKeluar: '-',
-        status: 'Open',
-        namaPelapor,
-        seksi,
-        namaDaisha,
-        noDaisha,
-        kategori,
-        detail: detail || '-'
-      };
-    } 
-    // 2.2 UPDATE (KHUSUS ROLE ADMIN)
+      // Pastikan Master Daisha terdaftar
+      const sizeInfo = detectDaishaSize(noDaisha);
+      const ukuran = sizeInfo?.code || 'Standard';
+      await prisma.masterDaisha.upsert({
+        where: { noDaisha },
+        update: { namaDaisha, seksi, ukuran },
+        create: { noDaisha, namaDaisha, seksi, ukuran },
+      });
+
+      // Parse waktu masuk
+      let parsedDateMasuk = new Date();
+      if (waktuMasuk) {
+        const d = new Date(waktuMasuk);
+        if (!isNaN(d.getTime())) parsedDateMasuk = d;
+      }
+
+      // Buat Tiket
+      await prisma.ticket.create({
+        data: {
+          idTiket,
+          noDaisha,
+          namaPelapor,
+          status: 'Open',
+          waktuMasuk: parsedDateMasuk,
+          catatan: '-',
+        },
+      });
+
+      // Pecah rincian kerusakan ke TicketDetail (createMany lebih efisien dari loop sequential)
+      const parsedDetails = parseTicketDamageDetail(detail);
+      if (parsedDetails.items.length > 0) {
+        await prisma.ticketDetail.createMany({
+          data: parsedDetails.items.map((it) => ({
+            idTiket,
+            komponen: it.komponen,
+            gejala: it.gejala,
+            tindakan: it.tindakan || 'Repair',
+            qty: it.qty || 1,
+          })),
+        });
+      }
+
+      // Pengurangan stok otomatis untuk komponen Ganti Baru (Projek 3)
+      const gantiItems = parsedDetails.items.filter((it) => it.tindakan === 'Ganti');
+      await Promise.allSettled(
+        gantiItems.map((it) =>
+          prisma.sparepart
+            .update({
+              where: { namaKomponen: it.komponen },
+              data: { stokGudang: { decrement: it.qty || 1 } },
+            })
+            .catch((e) => {
+              // Lanjutkan jika komponen belum terdaftar di tabel Sparepart
+              console.warn(`[Sparepart] Komponen '${it.komponen}' tidak ditemukan, skip pengurangan stok:`, e);
+            })
+        )
+      );
+
+      // Background Sync Opsional ke Power Automate (tanpa membuat user menunggu)
+      if (POWER_AUTOMATE_POST_URL) {
+        fetch(POWER_AUTOMATE_POST_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'CREATE',
+            idTiket,
+            waktuMasuk: waktuMasuk || new Date().toISOString().slice(0, 16).replace('T', ' '),
+            waktuKeluar: '-',
+            status: 'Open',
+            namaPelapor,
+            seksi,
+            namaDaisha,
+            noDaisha,
+            kategori: sanitizeString(body.kategori, 500) || 'Umum',
+            detail: detail || '-',
+          }),
+        }).catch((err) => console.error("Async Power Automate Sync Error:", err));
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Tiket ${idTiket} berhasil dibuat di database lokal`,
+        idTiket,
+      });
+    }
+
+    // 2.2 UPDATE STATUS & CATATAN (KHUSUS ROLE ADMIN)
     else if (action === 'UPDATE') {
       if (session.user.role !== 'ADMIN') {
         return NextResponse.json(
@@ -198,7 +235,6 @@ export async function POST(request: Request) {
         );
       }
 
-      // Validasi aturan alur: Tiket yang diproses tidak boleh dikembalikan ke status Open
       const normalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
       if (!['Progress', 'Done', 'Scrap'].includes(normalizedStatus)) {
         return NextResponse.json(
@@ -207,16 +243,49 @@ export async function POST(request: Request) {
         );
       }
 
-      payload = {
-        action: 'UPDATE',
-        idTiket,
-        status: normalizedStatus,
-        waktuKeluar: waktuKeluar || '-',
-        catatan: catatan || '-'
-      };
-    } 
-    // 2.3 DELETE / BATALKAN TIKET (Role ADMIN atau OPERATOR pembatalan)
+      const parsedWaktuSelesai = normalizedStatus === 'Done'
+        ? (waktuKeluar && waktuKeluar !== '-' && !isNaN(new Date(waktuKeluar).getTime()) ? new Date(waktuKeluar) : new Date())
+        : null;
+
+      await prisma.ticket.update({
+        where: { idTiket },
+        data: {
+          status: normalizedStatus,
+          waktuSelesai: parsedWaktuSelesai,
+          catatan: catatan && catatan !== '-' ? catatan : undefined,
+        },
+      });
+
+      // Background Sync ke Power Automate jika ada
+      if (POWER_AUTOMATE_POST_URL) {
+        fetch(POWER_AUTOMATE_POST_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'UPDATE',
+            idTiket,
+            status: normalizedStatus,
+            waktuKeluar: waktuKeluar || '-',
+            catatan: catatan || '-',
+          }),
+        }).catch((err) => console.error("Async Power Automate Sync Error:", err));
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Status tiket ${idTiket} berhasil diubah menjadi ${normalizedStatus}`,
+      });
+    }
+
+    // 2.3 DELETE / BATALKAN TIKET (KHUSUS ROLE ADMIN — operasi destruktif)
     else if (action === 'DELETE') {
+      if (session.user.role !== 'ADMIN') {
+        return NextResponse.json(
+          { error: "Akses ditolak. Hanya akun ADMIN yang berhak menghapus tiket." },
+          { status: 403 }
+        );
+      }
+
       const idTiket = sanitizeString(body.idTiket, 50);
       if (!idTiket) {
         return NextResponse.json(
@@ -225,20 +294,30 @@ export async function POST(request: Request) {
         );
       }
 
-      payload = {
-        action: 'DELETE',
-        idTiket,
-      };
+      await prisma.ticketDetail.deleteMany({ where: { idTiket } });
+      await prisma.ticket.delete({ where: { idTiket } });
+
+      if (POWER_AUTOMATE_POST_URL) {
+        fetch(POWER_AUTOMATE_POST_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'DELETE', idTiket }),
+        }).catch((err) => console.error("Async Power Automate Sync Error:", err));
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Tiket ${idTiket} berhasil dibatalkan / dihapus`,
+      });
     }
-    // 2.4 EDIT_TICKET (Koreksi data tiket Open oleh Pelapor/Operator)
+
+    // 2.4 EDIT_TICKET (Koreksi data tiket oleh Pelapor/Operator)
     else if (action === 'EDIT_TICKET') {
       const idTiket = sanitizeString(body.idTiket, 50);
-      const waktuMasuk = sanitizeString(body.waktuMasuk, 30);
       const namaPelapor = sanitizeString(body.namaPelapor, 100);
       const seksi = sanitizeString(body.seksi, 50);
       const namaDaisha = sanitizeString(body.namaDaisha, 100);
-      const noDaisha = sanitizeString(body.noDaisha, 50);
-      const kategori = sanitizeString(body.kategori, 500);
+      const noDaisha = sanitizeString(body.noDaisha, 50).toUpperCase();
       const detail = sanitizeString(body.detail, 2000);
 
       if (!idTiket || !noDaisha) {
@@ -248,64 +327,50 @@ export async function POST(request: Request) {
         );
       }
 
-      // Step 1: Hapus data lama di Excel
-      const deleteController = new AbortController();
-      const deleteTimeout = setTimeout(() => deleteController.abort(), 20000);
-      await fetch(POWER_AUTOMATE_POST_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "DELETE", idTiket }),
-        signal: deleteController.signal,
-      }).catch(err => console.error("Edit Delete Step Error:", err));
-      clearTimeout(deleteTimeout);
+      // Update Master Daisha
+      const sizeInfo = detectDaishaSize(noDaisha);
+      const ukuran = sizeInfo?.code || 'Standard';
+      await prisma.masterDaisha.upsert({
+        where: { noDaisha },
+        update: { namaDaisha, seksi, ukuran },
+        create: { noDaisha, namaDaisha, seksi, ukuran },
+      });
 
-      // Step 2: Kirim data baru hasil koreksi ke Excel
-      payload = {
-        action: 'CREATE',
-        idTiket,
-        waktuMasuk: waktuMasuk || new Date().toISOString().slice(0, 16).replace('T', ' '),
-        waktuKeluar: '-',
-        status: 'Open',
-        namaPelapor: namaPelapor || session.user.name || 'Operator',
-        seksi: seksi || '-',
-        namaDaisha: namaDaisha || '-',
-        noDaisha: noDaisha.toUpperCase(),
-        kategori: kategori || 'Umum',
-        detail: detail || '-'
-      };
+      // Update Ticket
+      await prisma.ticket.update({
+        where: { idTiket },
+        data: {
+          noDaisha,
+          namaPelapor: namaPelapor || session.user.name || 'Operator',
+        },
+      });
+
+      // Update Rincian Kerusakan (createMany lebih efisien dari loop sequential)
+      await prisma.ticketDetail.deleteMany({ where: { idTiket } });
+      const parsedDetails = parseTicketDamageDetail(detail);
+      if (parsedDetails.items.length > 0) {
+        await prisma.ticketDetail.createMany({
+          data: parsedDetails.items.map((it) => ({
+            idTiket,
+            komponen: it.komponen,
+            gejala: it.gejala,
+            tindakan: it.tindakan || 'Repair',
+            qty: it.qty || 1,
+          })),
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Tiket ${idTiket} berhasil dikoreksi`,
+      });
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    const response = await fetch(POWER_AUTOMATE_POST_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      console.error(`Power Automate POST failed with status: ${response.status}`);
-      return NextResponse.json(
-        { error: `Gagal memproses data ke server eksternal (Status: ${response.status})` },
-        { status: 502 }
-      );
-    }
-
-    // Hapus cache server seketika agar pembacaan berikutnya langsung mengambil data ter-update
-    clearServerCache();
-
-    return NextResponse.json({
-      success: true,
-      message: `Aksi ${action} berhasil diproses`,
-    });
+    return NextResponse.json({ error: "Aksi tidak dikenali" }, { status: 400 });
   } catch (error: unknown) {
-    console.error("API POST Error:", error);
-    const isTimeout = error instanceof Error && error.name === 'AbortError';
+    console.error("Prisma POST Error:", error);
     return NextResponse.json(
-      { error: isTimeout ? "Koneksi ke server timeout (30 detik)" : "Terjadi kesalahan internal pada server" },
+      { error: "Terjadi kesalahan internal pada server database" },
       { status: 500 }
     );
   }
