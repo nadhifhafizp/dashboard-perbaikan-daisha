@@ -36,13 +36,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
       setError(null);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        try {
-          controller.abort(new DOMException('Timeout: Permintaan data melebihi 35 detik', 'AbortError'));
-        } catch {
-          controller.abort();
-        }
-      }, FETCH_TIMEOUT_MS);
+      const timeoutId = setTimeout(() => controller.abort(), 15_000);
 
       try {
         const fetchUrl = forceFresh ? `${API_URL}?fresh=true` : API_URL;
@@ -76,16 +70,8 @@ export function useTickets(options: UseTicketsOptions = {}) {
         return processed;
       } catch (err: unknown) {
         clearTimeout(timeoutId);
-        const isAbort = err instanceof Error && (err.name === 'AbortError' || err.message.includes('aborted'));
         if (isMountedRef.current) {
-          const msg = isAbort
-            ? 'Koneksi ke server Power Automate lambat / timeout. Silakan klik muat ulang.'
-            : err instanceof Error
-            ? err.message
-            : 'Terjadi gangguan saat memuat tiket';
-          if (!isAbort) {
-            console.warn('Fetch tickets notice:', err);
-          }
+          const msg = err instanceof Error ? err.message : 'Terjadi gangguan saat memuat tiket';
           setError(msg);
         }
         return sharedTicketCache || [];

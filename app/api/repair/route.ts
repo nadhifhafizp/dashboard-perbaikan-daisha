@@ -6,9 +6,11 @@ import { prisma } from '@/lib/prisma';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 
-const POWER_AUTOMATE_POST_URL = process.env.POWER_AUTOMATE_POST_URL || "";
+const POWER_AUTOMATE_POST_URL = process.env.POWER_AUTOMATE_POST_URL || '';
 
 // 1. FUNGSI GET: Membaca data langsung dari SQLite via Prisma (Kecepatan Instan < 5ms)
+
+
 export async function GET() {
   // Proteksi: Wajib login (Admin atau Operator)
   const cookieStore = await cookies();
@@ -337,11 +339,19 @@ export async function POST(request: Request) {
       });
 
       // Update Ticket
+      const waktuMasukRaw = sanitizeString(body.waktuMasuk, 30);
+      let parsedWaktuMasuk: Date | undefined;
+      if (waktuMasukRaw && waktuMasukRaw !== '-') {
+        const d = new Date(waktuMasukRaw);
+        if (!isNaN(d.getTime())) parsedWaktuMasuk = d;
+      }
+
       await prisma.ticket.update({
         where: { idTiket },
         data: {
           noDaisha,
           namaPelapor: namaPelapor || session.user.name || 'Operator',
+          ...(parsedWaktuMasuk ? { waktuMasuk: parsedWaktuMasuk } : {}),
         },
       });
 

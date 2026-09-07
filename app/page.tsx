@@ -118,12 +118,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 1. 7 Kartu Metrik Ringkasan Eksekutif */}
+      {/* 1. 5 Kartu Metrik Ringkasan Eksekutif (Persis Layout Foto) */}
       <KpiCards
         kpi={kpi}
         filterHanyaBerulang={filterHanyaBerulang}
         setFilterHanyaBerulang={setFilterHanyaBerulang}
         setFilterStatus={setFilterStatus}
+        currentFilterStatus={filterStatus}
       />
 
       {/* 2. Tab Switcher Visualisasi Interaktif */}
@@ -132,7 +133,7 @@ export default function DashboardPage() {
         setActiveTab={setActiveVisualTab}
       />
 
-      {/* 3. Panel Filter & Pencarian Lengkap */}
+      {/* 3. Panel Filter & Pencarian Lengkap (Tidak Dirubah Sesuai Instruksi) */}
       <FilterPanel
         search={search}
         setSearch={setSearch}
@@ -167,15 +168,60 @@ export default function DashboardPage() {
         totalCount={dataRaw.length}
       />
 
-      {/* 4. Area Visualisasi Grafik Dinamis Sesuai Tab */}
-      {(activeVisualTab === 'all' || activeVisualTab === 'daisha') && (
+      {/* 4. Area Visualisasi Grafik Sesuai Referensi Foto */}
+      {activeVisualTab === 'all' && (
+        <div className="space-y-6">
+          {/* Baris Tengah: Sisi Kiri (Peta & Tabel Seksi) + Sisi Kanan (Top Unit Daisha Ranked Bar) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            <div className="lg:col-span-7">
+              <SectionCharts
+                chartSeksiStacked={charts.seksiStacked}
+                seksiJenisMonthly={charts.seksiJenisMonthly}
+                seksiJenisAll={charts.seksiJenisAll}
+                availableMonths={charts.availableMonths}
+                chartPelapor={charts.pelapor}
+                selectedSeksi={filterSeksi}
+                onSelectSeksi={(s) => setFilterSeksi(filterSeksi === s ? '' : s)}
+              />
+            </div>
+            <div className="lg:col-span-5">
+              <DaishaCharts
+                chartUnitFreq={charts.unitFreq}
+                chartSemuaDaisha={charts.semuaDaisha}
+              />
+            </div>
+          </div>
+
+          {/* Baris Bawah: Tren Bulanan/Harian Dual-Axis + Timeline Servis + Lead Time Bar */}
+          <ThroughputCharts
+            chartTrenHarian={charts.trenHarian}
+            chartTrenBulanan={charts.trenBulanan}
+            chartLeadTime={charts.leadTime}
+            avgLeadTimeHours={kpi.avgLeadTimeHours}
+            statusData={charts.statusData}
+            chartSeksiStacked={charts.seksiStacked}
+          />
+
+          {/* Analisis Komponen & Sparepart Demand */}
+          <DamageCharts
+            chartKategori={charts.kategori}
+            chartDetailGejala={charts.detailGejala}
+            tindakanStats={charts.tindakanStats}
+            sparepartKebutuhan={charts.sparepartKebutuhan}
+            sparepartKebutuhanSemua={charts.sparepartKebutuhanSemua}
+          />
+        </div>
+      )}
+
+      {/* Tampilan Tab Spesifik */}
+      {activeVisualTab === 'daisha' && (
         <DaishaCharts
           chartUnitFreq={charts.unitFreq}
           chartSemuaDaisha={charts.semuaDaisha}
         />
       )}
 
-      {(activeVisualTab === 'all' || activeVisualTab === 'damage') && (
+      {activeVisualTab === 'damage' && (
         <DamageCharts
           chartKategori={charts.kategori}
           chartDetailGejala={charts.detailGejala}
@@ -185,22 +231,30 @@ export default function DashboardPage() {
         />
       )}
 
-      {(activeVisualTab === 'all' || activeVisualTab === 'throughput') && (
-        <ThroughputCharts
+      {activeVisualTab === 'throughput' && (
+      <ThroughputCharts
           chartTrenHarian={charts.trenHarian}
-          chartStatusData={charts.statusData}
+          chartTrenBulanan={charts.trenBulanan}
           chartLeadTime={charts.leadTime}
           avgLeadTimeHours={kpi.avgLeadTimeHours}
+          statusData={charts.statusData}
+          chartSeksiStacked={charts.seksiStacked}
         />
       )}
 
-      {(activeVisualTab === 'all' || activeVisualTab === 'seksi') && (
+      {activeVisualTab === 'seksi' && (
         <SectionCharts
           chartSeksiStacked={charts.seksiStacked}
+          seksiJenisMonthly={charts.seksiJenisMonthly}
+          seksiJenisAll={charts.seksiJenisAll}
+          availableMonths={charts.availableMonths}
           chartPelapor={charts.pelapor}
+          selectedSeksi={filterSeksi}
+          onSelectSeksi={(s) => setFilterSeksi(filterSeksi === s ? '' : s)}
         />
       )}
 
+      {/* Panel Raw Data (Tidak Dirubah Sesuai Instruksi) */}
       {(activeVisualTab === 'all' || activeVisualTab === 'table') && (
         <TicketTable
           filteredData={filteredData}

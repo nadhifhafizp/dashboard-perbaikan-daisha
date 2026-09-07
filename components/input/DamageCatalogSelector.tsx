@@ -210,7 +210,7 @@ export default function DamageCatalogSelector({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                      <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 flex-wrap sm:flex-nowrap pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 shrink-0">
                         {/* Qty Stepper */}
                         <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-xl border border-slate-200 shadow-2xs">
                           <span className="text-[10px] font-bold text-slate-500 mr-0.5">Jumlah:</span>
@@ -300,7 +300,7 @@ export default function DamageCatalogSelector({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                      <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 flex-wrap sm:flex-nowrap pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 shrink-0">
                         {/* Custom Qty Stepper */}
                         <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-xl border border-slate-200 shadow-2xs">
                           <span className="text-[10px] font-bold text-slate-500 mr-0.5">Jumlah:</span>

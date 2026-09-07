@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Ticket } from '@/types/ticket';
-import { DAFTAR_SEKSI, DAFTAR_SEMUA_DAISHA, masterDataDaisha } from '@/lib/masterData';
+import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 import DamageCatalogSelector, { TindakanType } from '@/components/input/DamageCatalogSelector';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { cleanInputDateTime, toDateTimeLocalValue } from '@/lib/date';
@@ -112,11 +112,13 @@ function EditTicketModalDialog({
   const [customTindakanMap, setCustomTindakanMap] = useState<Record<string, TindakanType>>(initial.customTindakanMap);
   const [customQtyMap, setCustomQtyMap] = useState<Record<string, number>>(initial.customQtyMap);
 
+  const { catalog, seksiList, daishaList } = useDaishaCatalog();
+
   // Katalog kerusakan untuk tipe Daisha yang sedang diedit
   const katalogKerusakan = useMemo(() => {
-    if (!formData.namaDaisha || !masterDataDaisha[formData.namaDaisha]) return {};
-    return masterDataDaisha[formData.namaDaisha].jenisKerusakan || {};
-  }, [formData.namaDaisha]);
+    if (!formData.namaDaisha || !catalog[formData.namaDaisha]) return {};
+    return catalog[formData.namaDaisha].jenisKerusakan || {};
+  }, [formData.namaDaisha, catalog]);
 
   const toggleKerusakan = (komponen: string, detail: string) => {
     const key = `${komponen}:::${detail}`;
@@ -324,7 +326,7 @@ function EditTicketModalDialog({
                 required
               >
                 <option value="">-- Pilih Seksi --</option>
-                {DAFTAR_SEKSI.map((s) => (
+                {seksiList.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
@@ -347,7 +349,7 @@ function EditTicketModalDialog({
                 required
               />
               <datalist id="daftar-jenis-daisha-edit">
-                {DAFTAR_SEMUA_DAISHA.map((nama) => (
+                {daishaList.map((nama) => (
                   <option key={nama} value={nama} />
                 ))}
               </datalist>
@@ -385,18 +387,18 @@ function EditTicketModalDialog({
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-3 border-t border-slate-200 flex justify-end gap-2.5">
+          <div className="pt-3 border-t border-slate-200 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-2.5">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition cursor-pointer text-xs"
+              className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition cursor-pointer text-xs text-center"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl shadow-xs transition cursor-pointer flex items-center gap-2 text-xs disabled:opacity-50"
+              className="w-full sm:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl shadow-xs transition cursor-pointer flex items-center justify-center gap-2 text-xs disabled:opacity-50"
             >
               {isLoading ? (
                 <>

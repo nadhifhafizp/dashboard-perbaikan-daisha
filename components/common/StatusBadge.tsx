@@ -3,6 +3,8 @@
 import React from 'react';
 import { TicketStatus } from '@/types/ticket';
 import { normalizeStatus } from '@/lib/ticketParser';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, Clock, AlertCircle, Trash2 } from 'lucide-react';
 
 interface StatusBadgeProps {
   status: TicketStatus | string;
@@ -16,49 +18,38 @@ export default function StatusBadge({
   className = '',
 }: StatusBadgeProps) {
   const clean = normalizeStatus(status);
-
-  const sizeClasses =
-    size === 'sm'
-      ? 'px-2 py-0.5 text-[9px]'
-      : 'px-2.5 py-1 text-[10px] sm:text-xs';
+  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-[9px]' : 'px-2.5 py-1 text-xs';
 
   switch (clean) {
     case 'Done':
       return (
-        <span
-          className={`inline-flex items-center gap-1 rounded-full font-black bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs ${sizeClasses} ${className}`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <Badge variant="success" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
+          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
           <span>Done</span>
-        </span>
+        </Badge>
       );
     case 'Progress':
       return (
-        <span
-          className={`inline-flex items-center gap-1 rounded-full font-black bg-blue-100 text-blue-800 border border-blue-200 shadow-xs ${sizeClasses} ${className}`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+        <Badge variant="info" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
+          <Clock className="w-3 h-3 text-blue-600 animate-spin" style={{ animationDuration: '4s' }} />
           <span>Progress</span>
-        </span>
+        </Badge>
       );
     case 'Scrap':
       return (
-        <span
-          className={`inline-flex items-center gap-1 rounded-full font-black bg-rose-100 text-rose-800 border border-rose-200 shadow-xs ${sizeClasses} ${className}`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+        <Badge variant="destructive" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
+          <Trash2 className="w-3 h-3 text-white" />
           <span>Scrap</span>
-        </span>
+        </Badge>
       );
     case 'Open':
     default:
       return (
-        <span
-          className={`inline-flex items-center gap-1 rounded-full font-black bg-amber-100 text-amber-800 border border-amber-200 shadow-xs ${sizeClasses} ${className}`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+        <Badge variant="warning" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
+          <AlertCircle className="w-3 h-3 text-amber-600" />
           <span>Open</span>
-        </span>
+        </Badge>
       );
   }
 }
+

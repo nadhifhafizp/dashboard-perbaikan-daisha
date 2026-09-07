@@ -34,16 +34,29 @@ export interface KpiSummary {
   avgLeadTimeHours: number;
   unitUnikCount: number;
   repeatUnitCount: number;
+  totalPcs?: number;
+  seksiCount?: number;
+}
+
+export interface SeksiJenisBreakdown {
+  seksi: string;
+  total: number;
+  totalPcs: number;
+  jenisList: { jenis: string; count: number }[];
 }
 
 export interface DashboardChartsData {
-  trenHarian: { tanggal: string; Masuk: number; Selesai: number }[];
+  trenHarian: { tanggal: string; Masuk: number; Selesai: number; Pcs?: number }[];
+  trenBulanan: { bulan: string; monthKey: string; Tiket: number; Pcs: number; Selesai: number }[];
   statusData: { name: string; value: number; color: string }[];
-  unitFreq: { unit: string; total: number; jenis: string }[];
+  unitFreq: { unit: string; total: number; jenis: string; displayName?: string }[];
   semuaDaisha: { jenis: string; total: number }[];
   kategori: { kategori: string; total: number; totalPcs: number }[];
   detailGejala: { gejala: string; total: number; totalPcs: number; komponen?: string }[];
-  seksiStacked: { seksi: string; Open: number; Progress: number; Done: number; Scrap: number; Total: number }[];
+  seksiStacked: { seksi: string; Open: number; Progress: number; Done: number; Scrap: number; Total: number; totalPcs: number }[];
+  seksiJenisMonthly: Record<string, SeksiJenisBreakdown[]>;
+  seksiJenisAll: SeksiJenisBreakdown[];
+  availableMonths: { key: string; label: string }[];
   pelapor: { pelapor: string; seksi: string; total: number }[];
   leadTime: { rentang: string; total: number; persen: number }[];
   tindakanStats: {
@@ -214,7 +227,9 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     const avgLeadTimeHours = countedLeadTime > 0 ? Math.round(totalLeadTimeHours / countedLeadTime) : 0;
 
     const unitSet = new Set<string>();
+    const seksiSet = new Set<string>();
     let repeatUnitCount = 0;
+    let totalPcsSum = 0;
     filteredData.forEach(d => {
       if (d.noDaisha && d.noDaisha !== '-') {
         unitSet.add(d.noDaisha);
@@ -222,6 +237,11 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
           repeatUnitCount++;
         }
       }
+      if (d.seksi && d.seksi !== '-') {
+        seksiSet.add(d.seksi);
+      }
+      const parsed = parseTicketDamageDetail(d.detail);
+      totalPcsSum += (parsed.totalQtyGanti + parsed.totalQtyRepair) || 1;
     });
 
     return {
@@ -234,24 +254,30 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       scrapRate,
       avgLeadTimeHours,
       unitUnikCount: unitSet.size,
-      repeatUnitCount
+      repeatUnitCount,
+      totalPcs: totalPcsSum,
+      seksiCount: seksiSet.size,
     };
   }, [filteredData, unitRepeatMap]);
 
   // 5. Seluruh Data Visualisasi Grafik (Simulasi SQL GROUP BY queries)
   const charts: DashboardChartsData = useMemo(() => {
-    // 5.1 Throughput Masuk vs Selesai
-    const datesMap: Record<string, { tanggal: string; Masuk: number; Selesai: number }> = {};
+    // 5.1 Throughput Masuk vs Selesai & Tren Pcs
+    const datesMap: Record<string, { tanggal: string; Masuk: number; Selesai: number; Pcs: number }> = {};
     filteredData.forEach(d => {
       const tglMasukISO = parseToISODate(d.tglMasuk);
+      const parsed = parseTicketDamageDetail(d.detail);
+      const pcs = (parsed.totalQtyGanti + parsed.totalQtyRepair) || 1;
+
       if (tglMasukISO) {
-        if (!datesMap[tglMasukISO]) datesMap[tglMasukISO] = { tanggal: tglMasukISO, Masuk: 0, Selesai: 0 };
+        if (!datesMap[tglMasukISO]) datesMap[tglMasukISO] = { tanggal: tglMasukISO, Masuk: 0, Selesai: 0, Pcs: 0 };
         datesMap[tglMasukISO].Masuk++;
+        datesMap[tglMasukISO].Pcs += pcs;
       }
       if (d.status === 'Done') {
         const tglKeluarISO = parseToISODate(d.tglKeluar);
         if (tglKeluarISO) {
-          if (!datesMap[tglKeluarISO]) datesMap[tglKeluarISO] = { tanggal: tglKeluarISO, Masuk: 0, Selesai: 0 };
+          if (!datesMap[tglKeluarISO]) datesMap[tglKeluarISO] = { tanggal: tglKeluarISO, Masuk: 0, Selesai: 0, Pcs: 0 };
           datesMap[tglKeluarISO].Selesai++;
         }
       }
@@ -264,6 +290,36 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
         tanggal: formatDisplayDate(item.tanggal).split(' ')[0]
       }));
 
+    // 5.1.b Tren Agregasi Bulanan (Monthly Bar Chart)
+    const monthNames: Record<string, string> = {
+      '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr',
+      '05': 'Mei', '06': 'Jun', '07': 'Jul', '08': 'Ags',
+      '09': 'Sep', '10': 'Okt', '11': 'Nov', '12': 'Des',
+    };
+    const monthsMap: Record<string, { bulan: string; monthKey: string; Tiket: number; Pcs: number; Selesai: number }> = {};
+    filteredData.forEach(d => {
+      const tglMasukISO = parseToISODate(d.tglMasuk);
+      const parsed = parseTicketDamageDetail(d.detail);
+      const pcs = (parsed.totalQtyGanti + parsed.totalQtyRepair) || 1;
+
+      if (tglMasukISO && tglMasukISO.length >= 7) {
+        const mKey = tglMasukISO.slice(0, 7);
+        const [yyyy, mm] = mKey.split('-');
+        const bName = `${monthNames[mm] || mm} '${yyyy.slice(2)}`;
+        if (!monthsMap[mKey]) {
+          monthsMap[mKey] = { bulan: bName, monthKey: mKey, Tiket: 0, Pcs: 0, Selesai: 0 };
+        }
+        monthsMap[mKey].Tiket++;
+        monthsMap[mKey].Pcs += pcs;
+        if (d.status === 'Done') {
+          monthsMap[mKey].Selesai++;
+        }
+      }
+    });
+    const trenBulanan = Object.values(monthsMap)
+      .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
+      .slice(-12);
+
     // 5.2 Status Donut Data
     const statusData = [
       { name: 'Antre (Open)', value: kpi.open, color: '#f59e0b' },
@@ -273,11 +329,17 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     ];
 
     // 5.3 Top 10 Repeat Failure Units
-    const freq: Record<string, { unit: string; total: number; jenis: string }> = {};
+    const freq: Record<string, { unit: string; total: number; jenis: string; displayName: string }> = {};
     filteredData.forEach(d => {
       if (d.noDaisha && d.noDaisha !== '-') {
         if (!freq[d.noDaisha]) {
-          freq[d.noDaisha] = { unit: d.noDaisha, total: 0, jenis: d.namaDaisha };
+          const jenis = d.namaDaisha || 'Daisha';
+          freq[d.noDaisha] = {
+            unit: d.noDaisha,
+            total: 0,
+            jenis,
+            displayName: `${d.noDaisha} • ${jenis}`,
+          };
         }
         freq[d.noDaisha].total++;
       }
@@ -412,22 +474,98 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       .sort((a, b) => b.gantiPcs - a.gantiPcs || b.totalPcs - a.totalPcs)
       .slice(0, 8);
 
-    // 5.7 Beban Seksi Stacked Bar
-    const seksiMap: Record<string, { seksi: string; Open: number; Progress: number; Done: number; Scrap: number; Total: number }> = {};
+    // 5.7 Beban Seksi Stacked Bar & Total Pcs
+    const seksiMap: Record<string, { seksi: string; Open: number; Progress: number; Done: number; Scrap: number; Total: number; totalPcs: number }> = {};
     filteredData.forEach(d => {
       const s = d.seksi || 'Lainnya';
+      const parsed = parseTicketDamageDetail(d.detail);
+      const pcs = (parsed.totalQtyGanti + parsed.totalQtyRepair) || 1;
+
       if (!seksiMap[s]) {
-        seksiMap[s] = { seksi: s, Open: 0, Progress: 0, Done: 0, Scrap: 0, Total: 0 };
+        seksiMap[s] = { seksi: s, Open: 0, Progress: 0, Done: 0, Scrap: 0, Total: 0, totalPcs: 0 };
       }
       const st = d.status as 'Open' | 'Progress' | 'Done' | 'Scrap';
       if (seksiMap[s][st] !== undefined) {
         seksiMap[s][st]++;
       }
       seksiMap[s].Total++;
+      seksiMap[s].totalPcs += pcs;
     });
     const seksiStacked = Object.values(seksiMap)
       .filter(item => item.Total > 0)
       .sort((a, b) => b.Total - a.Total);
+
+    // 5.7.b Rincian Beban Seksi x Jenis Daisha (Keseluruhan & per Bulan untuk Poin 1 & 7)
+    const allSeksiJenisMap: Record<string, { seksi: string; total: number; totalPcs: number; jenisMap: Record<string, number> }> = {};
+    const monthlySeksiJenisMap: Record<string, Record<string, { seksi: string; total: number; totalPcs: number; jenisMap: Record<string, number> }>> = {};
+    const monthsSet = new Set<string>();
+
+    filteredData.forEach(d => {
+      const s = d.seksi || 'Lainnya';
+      const j = d.namaDaisha && d.namaDaisha !== '-' ? d.namaDaisha : 'Lainnya';
+      const parsed = parseTicketDamageDetail(d.detail);
+      const pcs = (parsed.totalQtyGanti + parsed.totalQtyRepair) || 1;
+
+      // Akumulasi Semua Bulan
+      if (!allSeksiJenisMap[s]) {
+        allSeksiJenisMap[s] = { seksi: s, total: 0, totalPcs: 0, jenisMap: {} };
+      }
+      allSeksiJenisMap[s].total++;
+      allSeksiJenisMap[s].totalPcs += pcs;
+      allSeksiJenisMap[s].jenisMap[j] = (allSeksiJenisMap[s].jenisMap[j] || 0) + 1;
+
+      // Akumulasi per Bulan
+      const tglMasukISO = parseToISODate(d.tglMasuk);
+      if (tglMasukISO && tglMasukISO.length >= 7) {
+        const mKey = tglMasukISO.slice(0, 7);
+        monthsSet.add(mKey);
+        if (!monthlySeksiJenisMap[mKey]) {
+          monthlySeksiJenisMap[mKey] = {};
+        }
+        if (!monthlySeksiJenisMap[mKey][s]) {
+          monthlySeksiJenisMap[mKey][s] = { seksi: s, total: 0, totalPcs: 0, jenisMap: {} };
+        }
+        monthlySeksiJenisMap[mKey][s].total++;
+        monthlySeksiJenisMap[mKey][s].totalPcs += pcs;
+        monthlySeksiJenisMap[mKey][s].jenisMap[j] = (monthlySeksiJenisMap[mKey][s].jenisMap[j] || 0) + 1;
+      }
+    });
+
+    const formatBreakdownList = (map: Record<string, { seksi: string; total: number; totalPcs: number; jenisMap: Record<string, number> }>): SeksiJenisBreakdown[] => {
+      return Object.values(map)
+        .sort((a, b) => b.total - a.total)
+        .map(item => ({
+          seksi: item.seksi,
+          total: item.total,
+          totalPcs: item.totalPcs,
+          jenisList: Object.entries(item.jenisMap)
+            .map(([jenis, count]) => ({ jenis, count }))
+            .sort((a, b) => b.count - a.count),
+        }));
+    };
+
+    const seksiJenisAll = formatBreakdownList(allSeksiJenisMap);
+
+    const seksiJenisMonthly: Record<string, SeksiJenisBreakdown[]> = {};
+    Object.entries(monthlySeksiJenisMap).forEach(([mKey, sMap]) => {
+      seksiJenisMonthly[mKey] = formatBreakdownList(sMap);
+    });
+
+    const fullMonthNames: Record<string, string> = {
+      '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
+      '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
+      '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember',
+    };
+
+    const availableMonths = Array.from(monthsSet)
+      .sort((a, b) => b.localeCompare(a))
+      .map(mKey => {
+        const [yyyy, mm] = mKey.split('-');
+        return {
+          key: mKey,
+          label: `${fullMonthNames[mm] || mm} ${yyyy}`,
+        };
+      });
 
     // 5.8 Leaderboard Pelapor
     const pelMap: Record<string, { pelapor: string; seksi: string; total: number }> = {};
@@ -475,12 +613,16 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
 
     return {
       trenHarian,
+      trenBulanan,
       statusData,
       unitFreq,
       semuaDaisha,
       kategori,
       detailGejala,
       seksiStacked,
+      seksiJenisMonthly,
+      seksiJenisAll,
+      availableMonths,
       pelapor,
       leadTime,
       tindakanStats: {

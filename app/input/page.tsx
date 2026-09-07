@@ -12,12 +12,7 @@ import PrintTicketTagModal, { PrintableTicketData } from '@/components/common/Pr
 import IndoDateTimeInput from '@/components/common/IndoDateTimeInput';
 import { useTickets } from '@/hooks/useTickets';
 import { detectDaishaSize } from '@/lib/daishaSize';
-import {
-  masterDataDaisha,
-  DAFTAR_SEKSI,
-  DAFTAR_SEMUA_DAISHA,
-  getDaishaBySeksi,
-} from '@/lib/masterData';
+import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 
 const INVALID_OPERATOR_NAMES = [
   'Staff Input / Teknisi Lapangan',
@@ -73,6 +68,7 @@ export default function InputKerusakanPage() {
   const [pendingPayload, setPendingPayload] = useState<CreateTicketPayload | null>(null);
 
   const { tickets } = useTickets({ autoRefreshIntervalMs: 0 });
+  const { catalog, seksiList, daishaList, getDaishaBySeksi } = useDaishaCatalog();
 
   // State untuk Cetak Tag Fisik Daisha setelah submit
   const [createdTicketForTag, setCreatedTicketForTag] = useState<PrintableTicketData | null>(null);
@@ -141,15 +137,15 @@ export default function InputKerusakanPage() {
 
   // Pilihan dinamis berdasarkan Master Data
   const pilihanDaishaTersedia = useMemo(() => {
-    if (showAllDaisha) return DAFTAR_SEMUA_DAISHA;
+    if (showAllDaisha) return daishaList;
     return getDaishaBySeksi(formData.seksi);
-  }, [showAllDaisha, formData.seksi]);
+  }, [showAllDaisha, formData.seksi, daishaList, getDaishaBySeksi]);
 
   // Katalog kerusakan untuk jenis Daisha yang sedang dipilih
   const katalogKerusakan = useMemo(() => {
-    if (!formData.jenisDaisha || !masterDataDaisha[formData.jenisDaisha]) return {};
-    return masterDataDaisha[formData.jenisDaisha].jenisKerusakan || {};
-  }, [formData.jenisDaisha]);
+    if (!formData.jenisDaisha || !catalog[formData.jenisDaisha]) return {};
+    return catalog[formData.jenisDaisha].jenisKerusakan || {};
+  }, [formData.jenisDaisha, catalog]);
 
   const totalDipilih = selectedKerusakan.length + customKerusakanList.length;
 
@@ -221,7 +217,7 @@ export default function InputKerusakanPage() {
       const isChecked = (e.target as HTMLInputElement).checked;
       setShowAllDaisha(isChecked);
     } else if (name === 'jenisDaisha') {
-      const daishaSeksi = masterDataDaisha[value]?.seksi;
+      const daishaSeksi = catalog[value]?.seksi;
       setFormData((prev) => ({
         ...prev,
         jenisDaisha: value,
@@ -486,7 +482,7 @@ export default function InputKerusakanPage() {
                   className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-bold bg-white focus:ring-2 focus:ring-red-600 outline-none cursor-pointer"
                 >
                   <option value="">-- Pilih Seksi --</option>
-                  {DAFTAR_SEKSI.filter((s) => s !== 'All seksi').map((s) => (
+                  {seksiList.filter((s) => s.toLowerCase() !== 'all seksi').map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>

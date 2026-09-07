@@ -41,20 +41,8 @@ export async function createSessionToken(payload: SessionPayload): Promise<strin
   // Encode username ke Base64 agar karakter apapun (termasuk '|') tidak merusak format token
   const encodedUsername = Buffer.from(payload.username).toString('base64');
   const data = `${encodedUsername}|${payload.role}|${timestamp}`;
-  const signature = await generateHmacSignature(data, getSecret());
+  const signature = generateHmacSignature(data, getSecret());
   return `${data}|${signature}`;
-}
-
-// Verifikasi session token
-export async function verifySessionToken(token: string | undefined | null): Promise<boolean> {
-  const res = await parseAndVerifySession(token);
-  return res.valid;
-}
-
-// Verifikasi khusus untuk role ADMIN
-export async function verifyAdminSession(token: string | undefined | null): Promise<boolean> {
-  const res = await parseAndVerifySession(token);
-  return res.valid && res.user?.role === 'ADMIN';
 }
 
 // Verifikasi session token dan decode informasinya
@@ -62,8 +50,18 @@ export async function parseAndVerifySession(token: string | undefined | null): P
   if (!token) return { valid: false };
 
   try {
-    const parts = token.split('|');
+    let cleanToken = token;
+    try {
+      if (token.includes('%')) {
+        cleanToken = decodeURIComponent(token);
+      }
+    } catch {
+      // Abaikan jika bukan format encoded
+    }
+
+    const parts = cleanToken.split('|');
     if (parts.length !== 4) return { valid: false };
+
 
     const [encodedUsername, role, timestampStr, providedSignature] = parts;
     const timestamp = parseInt(timestampStr, 10);
@@ -77,7 +75,7 @@ export async function parseAndVerifySession(token: string | undefined | null): P
     }
 
     const data = `${encodedUsername}|${role}|${timestampStr}`;
-    const expectedSignature = await generateHmacSignature(data, getSecret());
+    const expectedSignature = generateHmacSignature(data, getSecret());
 
     if (!constantTimeCompare(providedSignature, expectedSignature)) {
       return { valid: false };
@@ -85,14 +83,20 @@ export async function parseAndVerifySession(token: string | undefined | null): P
 
     // Decode Base64 username
     const username = Buffer.from(encodedUsername, 'base64').toString('utf8');
-    const matchedUser = findUserByUsername(username);
+    let matchedName = username;
+    try {
+      const matchedUser = await findUserByUsername(username);
+      if (matchedUser?.name) matchedName = matchedUser.name;
+    } catch {
+      // Fallback jika dipanggil dari environment yang tidak memiliki akses DB langsung
+    }
 
     return {
       valid: true,
       user: {
         username,
         role: role as UserRole,
-        name: matchedUser ? matchedUser.name : username,
+        name: matchedName,
       },
     };
   } catch (err) {

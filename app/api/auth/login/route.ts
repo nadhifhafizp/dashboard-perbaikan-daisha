@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = findUserByCredentials(username, password);
+    const user = await findUserByCredentials(username, password);
 
     if (!user) {
       return NextResponse.json(
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     response.cookies.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // HTTP lokal saja, tidak perlu HTTPS
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60, // 7 hari

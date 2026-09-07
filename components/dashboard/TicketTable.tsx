@@ -42,7 +42,7 @@ export default function TicketTable({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
           {/* Selector Jumlah Baris per Halaman */}
           <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
             <span className="text-slate-400">📄 Tampilkan:</span>
@@ -67,16 +67,16 @@ export default function TicketTable({
             type="button"
             onClick={exportToExcel}
             disabled={filteredData.length === 0}
-            className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="px-3.5 sm:px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <span>📥</span>
-            <span>Ekspor ke Excel (.xlsx)</span>
+            <span>Ekspor ke Excel</span>
           </button>
         </div>
       </div>
 
-      {/* Kontainer Tabel Responsif */}
-      <div className="overflow-x-auto">
+      {/* Kontainer Tabel Desktop (Khusus Layar md ke atas) */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-100/75 text-[11px] font-black text-slate-600 uppercase tracking-wider border-b border-slate-200">
@@ -192,9 +192,127 @@ export default function TicketTable({
         </table>
       </div>
 
+      {/* Kontainer Kartu Mobile (Khusus Smartphone < md) */}
+      <div className="md:hidden divide-y divide-slate-100">
+        {loading ? (
+          <div className="py-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
+            <span className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></span>
+            <span className="text-xs">Memuat data tiket perbaikan...</span>
+          </div>
+        ) : paginatedData.length === 0 ? (
+          <div className="py-12 text-center text-slate-400 text-xs px-4">
+            Tidak ada tiket perbaikan yang cocok dengan kriteria filter saat ini.
+          </div>
+        ) : (
+          paginatedData.map((item) => {
+            const parsed = parseTicketDamageDetail(item.detail);
+            const sizeInfo = detectDaishaSize(item.noDaisha);
+
+            return (
+              <div key={item.id} className="p-4 space-y-2.5 bg-white hover:bg-slate-50/60 transition">
+                {/* Baris 1: ID Tiket, No Daisha & Status */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                      #{item.idTiketAsli}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-black text-sm text-red-700">{item.noDaisha}</span>
+                      {sizeInfo && (
+                        <span
+                          className={`px-1.5 py-0.2 rounded text-[9px] font-black border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
+                          title={sizeInfo.description}
+                        >
+                          {sizeInfo.code}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <StatusBadge status={item.status} />
+                </div>
+
+                {/* Baris 2: Nama Daisha & Seksi */}
+                <div className="text-xs font-semibold text-slate-700 flex items-center gap-2 flex-wrap">
+                  <span className="text-slate-900 font-bold">{item.namaDaisha}</span>
+                  <span className="text-slate-300">•</span>
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[11px] font-bold">
+                    {item.seksi}
+                  </span>
+                </div>
+
+                {/* Baris 3: Titik Kerusakan */}
+                <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/70 space-y-1.5">
+                  <div className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                    Rincian Kerusakan:
+                  </div>
+                  {parsed.items.length > 0 ? (
+                    parsed.items.map((it, i) => (
+                      <div
+                        key={i}
+                        className="flex items-start justify-between gap-1.5 text-[11px]"
+                      >
+                        <div className="flex items-start gap-1 leading-snug">
+                          <span className="text-slate-400 font-bold">•</span>
+                          <div>
+                            {it.komponen && it.komponen !== 'Umum' && (
+                              <span className="font-extrabold text-slate-800 mr-1">
+                                [{it.komponen}]
+                              </span>
+                            )}
+                            <span className="text-slate-700 font-medium">{it.gejala}</span>
+                            {it.qty > 1 && (
+                              <span className="ml-1 text-[10px] font-black text-slate-800 bg-slate-200/80 px-1.5 py-0.2 rounded">
+                                {it.qty} pcs
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {it.tindakan && (
+                          <span
+                            className={`px-1.5 py-0.2 rounded text-[9px] font-black shrink-0 ${
+                              it.tindakan === 'Ganti'
+                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                : 'bg-amber-100 text-amber-800 border border-amber-200'
+                            }`}
+                          >
+                            {it.tindakan === 'Ganti' ? '🔄 Ganti' : '🔨 Repair'}
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div>
+                      <div className="font-bold text-slate-800 text-xs">{item.jenisKerusakan}</div>
+                      <div className="text-[11px] text-slate-500">{item.detail}</div>
+                    </div>
+                  )}
+                  {parsed.catatan && (
+                    <div className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      📌 Posisi: {parsed.catatan}
+                    </div>
+                  )}
+                </div>
+
+                {/* Baris 4: Info Pelapor & Waktu */}
+                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 flex-wrap gap-1">
+                  <div>
+                    <span>Pelapor: </span>
+                    <strong className="text-slate-700">{item.pelapor}</strong>
+                  </div>
+                  <div className="text-[10px]">
+                    <span>Masuk: {item.tglMasuk}</span>
+                    {item.tglKeluar && <span> • Selesai: {item.tglKeluar}</span>}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
       {/* Pagination Controls & Info Footer */}
-      <div className="p-3.5 border-t border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-slate-50/50 text-xs">
-        <div className="text-slate-500 font-medium flex items-center gap-2">
+      <div className="p-3.5 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/50 text-xs">
+        <div className="text-slate-500 font-medium flex items-center gap-2 text-center sm:text-left">
           <span>
             Menampilkan{' '}
             <b>{filteredData.length === 0 ? 0 : startIndex + 1}</b> -{' '}
@@ -207,7 +325,7 @@ export default function TicketTable({
         </div>
 
         {itemsPerPage !== -1 && totalPages > 1 && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap justify-center">
             <button
               type="button"
               disabled={currentPage === 1}
@@ -221,9 +339,9 @@ export default function TicketTable({
               type="button"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
+              className="px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
             >
-              ← Sebelumnya
+              ← <span className="hidden sm:inline">Sebelumnya</span>
             </button>
 
             <span className="px-3 py-1.5 bg-slate-200/80 rounded-lg font-black text-slate-800 text-[11px]">
@@ -234,9 +352,9 @@ export default function TicketTable({
               type="button"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
+              className="px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
             >
-              Selanjutnya →
+              <span className="hidden sm:inline">Selanjutnya</span> →
             </button>
             <button
               type="button"

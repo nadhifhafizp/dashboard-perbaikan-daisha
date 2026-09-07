@@ -318,11 +318,11 @@ export default function DetailTicketModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 sm:p-5 border-t border-slate-100 flex items-center justify-end gap-2.5 bg-slate-50/70 shrink-0">
+        <div className="p-3 sm:p-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-2.5 bg-slate-50/70 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer"
+            className="order-3 sm:order-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer text-center"
           >
             Tutup
           </button>
@@ -330,7 +330,7 @@ export default function DetailTicketModal({
           <button
             type="button"
             onClick={() => setIsPrintTagOpen(true)}
-            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold rounded-xl transition shadow-md cursor-pointer flex items-center gap-1.5"
+            className="order-2 sm:order-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold rounded-xl transition shadow-md cursor-pointer flex items-center justify-center gap-1.5"
           >
             <span>🏷️</span>
             <span>Cetak Tag Fisik</span>
@@ -343,7 +343,7 @@ export default function DetailTicketModal({
                 onClose();
                 onEdit(ticket);
               }}
-              className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold rounded-xl transition shadow-md shadow-amber-900/10 cursor-pointer flex items-center gap-1.5"
+              className="order-1 sm:order-3 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold rounded-xl transition shadow-md shadow-amber-900/10 cursor-pointer flex items-center justify-center gap-1.5"
             >
               <span>✏️</span>
               <span>Koreksi / Edit Tiket</span>

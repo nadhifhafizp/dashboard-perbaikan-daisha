@@ -16,6 +16,13 @@ export function exportTicketsToExcel(tickets: Ticket[], filePrefix = 'Rekap_Perb
     return;
   }
 
+  // Urutkan dari yang paling pertama diinput (ascending: tiket terlama di atas)
+  const sortedTickets = [...tickets].sort((a, b) => {
+    const idA = String(a.idTiketAsli || a.noTiket || a.id);
+    const idB = String(b.idTiketAsli || b.noTiket || b.id);
+    return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
+  });
+
   const wb = XLSX.utils.book_new();
 
   // 1. DATA SHEET 1: Rincian Kerusakan Per Titik (Multi-baris ke bawah dengan Qty)
@@ -40,7 +47,7 @@ export function exportTicketsToExcel(tickets: Ticket[], filePrefix = 'Rekap_Perb
   const rincianRows: RincianRow[] = [];
   let counter = 1;
 
-  for (const t of tickets) {
+  for (const t of sortedTickets) {
     const parsed = parseTicketDamageDetail(t.detail);
     const sizeLabel = detectDaishaSize(t.noDaisha)?.label || '-';
 
@@ -111,7 +118,7 @@ export function exportTicketsToExcel(tickets: Ticket[], filePrefix = 'Rekap_Perb
   XLSX.utils.book_append_sheet(wb, wsRincian, 'Rincian_Per_Titik_Rusak');
 
   // 2. DATA SHEET 2: Rekap Per Tiket Unit (sampai Waktu Selesai)
-  const rekapRows = tickets.map((t, idx) => {
+  const rekapRows = sortedTickets.map((t, idx) => {
     const parsed = parseTicketDamageDetail(t.detail);
     return {
       'No': idx + 1,
@@ -168,7 +175,7 @@ export function exportTicketsToExcel(tickets: Ticket[], filePrefix = 'Rekap_Perb
 
   const partMap: Record<string, SparepartAgg> = {};
 
-  for (const t of tickets) {
+  for (const t of sortedTickets) {
     const parsed = parseTicketDamageDetail(t.detail);
     const id = String(t.idTiketAsli || t.noTiket || t.id);
 

@@ -24,28 +24,8 @@ export function getValue(obj: RawTicketData, possibleKeys: string[]): string | n
   return null;
 }
 
-// Local cache override untuk mencegah visual rollback sesaat setelah Admin update status (akibat delay Power Automate sync)
-export interface StatusOverrideEntry {
-  status: TicketStatus;
-  waktuKeluar: string;
-  reason: string;
-  timestamp: number;
-}
-
-export const localStatusOverrides = new Map<string, StatusOverrideEntry>();
-
-export function setStatusOverride(idTiket: string, status: TicketStatus, waktuKeluar = '-', reason = '') {
-  localStatusOverrides.set(idTiket, {
-    status,
-    waktuKeluar,
-    reason,
-    timestamp: Date.now()
-  });
-}
-
 /**
- * Ekstraksi array mentah dari berbagai bentuk respons Power Automate / SharePoint API
- * (array langsung, atau objek dengan properti data, value, d, items, records, result)
+ * Ekstraksi array mentah dari berbagai bentuk respons data tiket
  */
 export function extractRawTicketArray(jsonResult: unknown): RawTicketData[] {
   if (Array.isArray(jsonResult)) {
@@ -63,7 +43,7 @@ export function extractRawTicketArray(jsonResult: unknown): RawTicketData[] {
   return [];
 }
 
-// Parser terpusat yang memetakan raw Excel/SharePoint JSON ke model domain Ticket
+// Parser terpusat yang memetakan raw record ke model domain Ticket
 export function processRawTicketData(hasilData: RawTicketData[]): Ticket[] {
   if (!Array.isArray(hasilData)) return [];
 
@@ -74,19 +54,10 @@ export function processRawTicketData(hasilData: RawTicketData[]): Ticket[] {
       const extractedNamaDaisha = getValue(item, ["Nama_Daisha", "namaDaisha", "Nama Daisha", "daisha", "nama_daisha"]) || "-";
 
       const rawStatus = getValue(item, ["Status", "status"]);
-      let cleanStatus = normalizeStatus(rawStatus);
-      let reason = getValue(item, ["Catatan", "catatan", "Catatan Teknisi", "CatatanTeknisi", "keterangan"]) || "";
-      let tglKeluar = formatDisplayDate(getValue(item, ["Waktu_Keluar", "waktuKeluar", "Waktu Keluar", "tanggalKeluar"]));
+      const cleanStatus = normalizeStatus(rawStatus);
+      const reason = getValue(item, ["Catatan", "catatan", "Catatan Teknisi", "CatatanTeknisi", "keterangan"]) || "";
+      const tglKeluar = formatDisplayDate(getValue(item, ["Waktu_Keluar", "waktuKeluar", "Waktu Keluar", "tanggalKeluar"]));
 
-      // Pertahankan status lokal jika baru saja diupdate dalam 60 detik terakhir
-      const override = localStatusOverrides.get(idTiket || "");
-      if (override && (Date.now() - override.timestamp < 60000)) {
-        if (override.status !== 'Open' && cleanStatus === 'Open') {
-          cleanStatus = override.status;
-          if (override.waktuKeluar && override.waktuKeluar !== '-') tglKeluar = override.waktuKeluar;
-          if (override.reason) reason = override.reason;
-        }
-      }
 
       return {
         id: idTiket || `temp-${index}`,

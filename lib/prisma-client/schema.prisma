@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/prisma-client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL") // Otomatis mengarah ke file lokal
+}
+
+model MasterDaisha {
+  noDaisha   String   @id
+  namaDaisha String
+  ukuran     String
+  seksi      String
+  tickets    Ticket[]
+}
+
+model Ticket {
+  idTiket      String         @id
+  noDaisha     String
+  daisha       MasterDaisha   @relation(fields: [noDaisha], references: [noDaisha])
+  namaPelapor  String
+  status       String         @default("Open")
+  waktuMasuk   DateTime       @default(now())
+  waktuSelesai DateTime?
+  catatan      String?
+  details      TicketDetail[]
+}
+
+model TicketDetail {
+  idDetail Int    @id @default(autoincrement())
+  idTiket  String
+  ticket   Ticket @relation(fields: [idTiket], references: [idTiket])
+  komponen String
+  gejala   String
+  tindakan String
+  qty      Int
+}
+
+model Sparepart {
+  namaKomponen String @id
+  stokGudang   Int    @default(0)
+  satuan       String
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  username    String   @unique
+  password    String
+  name        String
+  role        String   @default("OPERATOR")
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DaishaType {
+  id         Int               @id @default(autoincrement())
+  name       String            @unique
+  seksi      String
+  components DaishaComponent[]
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+}
+
+model DaishaComponent {
+  id           Int             @id @default(autoincrement())
+  daishaTypeId Int
+  daishaType   DaishaType      @relation(fields: [daishaTypeId], references: [id], onDelete: Cascade)
+  name         String
+  symptoms     DaishaSymptom[]
+
+  @@unique([daishaTypeId, name])
+}
+
+model DaishaSymptom {
+  id          Int             @id @default(autoincrement())
+  componentId Int
+  component   DaishaComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
+  description String
+}

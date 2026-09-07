@@ -70,24 +70,44 @@ export default function FilterPanel({
   filteredCount,
   totalCount,
 }: FilterPanelProps) {
+  const [isMobileExpanded, setIsMobileExpanded] = React.useState(false);
+
+  const activeFilterCount =
+    (search ? 1 : 0) +
+    (filterSeksi ? 1 : 0) +
+    (filterDaisha ? 1 : 0) +
+    (filterNoDaisha ? 1 : 0) +
+    (filterKerusakan ? 1 : 0) +
+    (filterDetail ? 1 : 0) +
+    (filterPelapor ? 1 : 0) +
+    (filterStatus ? 1 : 0) +
+    (filterHanyaBerulang ? 1 : 0) +
+    (startDate ? 1 : 0) +
+    (endDate ? 1 : 0);
+
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-3 border-b border-slate-100 pb-3">
         <div className="flex items-center gap-2">
           <span className="text-base">🎛️</span>
           <div>
-            <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-              Panel Filter & Pencarian Lengkap
+            <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <span>Panel Filter & Pencarian</span>
+              {activeFilterCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-100 text-red-700">
+                  {activeFilterCount} Aktif
+                </span>
+              )}
             </h2>
-            <p className="text-[11px] text-slate-600">
+            <p className="text-[11px] text-slate-500">
               Saring visualisasi berdasarkan 10 kriteria presisi
             </p>
           </div>
         </div>
 
         {/* Quick Date Presets & Quick Reset */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-bold text-slate-600">Preset Cepat:</span>
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span className="text-[11px] font-bold text-slate-600 hidden sm:inline">Preset Cepat:</span>
           <button
             type="button"
             onClick={() => handleQuickPreset(0)}
@@ -118,20 +138,31 @@ export default function FilterPanel({
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            {filterHanyaBerulang ? '✓ Unit Berulang (>1x)' : 'Unit Berulang (>1x)'}
+            {filterHanyaBerulang ? '✓ Unit Berulang' : 'Unit Berulang'}
           </button>
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={handleResetFilter}
+              className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition cursor-pointer"
+            >
+              Reset
+            </button>
+          )}
+
+          {/* Tombol Toggle Buka/Tutup Filter di Layar HP */}
           <button
             type="button"
-            onClick={handleResetFilter}
-            className="px-3 py-1 text-[11px] font-bold rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition cursor-pointer"
+            onClick={() => setIsMobileExpanded(!isMobileExpanded)}
+            className="md:hidden px-3 py-1 text-[11px] font-bold rounded-lg bg-slate-800 text-white flex items-center gap-1 transition cursor-pointer"
           >
-            Reset Semua Filter
+            <span>{isMobileExpanded ? '▲ Tutup Filter' : `▼ Buka Filter (${activeFilterCount})`}</span>
           </button>
         </div>
       </div>
 
-      {/* Grid 10 Filter Inputs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      {/* Grid 10 Filter Inputs (Selalu tampil di Desktop, Expandable di Mobile) */}
+      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 ${isMobileExpanded ? 'grid' : 'hidden md:grid'}`}>
         {/* 1. Pencarian Teks Bebas */}
         <div>
           <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
