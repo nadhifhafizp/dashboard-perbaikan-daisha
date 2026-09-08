@@ -266,7 +266,7 @@ export default function ThroughputCharts({
               </span>
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Snapshot proporsi tiket Open, Progress, Done, dan Scrap dari filter aktif
+              Snapshot proporsi tiket Open / Sedang Dikerjakan, Selesai, dan Rusak (Scrap)
             </p>
           </div>
 

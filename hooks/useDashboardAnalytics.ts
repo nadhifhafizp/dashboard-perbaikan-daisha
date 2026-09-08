@@ -134,7 +134,13 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
         if (!item.detail || !item.detail.toLowerCase().includes(filterDetail.toLowerCase())) return false;
       }
       if (filterPelapor && item.pelapor !== filterPelapor) return false;
-      if (filterStatus && item.status !== filterStatus) return false;
+      if (filterStatus) {
+        if (filterStatus === 'Open') {
+          if (item.status !== 'Open' && item.status !== 'Progress') return false;
+        } else if (item.status !== filterStatus) {
+          return false;
+        }
+      }
 
       // Filter khusus unit berulang (> 1x masuk)
       if (filterHanyaBerulang && item.noDaisha && (unitRepeatMap[item.noDaisha] || 0) <= 1) {
@@ -202,8 +208,9 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
   // 4. KPI Ringkasan Eksekutif (Simulasi SQL Aggregations: COUNT, AVG)
   const kpi: KpiSummary = useMemo(() => {
     const total = filteredData.length;
-    const open = filteredData.filter(d => d.status === 'Open').length;
-    const progress = filteredData.filter(d => d.status === 'Progress').length;
+    const openOnly = filteredData.filter(d => d.status === 'Open').length;
+    const progressOnly = filteredData.filter(d => d.status === 'Progress').length;
+    const open = openOnly + progressOnly;
     const done = filteredData.filter(d => d.status === 'Done').length;
     const scrap = filteredData.filter(d => d.status === 'Scrap').length;
 
@@ -247,7 +254,7 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     return {
       total,
       open,
-      progress,
+      progress: progressOnly,
       done,
       scrap,
       doneRate,
@@ -320,12 +327,11 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
       .slice(-12);
 
-    // 5.2 Status Donut Data
+    // 5.2 Status Donut Data (3 Status Pipeline Sesuai Request)
     const statusData = [
-      { name: 'Antre (Open)', value: kpi.open, color: '#f59e0b' },
-      { name: 'Dikerjakan (Progress)', value: kpi.progress, color: '#3b82f6' },
-      { name: 'Selesai (Done)', value: kpi.done, color: '#10b981' },
-      { name: 'Afkir (Scrap)', value: kpi.scrap, color: '#e11d48' },
+      { name: 'Open / Sedang Dikerjakan', value: kpi.open, color: '#f59e0b' },
+      { name: 'Selesai', value: kpi.done, color: '#10b981' },
+      { name: 'Rusak (Scrap)', value: kpi.scrap, color: '#e11d48' },
     ];
 
     // 5.3 Top 10 Repeat Failure Units

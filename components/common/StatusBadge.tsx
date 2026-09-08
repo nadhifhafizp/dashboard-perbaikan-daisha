@@ -25,21 +25,21 @@ export default function StatusBadge({
       return (
         <Badge variant="success" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-          <span>Done</span>
+          <span>Selesai</span>
         </Badge>
       );
     case 'Progress':
       return (
         <Badge variant="info" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
           <Clock className="w-3 h-3 text-blue-600 animate-spin" style={{ animationDuration: '4s' }} />
-          <span>Progress</span>
+          <span>Sedang Dikerjakan</span>
         </Badge>
       );
     case 'Scrap':
       return (
         <Badge variant="destructive" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
           <Trash2 className="w-3 h-3 text-white" />
-          <span>Scrap</span>
+          <span>Rusak (Scrap)</span>
         </Badge>
       );
     case 'Open':
@@ -47,7 +47,7 @@ export default function StatusBadge({
       return (
         <Badge variant="warning" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
           <AlertCircle className="w-3 h-3 text-amber-600" />
-          <span>Open</span>
+          <span>Open / Antre</span>
         </Badge>
       );
   }

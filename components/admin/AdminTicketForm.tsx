@@ -50,7 +50,7 @@ function AdminTicketFormDialog({
   const sizeInfo = detectDaishaSize(ticket.noDaisha);
 
   const [formStatus, setFormStatus] = useState<string>(() => {
-    if (currentStatus === 'Open') return 'Progress';
+    if (currentStatus === 'Open') return 'Done';
     if (currentStatus === 'Progress') return 'Done';
     return currentStatus;
   });
@@ -161,13 +161,14 @@ function AdminTicketFormDialog({
                 <select
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value)}
-                  className="w-full p-2.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 bg-white focus:ring-2 focus:ring-blue-600 outline-none cursor-pointer"
+                  className="w-full p-2.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 bg-white focus:ring-2 focus:ring-emerald-600 outline-none cursor-pointer"
                 >
+                  <option value="Done">🟢 Selesai Diperbaiki (Done) - Langsung Selesai</option>
                   <option value="Progress">🔵 Mulai Kerjakan (Progress)</option>
                   <option value="Scrap">⚫ Unit Rusak Berat (Scrap)</option>
                 </select>
-                <span className="text-[10px] text-blue-700 block mt-1">
-                  *Unit dalam antrean. Klik simpan untuk menandai pengerjaan bengkel sedang berlangsung.
+                <span className="text-[10px] text-emerald-700 font-semibold block mt-1">
+                  *Unit dalam antrean. Anda dapat langsung menandai Selesai (Done), Mulai Kerjakan (Progress), atau Unit Rusak (Scrap).
                 </span>
               </div>
             ) : currentStatus === 'Progress' ? (
@@ -300,6 +301,8 @@ function AdminTicketFormDialog({
                 '✅ Selesaikan & Simpan Servis'
               ) : formStatus === 'Progress' ? (
                 '⚙️ Mulai Pengerjaan (Set Progress)'
+              ) : formStatus === 'Scrap' ? (
+                '🗑️ Tandai Rusak (Scrap)'
               ) : (
                 '💾 Simpan Perubahan'
               )}

@@ -6,6 +6,9 @@ import StatusBadge from '@/components/common/StatusBadge';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 
+import { SortOption, SORT_OPTIONS, sortTickets } from '@/lib/sortTickets';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+
 interface TicketTableProps {
   filteredData: Ticket[];
   loading: boolean;
@@ -19,15 +22,31 @@ export default function TicketTable({
 }: TicketTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  const [sortBy, setSortBy] = useState<SortOption>('input_desc');
 
   // Reset ke halaman 1 jika jumlah data berubah karena filter
   React.useEffect(() => {
     setCurrentPage(1);
   }, [filteredData.length]);
 
-  const totalPages = itemsPerPage === -1 ? 1 : Math.ceil(filteredData.length / itemsPerPage) || 1;
+  const sortedData = React.useMemo(() => {
+    return sortTickets(filteredData, sortBy);
+  }, [filteredData, sortBy]);
+
+  const totalPages = itemsPerPage === -1 ? 1 : Math.ceil(sortedData.length / itemsPerPage) || 1;
   const startIndex = itemsPerPage === -1 ? 0 : (currentPage - 1) * itemsPerPage;
-  const paginatedData = itemsPerPage === -1 ? filteredData : filteredData.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedData = itemsPerPage === -1 ? sortedData : sortedData.slice(startIndex, startIndex + itemsPerPage);
+
+  const toggleSort = (ascOption: SortOption, descOption: SortOption) => {
+    setSortBy((prev) => (prev === ascOption ? descOption : ascOption));
+    setCurrentPage(1);
+  };
+
+  const getSortIcon = (ascOption: SortOption, descOption: SortOption) => {
+    if (sortBy === ascOption) return <ArrowUp className="w-3.5 h-3.5 text-blue-600 inline ml-1" />;
+    if (sortBy === descOption) return <ArrowDown className="w-3.5 h-3.5 text-blue-600 inline ml-1" />;
+    return <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-60 inline ml-1" />;
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
@@ -43,6 +62,25 @@ export default function TicketTable({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+          {/* Selector Urutan Data */}
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+            <span className="text-slate-400">🔃 Urutkan:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value as SortOption);
+                setCurrentPage(1);
+              }}
+              className="bg-transparent font-black text-slate-800 focus:outline-none cursor-pointer border-none py-0.5 text-xs"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Selector Jumlah Baris per Halaman */}
           <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
             <span className="text-slate-400">📄 Tampilkan:</span>
@@ -79,15 +117,60 @@ export default function TicketTable({
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-100/75 text-[11px] font-black text-slate-600 uppercase tracking-wider border-b border-slate-200">
+            <tr className="bg-slate-100/75 text-[11px] font-black text-slate-600 uppercase tracking-wider border-b border-slate-200 select-none">
               <th className="py-3 px-4">No</th>
               <th className="py-3 px-4">ID Tiket</th>
-              <th className="py-3 px-4">No Daisha</th>
-              <th className="py-3 px-4">Nama Daisha</th>
-              <th className="py-3 px-4">Seksi</th>
+              <th
+                onClick={() => toggleSort('unit_asc', 'unit_desc')}
+                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition"
+                title="Klik untuk urutkan nomor unit daisha"
+              >
+                <div className="flex items-center gap-1">
+                  <span>No Daisha</span>
+                  {getSortIcon('unit_asc', 'unit_desc')}
+                </div>
+              </th>
+              <th
+                onClick={() => toggleSort('daisha_asc', 'daisha_desc')}
+                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition"
+                title="Klik untuk urutkan jenis daisha"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Nama Daisha</span>
+                  {getSortIcon('daisha_asc', 'daisha_desc')}
+                </div>
+              </th>
+              <th
+                onClick={() => setSortBy('seksi_asc')}
+                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition"
+                title="Klik untuk urutkan seksi"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Seksi</span>
+                  {sortBy === 'seksi_asc' ? <ArrowUp className="w-3.5 h-3.5 text-blue-600 inline ml-1" /> : <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-60 inline ml-1" />}
+                </div>
+              </th>
               <th className="py-3 px-4">Komponen & Rincian Titik Kerusakan</th>
-              <th className="py-3 px-4">Pelapor</th>
-              <th className="py-3 px-4">Tgl Masuk</th>
+              <th
+                onClick={() => setSortBy('pelapor_asc')}
+                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition"
+                title="Klik untuk urutkan nama pelapor"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Pelapor</span>
+                  {sortBy === 'pelapor_asc' ? <ArrowUp className="w-3.5 h-3.5 text-blue-600 inline ml-1" /> : <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-60 inline ml-1" />}
+                </div>
+              </th>
+              <th
+                onClick={() => toggleSort('input_desc', 'input_asc')}
+                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition whitespace-nowrap"
+                title="Klik untuk urutkan tanggal masuk (terbaru / terlama)"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Tgl Masuk</span>
+                  {getSortIcon('input_asc', 'input_desc')}
+                </div>
+              </th>
               <th className="py-3 px-4">Tgl Keluar</th>
               <th className="py-3 px-4 text-center">Status</th>
             </tr>

@@ -290,10 +290,9 @@ export default function FilterPanel({
             className="w-full p-2 border border-slate-300 rounded-xl text-xs text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none font-medium"
           >
             <option value="">Semua Status</option>
-            <option value="Open">Antre (Open)</option>
-            <option value="Progress">Dikerjakan (Progress)</option>
+            <option value="Open">Open / Sedang Dikerjakan</option>
             <option value="Done">Selesai (Done)</option>
-            <option value="Scrap">Afkir (Scrap)</option>
+            <option value="Scrap">Rusak (Scrap)</option>
           </select>
         </div>
 

@@ -24,7 +24,7 @@ export default function RiwayatLaporanPage() {
   // Filter State
   const [selectedSeksi, setSelectedSeksi] = useState<string>('');
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'Open' | 'Progress' | 'Done'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'Open' | 'Done' | 'Scrap'>('all');
 
   // Modal Detail State (Cross-check)
   const [ticketForDetail, setTicketForDetail] = useState<Ticket | null>(null);
@@ -175,7 +175,11 @@ export default function RiwayatLaporanPage() {
         }
 
         // 2. Filter Status
-        if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+        if (statusFilter === 'Open') {
+          if (t.status !== 'Open' && t.status !== 'Progress') return false;
+        } else if (statusFilter !== 'all' && t.status !== statusFilter) {
+          return false;
+        }
 
         // 3. Filter Pencarian Cepat
         const q = search.toLowerCase().trim();
@@ -206,11 +210,14 @@ export default function RiwayatLaporanPage() {
         ? tickets.filter((t) => t.seksi.toLowerCase() === selectedSeksi.toLowerCase())
         : tickets;
 
+    const openOnly = baseTickets.filter((t) => t.status === 'Open').length;
+    const progressOnly = baseTickets.filter((t) => t.status === 'Progress').length;
+
     return {
       all: baseTickets.length,
-      open: baseTickets.filter((t) => t.status === 'Open').length,
-      progress: baseTickets.filter((t) => t.status === 'Progress').length,
+      open: openOnly + progressOnly,
       done: baseTickets.filter((t) => t.status === 'Done').length,
+      scrap: baseTickets.filter((t) => t.status === 'Scrap').length,
     };
   }, [tickets, viewMode, selectedSeksi]);
 
@@ -324,7 +331,7 @@ export default function RiwayatLaporanPage() {
               )}
             </div>
 
-            {/* Quick Status Filter Tabs */}
+            {/* Quick Status Filter Tabs (3 Pipeline Status) */}
             <div className="flex items-center gap-1 overflow-x-auto pb-0.5 text-xs shrink-0 scrollbar-none">
               <button
                 type="button"
@@ -347,19 +354,7 @@ export default function RiwayatLaporanPage() {
                     : 'bg-amber-50 text-amber-800 border border-amber-200/80 hover:bg-amber-100'
                 }`}
               >
-                🟡 Antre ({counts.open})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStatusFilter('Progress')}
-                className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition cursor-pointer ${
-                  statusFilter === 'Progress'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-blue-50 text-blue-800 border border-blue-200/80 hover:bg-blue-100'
-                }`}
-              >
-                🔵 Diproses ({counts.progress})
+                🟡 Open / Sedang Dikerjakan ({counts.open})
               </button>
 
               <button
@@ -372,6 +367,18 @@ export default function RiwayatLaporanPage() {
                 }`}
               >
                 🟢 Selesai ({counts.done})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter('Scrap')}
+                className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition cursor-pointer ${
+                  statusFilter === 'Scrap'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'bg-rose-50 text-rose-800 border border-rose-200/80 hover:bg-rose-100'
+                }`}
+              >
+                ⚫ Rusak / Scrap ({counts.scrap})
               </button>
             </div>
           </div>

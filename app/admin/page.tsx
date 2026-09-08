@@ -17,7 +17,8 @@ import CatalogManager from '@/components/admin/CatalogManager';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { DAFTAR_SEKSI, getDaishaBySeksi, DAFTAR_SEMUA_DAISHA } from '@/lib/masterData';
 import { Card } from '@/components/ui/card';
-import { ClipboardList, Clock, Wrench, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ClipboardList, Clock, Wrench, CheckCircle2, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { SortOption, SORT_OPTIONS, sortTickets } from '@/lib/sortTickets';
 
 const API_URL = '/api/repair';
 
@@ -27,6 +28,7 @@ export default function AdminPage() {
   const [adminTab, setAdminTab] = useState<'tickets' | 'catalog' | 'users'>('tickets');
   const [isProcessing, setIsProcessing] = useState(false);
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('input_desc');
   const [filterTab, setFilterTab] = useState<'all' | 'Open' | 'Progress' | 'Done' | 'Scrap'>('all');
   const [selectedSeksi, setSelectedSeksi] = useState<string>('all');
   const [selectedDaisha, setSelectedDaisha] = useState<string>('all');
@@ -204,6 +206,7 @@ export default function AdminPage() {
     selectedDaisha !== 'all' ||
     selectedSize !== 'all' ||
     filterTab !== 'all' ||
+    sortBy !== 'input_desc' ||
     Boolean(search.trim());
 
   const resetAllFilters = () => {
@@ -211,6 +214,7 @@ export default function AdminPage() {
     setSelectedDaisha('all');
     setSelectedSize('all');
     setFilterTab('all');
+    setSortBy('input_desc');
     setSearch('');
   };
 
@@ -240,18 +244,25 @@ export default function AdminPage() {
       );
     });
 
+    const openOnly = scopedTickets.filter((t) => t.status === 'Open').length;
+    const progressOnly = scopedTickets.filter((t) => t.status === 'Progress').length;
+
     return {
       all: scopedTickets.length,
-      open: scopedTickets.filter((t) => t.status === 'Open').length,
-      progress: scopedTickets.filter((t) => t.status === 'Progress').length,
+      open: openOnly + progressOnly,
+      progress: progressOnly,
       done: scopedTickets.filter((t) => t.status === 'Done').length,
       scrap: scopedTickets.filter((t) => t.status === 'Scrap').length,
     };
   }, [tickets, selectedSeksi, selectedDaisha, selectedSize, search]);
 
   const filteredTickets = useMemo(() => {
-    return tickets.filter((t) => {
-      if (filterTab !== 'all' && t.status !== filterTab) return false;
+    const list = tickets.filter((t) => {
+      if (filterTab === 'Open') {
+        if (t.status !== 'Open' && t.status !== 'Progress') return false;
+      } else if (filterTab !== 'all' && t.status !== filterTab) {
+        return false;
+      }
 
       if (selectedSeksi !== 'all' && t.seksi?.toLowerCase() !== selectedSeksi.toLowerCase()) {
         return false;
@@ -278,7 +289,19 @@ export default function AdminPage() {
         t.detail?.toLowerCase().includes(q)
       );
     });
-  }, [tickets, filterTab, selectedSeksi, selectedDaisha, selectedSize, search]);
+
+    return sortTickets(list, sortBy);
+  }, [tickets, filterTab, selectedSeksi, selectedDaisha, selectedSize, search, sortBy]);
+
+  const toggleSort = (ascOption: SortOption, descOption: SortOption) => {
+    setSortBy((prev) => (prev === ascOption ? descOption : ascOption));
+  };
+
+  const getSortIcon = (ascOption: SortOption, descOption: SortOption) => {
+    if (sortBy === ascOption) return <ArrowUp className="w-3.5 h-3.5 text-blue-600 inline ml-1" />;
+    if (sortBy === descOption) return <ArrowDown className="w-3.5 h-3.5 text-blue-600 inline ml-1" />;
+    return <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-60 inline ml-1" />;
+  };
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6">
@@ -380,8 +403,8 @@ export default function AdminPage() {
       {/* Tampilan Tab 1: Rekap Tiket & Status */}
       {adminTab === 'tickets' && (
         <>
-      {/* KPI Cards Ringkas (Desain Kotak Sesuai KpiCards) */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      {/* KPI Cards Ringkas (4 Status Pipeline) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {/* 1. Total Tiket */}
         <Card
           onClick={() => setFilterTab('all')}
@@ -409,7 +432,7 @@ export default function AdminPage() {
           <div className="text-[10px] font-medium text-slate-500 mt-1">Semua Tiket Masuk</div>
         </Card>
 
-        {/* 2. Menunggu (Open) */}
+        {/* 2. Open / Sedang Dikerjakan */}
         <Card
           onClick={() => setFilterTab('Open')}
           className={`p-4 cursor-pointer border-amber-200/80 bg-amber-50/20 hover:bg-amber-50/40 hover:shadow-md transition-all flex flex-col justify-between group ${
@@ -419,35 +442,16 @@ export default function AdminPage() {
           }`}
         >
           <div className="flex justify-between items-center mb-1">
-            <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Antre (Open)</span>
+            <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Open / Dikerjakan</span>
             <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700">
               <Clock className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="text-2xl font-black text-amber-600 group-hover:scale-105 transition">{countStats.open}</div>
-          <div className="text-[10px] font-medium text-amber-600/80 mt-1">Belum Dikerjakan</div>
+          <div className="text-[10px] font-medium text-amber-600/80 mt-1">Antre & Sedang Diproses</div>
         </Card>
 
-        {/* 3. Dalam Pengerjaan (Progress) */}
-        <Card
-          onClick={() => setFilterTab('Progress')}
-          className={`p-4 cursor-pointer border-blue-200/80 bg-blue-50/20 hover:bg-blue-50/40 hover:shadow-md transition-all flex flex-col justify-between group ${
-            filterTab === 'Progress'
-              ? 'ring-2 ring-blue-500 shadow-md scale-[1.02] !bg-white !border-blue-500'
-              : ''
-          }`}
-        >
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">Dikerjakan</span>
-            <div className="p-1.5 rounded-lg bg-blue-100 text-blue-700">
-              <Wrench className="w-3.5 h-3.5" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-blue-600 group-hover:scale-105 transition">{countStats.progress}</div>
-          <div className="text-[10px] font-medium text-blue-600/80 mt-1">Sedang Diperbaiki</div>
-        </Card>
-
-        {/* 4. Selesai (Done) */}
+        {/* 3. Selesai (Done) */}
         <Card
           onClick={() => setFilterTab('Done')}
           className={`p-4 cursor-pointer border-emerald-200/80 bg-emerald-50/20 hover:bg-emerald-50/40 hover:shadow-md transition-all flex flex-col justify-between group ${
@@ -457,7 +461,7 @@ export default function AdminPage() {
           }`}
         >
           <div className="flex justify-between items-center mb-1">
-            <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Selesai</span>
+            <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Selesai (Done)</span>
             <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
               <CheckCircle2 className="w-3.5 h-3.5" />
             </div>
@@ -468,17 +472,17 @@ export default function AdminPage() {
           </div>
         </Card>
 
-        {/* 5. Afkir (Scrap) */}
+        {/* 4. Rusak / Afkir (Scrap) */}
         <Card
           onClick={() => setFilterTab('Scrap')}
-          className={`p-4 cursor-pointer border-rose-200/80 bg-rose-50/20 hover:bg-rose-50/40 hover:shadow-md transition-all flex flex-col justify-between group col-span-2 sm:col-span-1 ${
+          className={`p-4 cursor-pointer border-rose-200/80 bg-rose-50/20 hover:bg-rose-50/40 hover:shadow-md transition-all flex flex-col justify-between group ${
             filterTab === 'Scrap'
               ? 'ring-2 ring-rose-500 shadow-md scale-[1.02] !bg-white !border-rose-500'
               : ''
           }`}
         >
           <div className="flex justify-between items-center mb-1">
-            <span className="text-[11px] font-bold text-rose-700 uppercase tracking-wider">Afkir (Scrap)</span>
+            <span className="text-[11px] font-bold text-rose-700 uppercase tracking-wider">Rusak (Scrap)</span>
             <div className="p-1.5 rounded-lg bg-rose-100 text-rose-700">
               <AlertTriangle className="w-3.5 h-3.5" />
             </div>
@@ -501,13 +505,31 @@ export default function AdminPage() {
                 </span>
               </div>
 
-              <input
-                type="text"
-                placeholder="🔍 Cari Unit / Pelapor / Gejala..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full sm:w-64 p-2 border border-gray-300 rounded-xl text-xs text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none"
-              />
+              <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                {/* Selector Urutan Data */}
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-300">
+                  <span className="text-gray-500 text-[11px]">🔃 Urutkan:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className="bg-transparent font-bold text-gray-800 focus:outline-none cursor-pointer border-none py-0.5 text-xs"
+                  >
+                    {SORT_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="🔍 Cari Unit / Pelapor / Gejala..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full sm:w-56 p-2 border border-gray-300 rounded-xl text-xs text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none"
+                />
+              </div>
             </div>
 
             {/* Filter Baris 2: Seksi Asal, Jenis Daisha, Ukuran Daisha, & Reset Button */}
@@ -603,7 +625,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Quick Status Filter Tabs */}
+            {/* Quick Status Filter Tabs (3 Pipeline Status) */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
               <button
                 type="button"
@@ -621,22 +643,11 @@ export default function AdminPage() {
                 onClick={() => setFilterTab('Open')}
                 className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1 cursor-pointer ${
                   filterTab === 'Open'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-100'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200'
                 }`}
               >
-                <span>🔴 Antrean ({countStats.open})</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterTab('Progress')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1 cursor-pointer ${
-                  filterTab === 'Progress'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100'
-                }`}
-              >
-                <span>🔵 Dikerjakan ({countStats.progress})</span>
+                <span>🟡 Open / Sedang Dikerjakan ({countStats.open})</span>
               </button>
               <button
                 type="button"
@@ -658,7 +669,7 @@ export default function AdminPage() {
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
-                <span>⚫ Scrap ({countStats.scrap})</span>
+                <span>⚫ Rusak (Scrap) ({countStats.scrap})</span>
               </button>
             </div>
           </div>
@@ -777,10 +788,37 @@ export default function AdminPage() {
           <div className="overflow-x-auto flex-1 hidden md:block">
             <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
               <thead>
-                <tr className="bg-gray-100 text-gray-700 font-bold uppercase tracking-wider border-b border-gray-200">
-                  <th className="p-3">ID & Masuk</th>
-                  <th className="p-3">Unit Daisha</th>
-                  <th className="p-3">Kerusakan</th>
+                <tr className="bg-gray-100 text-gray-700 font-bold uppercase tracking-wider border-b border-gray-200 select-none">
+                  <th
+                    onClick={() => toggleSort('input_desc', 'input_asc')}
+                    className="p-3 cursor-pointer hover:bg-gray-200/70 transition"
+                    title="Klik untuk urutkan tanggal masuk (terbaru / terlama)"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>ID & Masuk</span>
+                      {getSortIcon('input_asc', 'input_desc')}
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => toggleSort('unit_asc', 'unit_desc')}
+                    className="p-3 cursor-pointer hover:bg-gray-200/70 transition"
+                    title="Klik untuk urutkan nomor unit daisha"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Unit Daisha</span>
+                      {getSortIcon('unit_asc', 'unit_desc')}
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => toggleSort('daisha_asc', 'daisha_desc')}
+                    className="p-3 cursor-pointer hover:bg-gray-200/70 transition"
+                    title="Klik untuk urutkan jenis daisha"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Kerusakan & Jenis</span>
+                      {getSortIcon('daisha_asc', 'daisha_desc')}
+                    </div>
+                  </th>
                   <th className="p-3">Status</th>
                   <th className="p-3 text-center">Aksi Proses</th>
                 </tr>

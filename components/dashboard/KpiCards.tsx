@@ -178,20 +178,7 @@ export default function KpiCards({
           }`}
         >
           <Clock className="w-3.5 h-3.5" />
-          <span>Antre Open ({kpi.open})</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setFilterStatus('Progress')}
-          className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 cursor-pointer ${
-            currentFilterStatus === 'Progress'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'bg-white text-blue-700 hover:bg-blue-50'
-          }`}
-        >
-          <Wrench className="w-3.5 h-3.5" />
-          <span>Dikerjakan Progress ({kpi.progress})</span>
+          <span>Open / Sedang Dikerjakan ({kpi.open})</span>
         </button>
 
         <button
@@ -204,7 +191,7 @@ export default function KpiCards({
           }`}
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
-          <span>Selesai Done ({kpi.done})</span>
+          <span>Selesai ({kpi.done})</span>
         </button>
 
         <button
@@ -217,7 +204,7 @@ export default function KpiCards({
           }`}
         >
           <AlertTriangle className="w-3.5 h-3.5" />
-          <span>Afkir Scrap ({kpi.scrap})</span>
+          <span>Rusak / Scrap ({kpi.scrap})</span>
         </button>
 
         <button
