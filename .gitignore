@@ -30,7 +30,16 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 *.log
+*.err
+*.tmp*
+*.tmp
 cookie.txt
+.next-server.*
+
+# SQLite temporary journal & lock files
+*.db-journal
+*.db-wal
+*.db-shm
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -41,3 +50,6 @@ cookie.txt
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Antigravity / browser profile
+.daisha-profile/

@@ -11,16 +11,43 @@ const API_URL = '/api/repair';
 const FETCH_TIMEOUT_MS = 35_000;
 
 
-// Shared in-memory cache antar halaman (Dashboard, Admin, Riwayat)
+// Shared in-memory cache antar halaman (Dashboard, Admin, Riwayat, Input)
 let sharedTicketCache: Ticket[] | null = null;
+const sharedListeners = new Set<(tickets: Ticket[]) => void>();
+
+function notifySharedListeners(tickets: Ticket[]) {
+  sharedTicketCache = tickets;
+  sharedListeners.forEach((listener) => {
+    try {
+      listener(tickets);
+    } catch (e) {
+      console.error('[useTickets] Error notifying listener:', e);
+    }
+  });
+}
+
+/**
+ * Broadcast perubahan tiket ke seluruh tab/jendela browser & desktop app
+ */
+export function broadcastTicketChange() {
+  try {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      const bc = new BroadcastChannel('daisha_tickets_sync');
+      bc.postMessage({ type: 'TICKET_CHANGED', timestamp: Date.now() });
+      bc.close();
+    }
+  } catch {
+    // Abaikan jika tidak didukung
+  }
+}
 
 interface UseTicketsOptions {
-  autoRefreshIntervalMs?: number; // misalnya 45000ms untuk Dashboard
+  autoRefreshIntervalMs?: number; // default 15000ms (15 detik) untuk sinkronisasi antrean real-time
   initialFetch?: boolean;
 }
 
 export function useTickets(options: UseTicketsOptions = {}) {
-  const { autoRefreshIntervalMs, initialFetch = true } = options;
+  const { autoRefreshIntervalMs = 15_000, initialFetch = true } = options;
   const router = useRouter();
 
   const [tickets, setTickets] = useState<Ticket[]>(() => sharedTicketCache || []);
@@ -39,7 +66,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
       const timeoutId = setTimeout(() => controller.abort(), 15_000);
 
       try {
-        const fetchUrl = forceFresh ? `${API_URL}?fresh=true` : API_URL;
+        const fetchUrl = forceFresh ? `${API_URL}?fresh=${Date.now()}` : API_URL;
         const response = await fetch(fetchUrl, {
           cache: 'no-store',
           signal: controller.signal,
@@ -60,7 +87,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
         const rawArray = extractRawTicketArray(jsonResult);
         const processed = processRawTicketData(rawArray);
 
-        sharedTicketCache = processed;
+        notifySharedListeners(processed);
 
         if (isMountedRef.current) {
           setTickets(processed);
@@ -85,6 +112,55 @@ export function useTickets(options: UseTicketsOptions = {}) {
     [router]
   );
 
+  // 1. Sinkronisasi listener in-memory antar komponen dalam React Tree
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    const handleSharedUpdate = (newTickets: Ticket[]) => {
+      if (isMountedRef.current) {
+        setTickets(newTickets);
+      }
+    };
+    sharedListeners.add(handleSharedUpdate);
+
+    return () => {
+      sharedListeners.delete(handleSharedUpdate);
+    };
+  }, []);
+
+  // 2. BroadcastChannel & Window Focus Auto-Refresh
+  useEffect(() => {
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('daisha_tickets_sync');
+        bc.onmessage = (ev) => {
+          if (ev.data?.type === 'TICKET_CHANGED') {
+            void fetchTickets(true, true);
+          }
+        };
+      }
+    } catch {
+      // Abaikan jika tidak didukung
+    }
+
+    const handleFocusOrVisibility = () => {
+      if (document.visibilityState === 'visible' && isMountedRef.current) {
+        void fetchTickets(true);
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleFocusOrVisibility);
+    window.addEventListener('focus', handleFocusOrVisibility);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('visibilitychange', handleFocusOrVisibility);
+      window.removeEventListener('focus', handleFocusOrVisibility);
+    };
+  }, [fetchTickets]);
+
+  // 3. Initial Fetch & Background Interval Polling
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -100,7 +176,9 @@ export function useTickets(options: UseTicketsOptions = {}) {
     let intervalId: NodeJS.Timeout | null = null;
     if (autoRefreshIntervalMs && autoRefreshIntervalMs > 0) {
       intervalId = setInterval(() => {
-        fetchTickets(true);
+        if (document.visibilityState === 'visible') {
+          void fetchTickets(true);
+        }
       }, autoRefreshIntervalMs);
     }
 
@@ -114,7 +192,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
   const setLocalTickets = useCallback((updater: Ticket[] | ((prev: Ticket[]) => Ticket[])) => {
     setTickets((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
-      sharedTicketCache = next;
+      notifySharedListeners(next);
       return next;
     });
   }, []);
@@ -128,3 +206,4 @@ export function useTickets(options: UseTicketsOptions = {}) {
     setTickets: setLocalTickets,
   };
 }
+

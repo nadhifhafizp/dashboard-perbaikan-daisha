@@ -47,44 +47,48 @@ export default function MobileNav({
         {!isOperator && (
           <Link
             href="/"
-            className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition ${
+            className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
               pathname === '/' ? 'text-red-700 font-black' : 'text-slate-500 font-medium'
             }`}
           >
             <span className="text-base">📊</span>
             <span className="text-[10px] mt-0.5">Rekap</span>
+            {pathname === '/' && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
           </Link>
         )}
 
         <Link
           href="/input"
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition ${
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
             pathname === '/input' ? 'text-red-700 font-black' : 'text-slate-500 font-medium'
           }`}
         >
           <span className="text-base">📝</span>
-          <span className="text-[10px] mt-0.5">Input</span>
+          <span className="text-[10px] mt-0.5">Lapor</span>
+          {pathname === '/input' && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
         </Link>
 
         <Link
           href="/riwayat"
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition ${
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
             pathname === '/riwayat' ? 'text-red-700 font-black' : 'text-slate-500 font-medium'
           }`}
         >
           <span className="text-base">📋</span>
-          <span className="text-[10px] mt-0.5">Riwayat</span>
+          <span className="text-[10px] mt-0.5">Status</span>
+          {pathname === '/riwayat' && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
         </Link>
 
         {!isOperator && (
           <Link
             href="/admin"
-            className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition ${
+            className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
               pathname === '/admin' ? 'text-red-700 font-black' : 'text-slate-500 font-medium'
             }`}
           >
             <span className="text-base">⚙️</span>
-            <span className="text-[10px] mt-0.5">Admin</span>
+            <span className="text-[10px] mt-0.5">Bengkel</span>
+            {pathname === '/admin' && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
           </Link>
         )}
 

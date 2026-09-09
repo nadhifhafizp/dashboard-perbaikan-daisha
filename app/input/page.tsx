@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { CreateTicketPayload } from '@/types/ticket';
+import { CreateTicketPayload, Ticket } from '@/types/ticket';
 import { getInitialDateTime, cleanInputDateTime } from '@/lib/date';
 import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
 import QrScannerModal from '@/components/input/QrScannerModal';
@@ -10,7 +10,7 @@ import ReviewTicketModal from '@/components/input/ReviewTicketModal';
 import DamageCatalogSelector, { TindakanType } from '@/components/input/DamageCatalogSelector';
 import PrintTicketTagModal, { PrintableTicketData } from '@/components/common/PrintTicketTagModal';
 import IndoDateTimeInput from '@/components/common/IndoDateTimeInput';
-import { useTickets } from '@/hooks/useTickets';
+import { useTickets, broadcastTicketChange } from '@/hooks/useTickets';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 
@@ -67,7 +67,7 @@ export default function InputKerusakanPage() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<CreateTicketPayload | null>(null);
 
-  const { tickets } = useTickets({ autoRefreshIntervalMs: 0 });
+  const { tickets, refresh, setTickets } = useTickets({ autoRefreshIntervalMs: 10_000 });
   const { catalog, seksiList, daishaList, getDaishaBySeksi } = useDaishaCatalog();
 
   // State untuk Cetak Tag Fisik Daisha setelah submit
@@ -350,6 +350,33 @@ export default function InputKerusakanPage() {
           detail: pendingPayload.detail,
         };
         setCreatedTicketForTag(printable);
+
+        // 1. Optimistic Update: Langsung masukkan tiket baru ke state antrean aktif
+        const optimisticTicket: Ticket = {
+          id: pendingPayload.idTiket,
+          idTiketAsli: pendingPayload.idTiket,
+          noTiket: pendingPayload.idTiket,
+          pelapor: pendingPayload.namaPelapor,
+          namaPelapor: pendingPayload.namaPelapor,
+          tglMasuk: pendingPayload.waktuMasuk,
+          tglKeluar: '-',
+          status: 'Open',
+          namaDaisha: pendingPayload.namaDaisha,
+          seksi: pendingPayload.seksi,
+          noDaisha: pendingPayload.noDaisha,
+          jenisKerusakan: pendingPayload.kategori,
+          kategori: pendingPayload.kategori,
+          detail: pendingPayload.detail,
+          reason: '-',
+        };
+        setTickets((prev) => [optimisticTicket, ...prev.filter((t) => t.idTiketAsli !== optimisticTicket.idTiketAsli)]);
+
+        // 2. Fetch fresh data dari server di background dan siarkan ke seluruh jendela/tab
+        void refresh(true, true);
+        broadcastTicketChange();
+
+        // 3. Reset dismissed duplicate unit agar peringatan langsung aktif jika unit yang sama dicek kembali
+        setDismissedDuplicateUnit(null);
 
         showFeedback(
           'success',

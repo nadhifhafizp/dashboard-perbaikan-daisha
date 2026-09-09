@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Wrench,
 } from 'lucide-react';
+import PwaInstaller from '../common/PwaInstaller';
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
@@ -32,26 +33,26 @@ export default function Sidebar({
       ? [
           {
             href: '/',
-            label: 'Dashboard Rekap',
+            label: 'Analitik & Rekap',
             icon: LayoutDashboard,
           },
         ]
       : []),
     {
       href: '/input',
-      label: 'Input Perbaikan',
+      label: 'Lapor Kerusakan',
       icon: PenSquare,
     },
     {
       href: '/riwayat',
-      label: 'Riwayat & Status',
+      label: 'Status Tiket',
       icon: ClipboardList,
     },
     ...(!isOperator
       ? [
           {
             href: '/admin',
-            label: 'Admin Action Panel',
+            label: 'Panel Bengkel',
             icon: Settings,
           },
         ]
@@ -124,8 +125,11 @@ export default function Sidebar({
           );
         })}
 
-        {/* Tombol Logout di Sidebar */}
+        {/* Instalasi App Desktop untuk PC Client */}
         <div className="pt-4 mt-4 border-t border-red-600/60">
+          <PwaInstaller buttonStyle="sidebar" className="mb-3" />
+          
+          {/* Tombol Logout di Sidebar */}
           <button
             type="button"
             onClick={openLogoutModal}

@@ -6,11 +6,10 @@ import { prisma } from '@/lib/prisma';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 
-const POWER_AUTOMATE_POST_URL = process.env.POWER_AUTOMATE_POST_URL || '';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // 1. FUNGSI GET: Membaca data langsung dari SQLite via Prisma (Kecepatan Instan < 5ms)
-
-
 export async function GET() {
   // Proteksi: Wajib login (Admin atau Operator)
   const cookieStore = await cookies();
@@ -188,26 +187,6 @@ export async function POST(request: Request) {
         )
       );
 
-      // Background Sync Opsional ke Power Automate (tanpa membuat user menunggu)
-      if (POWER_AUTOMATE_POST_URL) {
-        fetch(POWER_AUTOMATE_POST_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'CREATE',
-            idTiket,
-            waktuMasuk: waktuMasuk || new Date().toISOString().slice(0, 16).replace('T', ' '),
-            waktuKeluar: '-',
-            status: 'Open',
-            namaPelapor,
-            seksi,
-            namaDaisha,
-            noDaisha,
-            kategori: sanitizeString(body.kategori, 500) || 'Umum',
-            detail: detail || '-',
-          }),
-        }).catch((err) => console.error("Async Power Automate Sync Error:", err));
-      }
 
       return NextResponse.json({
         success: true,
@@ -258,20 +237,6 @@ export async function POST(request: Request) {
         },
       });
 
-      // Background Sync ke Power Automate jika ada
-      if (POWER_AUTOMATE_POST_URL) {
-        fetch(POWER_AUTOMATE_POST_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'UPDATE',
-            idTiket,
-            status: normalizedStatus,
-            waktuKeluar: waktuKeluar || '-',
-            catatan: catatan || '-',
-          }),
-        }).catch((err) => console.error("Async Power Automate Sync Error:", err));
-      }
 
       return NextResponse.json({
         success: true,
@@ -299,13 +264,6 @@ export async function POST(request: Request) {
       await prisma.ticketDetail.deleteMany({ where: { idTiket } });
       await prisma.ticket.delete({ where: { idTiket } });
 
-      if (POWER_AUTOMATE_POST_URL) {
-        fetch(POWER_AUTOMATE_POST_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'DELETE', idTiket }),
-        }).catch((err) => console.error("Async Power Automate Sync Error:", err));
-      }
 
       return NextResponse.json({
         success: true,

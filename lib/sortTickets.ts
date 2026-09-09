@@ -4,68 +4,49 @@ import { parseToTimestamp } from './date';
 export type SortOption =
   | 'input_desc'
   | 'input_asc'
+  | 'done_desc'
+  | 'done_asc'
   | 'unit_asc'
   | 'unit_desc'
   | 'daisha_asc'
   | 'daisha_desc'
   | 'seksi_asc'
-  | 'pelapor_asc';
+  | 'seksi_desc'
+  | 'pelapor_asc'
+  | 'pelapor_desc';
 
 export interface SortOptionItem {
   value: SortOption;
   label: string;
   shortLabel: string;
-  category: 'waktu' | 'angka' | 'abjad';
 }
 
+// Opsi ringkas & esensial untuk dropdown di semua panel
 export const SORT_OPTIONS: SortOptionItem[] = [
   {
     value: 'input_desc',
-    label: '🕒 Input Terbaru (Masuk Baru ➔ Lama)',
-    shortLabel: 'Input Terbaru',
-    category: 'waktu',
+    label: '🕒 Masuk: Terbaru',
+    shortLabel: 'Masuk Terbaru',
   },
   {
     value: 'input_asc',
-    label: '⏳ Input Terlama (Masuk Lama ➔ Baru)',
-    shortLabel: 'Input Terlama',
-    category: 'waktu',
+    label: '⏳ Masuk: Terlama',
+    shortLabel: 'Masuk Terlama',
+  },
+  {
+    value: 'done_desc',
+    label: '✅ Selesai: Terbaru',
+    shortLabel: 'Selesai Terbaru',
+  },
+  {
+    value: 'done_asc',
+    label: '⌛ Selesai: Terlama',
+    shortLabel: 'Selesai Terlama',
   },
   {
     value: 'unit_asc',
-    label: '🔢 No Unit: Angka Kecil ➔ Besar (0-9)',
-    shortLabel: 'No Unit (0-9)',
-    category: 'angka',
-  },
-  {
-    value: 'unit_desc',
-    label: '🔢 No Unit: Angka Besar ➔ Kecil (9-0)',
-    shortLabel: 'No Unit (9-0)',
-    category: 'angka',
-  },
-  {
-    value: 'daisha_asc',
-    label: '🔤 Nama Daisha: Abjad (A ➔ Z)',
-    shortLabel: 'Nama Daisha (A-Z)',
-    category: 'abjad',
-  },
-  {
-    value: 'daisha_desc',
-    label: '🔤 Nama Daisha: Abjad (Z ➔ A)',
-    shortLabel: 'Nama Daisha (Z-A)',
-    category: 'abjad',
-  },
-  {
-    value: 'seksi_asc',
-    label: '🏢 Seksi: Abjad (A ➔ Z)',
-    shortLabel: 'Seksi (A-Z)',
-    category: 'abjad',
-  },
-  {
-    value: 'pelapor_asc',
-    label: '👤 Pelapor: Abjad (A ➔ Z)',
-    shortLabel: 'Pelapor (A-Z)',
-    category: 'abjad',
+    label: '🔢 No Unit: (0-9)',
+    shortLabel: 'No Unit',
   },
 ];
 
@@ -86,6 +67,30 @@ export function sortTickets(tickets: Ticket[], sortBy: SortOption): Ticket[] {
         const timeB = parseToTimestamp(b.tglMasuk);
         if (timeA !== timeB) return timeB - timeA;
         return String(b.idTiketAsli).localeCompare(String(a.idTiketAsli), undefined, { numeric: true });
+      }
+
+      case 'done_desc': {
+        const timeA = parseToTimestamp(a.tglKeluar);
+        const timeB = parseToTimestamp(b.tglKeluar);
+        if (timeA > 0 && timeB > 0) {
+          if (timeA !== timeB) return timeB - timeA;
+          return parseToTimestamp(b.tglMasuk) - parseToTimestamp(a.tglMasuk);
+        }
+        if (timeA > 0 && timeB === 0) return -1;
+        if (timeA === 0 && timeB > 0) return 1;
+        return parseToTimestamp(b.tglMasuk) - parseToTimestamp(a.tglMasuk);
+      }
+
+      case 'done_asc': {
+        const timeA = parseToTimestamp(a.tglKeluar);
+        const timeB = parseToTimestamp(b.tglKeluar);
+        if (timeA > 0 && timeB > 0) {
+          if (timeA !== timeB) return timeA - timeB;
+          return parseToTimestamp(a.tglMasuk) - parseToTimestamp(b.tglMasuk);
+        }
+        if (timeA > 0 && timeB === 0) return -1;
+        if (timeA === 0 && timeB > 0) return 1;
+        return parseToTimestamp(a.tglMasuk) - parseToTimestamp(b.tglMasuk);
       }
 
       case 'unit_asc': {
@@ -118,10 +123,22 @@ export function sortTickets(tickets: Ticket[], sortBy: SortOption): Ticket[] {
         return seksiA.localeCompare(seksiB, undefined, { sensitivity: 'base' });
       }
 
+      case 'seksi_desc': {
+        const seksiA = (a.seksi || '').trim();
+        const seksiB = (b.seksi || '').trim();
+        return seksiB.localeCompare(seksiA, undefined, { sensitivity: 'base' });
+      }
+
       case 'pelapor_asc': {
         const pelA = (a.pelapor || '').trim();
         const pelB = (b.pelapor || '').trim();
         return pelA.localeCompare(pelB, undefined, { sensitivity: 'base' });
+      }
+
+      case 'pelapor_desc': {
+        const pelA = (a.pelapor || '').trim();
+        const pelB = (b.pelapor || '').trim();
+        return pelB.localeCompare(pelA, undefined, { sensitivity: 'base' });
       }
 
       default:

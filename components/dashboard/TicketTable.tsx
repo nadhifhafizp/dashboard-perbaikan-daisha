@@ -8,6 +8,7 @@ import { detectDaishaSize } from '@/lib/daishaSize';
 
 import { SortOption, SORT_OPTIONS, sortTickets } from '@/lib/sortTickets';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import PaginationControl from '@/components/common/PaginationControl';
 
 interface TicketTableProps {
   filteredData: Ticket[];
@@ -141,24 +142,24 @@ export default function TicketTable({
                 </div>
               </th>
               <th
-                onClick={() => setSortBy('seksi_asc')}
+                onClick={() => toggleSort('seksi_asc', 'seksi_desc')}
                 className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition"
-                title="Klik untuk urutkan seksi"
+                title="Klik untuk urutkan seksi (A-Z / Z-A)"
               >
                 <div className="flex items-center gap-1">
                   <span>Seksi</span>
-                  {sortBy === 'seksi_asc' ? <ArrowUp className="w-3.5 h-3.5 text-blue-600 inline ml-1" /> : <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-60 inline ml-1" />}
+                  {getSortIcon('seksi_asc', 'seksi_desc')}
                 </div>
               </th>
               <th className="py-3 px-4">Komponen & Rincian Titik Kerusakan</th>
               <th
-                onClick={() => setSortBy('pelapor_asc')}
+                onClick={() => toggleSort('pelapor_asc', 'pelapor_desc')}
                 className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition"
-                title="Klik untuk urutkan nama pelapor"
+                title="Klik untuk urutkan nama pelapor (A-Z / Z-A)"
               >
                 <div className="flex items-center gap-1">
                   <span>Pelapor</span>
-                  {sortBy === 'pelapor_asc' ? <ArrowUp className="w-3.5 h-3.5 text-blue-600 inline ml-1" /> : <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-60 inline ml-1" />}
+                  {getSortIcon('pelapor_asc', 'pelapor_desc')}
                 </div>
               </th>
               <th
@@ -171,7 +172,16 @@ export default function TicketTable({
                   {getSortIcon('input_asc', 'input_desc')}
                 </div>
               </th>
-              <th className="py-3 px-4">Tgl Keluar</th>
+              <th
+                onClick={() => toggleSort('done_desc', 'done_asc')}
+                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition whitespace-nowrap"
+                title="Klik untuk urutkan tanggal selesai perbaikan (terbaru / terlama)"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Tgl Keluar</span>
+                  {getSortIcon('done_asc', 'done_desc')}
+                </div>
+              </th>
               <th className="py-3 px-4 text-center">Status</th>
             </tr>
           </thead>
@@ -394,62 +404,17 @@ export default function TicketTable({
       </div>
 
       {/* Pagination Controls & Info Footer */}
-      <div className="p-3.5 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/50 text-xs">
-        <div className="text-slate-500 font-medium flex items-center gap-2 text-center sm:text-left">
-          <span>
-            Menampilkan{' '}
-            <b>{filteredData.length === 0 ? 0 : startIndex + 1}</b> -{' '}
-            <b>{Math.min(startIndex + (itemsPerPage === -1 ? filteredData.length : itemsPerPage), filteredData.length)}</b>{' '}
-            dari <b>{filteredData.length}</b> tiket
-          </span>
-          {itemsPerPage !== -1 && totalPages > 1 && (
-            <span className="text-slate-400 hidden sm:inline">• Halaman {currentPage} dari {totalPages}</span>
-          )}
-        </div>
-
-        {itemsPerPage !== -1 && totalPages > 1 && (
-          <div className="flex items-center gap-1.5 flex-wrap justify-center">
-            <button
-              type="button"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(1)}
-              title="Halaman Pertama"
-              className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
-            >
-              ⇤
-            </button>
-            <button
-              type="button"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              className="px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
-            >
-              ← <span className="hidden sm:inline">Sebelumnya</span>
-            </button>
-
-            <span className="px-3 py-1.5 bg-slate-200/80 rounded-lg font-black text-slate-800 text-[11px]">
-              {currentPage} / {totalPages}
-            </span>
-
-            <button
-              type="button"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              className="px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
-            >
-              <span className="hidden sm:inline">Selanjutnya</span> →
-            </button>
-            <button
-              type="button"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(totalPages)}
-              title="Halaman Terakhir"
-              className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
-            >
-              ⇥
-            </button>
-          </div>
-        )}
+      <div className="p-3.5 border-t border-slate-100 bg-slate-50/50">
+        <PaginationControl
+          currentPage={currentPage}
+          totalItems={filteredData.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+          itemLabel="tiket"
+          variant="plain"
+          showItemsPerPage={false}
+        />
       </div>
     </div>
   );

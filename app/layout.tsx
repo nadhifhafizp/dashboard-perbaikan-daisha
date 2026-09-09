@@ -1,14 +1,34 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import AppShell from '@/components/layout/AppShell';
+
+export const viewport: Viewport = {
+  themeColor: '#dc2626',
+  width: 'device-width',
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: 'Daisha Maintenance | PT Bridgestone Tire Indonesia',
   description:
     'Sistem Pencatatan, Monitoring, dan Rekapitulasi Perbaikan Daisha Internal PT Bridgestone',
+  manifest: '/manifest.json',
+  applicationName: 'Daisha Maintenance',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Daisha Mnt',
+  },
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico?v=2' },
+      { url: '/icon-192.png?v=2', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png?v=2', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png?v=2', sizes: '180x180', type: 'image/png' },
+    ],
   },
 };
 
@@ -19,6 +39,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
       <body className="bg-gray-100 font-sans antialiased text-gray-900 min-h-screen">
         <AuthProvider>
           <AppShell>{children}</AppShell>

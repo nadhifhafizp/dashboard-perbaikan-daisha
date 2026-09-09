@@ -97,12 +97,29 @@ export function parseToISODate(value: unknown): string {
 // Konversi format tanggal apa pun ke millisecond timestamp
 export function parseToTimestamp(value: unknown): number {
   if (!value || value === '-' || value === 'null' || value === 'undefined') return 0;
+  if (value instanceof Date) return value.getTime();
+
+  const num = typeof value === 'number' ? value : parseFloat(String(value).trim());
+  if (!isNaN(num) && num > 30000 && num < 70000 && !String(value).includes('-') && !String(value).includes('/') && !String(value).includes(':')) {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    return excelEpoch.getTime() + num * 86400000;
+  }
+
   const isoDate = parseToISODate(value);
   if (!isoDate) return 0;
 
   const str = String(value).trim().replace('T', ' ');
   const timePart = str.split(' ')[1] || '00:00';
-  const parsed = new Date(`${isoDate}T${timePart.slice(0, 5)}`).getTime();
+  const [hhStr, mmStr] = timePart.split(':');
+  const [yyyyStr, mStr, dStr] = isoDate.split('-');
+
+  const yyyy = parseInt(yyyyStr, 10);
+  const mm = parseInt(mStr, 10) - 1;
+  const dd = parseInt(dStr, 10);
+  const hh = parseInt(hhStr || '0', 10);
+  const min = parseInt(mmStr || '0', 10);
+
+  const parsed = new Date(yyyy, mm, dd, hh, min).getTime();
   return isNaN(parsed) ? 0 : parsed;
 }
 

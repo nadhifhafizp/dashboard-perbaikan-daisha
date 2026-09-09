@@ -47,42 +47,47 @@ export function parseTicketDamageDetail(detailStr?: string | null): ParsedTicket
     text = text.replace(noteMatch[0], '').trim();
   }
 
-  const rawSplits = text.split('|').map((s) => s.trim()).filter(Boolean);
+  const rawSplits = text.includes('•') && !text.includes('|')
+    ? text.split('•').map((s) => s.trim()).filter(Boolean)
+    : text.split('|').map((s) => s.trim()).filter(Boolean);
+
   const items: ParsedDamageItem[] = [];
 
   for (const raw of rawSplits) {
+    const cleanRaw = raw.replace(/^[•\s-]+/, '').trim();
+    if (!cleanRaw) continue;
+
     // Pola mencakup:
-    // - (Qty: 2, Tindakan: Ganti)
-    // - (Tindakan: Ganti, Qty: 2)
-    // - (Tindakan: Ganti)
-    // - (Qty: 2)
-    const match = raw.match(
-      /^(?:\d+\.\s*)?\[(.*?)\]\s*(.*?)(?:\s*\((?:(?:Qty|Jumlah):\s*(\d+)(?:,\s*|\s*\|\s*)?Tindakan:\s*(Repair|Ganti)|Tindakan:\s*(Repair|Ganti)(?:,\s*|\s*\|\s*)?(?:Qty|Jumlah):\s*(\d+)|Tindakan:\s*(Repair|Ganti)|(?:Qty|Jumlah):\s*(\d+))\))?$/i
+    // - [Komponen] Gejala [Ganti] / [Repair]
+    // - [Komponen] Gejala (Qty: 2, Tindakan: Ganti)
+    // - [Komponen] Gejala
+    const match = cleanRaw.match(
+      /^(?:\d+\.\s*)?\[(.*?)\]\s*(.*?)(?:\s*\[(Repair|Ganti)\]|\s*\((?:(?:Qty|Jumlah):\s*(\d+)(?:,\s*|\s*\|\s*)?Tindakan:\s*(Repair|Ganti)|Tindakan:\s*(Repair|Ganti)(?:,\s*|\s*\|\s*)?(?:Qty|Jumlah):\s*(\d+)|Tindakan:\s*(Repair|Ganti)|(?:Qty|Jumlah):\s*(\d+))\))?$/i
     );
 
     if (match) {
       const komponen = match[1].trim();
-      const gejala = match[2].trim();
-      const rawQty = match[3] || match[6] || match[8] || '1';
+      const rawGejala = match[2].replace(/\s*\[(Repair|Ganti)\]\s*$/i, '').trim();
+      const rawQty = match[4] || match[7] || match[9] || '1';
       const qty = Math.max(1, parseInt(rawQty, 10) || 1);
-      const rawTindakan = match[4] || match[5] || match[7] || 'Repair';
+      const rawTindakan = match[3] || match[5] || match[6] || match[8] || 'Repair';
       const tindakan: 'Repair' | 'Ganti' =
         rawTindakan.toLowerCase() === 'ganti' ? 'Ganti' : 'Repair';
 
       items.push({
         komponen,
-        gejala,
+        gejala: rawGejala,
         qty,
         tindakan,
-        rawText: raw,
+        rawText: cleanRaw,
       });
     } else {
       // Jika teks bebas tanpa kurung siku []
       items.push({
         komponen: 'Umum',
-        gejala: raw,
+        gejala: cleanRaw,
         qty: 1,
-        rawText: raw,
+        rawText: cleanRaw,
       });
     }
   }
