@@ -1,10 +1,13 @@
 // Utility helper untuk parsing dan formatting tanggal & jam Daisha secara konsisten
 
 /**
- * Mengubah string tanggal atau serial number Excel menjadi format Indonesia: Tanggal/Bulan/Tahun Jam:Menit (DD/MM/YYYY HH:mm)
- * Contoh: "2026-09-02 13:57" -> "02/09/2026 13:57"
+ * Mengubah string tanggal atau serial number Excel menjadi format Indonesia: Tanggal/Bulan/Tahun (DD/MM/YYYY)
+ * Opsional menyertakan Jam:Menit (HH:mm). Default: true.
+ * Contoh:
+ * - formatDisplayDate("2026-09-02 13:57", true)  -> "02/09/2026 13:57"
+ * - formatDisplayDate("2026-09-02 13:57", false) -> "02/09/2026"
  */
-export function formatDisplayDate(value: unknown): string {
+export function formatDisplayDate(value: unknown, includeTime = true): string {
   if (value === null || value === undefined) return '-';
   const str = String(value).trim();
   if (!str || str === '-' || str === 'null' || str === 'undefined') return '-';
@@ -18,6 +21,7 @@ export function formatDisplayDate(value: unknown): string {
       const yyyy = jsDate.getUTCFullYear();
       const mm = String(jsDate.getUTCMonth() + 1).padStart(2, '0');
       const dd = String(jsDate.getUTCDate()).padStart(2, '0');
+      if (!includeTime) return `${dd}/${mm}/${yyyy}`;
       const hh = String(jsDate.getUTCHours()).padStart(2, '0');
       const min = String(jsDate.getUTCMinutes()).padStart(2, '0');
       return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
@@ -30,7 +34,7 @@ export function formatDisplayDate(value: unknown): string {
   const clean = str.replace('T', ' ').split('.')[0].trim();
   const parts = clean.split(' ');
   const datePart = parts[0];
-  const timePart = parts[1] ? ` ${parts[1].slice(0, 5)}` : '';
+  const timePart = includeTime && parts[1] ? ` ${parts[1].slice(0, 5)}` : '';
 
   // 3. Jika format YYYY-MM-DD atau YYYY/MM/DD
   if (datePart.includes('-')) {
@@ -61,7 +65,11 @@ export function formatDisplayDate(value: unknown): string {
     }
   }
 
-  return clean.slice(0, 16);
+  return includeTime ? clean.slice(0, 16) : datePart;
+}
+
+export function formatDisplayDateOnly(value: unknown): string {
+  return formatDisplayDate(value, false);
 }
 
 

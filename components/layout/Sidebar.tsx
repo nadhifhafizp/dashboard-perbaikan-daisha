@@ -15,6 +15,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import PwaInstaller from '../common/PwaInstaller';
+import { useServerInfo } from '@/hooks/useServerInfo';
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
@@ -27,6 +28,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { currentUser, isOperator, openLogoutModal, isLoggingOut } = useAuth();
+  const { serverInfo, copied, copyUrl } = useServerInfo();
 
   const navLinks = [
     ...(!isOperator
@@ -67,7 +69,7 @@ export default function Sidebar({
       `}
     >
       {/* Brand Logo */}
-      <div className="hidden md:flex p-6 text-center border-b border-red-600 flex-col items-center justify-center min-h-30 bg-white">
+      <div className="hidden md:flex p-5 text-center border-b border-red-600 flex-col items-center justify-center bg-white">
         <Image
           src="/logo-bs.png"
           alt="Logo Bridgestone"
@@ -77,9 +79,25 @@ export default function Sidebar({
           style={{ width: 'auto', height: '3rem' }}
           priority
         />
-        <span className="text-[11px] font-black text-gray-900 mt-3 tracking-widest uppercase">
-          Daisha Maintenance
-        </span>
+        <div className="mt-2.5 flex flex-col items-center w-full">
+          <span className="text-[11px] font-black text-gray-900 tracking-widest uppercase">
+            Daisha Maintenance
+          </span>
+          {serverInfo && (
+            <button
+              type="button"
+              onClick={copyUrl}
+              className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-full text-[10px] font-bold text-emerald-800 transition cursor-pointer shadow-2xs group"
+              title="Klik untuk menyalin URL akses jaringan lokal"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span className="font-mono">IP: {serverInfo.ip}:{serverInfo.port}</span>
+              <span className="text-[9px] text-emerald-600 group-hover:text-emerald-950 ml-0.5 font-sans">
+                {copied ? '✓ Salin' : '📋'}
+              </span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* User Badge Info */}

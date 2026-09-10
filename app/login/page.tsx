@@ -3,11 +3,13 @@
 import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import { useServerInfo } from '@/hooks/useServerInfo';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
+  const { serverInfo, copied, copyUrl } = useServerInfo();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -147,6 +149,23 @@ function LoginForm() {
             </button>
           </form>
         </div>
+
+        {serverInfo && (
+          <div className="bg-emerald-50/90 px-6 py-2.5 border-t border-emerald-100 flex items-center justify-between text-[11px] text-emerald-800">
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span>Akses Jaringan:</span>
+              <code className="font-bold bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-mono text-[11px]">{serverInfo.url}</code>
+            </span>
+            <button
+              type="button"
+              onClick={copyUrl}
+              className="text-emerald-700 hover:text-emerald-950 font-bold underline cursor-pointer text-[10.5px] ml-2 shrink-0"
+            >
+              {copied ? 'Tersalin ✓' : 'Salin Link'}
+            </button>
+          </div>
+        )}
 
         <div className="bg-gray-100 px-6 py-3 border-t border-gray-200 text-center text-[11px] text-gray-500 font-medium">
           PT Bridgestone Tire Indonesia • Daisha Management System

@@ -34,6 +34,7 @@ export interface KpiSummary {
   avgLeadTimeHours: number;
   unitUnikCount: number;
   repeatUnitCount: number;
+  repeatTicketCount: number;
   totalPcs?: number;
   seksiCount?: number;
 }
@@ -234,14 +235,16 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     const avgLeadTimeHours = countedLeadTime > 0 ? Math.round(totalLeadTimeHours / countedLeadTime) : 0;
 
     const unitSet = new Set<string>();
+    const repeatUnitSet = new Set<string>();
     const seksiSet = new Set<string>();
-    let repeatUnitCount = 0;
+    let repeatTicketCount = 0;
     let totalPcsSum = 0;
     filteredData.forEach(d => {
       if (d.noDaisha && d.noDaisha !== '-') {
         unitSet.add(d.noDaisha);
         if ((unitRepeatMap[d.noDaisha] || 0) > 1) {
-          repeatUnitCount++;
+          repeatUnitSet.add(d.noDaisha);
+          repeatTicketCount++;
         }
       }
       if (d.seksi && d.seksi !== '-') {
@@ -261,7 +264,8 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       scrapRate,
       avgLeadTimeHours,
       unitUnikCount: unitSet.size,
-      repeatUnitCount,
+      repeatUnitCount: repeatUnitSet.size,
+      repeatTicketCount,
       totalPcs: totalPcsSum,
       seksiCount: seksiSet.size,
     };

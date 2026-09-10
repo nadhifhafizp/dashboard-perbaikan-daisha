@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx';
 import { Ticket } from '@/types/ticket';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
-import { formatDisplayDate } from '@/lib/date';
+import { formatDisplayDateOnly } from '@/lib/date';
 
 /**
  * Ekspor data tiket ke file Excel (.xlsx) dengan struktur profesional 3 Sheet:
@@ -68,8 +68,8 @@ export function exportTicketsToExcel(tickets: Ticket[], filePrefix = 'Rekap_Perb
           'Jenis Tindakan': item.tindakan || 'Repair',
           'Status Tiket': t.status,
           'Nama Pelapor': t.pelapor,
-          'Waktu Masuk': formatDisplayDate(t.tglMasuk),
-          'Waktu Selesai': formatDisplayDate(t.tglKeluar),
+          'Waktu Masuk': formatDisplayDateOnly(t.tglMasuk),
+          'Waktu Selesai': formatDisplayDateOnly(t.tglKeluar),
         });
       });
     } else {
@@ -88,8 +88,8 @@ export function exportTicketsToExcel(tickets: Ticket[], filePrefix = 'Rekap_Perb
         'Jenis Tindakan': 'Repair',
         'Status Tiket': t.status,
         'Nama Pelapor': t.pelapor,
-        'Waktu Masuk': formatDisplayDate(t.tglMasuk),
-        'Waktu Selesai': formatDisplayDate(t.tglKeluar),
+        'Waktu Masuk': formatDisplayDateOnly(t.tglMasuk),
+        'Waktu Selesai': formatDisplayDateOnly(t.tglKeluar),
       });
     }
   }
@@ -135,8 +135,8 @@ export function exportTicketsToExcel(tickets: Ticket[], filePrefix = 'Rekap_Perb
       'Rincian Seluruh Gejala': t.detail && t.detail !== '-' ? t.detail : '-',
       'Status Tiket': t.status,
       'Nama Pelapor': t.pelapor,
-      'Waktu Masuk': formatDisplayDate(t.tglMasuk),
-      'Waktu Selesai': formatDisplayDate(t.tglKeluar),
+      'Waktu Masuk': formatDisplayDateOnly(t.tglMasuk),
+      'Waktu Selesai': formatDisplayDateOnly(t.tglKeluar),
     };
   });
 

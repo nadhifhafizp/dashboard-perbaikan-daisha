@@ -123,7 +123,11 @@ export default function KpiCards({
             </div>
             <div className="text-xs font-semibold text-amber-600 flex items-center gap-1 mt-1">
               <span>▲</span>
-              <span>{kpi.repeatUnitCount}x Unit Berulang</span>
+              <span>
+                {filterHanyaBerulang
+                  ? `${kpi.repeatTicketCount} Tiket Berulang`
+                  : `${kpi.repeatUnitCount} Unit Berulang (${kpi.repeatTicketCount} Tiket)`}
+              </span>
             </div>
           </div>
         </div>
@@ -217,7 +221,7 @@ export default function KpiCards({
           }`}
         >
           <span>🔁</span>
-          <span>{filterHanyaBerulang ? 'Unit Berulang (Aktif)' : `Unit Berulang (${kpi.repeatUnitCount}x)`}</span>
+          <span>{filterHanyaBerulang ? 'Unit Berulang (Aktif)' : `Unit Berulang (${kpi.repeatUnitCount} Unit)`}</span>
         </button>
       </div>
     </div>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useServerInfo } from '@/hooks/useServerInfo';
 
 interface MobileNavProps {
   isMobileMenuOpen: boolean;
@@ -17,21 +18,36 @@ export default function MobileNav({
 }: MobileNavProps) {
   const pathname = usePathname();
   const { isOperator, openLogoutModal } = useAuth();
+  const { serverInfo, copied, copyUrl } = useServerInfo();
 
   return (
     <>
       {/* Top Mobile Bar (Hanya di layar kecil) */}
-      <div className="md:hidden bg-red-700 text-white flex items-center justify-between p-4 shadow-md z-20">
-        <div className="flex items-center gap-2 bg-white px-3 py-1 rounded">
-          <Image
-            src="/logo-bs.png"
-            alt="Logo Bridgestone"
-            width={120}
-            height={24}
-            className="h-6 w-auto object-contain"
-            style={{ width: 'auto', height: '1.5rem' }}
-            priority
-          />
+      <div className="md:hidden bg-red-700 text-white flex items-center justify-between p-3.5 shadow-md z-20">
+        <div className="flex items-center gap-2">
+          <div className="bg-white px-2.5 py-1 rounded flex items-center">
+            <Image
+              src="/logo-bs.png"
+              alt="Logo Bridgestone"
+              width={100}
+              height={20}
+              className="h-5 w-auto object-contain"
+              style={{ width: 'auto', height: '1.25rem' }}
+              priority
+            />
+          </div>
+          {serverInfo && (
+            <button
+              type="button"
+              onClick={copyUrl}
+              className="px-2 py-1 bg-red-800/90 hover:bg-red-900 border border-red-500/60 rounded text-[10.5px] font-mono text-red-100 flex items-center gap-1.5 cursor-pointer transition active:scale-95"
+              title="Salin alamat IP server"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>{serverInfo.ip}:{serverInfo.port}</span>
+              <span className="text-[9px]">{copied ? '✓' : '📋'}</span>
+            </button>
+          )}
         </div>
         <button
           type="button"
