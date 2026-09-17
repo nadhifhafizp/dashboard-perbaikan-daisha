@@ -49,16 +49,8 @@ if not exist "node_modules\" (
     echo [2/3] Dependensi proyek sudah siap.
 )
 
-:: 3. Sinkronisasi Database Prisma SQLite
-echo [3/3] Menyiapkan database SQLite internal...
-if not exist "prisma\dev.db" (
-    echo Menyiapkan struktur tabel database pertama kali...
-    if exist "node_modules\.bin\prisma.cmd" (
-        call node_modules\.bin\prisma.cmd db push --skip-generate >nul 2>nul
-    ) else (
-        call npx.cmd prisma db push --skip-generate >nul 2>nul
-    )
-)
+:: 3. Sinkronisasi Database Prisma
+echo [3/3] Menyiapkan koneksi database Prisma...
 if exist "node_modules\.bin\prisma.cmd" (
     call node_modules\.bin\prisma.cmd generate >nul 2>nul
 ) else (

@@ -26,17 +26,12 @@ function checkServerReady() {
   });
 }
 
-// Menyiapkan Prisma / SQLite jika belum ada
+// Menyiapkan Prisma Client
 function prepareDatabase() {
-  const dbPath = path.join(PROJECT_ROOT, 'prisma', 'dev.db');
   const prismaBin = path.join(PROJECT_ROOT, 'node_modules', '.bin', 'prisma.cmd');
   const prismaCmd = fs.existsSync(prismaBin) ? `"${prismaBin}"` : 'npx prisma';
 
   try {
-    if (!fs.existsSync(dbPath)) {
-      console.log('[DAISHA] Menyiapkan database SQLite pertama kali...');
-      execSync(`${prismaCmd} db push --skip-generate`, { cwd: PROJECT_ROOT, stdio: 'ignore' });
-    }
     console.log('[DAISHA] Menyiapkan Prisma Client...');
     execSync(`${prismaCmd} generate`, { cwd: PROJECT_ROOT, stdio: 'ignore' });
   } catch (err) {
