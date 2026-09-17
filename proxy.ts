@@ -33,8 +33,8 @@ async function verifyTokenEdge(token: string): Promise<{ valid: boolean; role?: 
     const timestamp = parseInt(timestampStr, 10);
     if (isNaN(timestamp)) return { valid: false };
 
-    // Cek kadaluwarsa: 7 hari
-    const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+    // Cek kadaluwarsa: 12 jam (sesuai shift kerja pabrik)
+    const MAX_AGE_MS = 12 * 60 * 60 * 1000;
     if (Date.now() - timestamp > MAX_AGE_MS) return { valid: false };
 
     // HMAC-SHA256 via Web Crypto API (Edge-compatible)

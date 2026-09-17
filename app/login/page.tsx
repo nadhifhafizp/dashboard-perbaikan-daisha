@@ -9,6 +9,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
+  const reason = searchParams.get('reason');
   const { serverInfo, copied, copyUrl } = useServerInfo();
 
   const [username, setUsername] = useState('');
@@ -82,6 +83,18 @@ function LoginForm() {
 
         {/* Isi Form */}
         <div className="p-6 sm:p-8">
+          {reason === 'idle' && !errorMsg && (
+            <div className="mb-5 p-3.5 bg-amber-50 border border-amber-300 text-amber-900 rounded-xl text-xs font-medium flex items-start gap-2.5 shadow-xs">
+              <span className="text-base shrink-0 leading-tight">⏳</span>
+              <div>
+                <p className="font-bold text-amber-950">Sesi Berakhir Otomatis (Idle Timeout)</p>
+                <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                  Tidak ada aktivitas terdeteksi selama 30 menit. Akun otomatis keluar demi keamanan. Silakan login kembali.
+                </p>
+              </div>
+            </div>
+          )}
+
           {errorMsg && (
             <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-bold flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">

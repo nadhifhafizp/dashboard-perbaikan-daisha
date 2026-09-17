@@ -68,8 +68,8 @@ export async function parseAndVerifySession(token: string | undefined | null): P
 
     if (isNaN(timestamp)) return { valid: false };
 
-    // Kadaluwarsa token: 7 hari
-    const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+    // Kadaluwarsa token: 12 jam (sesuai shift kerja pabrik)
+    const MAX_AGE_MS = 12 * 60 * 60 * 1000;
     if (Date.now() - timestamp > MAX_AGE_MS) {
       return { valid: false };
     }

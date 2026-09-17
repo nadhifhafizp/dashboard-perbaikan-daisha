@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       secure: false, // HTTP lokal saja, tidak perlu HTTPS
       sameSite: 'lax',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60, // 7 hari
+      maxAge: 12 * 60 * 60, // 12 jam (sesuai shift kerja pabrik)
     });
 
     return response;

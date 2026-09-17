@@ -65,6 +65,78 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, checkAuth]);
 
+  // Durasi timeout idle: 30 menit tanpa aktivitas pengguna
+  const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+  const lastActivityRef = React.useRef<number>(Date.now());
+
+  // Handle auto logout saat idle
+  const handleIdleLogout = useCallback(async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.error('Idle logout error:', err);
+    } finally {
+      setCurrentUser(null);
+      router.push('/login?reason=idle');
+      router.refresh();
+    }
+  }, [router]);
+
+  // Pantau aktivitas pengguna (mouse, keyboard, scroll, touch)
+  useEffect(() => {
+    if (pathname === '/login' || !currentUser) return;
+
+    // Reset waktu aktivitas saat user pertama terautentikasi
+    lastActivityRef.current = Date.now();
+
+    const recordActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+    
+    // Throttle listener agar efisien (maksimal catat tiap 2 detik)
+    let lastRecorded = 0;
+    const throttledHandler = () => {
+      const now = Date.now();
+      if (now - lastRecorded > 2000) {
+        lastRecorded = now;
+        recordActivity();
+      }
+    };
+
+    events.forEach((evt) => {
+      window.addEventListener(evt, throttledHandler, { passive: true });
+    });
+
+    // Pengecekan interval berkala setiap 15 detik
+    const timerInterval = setInterval(() => {
+      if (Date.now() - lastActivityRef.current >= IDLE_TIMEOUT_MS) {
+        clearInterval(timerInterval);
+        void handleIdleLogout();
+      }
+    }, 15000);
+
+    // Cek juga saat tab kembali dilihat (misal setelah laptop sleep / ganti tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        if (Date.now() - lastActivityRef.current >= IDLE_TIMEOUT_MS) {
+          clearInterval(timerInterval);
+          void handleIdleLogout();
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      events.forEach((evt) => {
+        window.removeEventListener(evt, throttledHandler);
+      });
+      clearInterval(timerInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [pathname, currentUser, handleIdleLogout, IDLE_TIMEOUT_MS]);
+
   const executeLogout = async () => {
     setIsLoggingOut(true);
     try {
