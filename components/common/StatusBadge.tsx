@@ -3,7 +3,6 @@
 import React from 'react';
 import { TicketStatus } from '@/types/ticket';
 import { normalizeStatus } from '@/lib/ticketParser';
-import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Clock, AlertCircle, Trash2 } from 'lucide-react';
 
 interface StatusBadgeProps {
@@ -23,33 +22,32 @@ export default function StatusBadge({
   switch (clean) {
     case 'Done':
       return (
-        <Badge variant="success" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
+        <span className={`inline-flex items-center rounded-full font-bold shadow-xs bg-emerald-50 text-emerald-800 border border-emerald-200/80 ${sizeClass} gap-1.5 ${className}`}>
           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
           <span>Selesai</span>
-        </Badge>
+        </span>
       );
     case 'Progress':
       return (
-        <Badge variant="info" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
+        <span className={`inline-flex items-center rounded-full font-bold shadow-xs bg-blue-50 text-blue-800 border border-blue-200/80 ${sizeClass} gap-1.5 ${className}`}>
           <Clock className="w-3 h-3 text-blue-600 animate-spin" style={{ animationDuration: '4s' }} />
           <span>Sedang Dikerjakan</span>
-        </Badge>
+        </span>
       );
     case 'Scrap':
       return (
-        <Badge variant="destructive" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
+        <span className={`inline-flex items-center rounded-full font-bold shadow-xs bg-red-600 text-white border border-red-600 ${sizeClass} gap-1.5 ${className}`}>
           <Trash2 className="w-3 h-3 text-white" />
           <span>Rusak (Scrap)</span>
-        </Badge>
+        </span>
       );
     case 'Open':
     default:
       return (
-        <Badge variant="warning" className={`${sizeClass} gap-1.5 font-bold shadow-xs ${className}`}>
-          <AlertCircle className="w-3 h-3 text-amber-600" />
-          <span>Open / Antre</span>
-        </Badge>
+        <span className={`inline-flex items-center rounded-full font-bold shadow-xs bg-amber-50 text-amber-800 border border-amber-200/80 ${sizeClass} gap-1.5 ${className}`}>
+          <AlertCircle className="w-3 h-3 text-amber-500" />
+          <span>Open (Antre)</span>
+        </span>
       );
   }
 }
-

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 import { CreateTicketPayload, Ticket } from '@/types/ticket';
 import { getInitialDateTime, cleanInputDateTime } from '@/lib/date';
 import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
@@ -13,6 +14,7 @@ import IndoDateTimeInput from '@/components/common/IndoDateTimeInput';
 import { useTickets, broadcastTicketChange } from '@/hooks/useTickets';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
+import { ArrowLeft, LayoutDashboard, ClipboardList, Settings } from 'lucide-react';
 
 const INVALID_OPERATOR_NAMES = [
   'Staff Input / Teknisi Lapangan',
@@ -33,6 +35,7 @@ export function isInvalidOperatorName(name: string | null | undefined): boolean 
 const API_URL = '/api/repair';
 
 export default function InputKerusakanPage() {
+  const { isAdmin } = useAuth();
   const [formData, setFormData] = useState({
     waktuMasuk: getInitialDateTime(),
     namaPelapor: '',
@@ -431,24 +434,66 @@ export default function InputKerusakanPage() {
   return (
     <div className="min-h-screen bg-slate-100 p-3 sm:p-5 md:p-8 flex justify-center items-start pb-24 md:pb-10">
       <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200 w-full max-w-3xl">
-        {/* Header Form */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5 gap-2">
-          <div>
-            <h1 className="text-base sm:text-2xl font-black text-slate-900 leading-tight">
-              Input Daisha Rusak
-            </h1>
-            <p className="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">
-              Catat laporan perbaikan unit sesuai katalog workshop
-            </p>
+        {/* Header Form dengan Breadcrumb & Quick Nav */}
+        <div className="border-b border-slate-100 pb-4 mb-5">
+          <div className="flex items-center gap-2 mb-2 flex-wrap text-xs">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-slate-600 hover:text-red-700 hover:bg-red-50 transition border border-slate-200 hover:border-red-200"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Portal</span>
+            </Link>
+            <span className="text-slate-300">/</span>
+            <Link
+              href="/daisha"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-slate-600 hover:text-red-700 hover:bg-red-50 transition border border-slate-200 hover:border-red-200"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-red-600" />
+              <span>Dashboard Daisha</span>
+            </Link>
+            <span className="text-slate-300">/</span>
+            <span className="font-extrabold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
+              Input Rusak
+            </span>
           </div>
-          <Link
-            href="/riwayat"
-            className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl transition flex items-center gap-1.5 shrink-0"
-          >
-            <span>📋</span>
-            <span className="hidden sm:inline">Cek Riwayat Laporan</span>
-            <span className="sm:hidden">Riwayat</span>
-          </Link>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-2">
+            <div>
+              <h1 className="text-base sm:text-2xl font-black text-slate-900 leading-tight">
+                Input Daisha Rusak
+              </h1>
+              <p className="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">
+                Catat laporan perbaikan unit sesuai katalog workshop
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link
+                href="/daisha"
+                className="text-xs font-bold text-slate-700 hover:text-red-700 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5 text-slate-600" />
+                <span>Dashboard</span>
+              </Link>
+              <Link
+                href="/riwayat"
+                className="text-xs font-bold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer border border-red-100 shadow-2xs"
+              >
+                <ClipboardList className="w-3.5 h-3.5 text-red-600" />
+                <span>Status Antrean</span>
+              </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="text-xs font-bold text-slate-800 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer border border-slate-200 shadow-2xs"
+                >
+                  <Settings className="w-3.5 h-3.5 text-slate-700" />
+                  <span>Panel Admin</span>
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

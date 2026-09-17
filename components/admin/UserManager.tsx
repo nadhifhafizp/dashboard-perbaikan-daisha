@@ -267,10 +267,12 @@ export default function UserManager() {
                         className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black tracking-wide uppercase ${
                           u.role === 'ADMIN'
                             ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                            : u.role === 'USER_SEKSI'
+                              ? 'bg-teal-100 text-teal-800 border border-teal-200'
+                              : 'bg-blue-100 text-blue-800 border border-blue-200'
                         }`}
                       >
-                        {u.role === 'ADMIN' ? '👑 Admin' : '🔧 Operator'}
+                        {u.role === 'ADMIN' ? '👑 Admin' : u.role === 'USER_SEKSI' ? '🏢 Seksi' : '🔧 Operator'}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-gray-500 max-w-xs truncate">
@@ -343,10 +345,12 @@ export default function UserManager() {
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-black tracking-wide uppercase ${
                     u.role === 'ADMIN'
                       ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                      : 'bg-blue-100 text-blue-800 border border-blue-200'
+                      : u.role === 'USER_SEKSI'
+                        ? 'bg-teal-100 text-teal-800 border border-teal-200'
+                        : 'bg-blue-100 text-blue-800 border border-blue-200'
                   }`}
                 >
-                  {u.role === 'ADMIN' ? '👑 Admin' : '🔧 Operator'}
+                  {u.role === 'ADMIN' ? '👑 Admin' : u.role === 'USER_SEKSI' ? '🏢 Seksi' : '🔧 Operator'}
                 </span>
               </div>
 
@@ -446,7 +450,8 @@ export default function UserManager() {
                     onChange={(e) => setAddForm({ ...addForm, role: e.target.value as UserRole })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-hidden font-bold"
                   >
-                    <option value="OPERATOR">OPERATOR (Input Saja)</option>
+                    <option value="OPERATOR">OPERATOR (Input Daisha)</option>
+                    <option value="USER_SEKSI">USER SEKSI (Request)</option>
                     <option value="ADMIN">ADMIN (Akses Penuh)</option>
                   </select>
                 </div>
@@ -542,7 +547,8 @@ export default function UserManager() {
                     onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserRole })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-hidden font-bold"
                   >
-                    <option value="OPERATOR">OPERATOR (Input Saja)</option>
+                    <option value="OPERATOR">OPERATOR (Input Daisha)</option>
+                    <option value="USER_SEKSI">USER SEKSI (Request)</option>
                     <option value="ADMIN">ADMIN (Akses Penuh)</option>
                   </select>
                 </div>

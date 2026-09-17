@@ -17,8 +17,47 @@ export default function MobileNav({
   onToggleMobileMenu,
 }: MobileNavProps) {
   const pathname = usePathname();
-  const { isOperator, openLogoutModal } = useAuth();
+  const { isOperator, isAdmin, isSeksi, openLogoutModal } = useAuth();
   const { serverInfo, copied, copyUrl } = useServerInfo();
+
+  // Build bottom nav items based on role and active module
+  const navItems: { href: string; emoji: string; label: string }[] = [];
+
+  if (isAdmin) {
+    if (pathname.startsWith('/request')) {
+      navItems.push(
+        { href: '/', emoji: '🏠', label: 'Portal' },
+        { href: '/request', emoji: '📨', label: 'Request' },
+        { href: '/daisha', emoji: '📊', label: 'Daisha' },
+        { href: '/spareparts', emoji: '📦', label: 'Stok' },
+      );
+    } else if (pathname.startsWith('/spareparts')) {
+      navItems.push(
+        { href: '/', emoji: '🏠', label: 'Portal' },
+        { href: '/spareparts', emoji: '📦', label: 'Stok' },
+        { href: '/daisha', emoji: '📊', label: 'Daisha' },
+        { href: '/request', emoji: '📨', label: 'Request' },
+      );
+    } else {
+      // Modul Daisha (termasuk /daisha, /input, /riwayat, /admin)
+      navItems.push(
+        { href: '/', emoji: '🏠', label: 'Portal' },
+        { href: '/daisha', emoji: '📊', label: 'Analitik' },
+        { href: '/input', emoji: '📝', label: 'Lapor' },
+        { href: '/riwayat', emoji: '📋', label: 'Antrean' },
+        { href: '/admin', emoji: '⚙️', label: 'Tindakan' },
+      );
+    }
+  } else if (isOperator) {
+    navItems.push(
+      { href: '/input', emoji: '📝', label: 'Lapor' },
+      { href: '/riwayat', emoji: '📋', label: 'Status' },
+    );
+  } else if (isSeksi) {
+    navItems.push(
+      { href: '/request', emoji: '📨', label: 'Request' },
+    );
+  }
 
   return (
     <>
@@ -60,53 +99,19 @@ export default function MobileNav({
 
       {/* Bottom Navigation Bar (Khusus Smartphone) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1 flex items-center justify-around shadow-lg">
-        {!isOperator && (
+        {navItems.map(item => (
           <Link
-            href="/"
+            key={item.href}
+            href={item.href}
             className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
-              pathname === '/' ? 'text-red-700 font-black' : 'text-slate-500 font-medium'
+              pathname === item.href ? 'text-red-700 font-black' : 'text-slate-500 font-medium'
             }`}
           >
-            <span className="text-base">📊</span>
-            <span className="text-[10px] mt-0.5">Rekap</span>
-            {pathname === '/' && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
+            <span className="text-base">{item.emoji}</span>
+            <span className="text-[10px] mt-0.5">{item.label}</span>
+            {pathname === item.href && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
           </Link>
-        )}
-
-        <Link
-          href="/input"
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
-            pathname === '/input' ? 'text-red-700 font-black' : 'text-slate-500 font-medium'
-          }`}
-        >
-          <span className="text-base">📝</span>
-          <span className="text-[10px] mt-0.5">Lapor</span>
-          {pathname === '/input' && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
-        </Link>
-
-        <Link
-          href="/riwayat"
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
-            pathname === '/riwayat' ? 'text-red-700 font-black' : 'text-slate-500 font-medium'
-          }`}
-        >
-          <span className="text-base">📋</span>
-          <span className="text-[10px] mt-0.5">Status</span>
-          {pathname === '/riwayat' && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
-        </Link>
-
-        {!isOperator && (
-          <Link
-            href="/admin"
-            className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
-              pathname === '/admin' ? 'text-red-700 font-black' : 'text-slate-500 font-medium'
-            }`}
-          >
-            <span className="text-base">⚙️</span>
-            <span className="text-[10px] mt-0.5">Bengkel</span>
-            {pathname === '/admin' && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
-          </Link>
-        )}
+        ))}
 
         <button
           type="button"
@@ -120,3 +125,4 @@ export default function MobileNav({
     </>
   );
 }
+

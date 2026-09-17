@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     }
 
     // 2. Buat Akun Baru
-    const { username, password, name, role, description } = body;
+    const { username, password, name, role, seksi, description } = body;
     if (!username || !password || !name) {
       return NextResponse.json(
         { error: 'Username, password, dan nama lengkap wajib diisi.' },
@@ -78,13 +78,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const assignedRole: UserRole = role === 'ADMIN' ? 'ADMIN' : 'OPERATOR';
+    const validRoles: UserRole[] = ['ADMIN', 'OPERATOR', 'USER_SEKSI'];
+    const assignedRole: UserRole = validRoles.includes(role) ? role : 'OPERATOR';
 
     const newUser = await createUser({
       username,
       passwordPlain: password,
       name,
       role: assignedRole,
+      seksi,
       description,
     });
 
@@ -109,7 +111,7 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, username, name, role, description } = body;
+    const { id, username, name, role, seksi, description } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'ID akun wajib disertakan.' }, { status: 400 });
@@ -119,6 +121,7 @@ export async function PUT(request: Request) {
       username,
       name,
       role: role as UserRole,
+      seksi,
       description,
     });
 

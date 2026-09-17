@@ -35,8 +35,10 @@ function LoginForm() {
         let target = data.redirectUrl || '/input';
         if (from && from !== '/login') {
           // Jika operator mencoba membuka dashboard rekap (/), tetap arahkan ke /input
-          if (data.user?.role === 'OPERATOR' && (from === '/' || from.startsWith('/admin'))) {
+          if (data.user?.role === 'OPERATOR' && (from === '/' || from.startsWith('/admin') || from.startsWith('/request') || from.startsWith('/spareparts'))) {
             target = '/input';
+          } else if (data.user?.role === 'USER_SEKSI' && (from === '/' || from.startsWith('/admin') || from.startsWith('/input') || from.startsWith('/spareparts'))) {
+            target = '/request';
           } else {
             target = from;
           }
@@ -60,7 +62,7 @@ function LoginForm() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-red-950 flex flex-col justify-center items-center p-4 sm:p-6">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
-        
+
         {/* Header Kartu */}
         <div className="bg-red-700 p-6 text-center text-white flex flex-col items-center justify-center">
           <div className="bg-white px-4 py-2 rounded-lg shadow-md mb-3">
@@ -75,7 +77,7 @@ function LoginForm() {
             />
           </div>
           <h1 className="text-xl font-black tracking-wide uppercase">Internal Maintenance Login</h1>
-          <p className="text-xs text-red-100 mt-1 font-medium">Sistem Pencatatan & Monitoring Daisha</p>
+          <p className="text-xs text-red-100 mt-1 font-medium">Sistem Pencatatan, Monitoring Daisha dan Follow up Request</p>
         </div>
 
         {/* Isi Form */}

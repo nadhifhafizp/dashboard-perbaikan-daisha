@@ -8,7 +8,7 @@ const globalForPrisma = globalThis as unknown as {
 const existingClient = globalForPrisma.prisma;
 const isStale =
   existingClient &&
-  (!('daishaType' in existingClient) || !('user' in existingClient));
+  (!('daishaType' in existingClient) || !('user' in existingClient) || !('sectionRequest' in existingClient) || !('sparepartLog' in existingClient));
 
 export const prisma =
   isStale || !existingClient ? new PrismaClient() : existingClient;

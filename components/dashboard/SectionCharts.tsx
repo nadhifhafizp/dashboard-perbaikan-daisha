@@ -2,18 +2,13 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-  BarChart,
-  Bar,
+  PieChart,
+  Pie,
   Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
-  LabelList,
 } from 'recharts';
-import { Info, Calendar, Layers, Tag, CheckCircle } from 'lucide-react';
+import { Calendar, Building2, Filter, X } from 'lucide-react';
 import type { SeksiJenisBreakdown } from '@/hooks/useDashboardAnalytics';
 
 interface SectionChartsProps {
@@ -34,105 +29,133 @@ interface SectionChartsProps {
   selectedSeksi?: string;
 }
 
+const SEKSI_COLORS = [
+  '#2563eb', // Royal Blue
+  '#0d9488', // Teal
+  '#f59e0b', // Amber
+  '#8b5cf6', // Violet
+  '#ef4444', // Red
+  '#06b6d4', // Cyan
+  '#10b981', // Emerald
+  '#ec4899', // Pink
+  '#6366f1', // Indigo
+  '#f97316', // Orange
+  '#64748b', // Slate
+];
+
 export default function SectionCharts({
   chartSeksiStacked,
   seksiJenisMonthly = {},
   seksiJenisAll = [],
   availableMonths = [],
   onSelectSeksi,
-  selectedSeksi,
+  selectedSeksi = '',
 }: SectionChartsProps) {
-  // Mode tampilan grafik (murni chart tanpa tabel):
-  // 'model' (Stacked Bar per Model/Jenis Daisha) vs 'status' (Stacked Bar per Status Open/Progress/Done/Scrap)
-  const [chartMode, setChartMode] = useState<'model' | 'status'>('model');
-  // Pilihan Bulan: 'all' (Seluruh Riwayat) atau key bulan tertentu ('YYYY-MM')
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
-  // Ambil data aktif sesuai pilihan bulan (Poin 1: seberapa banyak daisha per seksi & jenisnya apa)
   const activeSeksiList = useMemo(() => {
+    let list: { seksi: string; total: number; totalPcs: number; jenisList?: { jenis: string; count: number }[] }[] = [];
+    
     if (selectedMonth === 'all') {
-      return seksiJenisAll.length > 0
-        ? seksiJenisAll
-        : chartSeksiStacked.map((s) => ({
-            seksi: s.seksi,
-            total: s.Total,
-            totalPcs: s.totalPcs || s.Total,
-            jenisList: [],
-          }));
+      if (seksiJenisAll.length > 0) {
+        list = seksiJenisAll.map((s) => ({
+          seksi: s.seksi,
+          total: s.total,
+          totalPcs: s.totalPcs || s.total,
+          jenisList: s.jenisList,
+        }));
+      } else {
+        list = chartSeksiStacked.map((s) => ({
+          seksi: s.seksi,
+          total: s.Total,
+          totalPcs: s.totalPcs || s.Total,
+          jenisList: [],
+        }));
+      }
+    } else {
+      const monthly = seksiJenisMonthly[selectedMonth] || [];
+      list = monthly.map((s) => ({
+        seksi: s.seksi,
+        total: s.total,
+        totalPcs: s.totalPcs || s.total,
+        jenisList: s.jenisList,
+      }));
     }
-    return seksiJenisMonthly[selectedMonth] || [];
+
+    return [...list].sort((a, b) => b.total - a.total);
   }, [selectedMonth, seksiJenisAll, seksiJenisMonthly, chartSeksiStacked]);
 
-  // Siapkan daftar unik seluruh model/jenis daisha untuk grafik stacked model
-  const uniqueModels = useMemo(() => {
-    const set = new Set<string>();
-    activeSeksiList.forEach((s) => {
-      s.jenisList.forEach((j) => set.add(j.jenis));
-    });
-    return Array.from(set);
+  const totalSeksiAll = useMemo(() => {
+    return activeSeksiList.reduce((acc, curr) => acc + curr.total, 0);
   }, [activeSeksiList]);
 
-  // Palette warna elegan untuk model/jenis daisha
-  const modelColors = [
-    '#2563eb', // Royal Blue
-    '#0d9488', // Teal
-    '#f59e0b', // Amber
-    '#8b5cf6', // Violet
-    '#ec4899', // Pink
-    '#06b6d4', // Cyan
-    '#ea580c', // Orange
-    '#475569', // Slate
-    '#10b981', // Emerald
-    '#6366f1', // Indigo
-  ];
+  const seksiDonutData = useMemo(() => {
+    return activeSeksiList.map((s, idx) => ({
+      ...s,
+      color: SEKSI_COLORS[idx % SEKSI_COLORS.length],
+      persen: totalSeksiAll > 0 ? Math.round((s.total / totalSeksiAll) * 100) : 0,
+    }));
+  }, [activeSeksiList, totalSeksiAll]);
 
-  // Format data untuk BarChart Stacked Model
-  const chartModelData = useMemo(() => {
-    return activeSeksiList.map((s) => {
-      const row: Record<string, string | number> = {
-        seksi: s.seksi,
-        Total: s.total,
-      };
-      s.jenisList.forEach((j) => {
-        row[j.jenis] = j.count;
-      });
-      return row;
-    });
-  }, [activeSeksiList]);
-
-  return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col h-full">
-      {/* 1. Header Card dengan Filter Bulan & Toggle Tipe Grafik */}
-      <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-        <div>
-          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
-            <span>
-              {chartMode === 'model'
-                ? 'DISTRIBUSI DAISHA PER SEKSI (BERDASARKAN MODEL)'
-                : 'DISTRIBUSI DAISHA PER SEKSI (BERDASARKAN STATUS)'}
-            </span>
-            <span title="Visualisasi grafik jumlah daisha yang masuk dari berbagai seksi plant">
-              <Info className="w-3.5 h-3.5 text-slate-400 cursor-help" />
-            </span>
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {chartMode === 'model'
-              ? 'Volume unit masuk per seksi plant dengan rincian komposisi model/jenis daisha'
-              : 'Status progres perbaikan unit daisha (Antre, Dikerjakan, Selesai, Afkir) per seksi'}
+  const SectionDonutTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean;
+    payload?: { name: string; value: number; payload: { seksi: string; total: number; persen: number; color: string } }[];
+  }) => {
+    if (active && payload && payload.length) {
+      const item = payload[0];
+      const data = item.payload;
+      return (
+        <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs shadow-md">
+          <p className="font-extrabold" style={{ color: data.color }}>
+            Seksi: {data.seksi}
+          </p>
+          <p className="text-slate-800 font-semibold mt-0.5">
+            <strong>{data.total}</strong> Unit ({data.persen}%)
           </p>
         </div>
+      );
+    }
+    return null;
+  };
 
-        {/* Kontrol Kanan: Pemilih Bulan + Mode Switcher */}
+  return (
+    <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col h-full justify-between">
+      {/* 1. Header Minimalis */}
+      <div className="flex flex-wrap justify-between items-center gap-3 mb-2">
+        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-blue-600" />
+          <span>DISTRIBUSI DAISHA PER SEKSI</span>
+        </h3>
+
         <div className="flex flex-wrap items-center gap-2">
-          {/* Dropdown Filter Bulan (Poin 1) */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+          {selectedSeksi && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 border border-red-200 rounded-xl text-xs font-extrabold text-red-700">
+              <Filter className="w-3 h-3" />
+              <span>{selectedSeksi}</span>
+              {onSelectSeksi && (
+                <button
+                  type="button"
+                  onClick={() => onSelectSeksi('')}
+                  className="hover:bg-red-200 p-0.5 rounded-full transition cursor-pointer"
+                  title="Hapus filter"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Dropdown Filter Periode */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-semibold">
             <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-            <span className="text-slate-500 text-[11px] hidden sm:inline">Bulan:</span>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
               aria-label="Pilih Periode Bulan Rekapitulasi"
-              className="bg-transparent text-slate-800 font-extrabold focus:outline-hidden cursor-pointer"
+              className="bg-transparent text-slate-800 font-bold focus:outline-hidden cursor-pointer"
             >
               <option value="all">Semua Periode</option>
               {availableMonths.map((m) => (
@@ -142,267 +165,101 @@ export default function SectionCharts({
               ))}
             </select>
           </div>
-
-          {/* Toggle Tipe Grafik: Model vs Status */}
-          <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => setChartMode('model')}
-              className={`px-3 py-1 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
-                chartMode === 'model'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <Tag className="w-3.5 h-3.5 text-blue-600" />
-              <span>Model Daisha</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setChartMode('status')}
-              className={`px-3 py-1 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
-                chartMode === 'status'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5 text-blue-600" />
-              <span>Status Pengerjaan</span>
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* 2. Visualisasi Grafik Utama (Murni Chart) */}
-      <div style={{ height: Math.min(400, Math.max(160, (chartMode === 'model' ? chartModelData.length : chartSeksiStacked.length) * 52 + 60)) }} className="w-full">
-        {chartMode === 'model' ? (
-          /* Grafik 1: Stacked Bar per Model Daisha (Poin 1 & 7) */
-          chartModelData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartModelData}
-                margin={{ top: 20, right: 20, left: -20, bottom: 0 }}
-                onClick={(state) => {
-                  if (state && state.activeLabel && onSelectSeksi) {
-                    onSelectSeksi(String(state.activeLabel));
-                  }
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="seksi"
-                  tick={{ fontSize: 11, fill: '#334155', fontWeight: 600 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: '#64748b' }}
-                  allowDecimals={false}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  formatter={(val: unknown, name) => [`${val} Unit`, name]}
-                  contentStyle={{
-                    borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
-                    fontSize: '12px',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
-                  }}
-                />
-                <Legend
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
-                />
-                {uniqueModels.map((model, idx) => {
-                  const isLast = idx === uniqueModels.length - 1;
-                  return (
-                    <Bar
-                      key={model}
-                      dataKey={model}
-                      stackId="seksiModelStack"
-                      fill={modelColors[idx % modelColors.length]}
-                      name={model}
-                      radius={isLast ? [4, 4, 0, 0] : [0, 0, 0, 0]}
-                    >
-                      {isLast && (
-                        <LabelList
-                          dataKey="Total"
-                          position="top"
-                          fill="#0f172a"
-                          fontSize={11}
-                          fontWeight={700}
-                          formatter={(val: unknown) => `${val} Unit`}
-                        />
-                      )}
-                    </Bar>
-                  );
-                })}
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-full flex items-center justify-center text-xs text-slate-400">
-              Belum ada data daisha per seksi
-            </div>
-          )
-        ) : (
-          /* Grafik 2: Stacked Bar per Status (Open, Progress, Done, Scrap) */
-          chartSeksiStacked.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartSeksiStacked}
-                margin={{ top: 20, right: 20, left: -20, bottom: 0 }}
-                onClick={(state) => {
-                  if (state && state.activeLabel && onSelectSeksi) {
-                    onSelectSeksi(String(state.activeLabel));
-                  }
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="seksi"
-                  tick={{ fontSize: 11, fill: '#334155', fontWeight: 600 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: '#64748b' }}
-                  allowDecimals={false}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  formatter={(val: unknown, name) => [`${val} Unit`, name]}
-                  contentStyle={{
-                    borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
-                    fontSize: '12px',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
-                  }}
-                />
-                <Legend
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
-                />
-                <Bar dataKey="Open" stackId="seksiStatusStack" fill="#f59e0b" name="Antre (Open)" />
-                <Bar dataKey="Progress" stackId="seksiStatusStack" fill="#3b82f6" name="Dikerjakan (Progress)" />
-                <Bar dataKey="Done" stackId="seksiStatusStack" fill="#10b981" name="Selesai (Done)" />
-                <Bar
-                  dataKey="Scrap"
-                  stackId="seksiStatusStack"
-                  fill="#e11d48"
-                  name="Afkir (Scrap)"
-                  radius={[4, 4, 0, 0]}
-                >
-                  <LabelList
-                    dataKey="Total"
-                    position="top"
-                    fill="#0f172a"
-                    fontSize={11}
-                    fontWeight={700}
-                    formatter={(val: unknown) => `${val} Unit`}
-                  />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-full flex items-center justify-center text-xs text-slate-400">
-              Belum ada data status seksi
-            </div>
-          )
-        )}
-      </div>
-
-      {/* 3. TINGKAT PENYELESAIAN PER SEKSI */}
-      <div className="mt-6 pt-6 border-t border-slate-100">
-        <div className="flex items-center gap-2 mb-3">
-          <CheckCircle className="w-4 h-4 text-emerald-600" />
-          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide">
-            TINGKAT PENYELESAIAN PER SEKSI
-          </h3>
-          <span title="Persentase tiket yang sudah berstatus Done dibanding total tiket masuk per seksi">
-            <Info className="w-3.5 h-3.5 text-slate-400 cursor-help" />
-          </span>
-        </div>
-        <p className="text-xs text-slate-500 mb-4">
-          Efektivitas penyelesaian perbaikan tiap seksi — semakin tinggi % Done semakin baik
-        </p>
-
-        {chartSeksiStacked.length > 0 ? (() => {
-          const completionData = chartSeksiStacked
-            .filter(s => s.Total > 0)
-            .map(s => ({
-              seksi: s.seksi,
-              pctDone: s.Total > 0 ? Math.round((s.Done / s.Total) * 100) : 0,
-              pctScrap: s.Total > 0 ? Math.round((s.Scrap / s.Total) * 100) : 0,
-              pctOpen: s.Total > 0 ? Math.round(((s.Open + s.Progress) / s.Total) * 100) : 0,
-              done: s.Done,
-              total: s.Total,
-            }))
-            .sort((a, b) => b.pctDone - a.pctDone);
-
-          return (
-            <div style={{ height: Math.min(400, Math.max(120, completionData.length * 52 + 50)) }} className="w-full">
+      {/* 2. Diagram Donat Simpel & Bersih */}
+      <div className="my-auto py-2">
+        {seksiDonutData.length > 0 ? (
+          <div className="flex flex-col items-center justify-center">
+            {/* Donut Chart Berukuran Besar & Jelas */}
+            <div className="relative h-64 w-64 sm:h-72 sm:w-72 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={completionData}
-                  layout="vertical"
-                  margin={{ top: 5, right: 70, left: 10, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis
-                    type="number"
-                    domain={[0, 100]}
-                    tick={{ fontSize: 10, fill: '#64748b' }}
-                    tickFormatter={(v) => `${v}%`}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    dataKey="seksi"
-                    type="category"
-                    tick={{ fontSize: 11, fill: '#1e293b', fontWeight: 600 }}
-                    width={70}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    formatter={(val: unknown) => [`${val}%`, '% Selesai (Done)'] as [string, string]}
-                    labelFormatter={(label, payload) => {
-                      const row = payload?.[0]?.payload as { done?: number; total?: number } | undefined;
-                      return row ? `${label} — ${row.done}/${row.total} tiket selesai` : label;
+                <PieChart>
+                  <Pie
+                    data={seksiDonutData}
+                    dataKey="total"
+                    nameKey="seksi"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={74}
+                    outerRadius={114}
+                    paddingAngle={seksiDonutData.length > 1 ? 3 : 0}
+                    startAngle={90}
+                    endAngle={-270}
+                    cursor="pointer"
+                    onClick={(entry: any) => {
+                      const seksiName = entry?.seksi || entry?.payload?.seksi;
+                      if (onSelectSeksi && seksiName) {
+                        onSelectSeksi(selectedSeksi === seksiName ? '' : seksiName);
+                      }
                     }}
-                    contentStyle={{
-                      borderRadius: '12px',
-                      border: '1px solid #e2e8f0',
-                      fontSize: '12px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
-                    }}
-                  />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '6px' }} />
-                  <Bar dataKey="pctDone" stackId="compl" fill="#10b981" name="% Selesai (Done)" radius={[0, 0, 0, 0]}>
-                    {completionData.map((entry, idx) => (
-                      <Cell
-                        key={`cell-done-${idx}`}
-                        fill={entry.pctDone >= 70 ? '#10b981' : entry.pctDone >= 40 ? '#f59e0b' : '#e11d48'}
-                      />
-                    ))}
-                    <LabelList
-                      dataKey="pctDone"
-                      position="right"
-                      fill="#0f172a"
-                      fontSize={11}
-                      fontWeight={700}
-                      formatter={(v: unknown) => `${v}%`}
-                    />
-                  </Bar>
-                </BarChart>
+                  >
+                    {seksiDonutData.map((entry) => {
+                      const isSelected = selectedSeksi === entry.seksi;
+                      const hasSelection = Boolean(selectedSeksi);
+                      return (
+                        <Cell
+                          key={`cell-seksi-${entry.seksi}`}
+                          fill={entry.color}
+                          opacity={hasSelection && !isSelected ? 0.35 : 1}
+                          stroke={isSelected ? '#1e293b' : 'transparent'}
+                          strokeWidth={isSelected ? 2.5 : 0}
+                          className="hover:opacity-85 transition cursor-pointer"
+                        />
+                      );
+                    })}
+                  </Pie>
+                  <Tooltip content={<SectionDonutTooltip />} />
+                </PieChart>
               </ResponsiveContainer>
+
+              {/* Total Unit di Tengah Donat (Besar & Mantap) */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-4xl font-black text-slate-900 leading-none tracking-tight">
+                  {totalSeksiAll}
+                </span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1.5">
+                  Total Unit
+                </span>
+              </div>
             </div>
-          );
-        })() : (
-          <div className="h-20 flex items-center justify-center text-xs text-slate-400">
-            Belum ada data penyelesaian
+
+            {/* Legenda Simpel Bersih (Inline) */}
+            <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 mt-5 max-w-full">
+              {seksiDonutData.map((entry) => {
+                const isSelected = selectedSeksi === entry.seksi;
+                return (
+                  <button
+                    key={entry.seksi}
+                    type="button"
+                    onClick={() => {
+                      if (onSelectSeksi) {
+                        onSelectSeksi(selectedSeksi === entry.seksi ? '' : entry.seksi);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-blue-100 text-blue-900 font-extrabold ring-1 ring-blue-400'
+                        : 'bg-slate-100/80 hover:bg-slate-200/70 text-slate-700 font-medium'
+                    }`}
+                    title={`Klik untuk filter seksi ${entry.seksi}`}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: entry.color }}
+                    />
+                    <span className="font-semibold text-slate-800">{entry.seksi}</span>
+                    <span className="font-extrabold text-slate-900">{entry.total} unit</span>
+                    <span className="text-[11px] text-slate-400">({entry.persen}%)</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="h-48 flex items-center justify-center text-xs text-slate-400">
+            Belum ada data daisha per seksi
           </div>
         )}
       </div>

@@ -11,13 +11,21 @@ echo           Server Local Internal Workshop dan Maintenance
 echo =====================================================================
 echo.
 
-:: 1. Cek Instalasi Node.js
+:: 1. Cek & Muat Portable Node.js (Aman dari kurung tutup x86 di PATH)
+if exist "%~dp0node\node.exe" set "PATH=%~dp0node;%PATH%"
+if exist "%~dp0node_bin\node.exe" set "PATH=%~dp0node_bin;%PATH%"
+if exist "%~dp0nodejs\node.exe" set "PATH=%~dp0nodejs;%PATH%"
+for /d %%D in ("%~dp0node-v*") do if exist "%%D\node.exe" set "PATH=%%D;%PATH%"
+
 where node >nul 2>nul
 if errorlevel 1 (
     color 0C
-    echo [ERROR] Node.js belum terinstall di PC ini!
-    echo Silakan download dan install Node.js LTS terlebih dahulu dari:
-    echo https://nodejs.org/
+    echo [ERROR] Node.js belum terdeteksi di PC ini!
+    echo.
+    echo Solusi Tanpa Hak Administrator - Portable Node.js:
+    echo 1. Unduh file ZIP Node.js [Windows Binary .zip] dari https://nodejs.org/dist/latest-v20.x/
+    echo 2. Ekstrak isinya ke dalam folder proyek ini dengan nama folder: node
+    echo 3. Jalankan kembali file ini. Sistem akan langsung bekerja tanpa perlu install!
     echo.
     pause
     exit /b
@@ -82,8 +90,8 @@ echo    [PC Server Ini] : http://localhost:%APP_PORT%
 echo    [HP / Tab Lain] : http://%LOCAL_IP%:%APP_PORT%
 echo.
 echo Akun Login:
-echo    - Admin    : admin / admin123
-echo    - Operator : operator / operator123
+echo    - Admin    : admin / Technosport (atau admin123)
+echo    - Operator : operator / Technosport (atau operator123)
 echo.
 echo Tekan Ctrl+C untuk menghentikan server.
 echo =====================================================================

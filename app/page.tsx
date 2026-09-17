@@ -1,267 +1,197 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useTickets } from '@/hooks/useTickets';
-import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
-import { exportTicketsToExcel } from '@/lib/excelExport';
+import React, { useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import {
+  Wrench,
+  SendHorizonal,
+  Package,
+  ArrowRight,
+  Users,
+  ChevronRight,
+} from 'lucide-react';
 
-// Modular Dashboard Components
-import KpiCards from '@/components/dashboard/KpiCards';
-import VisualFilterTabs, { TabType } from '@/components/dashboard/VisualFilterTabs';
-import FilterPanel from '@/components/dashboard/FilterPanel';
-import DaishaCharts from '@/components/dashboard/DaishaCharts';
-import DamageCharts from '@/components/dashboard/DamageCharts';
-import ThroughputCharts from '@/components/dashboard/ThroughputCharts';
-import SectionCharts from '@/components/dashboard/SectionCharts';
-import TicketTable from '@/components/dashboard/TicketTable';
+export default function WorkshopPortalPage() {
+  const router = useRouter();
+  const { currentUser, isOperator, isSeksi, isLoading: authLoading } = useAuth();
 
-export default function DashboardPage() {
-  const {
-    tickets: dataRaw,
-    loading,
-    isRefreshing,
-    refresh,
-  } = useTickets({
-    autoRefreshIntervalMs: 45000,
-  });
-
-  // Tab Visual Switcher State
-  const [activeVisualTab, setActiveVisualTab] = useState<TabType>('all');
-
-  // Filter States
-  const [search, setSearch] = useState('');
-  const [filterSeksi, setFilterSeksi] = useState('');
-  const [filterDaisha, setFilterDaisha] = useState('');
-  const [filterNoDaisha, setFilterNoDaisha] = useState('');
-  const [filterKerusakan, setFilterKerusakan] = useState('');
-  const [filterDetail, setFilterDetail] = useState('');
-  const [filterPelapor, setFilterPelapor] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterHanyaBerulang, setFilterHanyaBerulang] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-
-  // Hook Analitik Terpusat (Simulasi SQL Engine: WHERE, GROUP BY, COUNT, AVG)
-  const { filteredData, filterOptions, kpi, charts } = useDashboardAnalytics(dataRaw, {
-    search,
-    filterSeksi,
-    filterDaisha,
-    filterNoDaisha,
-    filterKerusakan,
-    filterDetail,
-    filterPelapor,
-    filterStatus,
-    filterHanyaBerulang,
-    startDate,
-    endDate,
-  });
-
-  // Shortcut Preset Filter Tanggal Cepat
-  const handleQuickPreset = (days: number) => {
-    const today = new Date();
-    const formatDate = (d: Date) => d.toISOString().slice(0, 10);
-    const todayStr = formatDate(today);
-
-    if (days === 0) {
-      setStartDate(todayStr);
-      setEndDate(todayStr);
-    } else {
-      const past = new Date();
-      past.setDate(today.getDate() - days);
-      setStartDate(formatDate(past));
-      setEndDate(todayStr);
+  // Role Redirect: Operator → /input, User Seksi → /request
+  useEffect(() => {
+    if (!authLoading && currentUser) {
+      if (isOperator) {
+        router.replace('/input');
+      } else if (isSeksi) {
+        router.replace('/request');
+      }
     }
-  };
+  }, [authLoading, currentUser, isOperator, isSeksi, router]);
 
-  const handleResetFilter = () => {
-    setSearch('');
-    setFilterSeksi('');
-    setFilterDaisha('');
-    setFilterNoDaisha('');
-    setFilterKerusakan('');
-    setFilterDetail('');
-    setFilterPelapor('');
-    setFilterStatus('');
-    setFilterHanyaBerulang(false);
-    setStartDate('');
-    setEndDate('');
-  };
-
-  // Ekspor Excel (.xlsx) dengan pemecahan multi-kerusakan per baris
-  const exportToExcel = () => {
-    exportTicketsToExcel(filteredData, 'Dashboard_Rekap_Daisha');
-  };
-
-  return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header Halaman */}
-      <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2.5">
-            <span>📊</span> Dashboard Analitik & Rekapitulasi Daisha
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
-            Monitoring komprehensif seluruh data perbaikan, reliabilitas unit, pareto kerusakan, dan lead time
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => refresh()}
-            disabled={isRefreshing}
-            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            <span className={isRefreshing ? 'animate-spin' : ''}>🔄</span>
-            <span>{isRefreshing ? 'Memperbarui...' : 'Segarkan Data'}</span>
-          </button>
+  // Jika bukan admin (atau sedang cek auth), tampilkan loading
+  if (authLoading || isOperator || isSeksi) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-bold text-slate-500">Mengarahkan ke halaman kerja Anda...</p>
         </div>
       </div>
+    );
+  }
 
-      {/* 1. 5 Kartu Metrik Ringkasan Eksekutif (Persis Layout Foto) */}
-      <KpiCards
-        kpi={kpi}
-        filterHanyaBerulang={filterHanyaBerulang}
-        setFilterHanyaBerulang={setFilterHanyaBerulang}
-        setFilterStatus={setFilterStatus}
-        currentFilterStatus={filterStatus}
-      />
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-6xl mx-auto">
+      {/* 1. Header Minimalis */}
+      <div className="pb-4 border-b border-slate-200">
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          Workshop Management Portal
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+          Selamat datang, <span className="font-bold text-slate-800">{currentUser?.name || 'Administrator'}</span>. Silakan pilih sistem kerja:
+        </p>
+      </div>
 
-      {/* 2. Tab Switcher Visualisasi Interaktif */}
-      <VisualFilterTabs
-        activeTab={activeVisualTab}
-        setActiveTab={setActiveVisualTab}
-      />
-
-      {/* 3. Panel Filter & Pencarian Lengkap (Tidak Dirubah Sesuai Instruksi) */}
-      <FilterPanel
-        search={search}
-        setSearch={setSearch}
-        filterSeksi={filterSeksi}
-        setFilterSeksi={setFilterSeksi}
-        filterDaisha={filterDaisha}
-        setFilterDaisha={setFilterDaisha}
-        filterNoDaisha={filterNoDaisha}
-        setFilterNoDaisha={setFilterNoDaisha}
-        filterKerusakan={filterKerusakan}
-        setFilterKerusakan={setFilterKerusakan}
-        filterDetail={filterDetail}
-        setFilterDetail={setFilterDetail}
-        filterPelapor={filterPelapor}
-        setFilterPelapor={setFilterPelapor}
-        filterStatus={filterStatus}
-        setFilterStatus={setFilterStatus}
-        startDate={startDate}
-        setStartDate={setStartDate}
-        endDate={endDate}
-        setEndDate={setEndDate}
-        filterHanyaBerulang={filterHanyaBerulang}
-        setFilterHanyaBerulang={setFilterHanyaBerulang}
-        pilihanDaishaFiltered={filterOptions.pilihanDaisha}
-        pilihanKomponenFiltered={filterOptions.pilihanKomponen}
-        pilihanDetailFiltered={filterOptions.pilihanDetail}
-        pilihanNoDaisha={filterOptions.pilihanNoDaisha}
-        pilihanPelapor={filterOptions.pilihanPelapor}
-        handleQuickPreset={handleQuickPreset}
-        handleResetFilter={handleResetFilter}
-        filteredCount={filteredData.length}
-        totalCount={dataRaw.length}
-      />
-
-      {/* 4. Area Visualisasi Grafik Sesuai Referensi Foto */}
-      {activeVisualTab === 'all' && (
-        <div className="space-y-6">
-          {/* Baris Tengah: Sisi Kiri (Peta & Tabel Seksi) + Sisi Kanan (Top Unit Daisha Ranked Bar) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            <div className="lg:col-span-7">
-              <SectionCharts
-                chartSeksiStacked={charts.seksiStacked}
-                seksiJenisMonthly={charts.seksiJenisMonthly}
-                seksiJenisAll={charts.seksiJenisAll}
-                availableMonths={charts.availableMonths}
-                chartPelapor={charts.pelapor}
-                selectedSeksi={filterSeksi}
-                onSelectSeksi={(s) => setFilterSeksi(filterSeksi === s ? '' : s)}
-              />
+      {/* 2. Kartu Sistem Kerja Utama (Murni Navigasi Card, Tanpa Angka Total) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* ================= KARTU 1: PERBAIKAN DAISHA ================= */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-lg hover:border-red-300 transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+          <div className="h-1.5 bg-red-600" />
+          
+          <div className="p-6 sm:p-7 space-y-4 flex-1 flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-700 flex items-center justify-center font-black group-hover:bg-red-600 group-hover:text-white transition-all duration-200 shadow-xs">
+              <Wrench className="w-7 h-7" />
             </div>
-            <div className="lg:col-span-5">
-              <DaishaCharts
-                chartUnitFreq={charts.unitFreq}
-                chartSemuaDaisha={charts.semuaDaisha}
-              />
+            <div>
+              <h3 className="text-lg font-black text-slate-900 group-hover:text-red-700 transition">
+                Perbaikan Daisha
+              </h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                Monitoring, rekap perbaikan troli & analitik unit
+              </p>
             </div>
           </div>
 
-          {/* Baris Bawah: Tren Bulanan/Harian Dual-Axis + Timeline Servis + Lead Time Bar */}
-          <ThroughputCharts
-            chartTrenHarian={charts.trenHarian}
-            chartTrenBulanan={charts.trenBulanan}
-            chartLeadTime={charts.leadTime}
-            avgLeadTimeHours={kpi.avgLeadTimeHours}
-            statusData={charts.statusData}
-            chartSeksiStacked={charts.seksiStacked}
-          />
-
-          {/* Analisis Komponen & Sparepart Demand */}
-          <DamageCharts
-            chartKategori={charts.kategori}
-            chartDetailGejala={charts.detailGejala}
-            tindakanStats={charts.tindakanStats}
-            sparepartKebutuhan={charts.sparepartKebutuhan}
-            sparepartKebutuhanSemua={charts.sparepartKebutuhanSemua}
-          />
+          <div className="p-5 bg-slate-50/70 border-t border-slate-100 space-y-2">
+            <Link
+              href="/daisha"
+              className="w-full py-3 px-4 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Buka Dashboard Daisha</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+            </Link>
+            <div className="flex items-center gap-2 pt-1">
+              <Link
+                href="/input"
+                className="flex-1 py-1.5 px-2 text-center text-[11px] font-bold text-slate-600 hover:text-red-700 hover:bg-white rounded-lg transition border border-transparent hover:border-slate-200"
+              >
+                + Input Daisha
+              </Link>
+              <Link
+                href="/riwayat"
+                className="flex-1 py-1.5 px-2 text-center text-[11px] font-bold text-slate-600 hover:text-red-700 hover:bg-white rounded-lg transition border border-transparent hover:border-slate-200"
+              >
+                Riwayat Tiket
+              </Link>
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Tampilan Tab Spesifik */}
-      {activeVisualTab === 'daisha' && (
-        <DaishaCharts
-          chartUnitFreq={charts.unitFreq}
-          chartSemuaDaisha={charts.semuaDaisha}
-        />
-      )}
+        {/* ================= KARTU 2: FOLLOW UP REQUEST SEKSI ================= */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-lg hover:border-blue-300 transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+          <div className="h-1.5 bg-blue-600" />
 
-      {activeVisualTab === 'damage' && (
-        <DamageCharts
-          chartKategori={charts.kategori}
-          chartDetailGejala={charts.detailGejala}
-          tindakanStats={charts.tindakanStats}
-          sparepartKebutuhan={charts.sparepartKebutuhan}
-          sparepartKebutuhanSemua={charts.sparepartKebutuhanSemua}
-        />
-      )}
+          <div className="p-6 sm:p-7 space-y-4 flex-1 flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-black group-hover:bg-blue-600 group-hover:text-white transition-all duration-200 shadow-xs">
+              <SendHorizonal className="w-7 h-7" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-slate-900 group-hover:text-blue-700 transition">
+                Request Seksi
+              </h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                Tindak lanjut pesanan pembuatan alat & modifikasi
+              </p>
+            </div>
+          </div>
 
-      {activeVisualTab === 'throughput' && (
-      <ThroughputCharts
-          chartTrenHarian={charts.trenHarian}
-          chartTrenBulanan={charts.trenBulanan}
-          chartLeadTime={charts.leadTime}
-          avgLeadTimeHours={kpi.avgLeadTimeHours}
-          statusData={charts.statusData}
-          chartSeksiStacked={charts.seksiStacked}
-        />
-      )}
+          <div className="p-5 bg-slate-50/70 border-t border-slate-100 space-y-2">
+            <Link
+              href="/request"
+              className="w-full py-3 px-4 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Buka Dashboard Request</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+            </Link>
+            <div className="pt-1">
+              <Link
+                href="/request"
+                className="block w-full py-1.5 px-2 text-center text-[11px] font-bold text-slate-600 hover:text-blue-700 hover:bg-white rounded-lg transition border border-transparent hover:border-slate-200"
+              >
+                + Buat Request Baru
+              </Link>
+            </div>
+          </div>
+        </div>
 
-      {activeVisualTab === 'seksi' && (
-        <SectionCharts
-          chartSeksiStacked={charts.seksiStacked}
-          seksiJenisMonthly={charts.seksiJenisMonthly}
-          seksiJenisAll={charts.seksiJenisAll}
-          availableMonths={charts.availableMonths}
-          chartPelapor={charts.pelapor}
-          selectedSeksi={filterSeksi}
-          onSelectSeksi={(s) => setFilterSeksi(filterSeksi === s ? '' : s)}
-        />
-      )}
+        {/* ================= KARTU 3: STOK SPAREPART ================= */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-lg hover:border-emerald-300 transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+          <div className="h-1.5 bg-emerald-600" />
 
-      {/* Panel Raw Data (Tidak Dirubah Sesuai Instruksi) */}
-      {(activeVisualTab === 'all' || activeVisualTab === 'table') && (
-        <TicketTable
-          filteredData={filteredData}
-          loading={loading}
-          exportToExcel={exportToExcel}
-        />
-      )}
+          <div className="p-6 sm:p-7 space-y-4 flex-1 flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-black group-hover:bg-emerald-600 group-hover:text-white transition-all duration-200 shadow-xs">
+              <Package className="w-7 h-7" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-slate-900 group-hover:text-emerald-700 transition">
+                Stok Sparepart
+              </h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                Inventaris persediaan suku cadang & logistik bengkel
+              </p>
+            </div>
+          </div>
+
+          <div className="p-5 bg-slate-50/70 border-t border-slate-100 space-y-2">
+            <Link
+              href="/spareparts"
+              className="w-full py-3 px-4 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Buka Monitoring Sparepart</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+            </Link>
+            <div className="pt-1">
+              <Link
+                href="/spareparts"
+                className="block w-full py-1.5 px-2 text-center text-[11px] font-bold text-slate-600 hover:text-emerald-700 hover:bg-white rounded-lg transition border border-transparent hover:border-slate-200"
+              >
+                Daftar Stok & Mutasi
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Bar Pintas Admin (Manajemen Pengguna) */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-slate-900">Manajemen Pengguna & Hak Akses</h4>
+            <p className="text-xs text-slate-400 mt-0.5">Kelola akun login seksi, operator, dan admin sistem</p>
+          </div>
+        </div>
+
+        <Link
+          href="/admin"
+          className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+        >
+          <span>Kelola Pengguna</span>
+          <ChevronRight className="w-4 h-4" />
+        </Link>
+      </div>
     </div>
   );
 }

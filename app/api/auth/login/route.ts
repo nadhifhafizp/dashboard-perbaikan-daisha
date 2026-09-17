@@ -29,8 +29,8 @@ export async function POST(request: Request) {
       name: user.name,
     });
 
-    // Operator langsung diarahkan ke form input, Atasan ke dashboard rekap
-    const redirectUrl = user.role === 'OPERATOR' ? '/input' : '/';
+    // Operator → form input Daisha, User Seksi → halaman request, Admin → dashboard rekap
+    const redirectUrl = user.role === 'OPERATOR' ? '/input' : user.role === 'USER_SEKSI' ? '/request' : '/';
 
     const response = NextResponse.json({
       success: true,

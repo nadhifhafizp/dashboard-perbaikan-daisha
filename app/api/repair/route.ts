@@ -5,6 +5,7 @@ import { sanitizeString } from '@/lib/sanitize';
 import { prisma } from '@/lib/prisma';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
+import { parseToTimestamp } from '@/lib/date';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -138,11 +139,11 @@ export async function POST(request: Request) {
         create: { noDaisha, namaDaisha, seksi, ukuran },
       });
 
-      // Parse waktu masuk
+      // Parse waktu masuk secara konsisten (aman format DD/MM/YYYY maupun ISO)
       let parsedDateMasuk = new Date();
       if (waktuMasuk) {
-        const d = new Date(waktuMasuk);
-        if (!isNaN(d.getTime())) parsedDateMasuk = d;
+        const ts = parseToTimestamp(waktuMasuk);
+        if (ts > 0) parsedDateMasuk = new Date(ts);
       }
 
       // Buat Tiket
@@ -224,9 +225,16 @@ export async function POST(request: Request) {
         );
       }
 
-      const parsedWaktuSelesai = normalizedStatus === 'Done'
-        ? (waktuKeluar && waktuKeluar !== '-' && !isNaN(new Date(waktuKeluar).getTime()) ? new Date(waktuKeluar) : new Date())
-        : null;
+      // Parse waktu selesai secara konsisten (aman format DD/MM/YYYY maupun ISO)
+      let parsedWaktuSelesai: Date | null = null;
+      if (normalizedStatus === 'Done') {
+        if (waktuKeluar && waktuKeluar !== '-') {
+          const ts = parseToTimestamp(waktuKeluar);
+          parsedWaktuSelesai = ts > 0 ? new Date(ts) : new Date();
+        } else {
+          parsedWaktuSelesai = new Date();
+        }
+      }
 
       await prisma.ticket.update({
         where: { idTiket },

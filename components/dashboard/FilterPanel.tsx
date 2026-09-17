@@ -10,14 +10,6 @@ interface FilterPanelProps {
   setFilterSeksi: (v: string) => void;
   filterDaisha: string;
   setFilterDaisha: (v: string) => void;
-  filterNoDaisha: string;
-  setFilterNoDaisha: (v: string) => void;
-  filterKerusakan: string;
-  setFilterKerusakan: (v: string) => void;
-  filterDetail: string;
-  setFilterDetail: (v: string) => void;
-  filterPelapor: string;
-  setFilterPelapor: (v: string) => void;
   filterStatus: string;
   setFilterStatus: (v: string) => void;
   startDate: string;
@@ -27,14 +19,23 @@ interface FilterPanelProps {
   filterHanyaBerulang: boolean;
   setFilterHanyaBerulang: (v: boolean) => void;
   pilihanDaishaFiltered: string[];
-  pilihanKomponenFiltered: string[];
-  pilihanDetailFiltered: string[];
-  pilihanNoDaisha: string[];
-  pilihanPelapor: string[];
   handleQuickPreset: (days: number) => void;
   handleResetFilter: () => void;
   filteredCount: number;
   totalCount: number;
+  // Props opsional yang telah dihilangkan dari tampilan UI (kompatibilitas backward)
+  filterNoDaisha?: string;
+  setFilterNoDaisha?: (v: string) => void;
+  filterKerusakan?: string;
+  setFilterKerusakan?: (v: string) => void;
+  filterDetail?: string;
+  setFilterDetail?: (v: string) => void;
+  filterPelapor?: string;
+  setFilterPelapor?: (v: string) => void;
+  pilihanKomponenFiltered?: string[];
+  pilihanDetailFiltered?: string[];
+  pilihanNoDaisha?: string[];
+  pilihanPelapor?: string[];
 }
 
 export default function FilterPanel({
@@ -44,14 +45,6 @@ export default function FilterPanel({
   setFilterSeksi,
   filterDaisha,
   setFilterDaisha,
-  filterNoDaisha,
-  setFilterNoDaisha,
-  filterKerusakan,
-  setFilterKerusakan,
-  filterDetail,
-  setFilterDetail,
-  filterPelapor,
-  setFilterPelapor,
   filterStatus,
   setFilterStatus,
   startDate,
@@ -61,10 +54,6 @@ export default function FilterPanel({
   filterHanyaBerulang,
   setFilterHanyaBerulang,
   pilihanDaishaFiltered,
-  pilihanKomponenFiltered,
-  pilihanDetailFiltered,
-  pilihanNoDaisha,
-  pilihanPelapor,
   handleQuickPreset,
   handleResetFilter,
   filteredCount,
@@ -76,10 +65,6 @@ export default function FilterPanel({
     (search ? 1 : 0) +
     (filterSeksi ? 1 : 0) +
     (filterDaisha ? 1 : 0) +
-    (filterNoDaisha ? 1 : 0) +
-    (filterKerusakan ? 1 : 0) +
-    (filterDetail ? 1 : 0) +
-    (filterPelapor ? 1 : 0) +
     (filterStatus ? 1 : 0) +
     (filterHanyaBerulang ? 1 : 0) +
     (startDate ? 1 : 0) +
@@ -100,7 +85,7 @@ export default function FilterPanel({
               )}
             </h2>
             <p className="text-[11px] text-slate-500">
-              Saring visualisasi berdasarkan 10 kriteria presisi
+              Saring laporan berdasarkan seksi, jenis daisha, status, dan rentang tanggal
             </p>
           </div>
         </div>
@@ -161,8 +146,8 @@ export default function FilterPanel({
         </div>
       </div>
 
-      {/* Grid 10 Filter Inputs (Selalu tampil di Desktop, Expandable di Mobile) */}
-      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 ${isMobileExpanded ? 'grid' : 'hidden md:grid'}`}>
+      {/* Grid 6 Filter Utama (Ringkas, Bersih, dan Tidak Padat) */}
+      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 ${isMobileExpanded ? 'grid' : 'hidden md:grid'}`}>
         {/* 1. Pencarian Teks Bebas */}
         <div>
           <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
@@ -170,7 +155,7 @@ export default function FilterPanel({
           </label>
           <input
             type="text"
-            placeholder="Cari ID tiket, unit, nama..."
+            placeholder="Cari ID tiket, unit..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full p-2 border border-slate-300 rounded-xl text-xs text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none"
@@ -187,8 +172,6 @@ export default function FilterPanel({
             onChange={(e) => {
               setFilterSeksi(e.target.value);
               setFilterDaisha('');
-              setFilterKerusakan('');
-              setFilterDetail('');
             }}
             className="w-full p-2 border border-slate-300 rounded-xl text-xs text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none font-medium"
           >
@@ -204,11 +187,7 @@ export default function FilterPanel({
           </label>
           <select
             value={filterDaisha}
-            onChange={(e) => {
-              setFilterDaisha(e.target.value);
-              setFilterKerusakan('');
-              setFilterDetail('');
-            }}
+            onChange={(e) => setFilterDaisha(e.target.value)}
             className="w-full p-2 border border-slate-300 rounded-xl text-xs text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none font-medium"
           >
             <option value="">Semua Jenis Daisha ({pilihanDaishaFiltered.length})</option>
@@ -216,70 +195,7 @@ export default function FilterPanel({
           </select>
         </div>
 
-        {/* 4. Filter Nomor Unit Fisik */}
-        <div>
-          <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-            🏷️ No. Unit Daisha
-          </label>
-          <select
-            value={filterNoDaisha}
-            onChange={(e) => setFilterNoDaisha(e.target.value)}
-            className="w-full p-2 border border-slate-300 rounded-xl text-xs text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none font-medium"
-          >
-            <option value="">Semua Nomor Unit ({pilihanNoDaisha.length})</option>
-            {pilihanNoDaisha.map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </div>
-
-        {/* 5. Filter Komponen Rusak */}
-        <div>
-          <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-            ⚙️ Komponen Rusak
-          </label>
-          <select
-            value={filterKerusakan}
-            onChange={(e) => {
-              setFilterKerusakan(e.target.value);
-              setFilterDetail('');
-            }}
-            className="w-full p-2 border border-slate-300 rounded-xl text-xs text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none font-medium"
-          >
-            <option value="">Semua Komponen ({pilihanKomponenFiltered.length})</option>
-            {pilihanKomponenFiltered.map(k => <option key={k} value={k}>{k}</option>)}
-          </select>
-        </div>
-
-        {/* 6. Filter Detail Gejala Spesifik */}
-        <div>
-          <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-            ⚠️ Detail Gejala Spesifik
-          </label>
-          <select
-            value={filterDetail}
-            onChange={(e) => setFilterDetail(e.target.value)}
-            className="w-full p-2 border border-slate-300 rounded-xl text-xs text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none font-medium"
-          >
-            <option value="">Semua Gejala ({pilihanDetailFiltered.length})</option>
-            {pilihanDetailFiltered.map(g => <option key={g} value={g}>{g}</option>)}
-          </select>
-        </div>
-
-        {/* 7. Filter Pelapor */}
-        <div>
-          <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-            👤 Nama Pelapor
-          </label>
-          <select
-            value={filterPelapor}
-            onChange={(e) => setFilterPelapor(e.target.value)}
-            className="w-full p-2 border border-slate-300 rounded-xl text-xs text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none font-medium"
-          >
-            <option value="">Semua Pelapor ({pilihanPelapor.length})</option>
-            {pilihanPelapor.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
-        </div>
-
-        {/* 8. Filter Status */}
+        {/* 4. Filter Status */}
         <div>
           <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
             🚦 Status Servis
@@ -296,7 +212,7 @@ export default function FilterPanel({
           </select>
         </div>
 
-        {/* 9. Tanggal Dari */}
+        {/* 5. Tanggal Dari */}
         <div>
           <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
             📅 Dari Tanggal
@@ -309,7 +225,7 @@ export default function FilterPanel({
           />
         </div>
 
-        {/* 10. Tanggal Sampai */}
+        {/* 6. Tanggal Sampai */}
         <div>
           <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
             📅 Sampai Tanggal

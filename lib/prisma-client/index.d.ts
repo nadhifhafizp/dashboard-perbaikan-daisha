@@ -29,16 +29,6 @@ export type Ticket = $Result.DefaultSelection<Prisma.$TicketPayload>
  */
 export type TicketDetail = $Result.DefaultSelection<Prisma.$TicketDetailPayload>
 /**
- * Model Sparepart
- * 
- */
-export type Sparepart = $Result.DefaultSelection<Prisma.$SparepartPayload>
-/**
- * Model User
- * 
- */
-export type User = $Result.DefaultSelection<Prisma.$UserPayload>
-/**
  * Model DaishaType
  * 
  */
@@ -53,6 +43,31 @@ export type DaishaComponent = $Result.DefaultSelection<Prisma.$DaishaComponentPa
  * 
  */
 export type DaishaSymptom = $Result.DefaultSelection<Prisma.$DaishaSymptomPayload>
+/**
+ * Model SectionRequest
+ * 
+ */
+export type SectionRequest = $Result.DefaultSelection<Prisma.$SectionRequestPayload>
+/**
+ * Model SectionRequestMaterial
+ * 
+ */
+export type SectionRequestMaterial = $Result.DefaultSelection<Prisma.$SectionRequestMaterialPayload>
+/**
+ * Model Sparepart
+ * 
+ */
+export type Sparepart = $Result.DefaultSelection<Prisma.$SparepartPayload>
+/**
+ * Model SparepartLog
+ * 
+ */
+export type SparepartLog = $Result.DefaultSelection<Prisma.$SparepartLogPayload>
+/**
+ * Model User
+ * 
+ */
+export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -203,26 +218,6 @@ export class PrismaClient<
   get ticketDetail(): Prisma.TicketDetailDelegate<ExtArgs, ClientOptions>;
 
   /**
-   * `prisma.sparepart`: Exposes CRUD operations for the **Sparepart** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more Spareparts
-    * const spareparts = await prisma.sparepart.findMany()
-    * ```
-    */
-  get sparepart(): Prisma.SparepartDelegate<ExtArgs, ClientOptions>;
-
-  /**
-   * `prisma.user`: Exposes CRUD operations for the **User** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more Users
-    * const users = await prisma.user.findMany()
-    * ```
-    */
-  get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
-
-  /**
    * `prisma.daishaType`: Exposes CRUD operations for the **DaishaType** model.
     * Example usage:
     * ```ts
@@ -251,6 +246,56 @@ export class PrismaClient<
     * ```
     */
   get daishaSymptom(): Prisma.DaishaSymptomDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.sectionRequest`: Exposes CRUD operations for the **SectionRequest** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SectionRequests
+    * const sectionRequests = await prisma.sectionRequest.findMany()
+    * ```
+    */
+  get sectionRequest(): Prisma.SectionRequestDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.sectionRequestMaterial`: Exposes CRUD operations for the **SectionRequestMaterial** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SectionRequestMaterials
+    * const sectionRequestMaterials = await prisma.sectionRequestMaterial.findMany()
+    * ```
+    */
+  get sectionRequestMaterial(): Prisma.SectionRequestMaterialDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.sparepart`: Exposes CRUD operations for the **Sparepart** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Spareparts
+    * const spareparts = await prisma.sparepart.findMany()
+    * ```
+    */
+  get sparepart(): Prisma.SparepartDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.sparepartLog`: Exposes CRUD operations for the **SparepartLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SparepartLogs
+    * const sparepartLogs = await prisma.sparepartLog.findMany()
+    * ```
+    */
+  get sparepartLog(): Prisma.SparepartLogDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.user`: Exposes CRUD operations for the **User** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Users
+    * const users = await prisma.user.findMany()
+    * ```
+    */
+  get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -695,11 +740,14 @@ export namespace Prisma {
     MasterDaisha: 'MasterDaisha',
     Ticket: 'Ticket',
     TicketDetail: 'TicketDetail',
-    Sparepart: 'Sparepart',
-    User: 'User',
     DaishaType: 'DaishaType',
     DaishaComponent: 'DaishaComponent',
-    DaishaSymptom: 'DaishaSymptom'
+    DaishaSymptom: 'DaishaSymptom',
+    SectionRequest: 'SectionRequest',
+    SectionRequestMaterial: 'SectionRequestMaterial',
+    Sparepart: 'Sparepart',
+    SparepartLog: 'SparepartLog',
+    User: 'User'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -718,7 +766,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "masterDaisha" | "ticket" | "ticketDetail" | "sparepart" | "user" | "daishaType" | "daishaComponent" | "daishaSymptom"
+      modelProps: "masterDaisha" | "ticket" | "ticketDetail" | "daishaType" | "daishaComponent" | "daishaSymptom" | "sectionRequest" | "sectionRequestMaterial" | "sparepart" | "sparepartLog" | "user"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -944,154 +992,6 @@ export namespace Prisma {
           }
         }
       }
-      Sparepart: {
-        payload: Prisma.$SparepartPayload<ExtArgs>
-        fields: Prisma.SparepartFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.SparepartFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SparepartPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.SparepartFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
-          }
-          findFirst: {
-            args: Prisma.SparepartFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SparepartPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.SparepartFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
-          }
-          findMany: {
-            args: Prisma.SparepartFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>[]
-          }
-          create: {
-            args: Prisma.SparepartCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
-          }
-          createMany: {
-            args: Prisma.SparepartCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.SparepartCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>[]
-          }
-          delete: {
-            args: Prisma.SparepartDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
-          }
-          update: {
-            args: Prisma.SparepartUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
-          }
-          deleteMany: {
-            args: Prisma.SparepartDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.SparepartUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.SparepartUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>[]
-          }
-          upsert: {
-            args: Prisma.SparepartUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
-          }
-          aggregate: {
-            args: Prisma.SparepartAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateSparepart>
-          }
-          groupBy: {
-            args: Prisma.SparepartGroupByArgs<ExtArgs>
-            result: $Utils.Optional<SparepartGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.SparepartCountArgs<ExtArgs>
-            result: $Utils.Optional<SparepartCountAggregateOutputType> | number
-          }
-        }
-      }
-      User: {
-        payload: Prisma.$UserPayload<ExtArgs>
-        fields: Prisma.UserFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.UserFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.UserFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserPayload>
-          }
-          findFirst: {
-            args: Prisma.UserFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.UserFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserPayload>
-          }
-          findMany: {
-            args: Prisma.UserFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
-          }
-          create: {
-            args: Prisma.UserCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserPayload>
-          }
-          createMany: {
-            args: Prisma.UserCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.UserCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
-          }
-          delete: {
-            args: Prisma.UserDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserPayload>
-          }
-          update: {
-            args: Prisma.UserUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserPayload>
-          }
-          deleteMany: {
-            args: Prisma.UserDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.UserUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.UserUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
-          }
-          upsert: {
-            args: Prisma.UserUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserPayload>
-          }
-          aggregate: {
-            args: Prisma.UserAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateUser>
-          }
-          groupBy: {
-            args: Prisma.UserGroupByArgs<ExtArgs>
-            result: $Utils.Optional<UserGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.UserCountArgs<ExtArgs>
-            result: $Utils.Optional<UserCountAggregateOutputType> | number
-          }
-        }
-      }
       DaishaType: {
         payload: Prisma.$DaishaTypePayload<ExtArgs>
         fields: Prisma.DaishaTypeFieldRefs
@@ -1314,6 +1214,376 @@ export namespace Prisma {
           }
         }
       }
+      SectionRequest: {
+        payload: Prisma.$SectionRequestPayload<ExtArgs>
+        fields: Prisma.SectionRequestFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SectionRequestFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SectionRequestFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestPayload>
+          }
+          findFirst: {
+            args: Prisma.SectionRequestFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SectionRequestFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestPayload>
+          }
+          findMany: {
+            args: Prisma.SectionRequestFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestPayload>[]
+          }
+          create: {
+            args: Prisma.SectionRequestCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestPayload>
+          }
+          createMany: {
+            args: Prisma.SectionRequestCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SectionRequestCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestPayload>[]
+          }
+          delete: {
+            args: Prisma.SectionRequestDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestPayload>
+          }
+          update: {
+            args: Prisma.SectionRequestUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestPayload>
+          }
+          deleteMany: {
+            args: Prisma.SectionRequestDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SectionRequestUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SectionRequestUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestPayload>[]
+          }
+          upsert: {
+            args: Prisma.SectionRequestUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestPayload>
+          }
+          aggregate: {
+            args: Prisma.SectionRequestAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSectionRequest>
+          }
+          groupBy: {
+            args: Prisma.SectionRequestGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SectionRequestGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SectionRequestCountArgs<ExtArgs>
+            result: $Utils.Optional<SectionRequestCountAggregateOutputType> | number
+          }
+        }
+      }
+      SectionRequestMaterial: {
+        payload: Prisma.$SectionRequestMaterialPayload<ExtArgs>
+        fields: Prisma.SectionRequestMaterialFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SectionRequestMaterialFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestMaterialPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SectionRequestMaterialFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestMaterialPayload>
+          }
+          findFirst: {
+            args: Prisma.SectionRequestMaterialFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestMaterialPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SectionRequestMaterialFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestMaterialPayload>
+          }
+          findMany: {
+            args: Prisma.SectionRequestMaterialFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestMaterialPayload>[]
+          }
+          create: {
+            args: Prisma.SectionRequestMaterialCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestMaterialPayload>
+          }
+          createMany: {
+            args: Prisma.SectionRequestMaterialCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SectionRequestMaterialCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestMaterialPayload>[]
+          }
+          delete: {
+            args: Prisma.SectionRequestMaterialDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestMaterialPayload>
+          }
+          update: {
+            args: Prisma.SectionRequestMaterialUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestMaterialPayload>
+          }
+          deleteMany: {
+            args: Prisma.SectionRequestMaterialDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SectionRequestMaterialUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SectionRequestMaterialUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestMaterialPayload>[]
+          }
+          upsert: {
+            args: Prisma.SectionRequestMaterialUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionRequestMaterialPayload>
+          }
+          aggregate: {
+            args: Prisma.SectionRequestMaterialAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSectionRequestMaterial>
+          }
+          groupBy: {
+            args: Prisma.SectionRequestMaterialGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SectionRequestMaterialGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SectionRequestMaterialCountArgs<ExtArgs>
+            result: $Utils.Optional<SectionRequestMaterialCountAggregateOutputType> | number
+          }
+        }
+      }
+      Sparepart: {
+        payload: Prisma.$SparepartPayload<ExtArgs>
+        fields: Prisma.SparepartFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SparepartFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SparepartFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
+          }
+          findFirst: {
+            args: Prisma.SparepartFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SparepartFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
+          }
+          findMany: {
+            args: Prisma.SparepartFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>[]
+          }
+          create: {
+            args: Prisma.SparepartCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
+          }
+          createMany: {
+            args: Prisma.SparepartCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SparepartCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>[]
+          }
+          delete: {
+            args: Prisma.SparepartDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
+          }
+          update: {
+            args: Prisma.SparepartUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
+          }
+          deleteMany: {
+            args: Prisma.SparepartDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SparepartUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SparepartUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>[]
+          }
+          upsert: {
+            args: Prisma.SparepartUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartPayload>
+          }
+          aggregate: {
+            args: Prisma.SparepartAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSparepart>
+          }
+          groupBy: {
+            args: Prisma.SparepartGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SparepartGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SparepartCountArgs<ExtArgs>
+            result: $Utils.Optional<SparepartCountAggregateOutputType> | number
+          }
+        }
+      }
+      SparepartLog: {
+        payload: Prisma.$SparepartLogPayload<ExtArgs>
+        fields: Prisma.SparepartLogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SparepartLogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SparepartLogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartLogPayload>
+          }
+          findFirst: {
+            args: Prisma.SparepartLogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SparepartLogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartLogPayload>
+          }
+          findMany: {
+            args: Prisma.SparepartLogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartLogPayload>[]
+          }
+          create: {
+            args: Prisma.SparepartLogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartLogPayload>
+          }
+          createMany: {
+            args: Prisma.SparepartLogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SparepartLogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartLogPayload>[]
+          }
+          delete: {
+            args: Prisma.SparepartLogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartLogPayload>
+          }
+          update: {
+            args: Prisma.SparepartLogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.SparepartLogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SparepartLogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SparepartLogUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartLogPayload>[]
+          }
+          upsert: {
+            args: Prisma.SparepartLogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SparepartLogPayload>
+          }
+          aggregate: {
+            args: Prisma.SparepartLogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSparepartLog>
+          }
+          groupBy: {
+            args: Prisma.SparepartLogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SparepartLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SparepartLogCountArgs<ExtArgs>
+            result: $Utils.Optional<SparepartLogCountAggregateOutputType> | number
+          }
+        }
+      }
+      User: {
+        payload: Prisma.$UserPayload<ExtArgs>
+        fields: Prisma.UserFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          findFirst: {
+            args: Prisma.UserFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          findMany: {
+            args: Prisma.UserFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
+          }
+          create: {
+            args: Prisma.UserCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          createMany: {
+            args: Prisma.UserCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
+          }
+          delete: {
+            args: Prisma.UserDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          update: {
+            args: Prisma.UserUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
+          }
+          upsert: {
+            args: Prisma.UserUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          aggregate: {
+            args: Prisma.UserAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUser>
+          }
+          groupBy: {
+            args: Prisma.UserGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserCountArgs<ExtArgs>
+            result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1413,11 +1683,14 @@ export namespace Prisma {
     masterDaisha?: MasterDaishaOmit
     ticket?: TicketOmit
     ticketDetail?: TicketDetailOmit
-    sparepart?: SparepartOmit
-    user?: UserOmit
     daishaType?: DaishaTypeOmit
     daishaComponent?: DaishaComponentOmit
     daishaSymptom?: DaishaSymptomOmit
+    sectionRequest?: SectionRequestOmit
+    sectionRequestMaterial?: SectionRequestMaterialOmit
+    sparepart?: SparepartOmit
+    sparepartLog?: SparepartLogOmit
+    user?: UserOmit
   }
 
   /* Types for Logging */
@@ -1614,6 +1887,77 @@ export namespace Prisma {
    */
   export type DaishaComponentCountOutputTypeCountSymptomsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: DaishaSymptomWhereInput
+  }
+
+
+  /**
+   * Count Type SectionRequestCountOutputType
+   */
+
+  export type SectionRequestCountOutputType = {
+    materials: number
+  }
+
+  export type SectionRequestCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    materials?: boolean | SectionRequestCountOutputTypeCountMaterialsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * SectionRequestCountOutputType without action
+   */
+  export type SectionRequestCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestCountOutputType
+     */
+    select?: SectionRequestCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * SectionRequestCountOutputType without action
+   */
+  export type SectionRequestCountOutputTypeCountMaterialsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SectionRequestMaterialWhereInput
+  }
+
+
+  /**
+   * Count Type SparepartCountOutputType
+   */
+
+  export type SparepartCountOutputType = {
+    logs: number
+    requestMaterials: number
+  }
+
+  export type SparepartCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    logs?: boolean | SparepartCountOutputTypeCountLogsArgs
+    requestMaterials?: boolean | SparepartCountOutputTypeCountRequestMaterialsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * SparepartCountOutputType without action
+   */
+  export type SparepartCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartCountOutputType
+     */
+    select?: SparepartCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * SparepartCountOutputType without action
+   */
+  export type SparepartCountOutputTypeCountLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SparepartLogWhereInput
+  }
+
+  /**
+   * SparepartCountOutputType without action
+   */
+  export type SparepartCountOutputTypeCountRequestMaterialsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SectionRequestMaterialWhereInput
   }
 
 
@@ -4896,2073 +5240,6 @@ export namespace Prisma {
 
 
   /**
-   * Model Sparepart
-   */
-
-  export type AggregateSparepart = {
-    _count: SparepartCountAggregateOutputType | null
-    _avg: SparepartAvgAggregateOutputType | null
-    _sum: SparepartSumAggregateOutputType | null
-    _min: SparepartMinAggregateOutputType | null
-    _max: SparepartMaxAggregateOutputType | null
-  }
-
-  export type SparepartAvgAggregateOutputType = {
-    stokGudang: number | null
-  }
-
-  export type SparepartSumAggregateOutputType = {
-    stokGudang: number | null
-  }
-
-  export type SparepartMinAggregateOutputType = {
-    namaKomponen: string | null
-    stokGudang: number | null
-    satuan: string | null
-  }
-
-  export type SparepartMaxAggregateOutputType = {
-    namaKomponen: string | null
-    stokGudang: number | null
-    satuan: string | null
-  }
-
-  export type SparepartCountAggregateOutputType = {
-    namaKomponen: number
-    stokGudang: number
-    satuan: number
-    _all: number
-  }
-
-
-  export type SparepartAvgAggregateInputType = {
-    stokGudang?: true
-  }
-
-  export type SparepartSumAggregateInputType = {
-    stokGudang?: true
-  }
-
-  export type SparepartMinAggregateInputType = {
-    namaKomponen?: true
-    stokGudang?: true
-    satuan?: true
-  }
-
-  export type SparepartMaxAggregateInputType = {
-    namaKomponen?: true
-    stokGudang?: true
-    satuan?: true
-  }
-
-  export type SparepartCountAggregateInputType = {
-    namaKomponen?: true
-    stokGudang?: true
-    satuan?: true
-    _all?: true
-  }
-
-  export type SparepartAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which Sparepart to aggregate.
-     */
-    where?: SparepartWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Spareparts to fetch.
-     */
-    orderBy?: SparepartOrderByWithRelationInput | SparepartOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: SparepartWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Spareparts from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Spareparts.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned Spareparts
-    **/
-    _count?: true | SparepartCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to average
-    **/
-    _avg?: SparepartAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: SparepartSumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: SparepartMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: SparepartMaxAggregateInputType
-  }
-
-  export type GetSparepartAggregateType<T extends SparepartAggregateArgs> = {
-        [P in keyof T & keyof AggregateSparepart]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateSparepart[P]>
-      : GetScalarType<T[P], AggregateSparepart[P]>
-  }
-
-
-
-
-  export type SparepartGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: SparepartWhereInput
-    orderBy?: SparepartOrderByWithAggregationInput | SparepartOrderByWithAggregationInput[]
-    by: SparepartScalarFieldEnum[] | SparepartScalarFieldEnum
-    having?: SparepartScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: SparepartCountAggregateInputType | true
-    _avg?: SparepartAvgAggregateInputType
-    _sum?: SparepartSumAggregateInputType
-    _min?: SparepartMinAggregateInputType
-    _max?: SparepartMaxAggregateInputType
-  }
-
-  export type SparepartGroupByOutputType = {
-    namaKomponen: string
-    stokGudang: number
-    satuan: string
-    _count: SparepartCountAggregateOutputType | null
-    _avg: SparepartAvgAggregateOutputType | null
-    _sum: SparepartSumAggregateOutputType | null
-    _min: SparepartMinAggregateOutputType | null
-    _max: SparepartMaxAggregateOutputType | null
-  }
-
-  type GetSparepartGroupByPayload<T extends SparepartGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<SparepartGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof SparepartGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], SparepartGroupByOutputType[P]>
-            : GetScalarType<T[P], SparepartGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type SparepartSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    namaKomponen?: boolean
-    stokGudang?: boolean
-    satuan?: boolean
-  }, ExtArgs["result"]["sparepart"]>
-
-  export type SparepartSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    namaKomponen?: boolean
-    stokGudang?: boolean
-    satuan?: boolean
-  }, ExtArgs["result"]["sparepart"]>
-
-  export type SparepartSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    namaKomponen?: boolean
-    stokGudang?: boolean
-    satuan?: boolean
-  }, ExtArgs["result"]["sparepart"]>
-
-  export type SparepartSelectScalar = {
-    namaKomponen?: boolean
-    stokGudang?: boolean
-    satuan?: boolean
-  }
-
-  export type SparepartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"namaKomponen" | "stokGudang" | "satuan", ExtArgs["result"]["sparepart"]>
-
-  export type $SparepartPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "Sparepart"
-    objects: {}
-    scalars: $Extensions.GetPayloadResult<{
-      namaKomponen: string
-      stokGudang: number
-      satuan: string
-    }, ExtArgs["result"]["sparepart"]>
-    composites: {}
-  }
-
-  type SparepartGetPayload<S extends boolean | null | undefined | SparepartDefaultArgs> = $Result.GetResult<Prisma.$SparepartPayload, S>
-
-  type SparepartCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<SparepartFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: SparepartCountAggregateInputType | true
-    }
-
-  export interface SparepartDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Sparepart'], meta: { name: 'Sparepart' } }
-    /**
-     * Find zero or one Sparepart that matches the filter.
-     * @param {SparepartFindUniqueArgs} args - Arguments to find a Sparepart
-     * @example
-     * // Get one Sparepart
-     * const sparepart = await prisma.sparepart.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends SparepartFindUniqueArgs>(args: SelectSubset<T, SparepartFindUniqueArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one Sparepart that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {SparepartFindUniqueOrThrowArgs} args - Arguments to find a Sparepart
-     * @example
-     * // Get one Sparepart
-     * const sparepart = await prisma.sparepart.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends SparepartFindUniqueOrThrowArgs>(args: SelectSubset<T, SparepartFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first Sparepart that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SparepartFindFirstArgs} args - Arguments to find a Sparepart
-     * @example
-     * // Get one Sparepart
-     * const sparepart = await prisma.sparepart.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends SparepartFindFirstArgs>(args?: SelectSubset<T, SparepartFindFirstArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first Sparepart that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SparepartFindFirstOrThrowArgs} args - Arguments to find a Sparepart
-     * @example
-     * // Get one Sparepart
-     * const sparepart = await prisma.sparepart.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends SparepartFindFirstOrThrowArgs>(args?: SelectSubset<T, SparepartFindFirstOrThrowArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more Spareparts that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SparepartFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all Spareparts
-     * const spareparts = await prisma.sparepart.findMany()
-     * 
-     * // Get first 10 Spareparts
-     * const spareparts = await prisma.sparepart.findMany({ take: 10 })
-     * 
-     * // Only select the `namaKomponen`
-     * const sparepartWithNamaKomponenOnly = await prisma.sparepart.findMany({ select: { namaKomponen: true } })
-     * 
-     */
-    findMany<T extends SparepartFindManyArgs>(args?: SelectSubset<T, SparepartFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a Sparepart.
-     * @param {SparepartCreateArgs} args - Arguments to create a Sparepart.
-     * @example
-     * // Create one Sparepart
-     * const Sparepart = await prisma.sparepart.create({
-     *   data: {
-     *     // ... data to create a Sparepart
-     *   }
-     * })
-     * 
-     */
-    create<T extends SparepartCreateArgs>(args: SelectSubset<T, SparepartCreateArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many Spareparts.
-     * @param {SparepartCreateManyArgs} args - Arguments to create many Spareparts.
-     * @example
-     * // Create many Spareparts
-     * const sparepart = await prisma.sparepart.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends SparepartCreateManyArgs>(args?: SelectSubset<T, SparepartCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many Spareparts and returns the data saved in the database.
-     * @param {SparepartCreateManyAndReturnArgs} args - Arguments to create many Spareparts.
-     * @example
-     * // Create many Spareparts
-     * const sparepart = await prisma.sparepart.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many Spareparts and only return the `namaKomponen`
-     * const sparepartWithNamaKomponenOnly = await prisma.sparepart.createManyAndReturn({
-     *   select: { namaKomponen: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends SparepartCreateManyAndReturnArgs>(args?: SelectSubset<T, SparepartCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a Sparepart.
-     * @param {SparepartDeleteArgs} args - Arguments to delete one Sparepart.
-     * @example
-     * // Delete one Sparepart
-     * const Sparepart = await prisma.sparepart.delete({
-     *   where: {
-     *     // ... filter to delete one Sparepart
-     *   }
-     * })
-     * 
-     */
-    delete<T extends SparepartDeleteArgs>(args: SelectSubset<T, SparepartDeleteArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one Sparepart.
-     * @param {SparepartUpdateArgs} args - Arguments to update one Sparepart.
-     * @example
-     * // Update one Sparepart
-     * const sparepart = await prisma.sparepart.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends SparepartUpdateArgs>(args: SelectSubset<T, SparepartUpdateArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more Spareparts.
-     * @param {SparepartDeleteManyArgs} args - Arguments to filter Spareparts to delete.
-     * @example
-     * // Delete a few Spareparts
-     * const { count } = await prisma.sparepart.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends SparepartDeleteManyArgs>(args?: SelectSubset<T, SparepartDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more Spareparts.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SparepartUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many Spareparts
-     * const sparepart = await prisma.sparepart.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends SparepartUpdateManyArgs>(args: SelectSubset<T, SparepartUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more Spareparts and returns the data updated in the database.
-     * @param {SparepartUpdateManyAndReturnArgs} args - Arguments to update many Spareparts.
-     * @example
-     * // Update many Spareparts
-     * const sparepart = await prisma.sparepart.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more Spareparts and only return the `namaKomponen`
-     * const sparepartWithNamaKomponenOnly = await prisma.sparepart.updateManyAndReturn({
-     *   select: { namaKomponen: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends SparepartUpdateManyAndReturnArgs>(args: SelectSubset<T, SparepartUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one Sparepart.
-     * @param {SparepartUpsertArgs} args - Arguments to update or create a Sparepart.
-     * @example
-     * // Update or create a Sparepart
-     * const sparepart = await prisma.sparepart.upsert({
-     *   create: {
-     *     // ... data to create a Sparepart
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the Sparepart we want to update
-     *   }
-     * })
-     */
-    upsert<T extends SparepartUpsertArgs>(args: SelectSubset<T, SparepartUpsertArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of Spareparts.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SparepartCountArgs} args - Arguments to filter Spareparts to count.
-     * @example
-     * // Count the number of Spareparts
-     * const count = await prisma.sparepart.count({
-     *   where: {
-     *     // ... the filter for the Spareparts we want to count
-     *   }
-     * })
-    **/
-    count<T extends SparepartCountArgs>(
-      args?: Subset<T, SparepartCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], SparepartCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a Sparepart.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SparepartAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends SparepartAggregateArgs>(args: Subset<T, SparepartAggregateArgs>): Prisma.PrismaPromise<GetSparepartAggregateType<T>>
-
-    /**
-     * Group by Sparepart.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SparepartGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends SparepartGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: SparepartGroupByArgs['orderBy'] }
-        : { orderBy?: SparepartGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, SparepartGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSparepartGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the Sparepart model
-   */
-  readonly fields: SparepartFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for Sparepart.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__SparepartClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the Sparepart model
-   */
-  interface SparepartFieldRefs {
-    readonly namaKomponen: FieldRef<"Sparepart", 'String'>
-    readonly stokGudang: FieldRef<"Sparepart", 'Int'>
-    readonly satuan: FieldRef<"Sparepart", 'String'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * Sparepart findUnique
-   */
-  export type SparepartFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-    /**
-     * Filter, which Sparepart to fetch.
-     */
-    where: SparepartWhereUniqueInput
-  }
-
-  /**
-   * Sparepart findUniqueOrThrow
-   */
-  export type SparepartFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-    /**
-     * Filter, which Sparepart to fetch.
-     */
-    where: SparepartWhereUniqueInput
-  }
-
-  /**
-   * Sparepart findFirst
-   */
-  export type SparepartFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-    /**
-     * Filter, which Sparepart to fetch.
-     */
-    where?: SparepartWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Spareparts to fetch.
-     */
-    orderBy?: SparepartOrderByWithRelationInput | SparepartOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for Spareparts.
-     */
-    cursor?: SparepartWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Spareparts from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Spareparts.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of Spareparts.
-     */
-    distinct?: SparepartScalarFieldEnum | SparepartScalarFieldEnum[]
-  }
-
-  /**
-   * Sparepart findFirstOrThrow
-   */
-  export type SparepartFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-    /**
-     * Filter, which Sparepart to fetch.
-     */
-    where?: SparepartWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Spareparts to fetch.
-     */
-    orderBy?: SparepartOrderByWithRelationInput | SparepartOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for Spareparts.
-     */
-    cursor?: SparepartWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Spareparts from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Spareparts.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of Spareparts.
-     */
-    distinct?: SparepartScalarFieldEnum | SparepartScalarFieldEnum[]
-  }
-
-  /**
-   * Sparepart findMany
-   */
-  export type SparepartFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-    /**
-     * Filter, which Spareparts to fetch.
-     */
-    where?: SparepartWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Spareparts to fetch.
-     */
-    orderBy?: SparepartOrderByWithRelationInput | SparepartOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing Spareparts.
-     */
-    cursor?: SparepartWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Spareparts from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Spareparts.
-     */
-    skip?: number
-    distinct?: SparepartScalarFieldEnum | SparepartScalarFieldEnum[]
-  }
-
-  /**
-   * Sparepart create
-   */
-  export type SparepartCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-    /**
-     * The data needed to create a Sparepart.
-     */
-    data: XOR<SparepartCreateInput, SparepartUncheckedCreateInput>
-  }
-
-  /**
-   * Sparepart createMany
-   */
-  export type SparepartCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many Spareparts.
-     */
-    data: SparepartCreateManyInput | SparepartCreateManyInput[]
-  }
-
-  /**
-   * Sparepart createManyAndReturn
-   */
-  export type SparepartCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-    /**
-     * The data used to create many Spareparts.
-     */
-    data: SparepartCreateManyInput | SparepartCreateManyInput[]
-  }
-
-  /**
-   * Sparepart update
-   */
-  export type SparepartUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-    /**
-     * The data needed to update a Sparepart.
-     */
-    data: XOR<SparepartUpdateInput, SparepartUncheckedUpdateInput>
-    /**
-     * Choose, which Sparepart to update.
-     */
-    where: SparepartWhereUniqueInput
-  }
-
-  /**
-   * Sparepart updateMany
-   */
-  export type SparepartUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update Spareparts.
-     */
-    data: XOR<SparepartUpdateManyMutationInput, SparepartUncheckedUpdateManyInput>
-    /**
-     * Filter which Spareparts to update
-     */
-    where?: SparepartWhereInput
-    /**
-     * Limit how many Spareparts to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * Sparepart updateManyAndReturn
-   */
-  export type SparepartUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-    /**
-     * The data used to update Spareparts.
-     */
-    data: XOR<SparepartUpdateManyMutationInput, SparepartUncheckedUpdateManyInput>
-    /**
-     * Filter which Spareparts to update
-     */
-    where?: SparepartWhereInput
-    /**
-     * Limit how many Spareparts to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * Sparepart upsert
-   */
-  export type SparepartUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-    /**
-     * The filter to search for the Sparepart to update in case it exists.
-     */
-    where: SparepartWhereUniqueInput
-    /**
-     * In case the Sparepart found by the `where` argument doesn't exist, create a new Sparepart with this data.
-     */
-    create: XOR<SparepartCreateInput, SparepartUncheckedCreateInput>
-    /**
-     * In case the Sparepart was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<SparepartUpdateInput, SparepartUncheckedUpdateInput>
-  }
-
-  /**
-   * Sparepart delete
-   */
-  export type SparepartDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-    /**
-     * Filter which Sparepart to delete.
-     */
-    where: SparepartWhereUniqueInput
-  }
-
-  /**
-   * Sparepart deleteMany
-   */
-  export type SparepartDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which Spareparts to delete
-     */
-    where?: SparepartWhereInput
-    /**
-     * Limit how many Spareparts to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * Sparepart without action
-   */
-  export type SparepartDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Sparepart
-     */
-    select?: SparepartSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Sparepart
-     */
-    omit?: SparepartOmit<ExtArgs> | null
-  }
-
-
-  /**
-   * Model User
-   */
-
-  export type AggregateUser = {
-    _count: UserCountAggregateOutputType | null
-    _avg: UserAvgAggregateOutputType | null
-    _sum: UserSumAggregateOutputType | null
-    _min: UserMinAggregateOutputType | null
-    _max: UserMaxAggregateOutputType | null
-  }
-
-  export type UserAvgAggregateOutputType = {
-    id: number | null
-  }
-
-  export type UserSumAggregateOutputType = {
-    id: number | null
-  }
-
-  export type UserMinAggregateOutputType = {
-    id: number | null
-    username: string | null
-    password: string | null
-    name: string | null
-    role: string | null
-    description: string | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type UserMaxAggregateOutputType = {
-    id: number | null
-    username: string | null
-    password: string | null
-    name: string | null
-    role: string | null
-    description: string | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type UserCountAggregateOutputType = {
-    id: number
-    username: number
-    password: number
-    name: number
-    role: number
-    description: number
-    createdAt: number
-    updatedAt: number
-    _all: number
-  }
-
-
-  export type UserAvgAggregateInputType = {
-    id?: true
-  }
-
-  export type UserSumAggregateInputType = {
-    id?: true
-  }
-
-  export type UserMinAggregateInputType = {
-    id?: true
-    username?: true
-    password?: true
-    name?: true
-    role?: true
-    description?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type UserMaxAggregateInputType = {
-    id?: true
-    username?: true
-    password?: true
-    name?: true
-    role?: true
-    description?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type UserCountAggregateInputType = {
-    id?: true
-    username?: true
-    password?: true
-    name?: true
-    role?: true
-    description?: true
-    createdAt?: true
-    updatedAt?: true
-    _all?: true
-  }
-
-  export type UserAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which User to aggregate.
-     */
-    where?: UserWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Users to fetch.
-     */
-    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: UserWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Users from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Users.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned Users
-    **/
-    _count?: true | UserCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to average
-    **/
-    _avg?: UserAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: UserSumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: UserMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: UserMaxAggregateInputType
-  }
-
-  export type GetUserAggregateType<T extends UserAggregateArgs> = {
-        [P in keyof T & keyof AggregateUser]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateUser[P]>
-      : GetScalarType<T[P], AggregateUser[P]>
-  }
-
-
-
-
-  export type UserGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: UserWhereInput
-    orderBy?: UserOrderByWithAggregationInput | UserOrderByWithAggregationInput[]
-    by: UserScalarFieldEnum[] | UserScalarFieldEnum
-    having?: UserScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: UserCountAggregateInputType | true
-    _avg?: UserAvgAggregateInputType
-    _sum?: UserSumAggregateInputType
-    _min?: UserMinAggregateInputType
-    _max?: UserMaxAggregateInputType
-  }
-
-  export type UserGroupByOutputType = {
-    id: number
-    username: string
-    password: string
-    name: string
-    role: string
-    description: string | null
-    createdAt: Date
-    updatedAt: Date
-    _count: UserCountAggregateOutputType | null
-    _avg: UserAvgAggregateOutputType | null
-    _sum: UserSumAggregateOutputType | null
-    _min: UserMinAggregateOutputType | null
-    _max: UserMaxAggregateOutputType | null
-  }
-
-  type GetUserGroupByPayload<T extends UserGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<UserGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof UserGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], UserGroupByOutputType[P]>
-            : GetScalarType<T[P], UserGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type UserSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    username?: boolean
-    password?: boolean
-    name?: boolean
-    role?: boolean
-    description?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }, ExtArgs["result"]["user"]>
-
-  export type UserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    username?: boolean
-    password?: boolean
-    name?: boolean
-    role?: boolean
-    description?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }, ExtArgs["result"]["user"]>
-
-  export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    username?: boolean
-    password?: boolean
-    name?: boolean
-    role?: boolean
-    description?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }, ExtArgs["result"]["user"]>
-
-  export type UserSelectScalar = {
-    id?: boolean
-    username?: boolean
-    password?: boolean
-    name?: boolean
-    role?: boolean
-    description?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }
-
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password" | "name" | "role" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
-
-  export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "User"
-    objects: {}
-    scalars: $Extensions.GetPayloadResult<{
-      id: number
-      username: string
-      password: string
-      name: string
-      role: string
-      description: string | null
-      createdAt: Date
-      updatedAt: Date
-    }, ExtArgs["result"]["user"]>
-    composites: {}
-  }
-
-  type UserGetPayload<S extends boolean | null | undefined | UserDefaultArgs> = $Result.GetResult<Prisma.$UserPayload, S>
-
-  type UserCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<UserFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: UserCountAggregateInputType | true
-    }
-
-  export interface UserDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['User'], meta: { name: 'User' } }
-    /**
-     * Find zero or one User that matches the filter.
-     * @param {UserFindUniqueArgs} args - Arguments to find a User
-     * @example
-     * // Get one User
-     * const user = await prisma.user.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one User that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {UserFindUniqueOrThrowArgs} args - Arguments to find a User
-     * @example
-     * // Get one User
-     * const user = await prisma.user.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends UserFindUniqueOrThrowArgs>(args: SelectSubset<T, UserFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first User that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserFindFirstArgs} args - Arguments to find a User
-     * @example
-     * // Get one User
-     * const user = await prisma.user.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends UserFindFirstArgs>(args?: SelectSubset<T, UserFindFirstArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first User that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserFindFirstOrThrowArgs} args - Arguments to find a User
-     * @example
-     * // Get one User
-     * const user = await prisma.user.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends UserFindFirstOrThrowArgs>(args?: SelectSubset<T, UserFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more Users that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all Users
-     * const users = await prisma.user.findMany()
-     * 
-     * // Get first 10 Users
-     * const users = await prisma.user.findMany({ take: 10 })
-     * 
-     * // Only select the `id`
-     * const userWithIdOnly = await prisma.user.findMany({ select: { id: true } })
-     * 
-     */
-    findMany<T extends UserFindManyArgs>(args?: SelectSubset<T, UserFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a User.
-     * @param {UserCreateArgs} args - Arguments to create a User.
-     * @example
-     * // Create one User
-     * const User = await prisma.user.create({
-     *   data: {
-     *     // ... data to create a User
-     *   }
-     * })
-     * 
-     */
-    create<T extends UserCreateArgs>(args: SelectSubset<T, UserCreateArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many Users.
-     * @param {UserCreateManyArgs} args - Arguments to create many Users.
-     * @example
-     * // Create many Users
-     * const user = await prisma.user.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends UserCreateManyArgs>(args?: SelectSubset<T, UserCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many Users and returns the data saved in the database.
-     * @param {UserCreateManyAndReturnArgs} args - Arguments to create many Users.
-     * @example
-     * // Create many Users
-     * const user = await prisma.user.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many Users and only return the `id`
-     * const userWithIdOnly = await prisma.user.createManyAndReturn({
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends UserCreateManyAndReturnArgs>(args?: SelectSubset<T, UserCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a User.
-     * @param {UserDeleteArgs} args - Arguments to delete one User.
-     * @example
-     * // Delete one User
-     * const User = await prisma.user.delete({
-     *   where: {
-     *     // ... filter to delete one User
-     *   }
-     * })
-     * 
-     */
-    delete<T extends UserDeleteArgs>(args: SelectSubset<T, UserDeleteArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one User.
-     * @param {UserUpdateArgs} args - Arguments to update one User.
-     * @example
-     * // Update one User
-     * const user = await prisma.user.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends UserUpdateArgs>(args: SelectSubset<T, UserUpdateArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more Users.
-     * @param {UserDeleteManyArgs} args - Arguments to filter Users to delete.
-     * @example
-     * // Delete a few Users
-     * const { count } = await prisma.user.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends UserDeleteManyArgs>(args?: SelectSubset<T, UserDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more Users.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many Users
-     * const user = await prisma.user.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends UserUpdateManyArgs>(args: SelectSubset<T, UserUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more Users and returns the data updated in the database.
-     * @param {UserUpdateManyAndReturnArgs} args - Arguments to update many Users.
-     * @example
-     * // Update many Users
-     * const user = await prisma.user.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more Users and only return the `id`
-     * const userWithIdOnly = await prisma.user.updateManyAndReturn({
-     *   select: { id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends UserUpdateManyAndReturnArgs>(args: SelectSubset<T, UserUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one User.
-     * @param {UserUpsertArgs} args - Arguments to update or create a User.
-     * @example
-     * // Update or create a User
-     * const user = await prisma.user.upsert({
-     *   create: {
-     *     // ... data to create a User
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the User we want to update
-     *   }
-     * })
-     */
-    upsert<T extends UserUpsertArgs>(args: SelectSubset<T, UserUpsertArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of Users.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserCountArgs} args - Arguments to filter Users to count.
-     * @example
-     * // Count the number of Users
-     * const count = await prisma.user.count({
-     *   where: {
-     *     // ... the filter for the Users we want to count
-     *   }
-     * })
-    **/
-    count<T extends UserCountArgs>(
-      args?: Subset<T, UserCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], UserCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a User.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends UserAggregateArgs>(args: Subset<T, UserAggregateArgs>): Prisma.PrismaPromise<GetUserAggregateType<T>>
-
-    /**
-     * Group by User.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends UserGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: UserGroupByArgs['orderBy'] }
-        : { orderBy?: UserGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, UserGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the User model
-   */
-  readonly fields: UserFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for User.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the User model
-   */
-  interface UserFieldRefs {
-    readonly id: FieldRef<"User", 'Int'>
-    readonly username: FieldRef<"User", 'String'>
-    readonly password: FieldRef<"User", 'String'>
-    readonly name: FieldRef<"User", 'String'>
-    readonly role: FieldRef<"User", 'String'>
-    readonly description: FieldRef<"User", 'String'>
-    readonly createdAt: FieldRef<"User", 'DateTime'>
-    readonly updatedAt: FieldRef<"User", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * User findUnique
-   */
-  export type UserFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-    /**
-     * Filter, which User to fetch.
-     */
-    where: UserWhereUniqueInput
-  }
-
-  /**
-   * User findUniqueOrThrow
-   */
-  export type UserFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-    /**
-     * Filter, which User to fetch.
-     */
-    where: UserWhereUniqueInput
-  }
-
-  /**
-   * User findFirst
-   */
-  export type UserFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-    /**
-     * Filter, which User to fetch.
-     */
-    where?: UserWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Users to fetch.
-     */
-    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for Users.
-     */
-    cursor?: UserWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Users from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Users.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of Users.
-     */
-    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
-  }
-
-  /**
-   * User findFirstOrThrow
-   */
-  export type UserFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-    /**
-     * Filter, which User to fetch.
-     */
-    where?: UserWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Users to fetch.
-     */
-    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for Users.
-     */
-    cursor?: UserWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Users from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Users.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of Users.
-     */
-    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
-  }
-
-  /**
-   * User findMany
-   */
-  export type UserFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-    /**
-     * Filter, which Users to fetch.
-     */
-    where?: UserWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Users to fetch.
-     */
-    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing Users.
-     */
-    cursor?: UserWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Users from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Users.
-     */
-    skip?: number
-    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
-  }
-
-  /**
-   * User create
-   */
-  export type UserCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-    /**
-     * The data needed to create a User.
-     */
-    data: XOR<UserCreateInput, UserUncheckedCreateInput>
-  }
-
-  /**
-   * User createMany
-   */
-  export type UserCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many Users.
-     */
-    data: UserCreateManyInput | UserCreateManyInput[]
-  }
-
-  /**
-   * User createManyAndReturn
-   */
-  export type UserCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-    /**
-     * The data used to create many Users.
-     */
-    data: UserCreateManyInput | UserCreateManyInput[]
-  }
-
-  /**
-   * User update
-   */
-  export type UserUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-    /**
-     * The data needed to update a User.
-     */
-    data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
-    /**
-     * Choose, which User to update.
-     */
-    where: UserWhereUniqueInput
-  }
-
-  /**
-   * User updateMany
-   */
-  export type UserUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update Users.
-     */
-    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyInput>
-    /**
-     * Filter which Users to update
-     */
-    where?: UserWhereInput
-    /**
-     * Limit how many Users to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * User updateManyAndReturn
-   */
-  export type UserUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-    /**
-     * The data used to update Users.
-     */
-    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyInput>
-    /**
-     * Filter which Users to update
-     */
-    where?: UserWhereInput
-    /**
-     * Limit how many Users to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * User upsert
-   */
-  export type UserUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-    /**
-     * The filter to search for the User to update in case it exists.
-     */
-    where: UserWhereUniqueInput
-    /**
-     * In case the User found by the `where` argument doesn't exist, create a new User with this data.
-     */
-    create: XOR<UserCreateInput, UserUncheckedCreateInput>
-    /**
-     * In case the User was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<UserUpdateInput, UserUncheckedUpdateInput>
-  }
-
-  /**
-   * User delete
-   */
-  export type UserDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-    /**
-     * Filter which User to delete.
-     */
-    where: UserWhereUniqueInput
-  }
-
-  /**
-   * User deleteMany
-   */
-  export type UserDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which Users to delete
-     */
-    where?: UserWhereInput
-    /**
-     * Limit how many Users to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * User without action
-   */
-  export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the User
-     */
-    omit?: UserOmit<ExtArgs> | null
-  }
-
-
-  /**
    * Model DaishaType
    */
 
@@ -10231,6 +8508,5759 @@ export namespace Prisma {
 
 
   /**
+   * Model SectionRequest
+   */
+
+  export type AggregateSectionRequest = {
+    _count: SectionRequestCountAggregateOutputType | null
+    _avg: SectionRequestAvgAggregateOutputType | null
+    _sum: SectionRequestSumAggregateOutputType | null
+    _min: SectionRequestMinAggregateOutputType | null
+    _max: SectionRequestMaxAggregateOutputType | null
+  }
+
+  export type SectionRequestAvgAggregateOutputType = {
+    id: number | null
+    jumlah: number | null
+  }
+
+  export type SectionRequestSumAggregateOutputType = {
+    id: number | null
+    jumlah: number | null
+  }
+
+  export type SectionRequestMinAggregateOutputType = {
+    id: number | null
+    nomorRequest: string | null
+    seksiPemohon: string | null
+    picPemohon: string | null
+    kontakPemohon: string | null
+    namaBarang: string | null
+    spesifikasi: string | null
+    jumlah: number | null
+    satuan: string | null
+    urgensi: string | null
+    catatan: string | null
+    status: string | null
+    alasanTolak: string | null
+    picBengkel: string | null
+    estimasi: string | null
+    catatanAdmin: string | null
+    dibuatOleh: string | null
+    waktuDibuat: Date | null
+    waktuUpdate: Date | null
+    waktuSelesai: Date | null
+  }
+
+  export type SectionRequestMaxAggregateOutputType = {
+    id: number | null
+    nomorRequest: string | null
+    seksiPemohon: string | null
+    picPemohon: string | null
+    kontakPemohon: string | null
+    namaBarang: string | null
+    spesifikasi: string | null
+    jumlah: number | null
+    satuan: string | null
+    urgensi: string | null
+    catatan: string | null
+    status: string | null
+    alasanTolak: string | null
+    picBengkel: string | null
+    estimasi: string | null
+    catatanAdmin: string | null
+    dibuatOleh: string | null
+    waktuDibuat: Date | null
+    waktuUpdate: Date | null
+    waktuSelesai: Date | null
+  }
+
+  export type SectionRequestCountAggregateOutputType = {
+    id: number
+    nomorRequest: number
+    seksiPemohon: number
+    picPemohon: number
+    kontakPemohon: number
+    namaBarang: number
+    spesifikasi: number
+    jumlah: number
+    satuan: number
+    urgensi: number
+    catatan: number
+    status: number
+    alasanTolak: number
+    picBengkel: number
+    estimasi: number
+    catatanAdmin: number
+    dibuatOleh: number
+    waktuDibuat: number
+    waktuUpdate: number
+    waktuSelesai: number
+    _all: number
+  }
+
+
+  export type SectionRequestAvgAggregateInputType = {
+    id?: true
+    jumlah?: true
+  }
+
+  export type SectionRequestSumAggregateInputType = {
+    id?: true
+    jumlah?: true
+  }
+
+  export type SectionRequestMinAggregateInputType = {
+    id?: true
+    nomorRequest?: true
+    seksiPemohon?: true
+    picPemohon?: true
+    kontakPemohon?: true
+    namaBarang?: true
+    spesifikasi?: true
+    jumlah?: true
+    satuan?: true
+    urgensi?: true
+    catatan?: true
+    status?: true
+    alasanTolak?: true
+    picBengkel?: true
+    estimasi?: true
+    catatanAdmin?: true
+    dibuatOleh?: true
+    waktuDibuat?: true
+    waktuUpdate?: true
+    waktuSelesai?: true
+  }
+
+  export type SectionRequestMaxAggregateInputType = {
+    id?: true
+    nomorRequest?: true
+    seksiPemohon?: true
+    picPemohon?: true
+    kontakPemohon?: true
+    namaBarang?: true
+    spesifikasi?: true
+    jumlah?: true
+    satuan?: true
+    urgensi?: true
+    catatan?: true
+    status?: true
+    alasanTolak?: true
+    picBengkel?: true
+    estimasi?: true
+    catatanAdmin?: true
+    dibuatOleh?: true
+    waktuDibuat?: true
+    waktuUpdate?: true
+    waktuSelesai?: true
+  }
+
+  export type SectionRequestCountAggregateInputType = {
+    id?: true
+    nomorRequest?: true
+    seksiPemohon?: true
+    picPemohon?: true
+    kontakPemohon?: true
+    namaBarang?: true
+    spesifikasi?: true
+    jumlah?: true
+    satuan?: true
+    urgensi?: true
+    catatan?: true
+    status?: true
+    alasanTolak?: true
+    picBengkel?: true
+    estimasi?: true
+    catatanAdmin?: true
+    dibuatOleh?: true
+    waktuDibuat?: true
+    waktuUpdate?: true
+    waktuSelesai?: true
+    _all?: true
+  }
+
+  export type SectionRequestAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SectionRequest to aggregate.
+     */
+    where?: SectionRequestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SectionRequests to fetch.
+     */
+    orderBy?: SectionRequestOrderByWithRelationInput | SectionRequestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SectionRequestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SectionRequests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SectionRequests.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SectionRequests
+    **/
+    _count?: true | SectionRequestCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SectionRequestAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SectionRequestSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SectionRequestMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SectionRequestMaxAggregateInputType
+  }
+
+  export type GetSectionRequestAggregateType<T extends SectionRequestAggregateArgs> = {
+        [P in keyof T & keyof AggregateSectionRequest]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSectionRequest[P]>
+      : GetScalarType<T[P], AggregateSectionRequest[P]>
+  }
+
+
+
+
+  export type SectionRequestGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SectionRequestWhereInput
+    orderBy?: SectionRequestOrderByWithAggregationInput | SectionRequestOrderByWithAggregationInput[]
+    by: SectionRequestScalarFieldEnum[] | SectionRequestScalarFieldEnum
+    having?: SectionRequestScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SectionRequestCountAggregateInputType | true
+    _avg?: SectionRequestAvgAggregateInputType
+    _sum?: SectionRequestSumAggregateInputType
+    _min?: SectionRequestMinAggregateInputType
+    _max?: SectionRequestMaxAggregateInputType
+  }
+
+  export type SectionRequestGroupByOutputType = {
+    id: number
+    nomorRequest: string
+    seksiPemohon: string
+    picPemohon: string
+    kontakPemohon: string | null
+    namaBarang: string
+    spesifikasi: string | null
+    jumlah: number
+    satuan: string
+    urgensi: string
+    catatan: string | null
+    status: string
+    alasanTolak: string | null
+    picBengkel: string | null
+    estimasi: string | null
+    catatanAdmin: string | null
+    dibuatOleh: string
+    waktuDibuat: Date
+    waktuUpdate: Date
+    waktuSelesai: Date | null
+    _count: SectionRequestCountAggregateOutputType | null
+    _avg: SectionRequestAvgAggregateOutputType | null
+    _sum: SectionRequestSumAggregateOutputType | null
+    _min: SectionRequestMinAggregateOutputType | null
+    _max: SectionRequestMaxAggregateOutputType | null
+  }
+
+  type GetSectionRequestGroupByPayload<T extends SectionRequestGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SectionRequestGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SectionRequestGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SectionRequestGroupByOutputType[P]>
+            : GetScalarType<T[P], SectionRequestGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SectionRequestSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    nomorRequest?: boolean
+    seksiPemohon?: boolean
+    picPemohon?: boolean
+    kontakPemohon?: boolean
+    namaBarang?: boolean
+    spesifikasi?: boolean
+    jumlah?: boolean
+    satuan?: boolean
+    urgensi?: boolean
+    catatan?: boolean
+    status?: boolean
+    alasanTolak?: boolean
+    picBengkel?: boolean
+    estimasi?: boolean
+    catatanAdmin?: boolean
+    dibuatOleh?: boolean
+    waktuDibuat?: boolean
+    waktuUpdate?: boolean
+    waktuSelesai?: boolean
+    materials?: boolean | SectionRequest$materialsArgs<ExtArgs>
+    _count?: boolean | SectionRequestCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["sectionRequest"]>
+
+  export type SectionRequestSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    nomorRequest?: boolean
+    seksiPemohon?: boolean
+    picPemohon?: boolean
+    kontakPemohon?: boolean
+    namaBarang?: boolean
+    spesifikasi?: boolean
+    jumlah?: boolean
+    satuan?: boolean
+    urgensi?: boolean
+    catatan?: boolean
+    status?: boolean
+    alasanTolak?: boolean
+    picBengkel?: boolean
+    estimasi?: boolean
+    catatanAdmin?: boolean
+    dibuatOleh?: boolean
+    waktuDibuat?: boolean
+    waktuUpdate?: boolean
+    waktuSelesai?: boolean
+  }, ExtArgs["result"]["sectionRequest"]>
+
+  export type SectionRequestSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    nomorRequest?: boolean
+    seksiPemohon?: boolean
+    picPemohon?: boolean
+    kontakPemohon?: boolean
+    namaBarang?: boolean
+    spesifikasi?: boolean
+    jumlah?: boolean
+    satuan?: boolean
+    urgensi?: boolean
+    catatan?: boolean
+    status?: boolean
+    alasanTolak?: boolean
+    picBengkel?: boolean
+    estimasi?: boolean
+    catatanAdmin?: boolean
+    dibuatOleh?: boolean
+    waktuDibuat?: boolean
+    waktuUpdate?: boolean
+    waktuSelesai?: boolean
+  }, ExtArgs["result"]["sectionRequest"]>
+
+  export type SectionRequestSelectScalar = {
+    id?: boolean
+    nomorRequest?: boolean
+    seksiPemohon?: boolean
+    picPemohon?: boolean
+    kontakPemohon?: boolean
+    namaBarang?: boolean
+    spesifikasi?: boolean
+    jumlah?: boolean
+    satuan?: boolean
+    urgensi?: boolean
+    catatan?: boolean
+    status?: boolean
+    alasanTolak?: boolean
+    picBengkel?: boolean
+    estimasi?: boolean
+    catatanAdmin?: boolean
+    dibuatOleh?: boolean
+    waktuDibuat?: boolean
+    waktuUpdate?: boolean
+    waktuSelesai?: boolean
+  }
+
+  export type SectionRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nomorRequest" | "seksiPemohon" | "picPemohon" | "kontakPemohon" | "namaBarang" | "spesifikasi" | "jumlah" | "satuan" | "urgensi" | "catatan" | "status" | "alasanTolak" | "picBengkel" | "estimasi" | "catatanAdmin" | "dibuatOleh" | "waktuDibuat" | "waktuUpdate" | "waktuSelesai", ExtArgs["result"]["sectionRequest"]>
+  export type SectionRequestInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    materials?: boolean | SectionRequest$materialsArgs<ExtArgs>
+    _count?: boolean | SectionRequestCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type SectionRequestIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type SectionRequestIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $SectionRequestPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SectionRequest"
+    objects: {
+      materials: Prisma.$SectionRequestMaterialPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      nomorRequest: string
+      seksiPemohon: string
+      picPemohon: string
+      kontakPemohon: string | null
+      namaBarang: string
+      spesifikasi: string | null
+      jumlah: number
+      satuan: string
+      urgensi: string
+      catatan: string | null
+      status: string
+      alasanTolak: string | null
+      picBengkel: string | null
+      estimasi: string | null
+      catatanAdmin: string | null
+      dibuatOleh: string
+      waktuDibuat: Date
+      waktuUpdate: Date
+      waktuSelesai: Date | null
+    }, ExtArgs["result"]["sectionRequest"]>
+    composites: {}
+  }
+
+  type SectionRequestGetPayload<S extends boolean | null | undefined | SectionRequestDefaultArgs> = $Result.GetResult<Prisma.$SectionRequestPayload, S>
+
+  type SectionRequestCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SectionRequestFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SectionRequestCountAggregateInputType | true
+    }
+
+  export interface SectionRequestDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SectionRequest'], meta: { name: 'SectionRequest' } }
+    /**
+     * Find zero or one SectionRequest that matches the filter.
+     * @param {SectionRequestFindUniqueArgs} args - Arguments to find a SectionRequest
+     * @example
+     * // Get one SectionRequest
+     * const sectionRequest = await prisma.sectionRequest.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SectionRequestFindUniqueArgs>(args: SelectSubset<T, SectionRequestFindUniqueArgs<ExtArgs>>): Prisma__SectionRequestClient<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SectionRequest that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SectionRequestFindUniqueOrThrowArgs} args - Arguments to find a SectionRequest
+     * @example
+     * // Get one SectionRequest
+     * const sectionRequest = await prisma.sectionRequest.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SectionRequestFindUniqueOrThrowArgs>(args: SelectSubset<T, SectionRequestFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SectionRequestClient<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SectionRequest that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestFindFirstArgs} args - Arguments to find a SectionRequest
+     * @example
+     * // Get one SectionRequest
+     * const sectionRequest = await prisma.sectionRequest.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SectionRequestFindFirstArgs>(args?: SelectSubset<T, SectionRequestFindFirstArgs<ExtArgs>>): Prisma__SectionRequestClient<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SectionRequest that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestFindFirstOrThrowArgs} args - Arguments to find a SectionRequest
+     * @example
+     * // Get one SectionRequest
+     * const sectionRequest = await prisma.sectionRequest.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SectionRequestFindFirstOrThrowArgs>(args?: SelectSubset<T, SectionRequestFindFirstOrThrowArgs<ExtArgs>>): Prisma__SectionRequestClient<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SectionRequests that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SectionRequests
+     * const sectionRequests = await prisma.sectionRequest.findMany()
+     * 
+     * // Get first 10 SectionRequests
+     * const sectionRequests = await prisma.sectionRequest.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const sectionRequestWithIdOnly = await prisma.sectionRequest.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SectionRequestFindManyArgs>(args?: SelectSubset<T, SectionRequestFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SectionRequest.
+     * @param {SectionRequestCreateArgs} args - Arguments to create a SectionRequest.
+     * @example
+     * // Create one SectionRequest
+     * const SectionRequest = await prisma.sectionRequest.create({
+     *   data: {
+     *     // ... data to create a SectionRequest
+     *   }
+     * })
+     * 
+     */
+    create<T extends SectionRequestCreateArgs>(args: SelectSubset<T, SectionRequestCreateArgs<ExtArgs>>): Prisma__SectionRequestClient<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SectionRequests.
+     * @param {SectionRequestCreateManyArgs} args - Arguments to create many SectionRequests.
+     * @example
+     * // Create many SectionRequests
+     * const sectionRequest = await prisma.sectionRequest.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SectionRequestCreateManyArgs>(args?: SelectSubset<T, SectionRequestCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SectionRequests and returns the data saved in the database.
+     * @param {SectionRequestCreateManyAndReturnArgs} args - Arguments to create many SectionRequests.
+     * @example
+     * // Create many SectionRequests
+     * const sectionRequest = await prisma.sectionRequest.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SectionRequests and only return the `id`
+     * const sectionRequestWithIdOnly = await prisma.sectionRequest.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SectionRequestCreateManyAndReturnArgs>(args?: SelectSubset<T, SectionRequestCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SectionRequest.
+     * @param {SectionRequestDeleteArgs} args - Arguments to delete one SectionRequest.
+     * @example
+     * // Delete one SectionRequest
+     * const SectionRequest = await prisma.sectionRequest.delete({
+     *   where: {
+     *     // ... filter to delete one SectionRequest
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SectionRequestDeleteArgs>(args: SelectSubset<T, SectionRequestDeleteArgs<ExtArgs>>): Prisma__SectionRequestClient<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SectionRequest.
+     * @param {SectionRequestUpdateArgs} args - Arguments to update one SectionRequest.
+     * @example
+     * // Update one SectionRequest
+     * const sectionRequest = await prisma.sectionRequest.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SectionRequestUpdateArgs>(args: SelectSubset<T, SectionRequestUpdateArgs<ExtArgs>>): Prisma__SectionRequestClient<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SectionRequests.
+     * @param {SectionRequestDeleteManyArgs} args - Arguments to filter SectionRequests to delete.
+     * @example
+     * // Delete a few SectionRequests
+     * const { count } = await prisma.sectionRequest.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SectionRequestDeleteManyArgs>(args?: SelectSubset<T, SectionRequestDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SectionRequests.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SectionRequests
+     * const sectionRequest = await prisma.sectionRequest.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SectionRequestUpdateManyArgs>(args: SelectSubset<T, SectionRequestUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SectionRequests and returns the data updated in the database.
+     * @param {SectionRequestUpdateManyAndReturnArgs} args - Arguments to update many SectionRequests.
+     * @example
+     * // Update many SectionRequests
+     * const sectionRequest = await prisma.sectionRequest.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SectionRequests and only return the `id`
+     * const sectionRequestWithIdOnly = await prisma.sectionRequest.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SectionRequestUpdateManyAndReturnArgs>(args: SelectSubset<T, SectionRequestUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SectionRequest.
+     * @param {SectionRequestUpsertArgs} args - Arguments to update or create a SectionRequest.
+     * @example
+     * // Update or create a SectionRequest
+     * const sectionRequest = await prisma.sectionRequest.upsert({
+     *   create: {
+     *     // ... data to create a SectionRequest
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SectionRequest we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SectionRequestUpsertArgs>(args: SelectSubset<T, SectionRequestUpsertArgs<ExtArgs>>): Prisma__SectionRequestClient<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SectionRequests.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestCountArgs} args - Arguments to filter SectionRequests to count.
+     * @example
+     * // Count the number of SectionRequests
+     * const count = await prisma.sectionRequest.count({
+     *   where: {
+     *     // ... the filter for the SectionRequests we want to count
+     *   }
+     * })
+    **/
+    count<T extends SectionRequestCountArgs>(
+      args?: Subset<T, SectionRequestCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SectionRequestCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SectionRequest.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SectionRequestAggregateArgs>(args: Subset<T, SectionRequestAggregateArgs>): Prisma.PrismaPromise<GetSectionRequestAggregateType<T>>
+
+    /**
+     * Group by SectionRequest.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SectionRequestGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SectionRequestGroupByArgs['orderBy'] }
+        : { orderBy?: SectionRequestGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SectionRequestGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSectionRequestGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SectionRequest model
+   */
+  readonly fields: SectionRequestFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SectionRequest.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SectionRequestClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    materials<T extends SectionRequest$materialsArgs<ExtArgs> = {}>(args?: Subset<T, SectionRequest$materialsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SectionRequest model
+   */
+  interface SectionRequestFieldRefs {
+    readonly id: FieldRef<"SectionRequest", 'Int'>
+    readonly nomorRequest: FieldRef<"SectionRequest", 'String'>
+    readonly seksiPemohon: FieldRef<"SectionRequest", 'String'>
+    readonly picPemohon: FieldRef<"SectionRequest", 'String'>
+    readonly kontakPemohon: FieldRef<"SectionRequest", 'String'>
+    readonly namaBarang: FieldRef<"SectionRequest", 'String'>
+    readonly spesifikasi: FieldRef<"SectionRequest", 'String'>
+    readonly jumlah: FieldRef<"SectionRequest", 'Int'>
+    readonly satuan: FieldRef<"SectionRequest", 'String'>
+    readonly urgensi: FieldRef<"SectionRequest", 'String'>
+    readonly catatan: FieldRef<"SectionRequest", 'String'>
+    readonly status: FieldRef<"SectionRequest", 'String'>
+    readonly alasanTolak: FieldRef<"SectionRequest", 'String'>
+    readonly picBengkel: FieldRef<"SectionRequest", 'String'>
+    readonly estimasi: FieldRef<"SectionRequest", 'String'>
+    readonly catatanAdmin: FieldRef<"SectionRequest", 'String'>
+    readonly dibuatOleh: FieldRef<"SectionRequest", 'String'>
+    readonly waktuDibuat: FieldRef<"SectionRequest", 'DateTime'>
+    readonly waktuUpdate: FieldRef<"SectionRequest", 'DateTime'>
+    readonly waktuSelesai: FieldRef<"SectionRequest", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SectionRequest findUnique
+   */
+  export type SectionRequestFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestInclude<ExtArgs> | null
+    /**
+     * Filter, which SectionRequest to fetch.
+     */
+    where: SectionRequestWhereUniqueInput
+  }
+
+  /**
+   * SectionRequest findUniqueOrThrow
+   */
+  export type SectionRequestFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestInclude<ExtArgs> | null
+    /**
+     * Filter, which SectionRequest to fetch.
+     */
+    where: SectionRequestWhereUniqueInput
+  }
+
+  /**
+   * SectionRequest findFirst
+   */
+  export type SectionRequestFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestInclude<ExtArgs> | null
+    /**
+     * Filter, which SectionRequest to fetch.
+     */
+    where?: SectionRequestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SectionRequests to fetch.
+     */
+    orderBy?: SectionRequestOrderByWithRelationInput | SectionRequestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SectionRequests.
+     */
+    cursor?: SectionRequestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SectionRequests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SectionRequests.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SectionRequests.
+     */
+    distinct?: SectionRequestScalarFieldEnum | SectionRequestScalarFieldEnum[]
+  }
+
+  /**
+   * SectionRequest findFirstOrThrow
+   */
+  export type SectionRequestFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestInclude<ExtArgs> | null
+    /**
+     * Filter, which SectionRequest to fetch.
+     */
+    where?: SectionRequestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SectionRequests to fetch.
+     */
+    orderBy?: SectionRequestOrderByWithRelationInput | SectionRequestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SectionRequests.
+     */
+    cursor?: SectionRequestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SectionRequests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SectionRequests.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SectionRequests.
+     */
+    distinct?: SectionRequestScalarFieldEnum | SectionRequestScalarFieldEnum[]
+  }
+
+  /**
+   * SectionRequest findMany
+   */
+  export type SectionRequestFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestInclude<ExtArgs> | null
+    /**
+     * Filter, which SectionRequests to fetch.
+     */
+    where?: SectionRequestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SectionRequests to fetch.
+     */
+    orderBy?: SectionRequestOrderByWithRelationInput | SectionRequestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SectionRequests.
+     */
+    cursor?: SectionRequestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SectionRequests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SectionRequests.
+     */
+    skip?: number
+    distinct?: SectionRequestScalarFieldEnum | SectionRequestScalarFieldEnum[]
+  }
+
+  /**
+   * SectionRequest create
+   */
+  export type SectionRequestCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SectionRequest.
+     */
+    data: XOR<SectionRequestCreateInput, SectionRequestUncheckedCreateInput>
+  }
+
+  /**
+   * SectionRequest createMany
+   */
+  export type SectionRequestCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SectionRequests.
+     */
+    data: SectionRequestCreateManyInput | SectionRequestCreateManyInput[]
+  }
+
+  /**
+   * SectionRequest createManyAndReturn
+   */
+  export type SectionRequestCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * The data used to create many SectionRequests.
+     */
+    data: SectionRequestCreateManyInput | SectionRequestCreateManyInput[]
+  }
+
+  /**
+   * SectionRequest update
+   */
+  export type SectionRequestUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SectionRequest.
+     */
+    data: XOR<SectionRequestUpdateInput, SectionRequestUncheckedUpdateInput>
+    /**
+     * Choose, which SectionRequest to update.
+     */
+    where: SectionRequestWhereUniqueInput
+  }
+
+  /**
+   * SectionRequest updateMany
+   */
+  export type SectionRequestUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SectionRequests.
+     */
+    data: XOR<SectionRequestUpdateManyMutationInput, SectionRequestUncheckedUpdateManyInput>
+    /**
+     * Filter which SectionRequests to update
+     */
+    where?: SectionRequestWhereInput
+    /**
+     * Limit how many SectionRequests to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SectionRequest updateManyAndReturn
+   */
+  export type SectionRequestUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * The data used to update SectionRequests.
+     */
+    data: XOR<SectionRequestUpdateManyMutationInput, SectionRequestUncheckedUpdateManyInput>
+    /**
+     * Filter which SectionRequests to update
+     */
+    where?: SectionRequestWhereInput
+    /**
+     * Limit how many SectionRequests to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SectionRequest upsert
+   */
+  export type SectionRequestUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SectionRequest to update in case it exists.
+     */
+    where: SectionRequestWhereUniqueInput
+    /**
+     * In case the SectionRequest found by the `where` argument doesn't exist, create a new SectionRequest with this data.
+     */
+    create: XOR<SectionRequestCreateInput, SectionRequestUncheckedCreateInput>
+    /**
+     * In case the SectionRequest was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SectionRequestUpdateInput, SectionRequestUncheckedUpdateInput>
+  }
+
+  /**
+   * SectionRequest delete
+   */
+  export type SectionRequestDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestInclude<ExtArgs> | null
+    /**
+     * Filter which SectionRequest to delete.
+     */
+    where: SectionRequestWhereUniqueInput
+  }
+
+  /**
+   * SectionRequest deleteMany
+   */
+  export type SectionRequestDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SectionRequests to delete
+     */
+    where?: SectionRequestWhereInput
+    /**
+     * Limit how many SectionRequests to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SectionRequest.materials
+   */
+  export type SectionRequest$materialsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+    where?: SectionRequestMaterialWhereInput
+    orderBy?: SectionRequestMaterialOrderByWithRelationInput | SectionRequestMaterialOrderByWithRelationInput[]
+    cursor?: SectionRequestMaterialWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SectionRequestMaterialScalarFieldEnum | SectionRequestMaterialScalarFieldEnum[]
+  }
+
+  /**
+   * SectionRequest without action
+   */
+  export type SectionRequestDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequest
+     */
+    select?: SectionRequestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequest
+     */
+    omit?: SectionRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SectionRequestMaterial
+   */
+
+  export type AggregateSectionRequestMaterial = {
+    _count: SectionRequestMaterialCountAggregateOutputType | null
+    _avg: SectionRequestMaterialAvgAggregateOutputType | null
+    _sum: SectionRequestMaterialSumAggregateOutputType | null
+    _min: SectionRequestMaterialMinAggregateOutputType | null
+    _max: SectionRequestMaterialMaxAggregateOutputType | null
+  }
+
+  export type SectionRequestMaterialAvgAggregateOutputType = {
+    id: number | null
+    sectionRequestId: number | null
+    qty: number | null
+  }
+
+  export type SectionRequestMaterialSumAggregateOutputType = {
+    id: number | null
+    sectionRequestId: number | null
+    qty: number | null
+  }
+
+  export type SectionRequestMaterialMinAggregateOutputType = {
+    id: number | null
+    sectionRequestId: number | null
+    namaKomponen: string | null
+    qty: number | null
+    keterangan: string | null
+  }
+
+  export type SectionRequestMaterialMaxAggregateOutputType = {
+    id: number | null
+    sectionRequestId: number | null
+    namaKomponen: string | null
+    qty: number | null
+    keterangan: string | null
+  }
+
+  export type SectionRequestMaterialCountAggregateOutputType = {
+    id: number
+    sectionRequestId: number
+    namaKomponen: number
+    qty: number
+    keterangan: number
+    _all: number
+  }
+
+
+  export type SectionRequestMaterialAvgAggregateInputType = {
+    id?: true
+    sectionRequestId?: true
+    qty?: true
+  }
+
+  export type SectionRequestMaterialSumAggregateInputType = {
+    id?: true
+    sectionRequestId?: true
+    qty?: true
+  }
+
+  export type SectionRequestMaterialMinAggregateInputType = {
+    id?: true
+    sectionRequestId?: true
+    namaKomponen?: true
+    qty?: true
+    keterangan?: true
+  }
+
+  export type SectionRequestMaterialMaxAggregateInputType = {
+    id?: true
+    sectionRequestId?: true
+    namaKomponen?: true
+    qty?: true
+    keterangan?: true
+  }
+
+  export type SectionRequestMaterialCountAggregateInputType = {
+    id?: true
+    sectionRequestId?: true
+    namaKomponen?: true
+    qty?: true
+    keterangan?: true
+    _all?: true
+  }
+
+  export type SectionRequestMaterialAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SectionRequestMaterial to aggregate.
+     */
+    where?: SectionRequestMaterialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SectionRequestMaterials to fetch.
+     */
+    orderBy?: SectionRequestMaterialOrderByWithRelationInput | SectionRequestMaterialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SectionRequestMaterialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SectionRequestMaterials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SectionRequestMaterials.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SectionRequestMaterials
+    **/
+    _count?: true | SectionRequestMaterialCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SectionRequestMaterialAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SectionRequestMaterialSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SectionRequestMaterialMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SectionRequestMaterialMaxAggregateInputType
+  }
+
+  export type GetSectionRequestMaterialAggregateType<T extends SectionRequestMaterialAggregateArgs> = {
+        [P in keyof T & keyof AggregateSectionRequestMaterial]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSectionRequestMaterial[P]>
+      : GetScalarType<T[P], AggregateSectionRequestMaterial[P]>
+  }
+
+
+
+
+  export type SectionRequestMaterialGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SectionRequestMaterialWhereInput
+    orderBy?: SectionRequestMaterialOrderByWithAggregationInput | SectionRequestMaterialOrderByWithAggregationInput[]
+    by: SectionRequestMaterialScalarFieldEnum[] | SectionRequestMaterialScalarFieldEnum
+    having?: SectionRequestMaterialScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SectionRequestMaterialCountAggregateInputType | true
+    _avg?: SectionRequestMaterialAvgAggregateInputType
+    _sum?: SectionRequestMaterialSumAggregateInputType
+    _min?: SectionRequestMaterialMinAggregateInputType
+    _max?: SectionRequestMaterialMaxAggregateInputType
+  }
+
+  export type SectionRequestMaterialGroupByOutputType = {
+    id: number
+    sectionRequestId: number
+    namaKomponen: string
+    qty: number
+    keterangan: string | null
+    _count: SectionRequestMaterialCountAggregateOutputType | null
+    _avg: SectionRequestMaterialAvgAggregateOutputType | null
+    _sum: SectionRequestMaterialSumAggregateOutputType | null
+    _min: SectionRequestMaterialMinAggregateOutputType | null
+    _max: SectionRequestMaterialMaxAggregateOutputType | null
+  }
+
+  type GetSectionRequestMaterialGroupByPayload<T extends SectionRequestMaterialGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SectionRequestMaterialGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SectionRequestMaterialGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SectionRequestMaterialGroupByOutputType[P]>
+            : GetScalarType<T[P], SectionRequestMaterialGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SectionRequestMaterialSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    sectionRequestId?: boolean
+    namaKomponen?: boolean
+    qty?: boolean
+    keterangan?: boolean
+    sectionRequest?: boolean | SectionRequestDefaultArgs<ExtArgs>
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["sectionRequestMaterial"]>
+
+  export type SectionRequestMaterialSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    sectionRequestId?: boolean
+    namaKomponen?: boolean
+    qty?: boolean
+    keterangan?: boolean
+    sectionRequest?: boolean | SectionRequestDefaultArgs<ExtArgs>
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["sectionRequestMaterial"]>
+
+  export type SectionRequestMaterialSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    sectionRequestId?: boolean
+    namaKomponen?: boolean
+    qty?: boolean
+    keterangan?: boolean
+    sectionRequest?: boolean | SectionRequestDefaultArgs<ExtArgs>
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["sectionRequestMaterial"]>
+
+  export type SectionRequestMaterialSelectScalar = {
+    id?: boolean
+    sectionRequestId?: boolean
+    namaKomponen?: boolean
+    qty?: boolean
+    keterangan?: boolean
+  }
+
+  export type SectionRequestMaterialOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sectionRequestId" | "namaKomponen" | "qty" | "keterangan", ExtArgs["result"]["sectionRequestMaterial"]>
+  export type SectionRequestMaterialInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    sectionRequest?: boolean | SectionRequestDefaultArgs<ExtArgs>
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }
+  export type SectionRequestMaterialIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    sectionRequest?: boolean | SectionRequestDefaultArgs<ExtArgs>
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }
+  export type SectionRequestMaterialIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    sectionRequest?: boolean | SectionRequestDefaultArgs<ExtArgs>
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }
+
+  export type $SectionRequestMaterialPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SectionRequestMaterial"
+    objects: {
+      sectionRequest: Prisma.$SectionRequestPayload<ExtArgs>
+      sparepart: Prisma.$SparepartPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      sectionRequestId: number
+      namaKomponen: string
+      qty: number
+      keterangan: string | null
+    }, ExtArgs["result"]["sectionRequestMaterial"]>
+    composites: {}
+  }
+
+  type SectionRequestMaterialGetPayload<S extends boolean | null | undefined | SectionRequestMaterialDefaultArgs> = $Result.GetResult<Prisma.$SectionRequestMaterialPayload, S>
+
+  type SectionRequestMaterialCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SectionRequestMaterialFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SectionRequestMaterialCountAggregateInputType | true
+    }
+
+  export interface SectionRequestMaterialDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SectionRequestMaterial'], meta: { name: 'SectionRequestMaterial' } }
+    /**
+     * Find zero or one SectionRequestMaterial that matches the filter.
+     * @param {SectionRequestMaterialFindUniqueArgs} args - Arguments to find a SectionRequestMaterial
+     * @example
+     * // Get one SectionRequestMaterial
+     * const sectionRequestMaterial = await prisma.sectionRequestMaterial.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SectionRequestMaterialFindUniqueArgs>(args: SelectSubset<T, SectionRequestMaterialFindUniqueArgs<ExtArgs>>): Prisma__SectionRequestMaterialClient<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SectionRequestMaterial that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SectionRequestMaterialFindUniqueOrThrowArgs} args - Arguments to find a SectionRequestMaterial
+     * @example
+     * // Get one SectionRequestMaterial
+     * const sectionRequestMaterial = await prisma.sectionRequestMaterial.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SectionRequestMaterialFindUniqueOrThrowArgs>(args: SelectSubset<T, SectionRequestMaterialFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SectionRequestMaterialClient<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SectionRequestMaterial that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestMaterialFindFirstArgs} args - Arguments to find a SectionRequestMaterial
+     * @example
+     * // Get one SectionRequestMaterial
+     * const sectionRequestMaterial = await prisma.sectionRequestMaterial.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SectionRequestMaterialFindFirstArgs>(args?: SelectSubset<T, SectionRequestMaterialFindFirstArgs<ExtArgs>>): Prisma__SectionRequestMaterialClient<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SectionRequestMaterial that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestMaterialFindFirstOrThrowArgs} args - Arguments to find a SectionRequestMaterial
+     * @example
+     * // Get one SectionRequestMaterial
+     * const sectionRequestMaterial = await prisma.sectionRequestMaterial.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SectionRequestMaterialFindFirstOrThrowArgs>(args?: SelectSubset<T, SectionRequestMaterialFindFirstOrThrowArgs<ExtArgs>>): Prisma__SectionRequestMaterialClient<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SectionRequestMaterials that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestMaterialFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SectionRequestMaterials
+     * const sectionRequestMaterials = await prisma.sectionRequestMaterial.findMany()
+     * 
+     * // Get first 10 SectionRequestMaterials
+     * const sectionRequestMaterials = await prisma.sectionRequestMaterial.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const sectionRequestMaterialWithIdOnly = await prisma.sectionRequestMaterial.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SectionRequestMaterialFindManyArgs>(args?: SelectSubset<T, SectionRequestMaterialFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SectionRequestMaterial.
+     * @param {SectionRequestMaterialCreateArgs} args - Arguments to create a SectionRequestMaterial.
+     * @example
+     * // Create one SectionRequestMaterial
+     * const SectionRequestMaterial = await prisma.sectionRequestMaterial.create({
+     *   data: {
+     *     // ... data to create a SectionRequestMaterial
+     *   }
+     * })
+     * 
+     */
+    create<T extends SectionRequestMaterialCreateArgs>(args: SelectSubset<T, SectionRequestMaterialCreateArgs<ExtArgs>>): Prisma__SectionRequestMaterialClient<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SectionRequestMaterials.
+     * @param {SectionRequestMaterialCreateManyArgs} args - Arguments to create many SectionRequestMaterials.
+     * @example
+     * // Create many SectionRequestMaterials
+     * const sectionRequestMaterial = await prisma.sectionRequestMaterial.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SectionRequestMaterialCreateManyArgs>(args?: SelectSubset<T, SectionRequestMaterialCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SectionRequestMaterials and returns the data saved in the database.
+     * @param {SectionRequestMaterialCreateManyAndReturnArgs} args - Arguments to create many SectionRequestMaterials.
+     * @example
+     * // Create many SectionRequestMaterials
+     * const sectionRequestMaterial = await prisma.sectionRequestMaterial.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SectionRequestMaterials and only return the `id`
+     * const sectionRequestMaterialWithIdOnly = await prisma.sectionRequestMaterial.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SectionRequestMaterialCreateManyAndReturnArgs>(args?: SelectSubset<T, SectionRequestMaterialCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SectionRequestMaterial.
+     * @param {SectionRequestMaterialDeleteArgs} args - Arguments to delete one SectionRequestMaterial.
+     * @example
+     * // Delete one SectionRequestMaterial
+     * const SectionRequestMaterial = await prisma.sectionRequestMaterial.delete({
+     *   where: {
+     *     // ... filter to delete one SectionRequestMaterial
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SectionRequestMaterialDeleteArgs>(args: SelectSubset<T, SectionRequestMaterialDeleteArgs<ExtArgs>>): Prisma__SectionRequestMaterialClient<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SectionRequestMaterial.
+     * @param {SectionRequestMaterialUpdateArgs} args - Arguments to update one SectionRequestMaterial.
+     * @example
+     * // Update one SectionRequestMaterial
+     * const sectionRequestMaterial = await prisma.sectionRequestMaterial.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SectionRequestMaterialUpdateArgs>(args: SelectSubset<T, SectionRequestMaterialUpdateArgs<ExtArgs>>): Prisma__SectionRequestMaterialClient<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SectionRequestMaterials.
+     * @param {SectionRequestMaterialDeleteManyArgs} args - Arguments to filter SectionRequestMaterials to delete.
+     * @example
+     * // Delete a few SectionRequestMaterials
+     * const { count } = await prisma.sectionRequestMaterial.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SectionRequestMaterialDeleteManyArgs>(args?: SelectSubset<T, SectionRequestMaterialDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SectionRequestMaterials.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestMaterialUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SectionRequestMaterials
+     * const sectionRequestMaterial = await prisma.sectionRequestMaterial.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SectionRequestMaterialUpdateManyArgs>(args: SelectSubset<T, SectionRequestMaterialUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SectionRequestMaterials and returns the data updated in the database.
+     * @param {SectionRequestMaterialUpdateManyAndReturnArgs} args - Arguments to update many SectionRequestMaterials.
+     * @example
+     * // Update many SectionRequestMaterials
+     * const sectionRequestMaterial = await prisma.sectionRequestMaterial.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SectionRequestMaterials and only return the `id`
+     * const sectionRequestMaterialWithIdOnly = await prisma.sectionRequestMaterial.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SectionRequestMaterialUpdateManyAndReturnArgs>(args: SelectSubset<T, SectionRequestMaterialUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SectionRequestMaterial.
+     * @param {SectionRequestMaterialUpsertArgs} args - Arguments to update or create a SectionRequestMaterial.
+     * @example
+     * // Update or create a SectionRequestMaterial
+     * const sectionRequestMaterial = await prisma.sectionRequestMaterial.upsert({
+     *   create: {
+     *     // ... data to create a SectionRequestMaterial
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SectionRequestMaterial we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SectionRequestMaterialUpsertArgs>(args: SelectSubset<T, SectionRequestMaterialUpsertArgs<ExtArgs>>): Prisma__SectionRequestMaterialClient<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SectionRequestMaterials.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestMaterialCountArgs} args - Arguments to filter SectionRequestMaterials to count.
+     * @example
+     * // Count the number of SectionRequestMaterials
+     * const count = await prisma.sectionRequestMaterial.count({
+     *   where: {
+     *     // ... the filter for the SectionRequestMaterials we want to count
+     *   }
+     * })
+    **/
+    count<T extends SectionRequestMaterialCountArgs>(
+      args?: Subset<T, SectionRequestMaterialCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SectionRequestMaterialCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SectionRequestMaterial.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestMaterialAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SectionRequestMaterialAggregateArgs>(args: Subset<T, SectionRequestMaterialAggregateArgs>): Prisma.PrismaPromise<GetSectionRequestMaterialAggregateType<T>>
+
+    /**
+     * Group by SectionRequestMaterial.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionRequestMaterialGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SectionRequestMaterialGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SectionRequestMaterialGroupByArgs['orderBy'] }
+        : { orderBy?: SectionRequestMaterialGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SectionRequestMaterialGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSectionRequestMaterialGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SectionRequestMaterial model
+   */
+  readonly fields: SectionRequestMaterialFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SectionRequestMaterial.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SectionRequestMaterialClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    sectionRequest<T extends SectionRequestDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SectionRequestDefaultArgs<ExtArgs>>): Prisma__SectionRequestClient<$Result.GetResult<Prisma.$SectionRequestPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    sparepart<T extends SparepartDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SparepartDefaultArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SectionRequestMaterial model
+   */
+  interface SectionRequestMaterialFieldRefs {
+    readonly id: FieldRef<"SectionRequestMaterial", 'Int'>
+    readonly sectionRequestId: FieldRef<"SectionRequestMaterial", 'Int'>
+    readonly namaKomponen: FieldRef<"SectionRequestMaterial", 'String'>
+    readonly qty: FieldRef<"SectionRequestMaterial", 'Int'>
+    readonly keterangan: FieldRef<"SectionRequestMaterial", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SectionRequestMaterial findUnique
+   */
+  export type SectionRequestMaterialFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+    /**
+     * Filter, which SectionRequestMaterial to fetch.
+     */
+    where: SectionRequestMaterialWhereUniqueInput
+  }
+
+  /**
+   * SectionRequestMaterial findUniqueOrThrow
+   */
+  export type SectionRequestMaterialFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+    /**
+     * Filter, which SectionRequestMaterial to fetch.
+     */
+    where: SectionRequestMaterialWhereUniqueInput
+  }
+
+  /**
+   * SectionRequestMaterial findFirst
+   */
+  export type SectionRequestMaterialFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+    /**
+     * Filter, which SectionRequestMaterial to fetch.
+     */
+    where?: SectionRequestMaterialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SectionRequestMaterials to fetch.
+     */
+    orderBy?: SectionRequestMaterialOrderByWithRelationInput | SectionRequestMaterialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SectionRequestMaterials.
+     */
+    cursor?: SectionRequestMaterialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SectionRequestMaterials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SectionRequestMaterials.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SectionRequestMaterials.
+     */
+    distinct?: SectionRequestMaterialScalarFieldEnum | SectionRequestMaterialScalarFieldEnum[]
+  }
+
+  /**
+   * SectionRequestMaterial findFirstOrThrow
+   */
+  export type SectionRequestMaterialFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+    /**
+     * Filter, which SectionRequestMaterial to fetch.
+     */
+    where?: SectionRequestMaterialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SectionRequestMaterials to fetch.
+     */
+    orderBy?: SectionRequestMaterialOrderByWithRelationInput | SectionRequestMaterialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SectionRequestMaterials.
+     */
+    cursor?: SectionRequestMaterialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SectionRequestMaterials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SectionRequestMaterials.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SectionRequestMaterials.
+     */
+    distinct?: SectionRequestMaterialScalarFieldEnum | SectionRequestMaterialScalarFieldEnum[]
+  }
+
+  /**
+   * SectionRequestMaterial findMany
+   */
+  export type SectionRequestMaterialFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+    /**
+     * Filter, which SectionRequestMaterials to fetch.
+     */
+    where?: SectionRequestMaterialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SectionRequestMaterials to fetch.
+     */
+    orderBy?: SectionRequestMaterialOrderByWithRelationInput | SectionRequestMaterialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SectionRequestMaterials.
+     */
+    cursor?: SectionRequestMaterialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SectionRequestMaterials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SectionRequestMaterials.
+     */
+    skip?: number
+    distinct?: SectionRequestMaterialScalarFieldEnum | SectionRequestMaterialScalarFieldEnum[]
+  }
+
+  /**
+   * SectionRequestMaterial create
+   */
+  export type SectionRequestMaterialCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SectionRequestMaterial.
+     */
+    data: XOR<SectionRequestMaterialCreateInput, SectionRequestMaterialUncheckedCreateInput>
+  }
+
+  /**
+   * SectionRequestMaterial createMany
+   */
+  export type SectionRequestMaterialCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SectionRequestMaterials.
+     */
+    data: SectionRequestMaterialCreateManyInput | SectionRequestMaterialCreateManyInput[]
+  }
+
+  /**
+   * SectionRequestMaterial createManyAndReturn
+   */
+  export type SectionRequestMaterialCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * The data used to create many SectionRequestMaterials.
+     */
+    data: SectionRequestMaterialCreateManyInput | SectionRequestMaterialCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SectionRequestMaterial update
+   */
+  export type SectionRequestMaterialUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SectionRequestMaterial.
+     */
+    data: XOR<SectionRequestMaterialUpdateInput, SectionRequestMaterialUncheckedUpdateInput>
+    /**
+     * Choose, which SectionRequestMaterial to update.
+     */
+    where: SectionRequestMaterialWhereUniqueInput
+  }
+
+  /**
+   * SectionRequestMaterial updateMany
+   */
+  export type SectionRequestMaterialUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SectionRequestMaterials.
+     */
+    data: XOR<SectionRequestMaterialUpdateManyMutationInput, SectionRequestMaterialUncheckedUpdateManyInput>
+    /**
+     * Filter which SectionRequestMaterials to update
+     */
+    where?: SectionRequestMaterialWhereInput
+    /**
+     * Limit how many SectionRequestMaterials to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SectionRequestMaterial updateManyAndReturn
+   */
+  export type SectionRequestMaterialUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * The data used to update SectionRequestMaterials.
+     */
+    data: XOR<SectionRequestMaterialUpdateManyMutationInput, SectionRequestMaterialUncheckedUpdateManyInput>
+    /**
+     * Filter which SectionRequestMaterials to update
+     */
+    where?: SectionRequestMaterialWhereInput
+    /**
+     * Limit how many SectionRequestMaterials to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SectionRequestMaterial upsert
+   */
+  export type SectionRequestMaterialUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SectionRequestMaterial to update in case it exists.
+     */
+    where: SectionRequestMaterialWhereUniqueInput
+    /**
+     * In case the SectionRequestMaterial found by the `where` argument doesn't exist, create a new SectionRequestMaterial with this data.
+     */
+    create: XOR<SectionRequestMaterialCreateInput, SectionRequestMaterialUncheckedCreateInput>
+    /**
+     * In case the SectionRequestMaterial was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SectionRequestMaterialUpdateInput, SectionRequestMaterialUncheckedUpdateInput>
+  }
+
+  /**
+   * SectionRequestMaterial delete
+   */
+  export type SectionRequestMaterialDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+    /**
+     * Filter which SectionRequestMaterial to delete.
+     */
+    where: SectionRequestMaterialWhereUniqueInput
+  }
+
+  /**
+   * SectionRequestMaterial deleteMany
+   */
+  export type SectionRequestMaterialDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SectionRequestMaterials to delete
+     */
+    where?: SectionRequestMaterialWhereInput
+    /**
+     * Limit how many SectionRequestMaterials to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SectionRequestMaterial without action
+   */
+  export type SectionRequestMaterialDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Sparepart
+   */
+
+  export type AggregateSparepart = {
+    _count: SparepartCountAggregateOutputType | null
+    _avg: SparepartAvgAggregateOutputType | null
+    _sum: SparepartSumAggregateOutputType | null
+    _min: SparepartMinAggregateOutputType | null
+    _max: SparepartMaxAggregateOutputType | null
+  }
+
+  export type SparepartAvgAggregateOutputType = {
+    stokGudang: number | null
+    minStok: number | null
+  }
+
+  export type SparepartSumAggregateOutputType = {
+    stokGudang: number | null
+    minStok: number | null
+  }
+
+  export type SparepartMinAggregateOutputType = {
+    namaKomponen: string | null
+    kategori: string | null
+    stokGudang: number | null
+    satuan: string | null
+    minStok: number | null
+    lokasi: string | null
+  }
+
+  export type SparepartMaxAggregateOutputType = {
+    namaKomponen: string | null
+    kategori: string | null
+    stokGudang: number | null
+    satuan: string | null
+    minStok: number | null
+    lokasi: string | null
+  }
+
+  export type SparepartCountAggregateOutputType = {
+    namaKomponen: number
+    kategori: number
+    stokGudang: number
+    satuan: number
+    minStok: number
+    lokasi: number
+    _all: number
+  }
+
+
+  export type SparepartAvgAggregateInputType = {
+    stokGudang?: true
+    minStok?: true
+  }
+
+  export type SparepartSumAggregateInputType = {
+    stokGudang?: true
+    minStok?: true
+  }
+
+  export type SparepartMinAggregateInputType = {
+    namaKomponen?: true
+    kategori?: true
+    stokGudang?: true
+    satuan?: true
+    minStok?: true
+    lokasi?: true
+  }
+
+  export type SparepartMaxAggregateInputType = {
+    namaKomponen?: true
+    kategori?: true
+    stokGudang?: true
+    satuan?: true
+    minStok?: true
+    lokasi?: true
+  }
+
+  export type SparepartCountAggregateInputType = {
+    namaKomponen?: true
+    kategori?: true
+    stokGudang?: true
+    satuan?: true
+    minStok?: true
+    lokasi?: true
+    _all?: true
+  }
+
+  export type SparepartAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Sparepart to aggregate.
+     */
+    where?: SparepartWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Spareparts to fetch.
+     */
+    orderBy?: SparepartOrderByWithRelationInput | SparepartOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SparepartWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Spareparts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Spareparts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Spareparts
+    **/
+    _count?: true | SparepartCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SparepartAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SparepartSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SparepartMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SparepartMaxAggregateInputType
+  }
+
+  export type GetSparepartAggregateType<T extends SparepartAggregateArgs> = {
+        [P in keyof T & keyof AggregateSparepart]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSparepart[P]>
+      : GetScalarType<T[P], AggregateSparepart[P]>
+  }
+
+
+
+
+  export type SparepartGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SparepartWhereInput
+    orderBy?: SparepartOrderByWithAggregationInput | SparepartOrderByWithAggregationInput[]
+    by: SparepartScalarFieldEnum[] | SparepartScalarFieldEnum
+    having?: SparepartScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SparepartCountAggregateInputType | true
+    _avg?: SparepartAvgAggregateInputType
+    _sum?: SparepartSumAggregateInputType
+    _min?: SparepartMinAggregateInputType
+    _max?: SparepartMaxAggregateInputType
+  }
+
+  export type SparepartGroupByOutputType = {
+    namaKomponen: string
+    kategori: string
+    stokGudang: number
+    satuan: string
+    minStok: number
+    lokasi: string | null
+    _count: SparepartCountAggregateOutputType | null
+    _avg: SparepartAvgAggregateOutputType | null
+    _sum: SparepartSumAggregateOutputType | null
+    _min: SparepartMinAggregateOutputType | null
+    _max: SparepartMaxAggregateOutputType | null
+  }
+
+  type GetSparepartGroupByPayload<T extends SparepartGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SparepartGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SparepartGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SparepartGroupByOutputType[P]>
+            : GetScalarType<T[P], SparepartGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SparepartSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    namaKomponen?: boolean
+    kategori?: boolean
+    stokGudang?: boolean
+    satuan?: boolean
+    minStok?: boolean
+    lokasi?: boolean
+    logs?: boolean | Sparepart$logsArgs<ExtArgs>
+    requestMaterials?: boolean | Sparepart$requestMaterialsArgs<ExtArgs>
+    _count?: boolean | SparepartCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["sparepart"]>
+
+  export type SparepartSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    namaKomponen?: boolean
+    kategori?: boolean
+    stokGudang?: boolean
+    satuan?: boolean
+    minStok?: boolean
+    lokasi?: boolean
+  }, ExtArgs["result"]["sparepart"]>
+
+  export type SparepartSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    namaKomponen?: boolean
+    kategori?: boolean
+    stokGudang?: boolean
+    satuan?: boolean
+    minStok?: boolean
+    lokasi?: boolean
+  }, ExtArgs["result"]["sparepart"]>
+
+  export type SparepartSelectScalar = {
+    namaKomponen?: boolean
+    kategori?: boolean
+    stokGudang?: boolean
+    satuan?: boolean
+    minStok?: boolean
+    lokasi?: boolean
+  }
+
+  export type SparepartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"namaKomponen" | "kategori" | "stokGudang" | "satuan" | "minStok" | "lokasi", ExtArgs["result"]["sparepart"]>
+  export type SparepartInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    logs?: boolean | Sparepart$logsArgs<ExtArgs>
+    requestMaterials?: boolean | Sparepart$requestMaterialsArgs<ExtArgs>
+    _count?: boolean | SparepartCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type SparepartIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type SparepartIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $SparepartPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Sparepart"
+    objects: {
+      logs: Prisma.$SparepartLogPayload<ExtArgs>[]
+      requestMaterials: Prisma.$SectionRequestMaterialPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      namaKomponen: string
+      kategori: string
+      stokGudang: number
+      satuan: string
+      minStok: number
+      lokasi: string | null
+    }, ExtArgs["result"]["sparepart"]>
+    composites: {}
+  }
+
+  type SparepartGetPayload<S extends boolean | null | undefined | SparepartDefaultArgs> = $Result.GetResult<Prisma.$SparepartPayload, S>
+
+  type SparepartCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SparepartFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SparepartCountAggregateInputType | true
+    }
+
+  export interface SparepartDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Sparepart'], meta: { name: 'Sparepart' } }
+    /**
+     * Find zero or one Sparepart that matches the filter.
+     * @param {SparepartFindUniqueArgs} args - Arguments to find a Sparepart
+     * @example
+     * // Get one Sparepart
+     * const sparepart = await prisma.sparepart.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SparepartFindUniqueArgs>(args: SelectSubset<T, SparepartFindUniqueArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Sparepart that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SparepartFindUniqueOrThrowArgs} args - Arguments to find a Sparepart
+     * @example
+     * // Get one Sparepart
+     * const sparepart = await prisma.sparepart.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SparepartFindUniqueOrThrowArgs>(args: SelectSubset<T, SparepartFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Sparepart that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartFindFirstArgs} args - Arguments to find a Sparepart
+     * @example
+     * // Get one Sparepart
+     * const sparepart = await prisma.sparepart.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SparepartFindFirstArgs>(args?: SelectSubset<T, SparepartFindFirstArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Sparepart that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartFindFirstOrThrowArgs} args - Arguments to find a Sparepart
+     * @example
+     * // Get one Sparepart
+     * const sparepart = await prisma.sparepart.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SparepartFindFirstOrThrowArgs>(args?: SelectSubset<T, SparepartFindFirstOrThrowArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Spareparts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Spareparts
+     * const spareparts = await prisma.sparepart.findMany()
+     * 
+     * // Get first 10 Spareparts
+     * const spareparts = await prisma.sparepart.findMany({ take: 10 })
+     * 
+     * // Only select the `namaKomponen`
+     * const sparepartWithNamaKomponenOnly = await prisma.sparepart.findMany({ select: { namaKomponen: true } })
+     * 
+     */
+    findMany<T extends SparepartFindManyArgs>(args?: SelectSubset<T, SparepartFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Sparepart.
+     * @param {SparepartCreateArgs} args - Arguments to create a Sparepart.
+     * @example
+     * // Create one Sparepart
+     * const Sparepart = await prisma.sparepart.create({
+     *   data: {
+     *     // ... data to create a Sparepart
+     *   }
+     * })
+     * 
+     */
+    create<T extends SparepartCreateArgs>(args: SelectSubset<T, SparepartCreateArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Spareparts.
+     * @param {SparepartCreateManyArgs} args - Arguments to create many Spareparts.
+     * @example
+     * // Create many Spareparts
+     * const sparepart = await prisma.sparepart.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SparepartCreateManyArgs>(args?: SelectSubset<T, SparepartCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Spareparts and returns the data saved in the database.
+     * @param {SparepartCreateManyAndReturnArgs} args - Arguments to create many Spareparts.
+     * @example
+     * // Create many Spareparts
+     * const sparepart = await prisma.sparepart.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Spareparts and only return the `namaKomponen`
+     * const sparepartWithNamaKomponenOnly = await prisma.sparepart.createManyAndReturn({
+     *   select: { namaKomponen: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SparepartCreateManyAndReturnArgs>(args?: SelectSubset<T, SparepartCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Sparepart.
+     * @param {SparepartDeleteArgs} args - Arguments to delete one Sparepart.
+     * @example
+     * // Delete one Sparepart
+     * const Sparepart = await prisma.sparepart.delete({
+     *   where: {
+     *     // ... filter to delete one Sparepart
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SparepartDeleteArgs>(args: SelectSubset<T, SparepartDeleteArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Sparepart.
+     * @param {SparepartUpdateArgs} args - Arguments to update one Sparepart.
+     * @example
+     * // Update one Sparepart
+     * const sparepart = await prisma.sparepart.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SparepartUpdateArgs>(args: SelectSubset<T, SparepartUpdateArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Spareparts.
+     * @param {SparepartDeleteManyArgs} args - Arguments to filter Spareparts to delete.
+     * @example
+     * // Delete a few Spareparts
+     * const { count } = await prisma.sparepart.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SparepartDeleteManyArgs>(args?: SelectSubset<T, SparepartDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Spareparts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Spareparts
+     * const sparepart = await prisma.sparepart.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SparepartUpdateManyArgs>(args: SelectSubset<T, SparepartUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Spareparts and returns the data updated in the database.
+     * @param {SparepartUpdateManyAndReturnArgs} args - Arguments to update many Spareparts.
+     * @example
+     * // Update many Spareparts
+     * const sparepart = await prisma.sparepart.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Spareparts and only return the `namaKomponen`
+     * const sparepartWithNamaKomponenOnly = await prisma.sparepart.updateManyAndReturn({
+     *   select: { namaKomponen: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SparepartUpdateManyAndReturnArgs>(args: SelectSubset<T, SparepartUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Sparepart.
+     * @param {SparepartUpsertArgs} args - Arguments to update or create a Sparepart.
+     * @example
+     * // Update or create a Sparepart
+     * const sparepart = await prisma.sparepart.upsert({
+     *   create: {
+     *     // ... data to create a Sparepart
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Sparepart we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SparepartUpsertArgs>(args: SelectSubset<T, SparepartUpsertArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Spareparts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartCountArgs} args - Arguments to filter Spareparts to count.
+     * @example
+     * // Count the number of Spareparts
+     * const count = await prisma.sparepart.count({
+     *   where: {
+     *     // ... the filter for the Spareparts we want to count
+     *   }
+     * })
+    **/
+    count<T extends SparepartCountArgs>(
+      args?: Subset<T, SparepartCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SparepartCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Sparepart.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SparepartAggregateArgs>(args: Subset<T, SparepartAggregateArgs>): Prisma.PrismaPromise<GetSparepartAggregateType<T>>
+
+    /**
+     * Group by Sparepart.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SparepartGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SparepartGroupByArgs['orderBy'] }
+        : { orderBy?: SparepartGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SparepartGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSparepartGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Sparepart model
+   */
+  readonly fields: SparepartFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Sparepart.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SparepartClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    logs<T extends Sparepart$logsArgs<ExtArgs> = {}>(args?: Subset<T, Sparepart$logsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    requestMaterials<T extends Sparepart$requestMaterialsArgs<ExtArgs> = {}>(args?: Subset<T, Sparepart$requestMaterialsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionRequestMaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Sparepart model
+   */
+  interface SparepartFieldRefs {
+    readonly namaKomponen: FieldRef<"Sparepart", 'String'>
+    readonly kategori: FieldRef<"Sparepart", 'String'>
+    readonly stokGudang: FieldRef<"Sparepart", 'Int'>
+    readonly satuan: FieldRef<"Sparepart", 'String'>
+    readonly minStok: FieldRef<"Sparepart", 'Int'>
+    readonly lokasi: FieldRef<"Sparepart", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Sparepart findUnique
+   */
+  export type SparepartFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartInclude<ExtArgs> | null
+    /**
+     * Filter, which Sparepart to fetch.
+     */
+    where: SparepartWhereUniqueInput
+  }
+
+  /**
+   * Sparepart findUniqueOrThrow
+   */
+  export type SparepartFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartInclude<ExtArgs> | null
+    /**
+     * Filter, which Sparepart to fetch.
+     */
+    where: SparepartWhereUniqueInput
+  }
+
+  /**
+   * Sparepart findFirst
+   */
+  export type SparepartFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartInclude<ExtArgs> | null
+    /**
+     * Filter, which Sparepart to fetch.
+     */
+    where?: SparepartWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Spareparts to fetch.
+     */
+    orderBy?: SparepartOrderByWithRelationInput | SparepartOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Spareparts.
+     */
+    cursor?: SparepartWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Spareparts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Spareparts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Spareparts.
+     */
+    distinct?: SparepartScalarFieldEnum | SparepartScalarFieldEnum[]
+  }
+
+  /**
+   * Sparepart findFirstOrThrow
+   */
+  export type SparepartFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartInclude<ExtArgs> | null
+    /**
+     * Filter, which Sparepart to fetch.
+     */
+    where?: SparepartWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Spareparts to fetch.
+     */
+    orderBy?: SparepartOrderByWithRelationInput | SparepartOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Spareparts.
+     */
+    cursor?: SparepartWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Spareparts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Spareparts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Spareparts.
+     */
+    distinct?: SparepartScalarFieldEnum | SparepartScalarFieldEnum[]
+  }
+
+  /**
+   * Sparepart findMany
+   */
+  export type SparepartFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartInclude<ExtArgs> | null
+    /**
+     * Filter, which Spareparts to fetch.
+     */
+    where?: SparepartWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Spareparts to fetch.
+     */
+    orderBy?: SparepartOrderByWithRelationInput | SparepartOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Spareparts.
+     */
+    cursor?: SparepartWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Spareparts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Spareparts.
+     */
+    skip?: number
+    distinct?: SparepartScalarFieldEnum | SparepartScalarFieldEnum[]
+  }
+
+  /**
+   * Sparepart create
+   */
+  export type SparepartCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Sparepart.
+     */
+    data: XOR<SparepartCreateInput, SparepartUncheckedCreateInput>
+  }
+
+  /**
+   * Sparepart createMany
+   */
+  export type SparepartCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Spareparts.
+     */
+    data: SparepartCreateManyInput | SparepartCreateManyInput[]
+  }
+
+  /**
+   * Sparepart createManyAndReturn
+   */
+  export type SparepartCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * The data used to create many Spareparts.
+     */
+    data: SparepartCreateManyInput | SparepartCreateManyInput[]
+  }
+
+  /**
+   * Sparepart update
+   */
+  export type SparepartUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Sparepart.
+     */
+    data: XOR<SparepartUpdateInput, SparepartUncheckedUpdateInput>
+    /**
+     * Choose, which Sparepart to update.
+     */
+    where: SparepartWhereUniqueInput
+  }
+
+  /**
+   * Sparepart updateMany
+   */
+  export type SparepartUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Spareparts.
+     */
+    data: XOR<SparepartUpdateManyMutationInput, SparepartUncheckedUpdateManyInput>
+    /**
+     * Filter which Spareparts to update
+     */
+    where?: SparepartWhereInput
+    /**
+     * Limit how many Spareparts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Sparepart updateManyAndReturn
+   */
+  export type SparepartUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * The data used to update Spareparts.
+     */
+    data: XOR<SparepartUpdateManyMutationInput, SparepartUncheckedUpdateManyInput>
+    /**
+     * Filter which Spareparts to update
+     */
+    where?: SparepartWhereInput
+    /**
+     * Limit how many Spareparts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Sparepart upsert
+   */
+  export type SparepartUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Sparepart to update in case it exists.
+     */
+    where: SparepartWhereUniqueInput
+    /**
+     * In case the Sparepart found by the `where` argument doesn't exist, create a new Sparepart with this data.
+     */
+    create: XOR<SparepartCreateInput, SparepartUncheckedCreateInput>
+    /**
+     * In case the Sparepart was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SparepartUpdateInput, SparepartUncheckedUpdateInput>
+  }
+
+  /**
+   * Sparepart delete
+   */
+  export type SparepartDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartInclude<ExtArgs> | null
+    /**
+     * Filter which Sparepart to delete.
+     */
+    where: SparepartWhereUniqueInput
+  }
+
+  /**
+   * Sparepart deleteMany
+   */
+  export type SparepartDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Spareparts to delete
+     */
+    where?: SparepartWhereInput
+    /**
+     * Limit how many Spareparts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Sparepart.logs
+   */
+  export type Sparepart$logsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogInclude<ExtArgs> | null
+    where?: SparepartLogWhereInput
+    orderBy?: SparepartLogOrderByWithRelationInput | SparepartLogOrderByWithRelationInput[]
+    cursor?: SparepartLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SparepartLogScalarFieldEnum | SparepartLogScalarFieldEnum[]
+  }
+
+  /**
+   * Sparepart.requestMaterials
+   */
+  export type Sparepart$requestMaterialsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionRequestMaterial
+     */
+    select?: SectionRequestMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SectionRequestMaterial
+     */
+    omit?: SectionRequestMaterialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionRequestMaterialInclude<ExtArgs> | null
+    where?: SectionRequestMaterialWhereInput
+    orderBy?: SectionRequestMaterialOrderByWithRelationInput | SectionRequestMaterialOrderByWithRelationInput[]
+    cursor?: SectionRequestMaterialWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SectionRequestMaterialScalarFieldEnum | SectionRequestMaterialScalarFieldEnum[]
+  }
+
+  /**
+   * Sparepart without action
+   */
+  export type SparepartDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sparepart
+     */
+    select?: SparepartSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sparepart
+     */
+    omit?: SparepartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SparepartLog
+   */
+
+  export type AggregateSparepartLog = {
+    _count: SparepartLogCountAggregateOutputType | null
+    _avg: SparepartLogAvgAggregateOutputType | null
+    _sum: SparepartLogSumAggregateOutputType | null
+    _min: SparepartLogMinAggregateOutputType | null
+    _max: SparepartLogMaxAggregateOutputType | null
+  }
+
+  export type SparepartLogAvgAggregateOutputType = {
+    id: number | null
+    qty: number | null
+  }
+
+  export type SparepartLogSumAggregateOutputType = {
+    id: number | null
+    qty: number | null
+  }
+
+  export type SparepartLogMinAggregateOutputType = {
+    id: number | null
+    namaKomponen: string | null
+    tipe: string | null
+    qty: number | null
+    referensi: string | null
+    keterangan: string | null
+    tanggal: Date | null
+  }
+
+  export type SparepartLogMaxAggregateOutputType = {
+    id: number | null
+    namaKomponen: string | null
+    tipe: string | null
+    qty: number | null
+    referensi: string | null
+    keterangan: string | null
+    tanggal: Date | null
+  }
+
+  export type SparepartLogCountAggregateOutputType = {
+    id: number
+    namaKomponen: number
+    tipe: number
+    qty: number
+    referensi: number
+    keterangan: number
+    tanggal: number
+    _all: number
+  }
+
+
+  export type SparepartLogAvgAggregateInputType = {
+    id?: true
+    qty?: true
+  }
+
+  export type SparepartLogSumAggregateInputType = {
+    id?: true
+    qty?: true
+  }
+
+  export type SparepartLogMinAggregateInputType = {
+    id?: true
+    namaKomponen?: true
+    tipe?: true
+    qty?: true
+    referensi?: true
+    keterangan?: true
+    tanggal?: true
+  }
+
+  export type SparepartLogMaxAggregateInputType = {
+    id?: true
+    namaKomponen?: true
+    tipe?: true
+    qty?: true
+    referensi?: true
+    keterangan?: true
+    tanggal?: true
+  }
+
+  export type SparepartLogCountAggregateInputType = {
+    id?: true
+    namaKomponen?: true
+    tipe?: true
+    qty?: true
+    referensi?: true
+    keterangan?: true
+    tanggal?: true
+    _all?: true
+  }
+
+  export type SparepartLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SparepartLog to aggregate.
+     */
+    where?: SparepartLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SparepartLogs to fetch.
+     */
+    orderBy?: SparepartLogOrderByWithRelationInput | SparepartLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SparepartLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SparepartLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SparepartLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SparepartLogs
+    **/
+    _count?: true | SparepartLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SparepartLogAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SparepartLogSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SparepartLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SparepartLogMaxAggregateInputType
+  }
+
+  export type GetSparepartLogAggregateType<T extends SparepartLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateSparepartLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSparepartLog[P]>
+      : GetScalarType<T[P], AggregateSparepartLog[P]>
+  }
+
+
+
+
+  export type SparepartLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SparepartLogWhereInput
+    orderBy?: SparepartLogOrderByWithAggregationInput | SparepartLogOrderByWithAggregationInput[]
+    by: SparepartLogScalarFieldEnum[] | SparepartLogScalarFieldEnum
+    having?: SparepartLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SparepartLogCountAggregateInputType | true
+    _avg?: SparepartLogAvgAggregateInputType
+    _sum?: SparepartLogSumAggregateInputType
+    _min?: SparepartLogMinAggregateInputType
+    _max?: SparepartLogMaxAggregateInputType
+  }
+
+  export type SparepartLogGroupByOutputType = {
+    id: number
+    namaKomponen: string
+    tipe: string
+    qty: number
+    referensi: string | null
+    keterangan: string | null
+    tanggal: Date
+    _count: SparepartLogCountAggregateOutputType | null
+    _avg: SparepartLogAvgAggregateOutputType | null
+    _sum: SparepartLogSumAggregateOutputType | null
+    _min: SparepartLogMinAggregateOutputType | null
+    _max: SparepartLogMaxAggregateOutputType | null
+  }
+
+  type GetSparepartLogGroupByPayload<T extends SparepartLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SparepartLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SparepartLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SparepartLogGroupByOutputType[P]>
+            : GetScalarType<T[P], SparepartLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SparepartLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    namaKomponen?: boolean
+    tipe?: boolean
+    qty?: boolean
+    referensi?: boolean
+    keterangan?: boolean
+    tanggal?: boolean
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["sparepartLog"]>
+
+  export type SparepartLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    namaKomponen?: boolean
+    tipe?: boolean
+    qty?: boolean
+    referensi?: boolean
+    keterangan?: boolean
+    tanggal?: boolean
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["sparepartLog"]>
+
+  export type SparepartLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    namaKomponen?: boolean
+    tipe?: boolean
+    qty?: boolean
+    referensi?: boolean
+    keterangan?: boolean
+    tanggal?: boolean
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["sparepartLog"]>
+
+  export type SparepartLogSelectScalar = {
+    id?: boolean
+    namaKomponen?: boolean
+    tipe?: boolean
+    qty?: boolean
+    referensi?: boolean
+    keterangan?: boolean
+    tanggal?: boolean
+  }
+
+  export type SparepartLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "namaKomponen" | "tipe" | "qty" | "referensi" | "keterangan" | "tanggal", ExtArgs["result"]["sparepartLog"]>
+  export type SparepartLogInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }
+  export type SparepartLogIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }
+  export type SparepartLogIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    sparepart?: boolean | SparepartDefaultArgs<ExtArgs>
+  }
+
+  export type $SparepartLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SparepartLog"
+    objects: {
+      sparepart: Prisma.$SparepartPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      namaKomponen: string
+      tipe: string
+      qty: number
+      referensi: string | null
+      keterangan: string | null
+      tanggal: Date
+    }, ExtArgs["result"]["sparepartLog"]>
+    composites: {}
+  }
+
+  type SparepartLogGetPayload<S extends boolean | null | undefined | SparepartLogDefaultArgs> = $Result.GetResult<Prisma.$SparepartLogPayload, S>
+
+  type SparepartLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SparepartLogFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SparepartLogCountAggregateInputType | true
+    }
+
+  export interface SparepartLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SparepartLog'], meta: { name: 'SparepartLog' } }
+    /**
+     * Find zero or one SparepartLog that matches the filter.
+     * @param {SparepartLogFindUniqueArgs} args - Arguments to find a SparepartLog
+     * @example
+     * // Get one SparepartLog
+     * const sparepartLog = await prisma.sparepartLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SparepartLogFindUniqueArgs>(args: SelectSubset<T, SparepartLogFindUniqueArgs<ExtArgs>>): Prisma__SparepartLogClient<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SparepartLog that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SparepartLogFindUniqueOrThrowArgs} args - Arguments to find a SparepartLog
+     * @example
+     * // Get one SparepartLog
+     * const sparepartLog = await prisma.sparepartLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SparepartLogFindUniqueOrThrowArgs>(args: SelectSubset<T, SparepartLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SparepartLogClient<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SparepartLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartLogFindFirstArgs} args - Arguments to find a SparepartLog
+     * @example
+     * // Get one SparepartLog
+     * const sparepartLog = await prisma.sparepartLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SparepartLogFindFirstArgs>(args?: SelectSubset<T, SparepartLogFindFirstArgs<ExtArgs>>): Prisma__SparepartLogClient<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SparepartLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartLogFindFirstOrThrowArgs} args - Arguments to find a SparepartLog
+     * @example
+     * // Get one SparepartLog
+     * const sparepartLog = await prisma.sparepartLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SparepartLogFindFirstOrThrowArgs>(args?: SelectSubset<T, SparepartLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__SparepartLogClient<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SparepartLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SparepartLogs
+     * const sparepartLogs = await prisma.sparepartLog.findMany()
+     * 
+     * // Get first 10 SparepartLogs
+     * const sparepartLogs = await prisma.sparepartLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const sparepartLogWithIdOnly = await prisma.sparepartLog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SparepartLogFindManyArgs>(args?: SelectSubset<T, SparepartLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SparepartLog.
+     * @param {SparepartLogCreateArgs} args - Arguments to create a SparepartLog.
+     * @example
+     * // Create one SparepartLog
+     * const SparepartLog = await prisma.sparepartLog.create({
+     *   data: {
+     *     // ... data to create a SparepartLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends SparepartLogCreateArgs>(args: SelectSubset<T, SparepartLogCreateArgs<ExtArgs>>): Prisma__SparepartLogClient<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SparepartLogs.
+     * @param {SparepartLogCreateManyArgs} args - Arguments to create many SparepartLogs.
+     * @example
+     * // Create many SparepartLogs
+     * const sparepartLog = await prisma.sparepartLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SparepartLogCreateManyArgs>(args?: SelectSubset<T, SparepartLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SparepartLogs and returns the data saved in the database.
+     * @param {SparepartLogCreateManyAndReturnArgs} args - Arguments to create many SparepartLogs.
+     * @example
+     * // Create many SparepartLogs
+     * const sparepartLog = await prisma.sparepartLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SparepartLogs and only return the `id`
+     * const sparepartLogWithIdOnly = await prisma.sparepartLog.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SparepartLogCreateManyAndReturnArgs>(args?: SelectSubset<T, SparepartLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SparepartLog.
+     * @param {SparepartLogDeleteArgs} args - Arguments to delete one SparepartLog.
+     * @example
+     * // Delete one SparepartLog
+     * const SparepartLog = await prisma.sparepartLog.delete({
+     *   where: {
+     *     // ... filter to delete one SparepartLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SparepartLogDeleteArgs>(args: SelectSubset<T, SparepartLogDeleteArgs<ExtArgs>>): Prisma__SparepartLogClient<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SparepartLog.
+     * @param {SparepartLogUpdateArgs} args - Arguments to update one SparepartLog.
+     * @example
+     * // Update one SparepartLog
+     * const sparepartLog = await prisma.sparepartLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SparepartLogUpdateArgs>(args: SelectSubset<T, SparepartLogUpdateArgs<ExtArgs>>): Prisma__SparepartLogClient<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SparepartLogs.
+     * @param {SparepartLogDeleteManyArgs} args - Arguments to filter SparepartLogs to delete.
+     * @example
+     * // Delete a few SparepartLogs
+     * const { count } = await prisma.sparepartLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SparepartLogDeleteManyArgs>(args?: SelectSubset<T, SparepartLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SparepartLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SparepartLogs
+     * const sparepartLog = await prisma.sparepartLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SparepartLogUpdateManyArgs>(args: SelectSubset<T, SparepartLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SparepartLogs and returns the data updated in the database.
+     * @param {SparepartLogUpdateManyAndReturnArgs} args - Arguments to update many SparepartLogs.
+     * @example
+     * // Update many SparepartLogs
+     * const sparepartLog = await prisma.sparepartLog.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SparepartLogs and only return the `id`
+     * const sparepartLogWithIdOnly = await prisma.sparepartLog.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SparepartLogUpdateManyAndReturnArgs>(args: SelectSubset<T, SparepartLogUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SparepartLog.
+     * @param {SparepartLogUpsertArgs} args - Arguments to update or create a SparepartLog.
+     * @example
+     * // Update or create a SparepartLog
+     * const sparepartLog = await prisma.sparepartLog.upsert({
+     *   create: {
+     *     // ... data to create a SparepartLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SparepartLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SparepartLogUpsertArgs>(args: SelectSubset<T, SparepartLogUpsertArgs<ExtArgs>>): Prisma__SparepartLogClient<$Result.GetResult<Prisma.$SparepartLogPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SparepartLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartLogCountArgs} args - Arguments to filter SparepartLogs to count.
+     * @example
+     * // Count the number of SparepartLogs
+     * const count = await prisma.sparepartLog.count({
+     *   where: {
+     *     // ... the filter for the SparepartLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends SparepartLogCountArgs>(
+      args?: Subset<T, SparepartLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SparepartLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SparepartLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SparepartLogAggregateArgs>(args: Subset<T, SparepartLogAggregateArgs>): Prisma.PrismaPromise<GetSparepartLogAggregateType<T>>
+
+    /**
+     * Group by SparepartLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SparepartLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SparepartLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SparepartLogGroupByArgs['orderBy'] }
+        : { orderBy?: SparepartLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SparepartLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSparepartLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SparepartLog model
+   */
+  readonly fields: SparepartLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SparepartLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SparepartLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    sparepart<T extends SparepartDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SparepartDefaultArgs<ExtArgs>>): Prisma__SparepartClient<$Result.GetResult<Prisma.$SparepartPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SparepartLog model
+   */
+  interface SparepartLogFieldRefs {
+    readonly id: FieldRef<"SparepartLog", 'Int'>
+    readonly namaKomponen: FieldRef<"SparepartLog", 'String'>
+    readonly tipe: FieldRef<"SparepartLog", 'String'>
+    readonly qty: FieldRef<"SparepartLog", 'Int'>
+    readonly referensi: FieldRef<"SparepartLog", 'String'>
+    readonly keterangan: FieldRef<"SparepartLog", 'String'>
+    readonly tanggal: FieldRef<"SparepartLog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SparepartLog findUnique
+   */
+  export type SparepartLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogInclude<ExtArgs> | null
+    /**
+     * Filter, which SparepartLog to fetch.
+     */
+    where: SparepartLogWhereUniqueInput
+  }
+
+  /**
+   * SparepartLog findUniqueOrThrow
+   */
+  export type SparepartLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogInclude<ExtArgs> | null
+    /**
+     * Filter, which SparepartLog to fetch.
+     */
+    where: SparepartLogWhereUniqueInput
+  }
+
+  /**
+   * SparepartLog findFirst
+   */
+  export type SparepartLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogInclude<ExtArgs> | null
+    /**
+     * Filter, which SparepartLog to fetch.
+     */
+    where?: SparepartLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SparepartLogs to fetch.
+     */
+    orderBy?: SparepartLogOrderByWithRelationInput | SparepartLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SparepartLogs.
+     */
+    cursor?: SparepartLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SparepartLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SparepartLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SparepartLogs.
+     */
+    distinct?: SparepartLogScalarFieldEnum | SparepartLogScalarFieldEnum[]
+  }
+
+  /**
+   * SparepartLog findFirstOrThrow
+   */
+  export type SparepartLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogInclude<ExtArgs> | null
+    /**
+     * Filter, which SparepartLog to fetch.
+     */
+    where?: SparepartLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SparepartLogs to fetch.
+     */
+    orderBy?: SparepartLogOrderByWithRelationInput | SparepartLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SparepartLogs.
+     */
+    cursor?: SparepartLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SparepartLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SparepartLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SparepartLogs.
+     */
+    distinct?: SparepartLogScalarFieldEnum | SparepartLogScalarFieldEnum[]
+  }
+
+  /**
+   * SparepartLog findMany
+   */
+  export type SparepartLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogInclude<ExtArgs> | null
+    /**
+     * Filter, which SparepartLogs to fetch.
+     */
+    where?: SparepartLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SparepartLogs to fetch.
+     */
+    orderBy?: SparepartLogOrderByWithRelationInput | SparepartLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SparepartLogs.
+     */
+    cursor?: SparepartLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SparepartLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SparepartLogs.
+     */
+    skip?: number
+    distinct?: SparepartLogScalarFieldEnum | SparepartLogScalarFieldEnum[]
+  }
+
+  /**
+   * SparepartLog create
+   */
+  export type SparepartLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SparepartLog.
+     */
+    data: XOR<SparepartLogCreateInput, SparepartLogUncheckedCreateInput>
+  }
+
+  /**
+   * SparepartLog createMany
+   */
+  export type SparepartLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SparepartLogs.
+     */
+    data: SparepartLogCreateManyInput | SparepartLogCreateManyInput[]
+  }
+
+  /**
+   * SparepartLog createManyAndReturn
+   */
+  export type SparepartLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * The data used to create many SparepartLogs.
+     */
+    data: SparepartLogCreateManyInput | SparepartLogCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SparepartLog update
+   */
+  export type SparepartLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SparepartLog.
+     */
+    data: XOR<SparepartLogUpdateInput, SparepartLogUncheckedUpdateInput>
+    /**
+     * Choose, which SparepartLog to update.
+     */
+    where: SparepartLogWhereUniqueInput
+  }
+
+  /**
+   * SparepartLog updateMany
+   */
+  export type SparepartLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SparepartLogs.
+     */
+    data: XOR<SparepartLogUpdateManyMutationInput, SparepartLogUncheckedUpdateManyInput>
+    /**
+     * Filter which SparepartLogs to update
+     */
+    where?: SparepartLogWhereInput
+    /**
+     * Limit how many SparepartLogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SparepartLog updateManyAndReturn
+   */
+  export type SparepartLogUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * The data used to update SparepartLogs.
+     */
+    data: XOR<SparepartLogUpdateManyMutationInput, SparepartLogUncheckedUpdateManyInput>
+    /**
+     * Filter which SparepartLogs to update
+     */
+    where?: SparepartLogWhereInput
+    /**
+     * Limit how many SparepartLogs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SparepartLog upsert
+   */
+  export type SparepartLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SparepartLog to update in case it exists.
+     */
+    where: SparepartLogWhereUniqueInput
+    /**
+     * In case the SparepartLog found by the `where` argument doesn't exist, create a new SparepartLog with this data.
+     */
+    create: XOR<SparepartLogCreateInput, SparepartLogUncheckedCreateInput>
+    /**
+     * In case the SparepartLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SparepartLogUpdateInput, SparepartLogUncheckedUpdateInput>
+  }
+
+  /**
+   * SparepartLog delete
+   */
+  export type SparepartLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogInclude<ExtArgs> | null
+    /**
+     * Filter which SparepartLog to delete.
+     */
+    where: SparepartLogWhereUniqueInput
+  }
+
+  /**
+   * SparepartLog deleteMany
+   */
+  export type SparepartLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SparepartLogs to delete
+     */
+    where?: SparepartLogWhereInput
+    /**
+     * Limit how many SparepartLogs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SparepartLog without action
+   */
+  export type SparepartLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SparepartLog
+     */
+    select?: SparepartLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SparepartLog
+     */
+    omit?: SparepartLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SparepartLogInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model User
+   */
+
+  export type AggregateUser = {
+    _count: UserCountAggregateOutputType | null
+    _avg: UserAvgAggregateOutputType | null
+    _sum: UserSumAggregateOutputType | null
+    _min: UserMinAggregateOutputType | null
+    _max: UserMaxAggregateOutputType | null
+  }
+
+  export type UserAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type UserSumAggregateOutputType = {
+    id: number | null
+  }
+
+  export type UserMinAggregateOutputType = {
+    id: number | null
+    username: string | null
+    password: string | null
+    name: string | null
+    role: string | null
+    seksi: string | null
+    description: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserMaxAggregateOutputType = {
+    id: number | null
+    username: string | null
+    password: string | null
+    name: string | null
+    role: string | null
+    seksi: string | null
+    description: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserCountAggregateOutputType = {
+    id: number
+    username: number
+    password: number
+    name: number
+    role: number
+    seksi: number
+    description: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type UserAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type UserSumAggregateInputType = {
+    id?: true
+  }
+
+  export type UserMinAggregateInputType = {
+    id?: true
+    username?: true
+    password?: true
+    name?: true
+    role?: true
+    seksi?: true
+    description?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserMaxAggregateInputType = {
+    id?: true
+    username?: true
+    password?: true
+    name?: true
+    role?: true
+    seksi?: true
+    description?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserCountAggregateInputType = {
+    id?: true
+    username?: true
+    password?: true
+    name?: true
+    role?: true
+    seksi?: true
+    description?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type UserAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which User to aggregate.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Users
+    **/
+    _count?: true | UserCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: UserAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: UserSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserMaxAggregateInputType
+  }
+
+  export type GetUserAggregateType<T extends UserAggregateArgs> = {
+        [P in keyof T & keyof AggregateUser]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUser[P]>
+      : GetScalarType<T[P], AggregateUser[P]>
+  }
+
+
+
+
+  export type UserGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserWhereInput
+    orderBy?: UserOrderByWithAggregationInput | UserOrderByWithAggregationInput[]
+    by: UserScalarFieldEnum[] | UserScalarFieldEnum
+    having?: UserScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserCountAggregateInputType | true
+    _avg?: UserAvgAggregateInputType
+    _sum?: UserSumAggregateInputType
+    _min?: UserMinAggregateInputType
+    _max?: UserMaxAggregateInputType
+  }
+
+  export type UserGroupByOutputType = {
+    id: number
+    username: string
+    password: string
+    name: string
+    role: string
+    seksi: string | null
+    description: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: UserCountAggregateOutputType | null
+    _avg: UserAvgAggregateOutputType | null
+    _sum: UserSumAggregateOutputType | null
+    _min: UserMinAggregateOutputType | null
+    _max: UserMaxAggregateOutputType | null
+  }
+
+  type GetUserGroupByPayload<T extends UserGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserGroupByOutputType[P]>
+            : GetScalarType<T[P], UserGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    username?: boolean
+    password?: boolean
+    name?: boolean
+    role?: boolean
+    seksi?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["user"]>
+
+  export type UserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    username?: boolean
+    password?: boolean
+    name?: boolean
+    role?: boolean
+    seksi?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["user"]>
+
+  export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    username?: boolean
+    password?: boolean
+    name?: boolean
+    role?: boolean
+    seksi?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["user"]>
+
+  export type UserSelectScalar = {
+    id?: boolean
+    username?: boolean
+    password?: boolean
+    name?: boolean
+    role?: boolean
+    seksi?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password" | "name" | "role" | "seksi" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+
+  export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "User"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      username: string
+      password: string
+      name: string
+      role: string
+      seksi: string | null
+      description: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["user"]>
+    composites: {}
+  }
+
+  type UserGetPayload<S extends boolean | null | undefined | UserDefaultArgs> = $Result.GetResult<Prisma.$UserPayload, S>
+
+  type UserCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserCountAggregateInputType | true
+    }
+
+  export interface UserDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['User'], meta: { name: 'User' } }
+    /**
+     * Find zero or one User that matches the filter.
+     * @param {UserFindUniqueArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one User that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserFindUniqueOrThrowArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserFindUniqueOrThrowArgs>(args: SelectSubset<T, UserFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first User that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserFindFirstArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserFindFirstArgs>(args?: SelectSubset<T, UserFindFirstArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first User that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserFindFirstOrThrowArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserFindFirstOrThrowArgs>(args?: SelectSubset<T, UserFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Users that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Users
+     * const users = await prisma.user.findMany()
+     * 
+     * // Get first 10 Users
+     * const users = await prisma.user.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userWithIdOnly = await prisma.user.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserFindManyArgs>(args?: SelectSubset<T, UserFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a User.
+     * @param {UserCreateArgs} args - Arguments to create a User.
+     * @example
+     * // Create one User
+     * const User = await prisma.user.create({
+     *   data: {
+     *     // ... data to create a User
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserCreateArgs>(args: SelectSubset<T, UserCreateArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Users.
+     * @param {UserCreateManyArgs} args - Arguments to create many Users.
+     * @example
+     * // Create many Users
+     * const user = await prisma.user.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserCreateManyArgs>(args?: SelectSubset<T, UserCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Users and returns the data saved in the database.
+     * @param {UserCreateManyAndReturnArgs} args - Arguments to create many Users.
+     * @example
+     * // Create many Users
+     * const user = await prisma.user.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Users and only return the `id`
+     * const userWithIdOnly = await prisma.user.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserCreateManyAndReturnArgs>(args?: SelectSubset<T, UserCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a User.
+     * @param {UserDeleteArgs} args - Arguments to delete one User.
+     * @example
+     * // Delete one User
+     * const User = await prisma.user.delete({
+     *   where: {
+     *     // ... filter to delete one User
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserDeleteArgs>(args: SelectSubset<T, UserDeleteArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one User.
+     * @param {UserUpdateArgs} args - Arguments to update one User.
+     * @example
+     * // Update one User
+     * const user = await prisma.user.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserUpdateArgs>(args: SelectSubset<T, UserUpdateArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Users.
+     * @param {UserDeleteManyArgs} args - Arguments to filter Users to delete.
+     * @example
+     * // Delete a few Users
+     * const { count } = await prisma.user.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserDeleteManyArgs>(args?: SelectSubset<T, UserDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Users.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Users
+     * const user = await prisma.user.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserUpdateManyArgs>(args: SelectSubset<T, UserUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Users and returns the data updated in the database.
+     * @param {UserUpdateManyAndReturnArgs} args - Arguments to update many Users.
+     * @example
+     * // Update many Users
+     * const user = await prisma.user.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Users and only return the `id`
+     * const userWithIdOnly = await prisma.user.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserUpdateManyAndReturnArgs>(args: SelectSubset<T, UserUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one User.
+     * @param {UserUpsertArgs} args - Arguments to update or create a User.
+     * @example
+     * // Update or create a User
+     * const user = await prisma.user.upsert({
+     *   create: {
+     *     // ... data to create a User
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the User we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserUpsertArgs>(args: SelectSubset<T, UserUpsertArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Users.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserCountArgs} args - Arguments to filter Users to count.
+     * @example
+     * // Count the number of Users
+     * const count = await prisma.user.count({
+     *   where: {
+     *     // ... the filter for the Users we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserCountArgs>(
+      args?: Subset<T, UserCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a User.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserAggregateArgs>(args: Subset<T, UserAggregateArgs>): Prisma.PrismaPromise<GetUserAggregateType<T>>
+
+    /**
+     * Group by User.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserGroupByArgs['orderBy'] }
+        : { orderBy?: UserGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the User model
+   */
+  readonly fields: UserFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for User.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the User model
+   */
+  interface UserFieldRefs {
+    readonly id: FieldRef<"User", 'Int'>
+    readonly username: FieldRef<"User", 'String'>
+    readonly password: FieldRef<"User", 'String'>
+    readonly name: FieldRef<"User", 'String'>
+    readonly role: FieldRef<"User", 'String'>
+    readonly seksi: FieldRef<"User", 'String'>
+    readonly description: FieldRef<"User", 'String'>
+    readonly createdAt: FieldRef<"User", 'DateTime'>
+    readonly updatedAt: FieldRef<"User", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * User findUnique
+   */
+  export type UserFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User findUniqueOrThrow
+   */
+  export type UserFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User findFirst
+   */
+  export type UserFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Users.
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Users.
+     */
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * User findFirstOrThrow
+   */
+  export type UserFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Users.
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Users.
+     */
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * User findMany
+   */
+  export type UserFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Filter, which Users to fetch.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Users.
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * User create
+   */
+  export type UserCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * The data needed to create a User.
+     */
+    data: XOR<UserCreateInput, UserUncheckedCreateInput>
+  }
+
+  /**
+   * User createMany
+   */
+  export type UserCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Users.
+     */
+    data: UserCreateManyInput | UserCreateManyInput[]
+  }
+
+  /**
+   * User createManyAndReturn
+   */
+  export type UserCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * The data used to create many Users.
+     */
+    data: UserCreateManyInput | UserCreateManyInput[]
+  }
+
+  /**
+   * User update
+   */
+  export type UserUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * The data needed to update a User.
+     */
+    data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+    /**
+     * Choose, which User to update.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User updateMany
+   */
+  export type UserUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Users.
+     */
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyInput>
+    /**
+     * Filter which Users to update
+     */
+    where?: UserWhereInput
+    /**
+     * Limit how many Users to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * User updateManyAndReturn
+   */
+  export type UserUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * The data used to update Users.
+     */
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyInput>
+    /**
+     * Filter which Users to update
+     */
+    where?: UserWhereInput
+    /**
+     * Limit how many Users to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * User upsert
+   */
+  export type UserUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * The filter to search for the User to update in case it exists.
+     */
+    where: UserWhereUniqueInput
+    /**
+     * In case the User found by the `where` argument doesn't exist, create a new User with this data.
+     */
+    create: XOR<UserCreateInput, UserUncheckedCreateInput>
+    /**
+     * In case the User was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+  }
+
+  /**
+   * User delete
+   */
+  export type UserDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Filter which User to delete.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User deleteMany
+   */
+  export type UserDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Users to delete
+     */
+    where?: UserWhereInput
+    /**
+     * Limit how many Users to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * User without action
+   */
+  export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -10276,29 +14306,6 @@ export namespace Prisma {
   export type TicketDetailScalarFieldEnum = (typeof TicketDetailScalarFieldEnum)[keyof typeof TicketDetailScalarFieldEnum]
 
 
-  export const SparepartScalarFieldEnum: {
-    namaKomponen: 'namaKomponen',
-    stokGudang: 'stokGudang',
-    satuan: 'satuan'
-  };
-
-  export type SparepartScalarFieldEnum = (typeof SparepartScalarFieldEnum)[keyof typeof SparepartScalarFieldEnum]
-
-
-  export const UserScalarFieldEnum: {
-    id: 'id',
-    username: 'username',
-    password: 'password',
-    name: 'name',
-    role: 'role',
-    description: 'description',
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
-  };
-
-  export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
-
-
   export const DaishaTypeScalarFieldEnum: {
     id: 'id',
     name: 'name',
@@ -10326,6 +14333,83 @@ export namespace Prisma {
   };
 
   export type DaishaSymptomScalarFieldEnum = (typeof DaishaSymptomScalarFieldEnum)[keyof typeof DaishaSymptomScalarFieldEnum]
+
+
+  export const SectionRequestScalarFieldEnum: {
+    id: 'id',
+    nomorRequest: 'nomorRequest',
+    seksiPemohon: 'seksiPemohon',
+    picPemohon: 'picPemohon',
+    kontakPemohon: 'kontakPemohon',
+    namaBarang: 'namaBarang',
+    spesifikasi: 'spesifikasi',
+    jumlah: 'jumlah',
+    satuan: 'satuan',
+    urgensi: 'urgensi',
+    catatan: 'catatan',
+    status: 'status',
+    alasanTolak: 'alasanTolak',
+    picBengkel: 'picBengkel',
+    estimasi: 'estimasi',
+    catatanAdmin: 'catatanAdmin',
+    dibuatOleh: 'dibuatOleh',
+    waktuDibuat: 'waktuDibuat',
+    waktuUpdate: 'waktuUpdate',
+    waktuSelesai: 'waktuSelesai'
+  };
+
+  export type SectionRequestScalarFieldEnum = (typeof SectionRequestScalarFieldEnum)[keyof typeof SectionRequestScalarFieldEnum]
+
+
+  export const SectionRequestMaterialScalarFieldEnum: {
+    id: 'id',
+    sectionRequestId: 'sectionRequestId',
+    namaKomponen: 'namaKomponen',
+    qty: 'qty',
+    keterangan: 'keterangan'
+  };
+
+  export type SectionRequestMaterialScalarFieldEnum = (typeof SectionRequestMaterialScalarFieldEnum)[keyof typeof SectionRequestMaterialScalarFieldEnum]
+
+
+  export const SparepartScalarFieldEnum: {
+    namaKomponen: 'namaKomponen',
+    kategori: 'kategori',
+    stokGudang: 'stokGudang',
+    satuan: 'satuan',
+    minStok: 'minStok',
+    lokasi: 'lokasi'
+  };
+
+  export type SparepartScalarFieldEnum = (typeof SparepartScalarFieldEnum)[keyof typeof SparepartScalarFieldEnum]
+
+
+  export const SparepartLogScalarFieldEnum: {
+    id: 'id',
+    namaKomponen: 'namaKomponen',
+    tipe: 'tipe',
+    qty: 'qty',
+    referensi: 'referensi',
+    keterangan: 'keterangan',
+    tanggal: 'tanggal'
+  };
+
+  export type SparepartLogScalarFieldEnum = (typeof SparepartLogScalarFieldEnum)[keyof typeof SparepartLogScalarFieldEnum]
+
+
+  export const UserScalarFieldEnum: {
+    id: 'id',
+    username: 'username',
+    password: 'password',
+    name: 'name',
+    role: 'role',
+    seksi: 'seksi',
+    description: 'description',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -10560,119 +14644,6 @@ export namespace Prisma {
     qty?: IntWithAggregatesFilter<"TicketDetail"> | number
   }
 
-  export type SparepartWhereInput = {
-    AND?: SparepartWhereInput | SparepartWhereInput[]
-    OR?: SparepartWhereInput[]
-    NOT?: SparepartWhereInput | SparepartWhereInput[]
-    namaKomponen?: StringFilter<"Sparepart"> | string
-    stokGudang?: IntFilter<"Sparepart"> | number
-    satuan?: StringFilter<"Sparepart"> | string
-  }
-
-  export type SparepartOrderByWithRelationInput = {
-    namaKomponen?: SortOrder
-    stokGudang?: SortOrder
-    satuan?: SortOrder
-  }
-
-  export type SparepartWhereUniqueInput = Prisma.AtLeast<{
-    namaKomponen?: string
-    AND?: SparepartWhereInput | SparepartWhereInput[]
-    OR?: SparepartWhereInput[]
-    NOT?: SparepartWhereInput | SparepartWhereInput[]
-    stokGudang?: IntFilter<"Sparepart"> | number
-    satuan?: StringFilter<"Sparepart"> | string
-  }, "namaKomponen">
-
-  export type SparepartOrderByWithAggregationInput = {
-    namaKomponen?: SortOrder
-    stokGudang?: SortOrder
-    satuan?: SortOrder
-    _count?: SparepartCountOrderByAggregateInput
-    _avg?: SparepartAvgOrderByAggregateInput
-    _max?: SparepartMaxOrderByAggregateInput
-    _min?: SparepartMinOrderByAggregateInput
-    _sum?: SparepartSumOrderByAggregateInput
-  }
-
-  export type SparepartScalarWhereWithAggregatesInput = {
-    AND?: SparepartScalarWhereWithAggregatesInput | SparepartScalarWhereWithAggregatesInput[]
-    OR?: SparepartScalarWhereWithAggregatesInput[]
-    NOT?: SparepartScalarWhereWithAggregatesInput | SparepartScalarWhereWithAggregatesInput[]
-    namaKomponen?: StringWithAggregatesFilter<"Sparepart"> | string
-    stokGudang?: IntWithAggregatesFilter<"Sparepart"> | number
-    satuan?: StringWithAggregatesFilter<"Sparepart"> | string
-  }
-
-  export type UserWhereInput = {
-    AND?: UserWhereInput | UserWhereInput[]
-    OR?: UserWhereInput[]
-    NOT?: UserWhereInput | UserWhereInput[]
-    id?: IntFilter<"User"> | number
-    username?: StringFilter<"User"> | string
-    password?: StringFilter<"User"> | string
-    name?: StringFilter<"User"> | string
-    role?: StringFilter<"User"> | string
-    description?: StringNullableFilter<"User"> | string | null
-    createdAt?: DateTimeFilter<"User"> | Date | string
-    updatedAt?: DateTimeFilter<"User"> | Date | string
-  }
-
-  export type UserOrderByWithRelationInput = {
-    id?: SortOrder
-    username?: SortOrder
-    password?: SortOrder
-    name?: SortOrder
-    role?: SortOrder
-    description?: SortOrderInput | SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type UserWhereUniqueInput = Prisma.AtLeast<{
-    id?: number
-    username?: string
-    AND?: UserWhereInput | UserWhereInput[]
-    OR?: UserWhereInput[]
-    NOT?: UserWhereInput | UserWhereInput[]
-    password?: StringFilter<"User"> | string
-    name?: StringFilter<"User"> | string
-    role?: StringFilter<"User"> | string
-    description?: StringNullableFilter<"User"> | string | null
-    createdAt?: DateTimeFilter<"User"> | Date | string
-    updatedAt?: DateTimeFilter<"User"> | Date | string
-  }, "id" | "username">
-
-  export type UserOrderByWithAggregationInput = {
-    id?: SortOrder
-    username?: SortOrder
-    password?: SortOrder
-    name?: SortOrder
-    role?: SortOrder
-    description?: SortOrderInput | SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    _count?: UserCountOrderByAggregateInput
-    _avg?: UserAvgOrderByAggregateInput
-    _max?: UserMaxOrderByAggregateInput
-    _min?: UserMinOrderByAggregateInput
-    _sum?: UserSumOrderByAggregateInput
-  }
-
-  export type UserScalarWhereWithAggregatesInput = {
-    AND?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
-    OR?: UserScalarWhereWithAggregatesInput[]
-    NOT?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
-    id?: IntWithAggregatesFilter<"User"> | number
-    username?: StringWithAggregatesFilter<"User"> | string
-    password?: StringWithAggregatesFilter<"User"> | string
-    name?: StringWithAggregatesFilter<"User"> | string
-    role?: StringWithAggregatesFilter<"User"> | string
-    description?: StringNullableWithAggregatesFilter<"User"> | string | null
-    createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
-    updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
-  }
-
   export type DaishaTypeWhereInput = {
     AND?: DaishaTypeWhereInput | DaishaTypeWhereInput[]
     OR?: DaishaTypeWhereInput[]
@@ -10826,6 +14797,404 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"DaishaSymptom"> | number
     componentId?: IntWithAggregatesFilter<"DaishaSymptom"> | number
     description?: StringWithAggregatesFilter<"DaishaSymptom"> | string
+  }
+
+  export type SectionRequestWhereInput = {
+    AND?: SectionRequestWhereInput | SectionRequestWhereInput[]
+    OR?: SectionRequestWhereInput[]
+    NOT?: SectionRequestWhereInput | SectionRequestWhereInput[]
+    id?: IntFilter<"SectionRequest"> | number
+    nomorRequest?: StringFilter<"SectionRequest"> | string
+    seksiPemohon?: StringFilter<"SectionRequest"> | string
+    picPemohon?: StringFilter<"SectionRequest"> | string
+    kontakPemohon?: StringNullableFilter<"SectionRequest"> | string | null
+    namaBarang?: StringFilter<"SectionRequest"> | string
+    spesifikasi?: StringNullableFilter<"SectionRequest"> | string | null
+    jumlah?: IntFilter<"SectionRequest"> | number
+    satuan?: StringFilter<"SectionRequest"> | string
+    urgensi?: StringFilter<"SectionRequest"> | string
+    catatan?: StringNullableFilter<"SectionRequest"> | string | null
+    status?: StringFilter<"SectionRequest"> | string
+    alasanTolak?: StringNullableFilter<"SectionRequest"> | string | null
+    picBengkel?: StringNullableFilter<"SectionRequest"> | string | null
+    estimasi?: StringNullableFilter<"SectionRequest"> | string | null
+    catatanAdmin?: StringNullableFilter<"SectionRequest"> | string | null
+    dibuatOleh?: StringFilter<"SectionRequest"> | string
+    waktuDibuat?: DateTimeFilter<"SectionRequest"> | Date | string
+    waktuUpdate?: DateTimeFilter<"SectionRequest"> | Date | string
+    waktuSelesai?: DateTimeNullableFilter<"SectionRequest"> | Date | string | null
+    materials?: SectionRequestMaterialListRelationFilter
+  }
+
+  export type SectionRequestOrderByWithRelationInput = {
+    id?: SortOrder
+    nomorRequest?: SortOrder
+    seksiPemohon?: SortOrder
+    picPemohon?: SortOrder
+    kontakPemohon?: SortOrderInput | SortOrder
+    namaBarang?: SortOrder
+    spesifikasi?: SortOrderInput | SortOrder
+    jumlah?: SortOrder
+    satuan?: SortOrder
+    urgensi?: SortOrder
+    catatan?: SortOrderInput | SortOrder
+    status?: SortOrder
+    alasanTolak?: SortOrderInput | SortOrder
+    picBengkel?: SortOrderInput | SortOrder
+    estimasi?: SortOrderInput | SortOrder
+    catatanAdmin?: SortOrderInput | SortOrder
+    dibuatOleh?: SortOrder
+    waktuDibuat?: SortOrder
+    waktuUpdate?: SortOrder
+    waktuSelesai?: SortOrderInput | SortOrder
+    materials?: SectionRequestMaterialOrderByRelationAggregateInput
+  }
+
+  export type SectionRequestWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    nomorRequest?: string
+    AND?: SectionRequestWhereInput | SectionRequestWhereInput[]
+    OR?: SectionRequestWhereInput[]
+    NOT?: SectionRequestWhereInput | SectionRequestWhereInput[]
+    seksiPemohon?: StringFilter<"SectionRequest"> | string
+    picPemohon?: StringFilter<"SectionRequest"> | string
+    kontakPemohon?: StringNullableFilter<"SectionRequest"> | string | null
+    namaBarang?: StringFilter<"SectionRequest"> | string
+    spesifikasi?: StringNullableFilter<"SectionRequest"> | string | null
+    jumlah?: IntFilter<"SectionRequest"> | number
+    satuan?: StringFilter<"SectionRequest"> | string
+    urgensi?: StringFilter<"SectionRequest"> | string
+    catatan?: StringNullableFilter<"SectionRequest"> | string | null
+    status?: StringFilter<"SectionRequest"> | string
+    alasanTolak?: StringNullableFilter<"SectionRequest"> | string | null
+    picBengkel?: StringNullableFilter<"SectionRequest"> | string | null
+    estimasi?: StringNullableFilter<"SectionRequest"> | string | null
+    catatanAdmin?: StringNullableFilter<"SectionRequest"> | string | null
+    dibuatOleh?: StringFilter<"SectionRequest"> | string
+    waktuDibuat?: DateTimeFilter<"SectionRequest"> | Date | string
+    waktuUpdate?: DateTimeFilter<"SectionRequest"> | Date | string
+    waktuSelesai?: DateTimeNullableFilter<"SectionRequest"> | Date | string | null
+    materials?: SectionRequestMaterialListRelationFilter
+  }, "id" | "nomorRequest">
+
+  export type SectionRequestOrderByWithAggregationInput = {
+    id?: SortOrder
+    nomorRequest?: SortOrder
+    seksiPemohon?: SortOrder
+    picPemohon?: SortOrder
+    kontakPemohon?: SortOrderInput | SortOrder
+    namaBarang?: SortOrder
+    spesifikasi?: SortOrderInput | SortOrder
+    jumlah?: SortOrder
+    satuan?: SortOrder
+    urgensi?: SortOrder
+    catatan?: SortOrderInput | SortOrder
+    status?: SortOrder
+    alasanTolak?: SortOrderInput | SortOrder
+    picBengkel?: SortOrderInput | SortOrder
+    estimasi?: SortOrderInput | SortOrder
+    catatanAdmin?: SortOrderInput | SortOrder
+    dibuatOleh?: SortOrder
+    waktuDibuat?: SortOrder
+    waktuUpdate?: SortOrder
+    waktuSelesai?: SortOrderInput | SortOrder
+    _count?: SectionRequestCountOrderByAggregateInput
+    _avg?: SectionRequestAvgOrderByAggregateInput
+    _max?: SectionRequestMaxOrderByAggregateInput
+    _min?: SectionRequestMinOrderByAggregateInput
+    _sum?: SectionRequestSumOrderByAggregateInput
+  }
+
+  export type SectionRequestScalarWhereWithAggregatesInput = {
+    AND?: SectionRequestScalarWhereWithAggregatesInput | SectionRequestScalarWhereWithAggregatesInput[]
+    OR?: SectionRequestScalarWhereWithAggregatesInput[]
+    NOT?: SectionRequestScalarWhereWithAggregatesInput | SectionRequestScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"SectionRequest"> | number
+    nomorRequest?: StringWithAggregatesFilter<"SectionRequest"> | string
+    seksiPemohon?: StringWithAggregatesFilter<"SectionRequest"> | string
+    picPemohon?: StringWithAggregatesFilter<"SectionRequest"> | string
+    kontakPemohon?: StringNullableWithAggregatesFilter<"SectionRequest"> | string | null
+    namaBarang?: StringWithAggregatesFilter<"SectionRequest"> | string
+    spesifikasi?: StringNullableWithAggregatesFilter<"SectionRequest"> | string | null
+    jumlah?: IntWithAggregatesFilter<"SectionRequest"> | number
+    satuan?: StringWithAggregatesFilter<"SectionRequest"> | string
+    urgensi?: StringWithAggregatesFilter<"SectionRequest"> | string
+    catatan?: StringNullableWithAggregatesFilter<"SectionRequest"> | string | null
+    status?: StringWithAggregatesFilter<"SectionRequest"> | string
+    alasanTolak?: StringNullableWithAggregatesFilter<"SectionRequest"> | string | null
+    picBengkel?: StringNullableWithAggregatesFilter<"SectionRequest"> | string | null
+    estimasi?: StringNullableWithAggregatesFilter<"SectionRequest"> | string | null
+    catatanAdmin?: StringNullableWithAggregatesFilter<"SectionRequest"> | string | null
+    dibuatOleh?: StringWithAggregatesFilter<"SectionRequest"> | string
+    waktuDibuat?: DateTimeWithAggregatesFilter<"SectionRequest"> | Date | string
+    waktuUpdate?: DateTimeWithAggregatesFilter<"SectionRequest"> | Date | string
+    waktuSelesai?: DateTimeNullableWithAggregatesFilter<"SectionRequest"> | Date | string | null
+  }
+
+  export type SectionRequestMaterialWhereInput = {
+    AND?: SectionRequestMaterialWhereInput | SectionRequestMaterialWhereInput[]
+    OR?: SectionRequestMaterialWhereInput[]
+    NOT?: SectionRequestMaterialWhereInput | SectionRequestMaterialWhereInput[]
+    id?: IntFilter<"SectionRequestMaterial"> | number
+    sectionRequestId?: IntFilter<"SectionRequestMaterial"> | number
+    namaKomponen?: StringFilter<"SectionRequestMaterial"> | string
+    qty?: IntFilter<"SectionRequestMaterial"> | number
+    keterangan?: StringNullableFilter<"SectionRequestMaterial"> | string | null
+    sectionRequest?: XOR<SectionRequestScalarRelationFilter, SectionRequestWhereInput>
+    sparepart?: XOR<SparepartScalarRelationFilter, SparepartWhereInput>
+  }
+
+  export type SectionRequestMaterialOrderByWithRelationInput = {
+    id?: SortOrder
+    sectionRequestId?: SortOrder
+    namaKomponen?: SortOrder
+    qty?: SortOrder
+    keterangan?: SortOrderInput | SortOrder
+    sectionRequest?: SectionRequestOrderByWithRelationInput
+    sparepart?: SparepartOrderByWithRelationInput
+  }
+
+  export type SectionRequestMaterialWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    AND?: SectionRequestMaterialWhereInput | SectionRequestMaterialWhereInput[]
+    OR?: SectionRequestMaterialWhereInput[]
+    NOT?: SectionRequestMaterialWhereInput | SectionRequestMaterialWhereInput[]
+    sectionRequestId?: IntFilter<"SectionRequestMaterial"> | number
+    namaKomponen?: StringFilter<"SectionRequestMaterial"> | string
+    qty?: IntFilter<"SectionRequestMaterial"> | number
+    keterangan?: StringNullableFilter<"SectionRequestMaterial"> | string | null
+    sectionRequest?: XOR<SectionRequestScalarRelationFilter, SectionRequestWhereInput>
+    sparepart?: XOR<SparepartScalarRelationFilter, SparepartWhereInput>
+  }, "id">
+
+  export type SectionRequestMaterialOrderByWithAggregationInput = {
+    id?: SortOrder
+    sectionRequestId?: SortOrder
+    namaKomponen?: SortOrder
+    qty?: SortOrder
+    keterangan?: SortOrderInput | SortOrder
+    _count?: SectionRequestMaterialCountOrderByAggregateInput
+    _avg?: SectionRequestMaterialAvgOrderByAggregateInput
+    _max?: SectionRequestMaterialMaxOrderByAggregateInput
+    _min?: SectionRequestMaterialMinOrderByAggregateInput
+    _sum?: SectionRequestMaterialSumOrderByAggregateInput
+  }
+
+  export type SectionRequestMaterialScalarWhereWithAggregatesInput = {
+    AND?: SectionRequestMaterialScalarWhereWithAggregatesInput | SectionRequestMaterialScalarWhereWithAggregatesInput[]
+    OR?: SectionRequestMaterialScalarWhereWithAggregatesInput[]
+    NOT?: SectionRequestMaterialScalarWhereWithAggregatesInput | SectionRequestMaterialScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"SectionRequestMaterial"> | number
+    sectionRequestId?: IntWithAggregatesFilter<"SectionRequestMaterial"> | number
+    namaKomponen?: StringWithAggregatesFilter<"SectionRequestMaterial"> | string
+    qty?: IntWithAggregatesFilter<"SectionRequestMaterial"> | number
+    keterangan?: StringNullableWithAggregatesFilter<"SectionRequestMaterial"> | string | null
+  }
+
+  export type SparepartWhereInput = {
+    AND?: SparepartWhereInput | SparepartWhereInput[]
+    OR?: SparepartWhereInput[]
+    NOT?: SparepartWhereInput | SparepartWhereInput[]
+    namaKomponen?: StringFilter<"Sparepart"> | string
+    kategori?: StringFilter<"Sparepart"> | string
+    stokGudang?: IntFilter<"Sparepart"> | number
+    satuan?: StringFilter<"Sparepart"> | string
+    minStok?: IntFilter<"Sparepart"> | number
+    lokasi?: StringNullableFilter<"Sparepart"> | string | null
+    logs?: SparepartLogListRelationFilter
+    requestMaterials?: SectionRequestMaterialListRelationFilter
+  }
+
+  export type SparepartOrderByWithRelationInput = {
+    namaKomponen?: SortOrder
+    kategori?: SortOrder
+    stokGudang?: SortOrder
+    satuan?: SortOrder
+    minStok?: SortOrder
+    lokasi?: SortOrderInput | SortOrder
+    logs?: SparepartLogOrderByRelationAggregateInput
+    requestMaterials?: SectionRequestMaterialOrderByRelationAggregateInput
+  }
+
+  export type SparepartWhereUniqueInput = Prisma.AtLeast<{
+    namaKomponen?: string
+    AND?: SparepartWhereInput | SparepartWhereInput[]
+    OR?: SparepartWhereInput[]
+    NOT?: SparepartWhereInput | SparepartWhereInput[]
+    kategori?: StringFilter<"Sparepart"> | string
+    stokGudang?: IntFilter<"Sparepart"> | number
+    satuan?: StringFilter<"Sparepart"> | string
+    minStok?: IntFilter<"Sparepart"> | number
+    lokasi?: StringNullableFilter<"Sparepart"> | string | null
+    logs?: SparepartLogListRelationFilter
+    requestMaterials?: SectionRequestMaterialListRelationFilter
+  }, "namaKomponen">
+
+  export type SparepartOrderByWithAggregationInput = {
+    namaKomponen?: SortOrder
+    kategori?: SortOrder
+    stokGudang?: SortOrder
+    satuan?: SortOrder
+    minStok?: SortOrder
+    lokasi?: SortOrderInput | SortOrder
+    _count?: SparepartCountOrderByAggregateInput
+    _avg?: SparepartAvgOrderByAggregateInput
+    _max?: SparepartMaxOrderByAggregateInput
+    _min?: SparepartMinOrderByAggregateInput
+    _sum?: SparepartSumOrderByAggregateInput
+  }
+
+  export type SparepartScalarWhereWithAggregatesInput = {
+    AND?: SparepartScalarWhereWithAggregatesInput | SparepartScalarWhereWithAggregatesInput[]
+    OR?: SparepartScalarWhereWithAggregatesInput[]
+    NOT?: SparepartScalarWhereWithAggregatesInput | SparepartScalarWhereWithAggregatesInput[]
+    namaKomponen?: StringWithAggregatesFilter<"Sparepart"> | string
+    kategori?: StringWithAggregatesFilter<"Sparepart"> | string
+    stokGudang?: IntWithAggregatesFilter<"Sparepart"> | number
+    satuan?: StringWithAggregatesFilter<"Sparepart"> | string
+    minStok?: IntWithAggregatesFilter<"Sparepart"> | number
+    lokasi?: StringNullableWithAggregatesFilter<"Sparepart"> | string | null
+  }
+
+  export type SparepartLogWhereInput = {
+    AND?: SparepartLogWhereInput | SparepartLogWhereInput[]
+    OR?: SparepartLogWhereInput[]
+    NOT?: SparepartLogWhereInput | SparepartLogWhereInput[]
+    id?: IntFilter<"SparepartLog"> | number
+    namaKomponen?: StringFilter<"SparepartLog"> | string
+    tipe?: StringFilter<"SparepartLog"> | string
+    qty?: IntFilter<"SparepartLog"> | number
+    referensi?: StringNullableFilter<"SparepartLog"> | string | null
+    keterangan?: StringNullableFilter<"SparepartLog"> | string | null
+    tanggal?: DateTimeFilter<"SparepartLog"> | Date | string
+    sparepart?: XOR<SparepartScalarRelationFilter, SparepartWhereInput>
+  }
+
+  export type SparepartLogOrderByWithRelationInput = {
+    id?: SortOrder
+    namaKomponen?: SortOrder
+    tipe?: SortOrder
+    qty?: SortOrder
+    referensi?: SortOrderInput | SortOrder
+    keterangan?: SortOrderInput | SortOrder
+    tanggal?: SortOrder
+    sparepart?: SparepartOrderByWithRelationInput
+  }
+
+  export type SparepartLogWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    AND?: SparepartLogWhereInput | SparepartLogWhereInput[]
+    OR?: SparepartLogWhereInput[]
+    NOT?: SparepartLogWhereInput | SparepartLogWhereInput[]
+    namaKomponen?: StringFilter<"SparepartLog"> | string
+    tipe?: StringFilter<"SparepartLog"> | string
+    qty?: IntFilter<"SparepartLog"> | number
+    referensi?: StringNullableFilter<"SparepartLog"> | string | null
+    keterangan?: StringNullableFilter<"SparepartLog"> | string | null
+    tanggal?: DateTimeFilter<"SparepartLog"> | Date | string
+    sparepart?: XOR<SparepartScalarRelationFilter, SparepartWhereInput>
+  }, "id">
+
+  export type SparepartLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    namaKomponen?: SortOrder
+    tipe?: SortOrder
+    qty?: SortOrder
+    referensi?: SortOrderInput | SortOrder
+    keterangan?: SortOrderInput | SortOrder
+    tanggal?: SortOrder
+    _count?: SparepartLogCountOrderByAggregateInput
+    _avg?: SparepartLogAvgOrderByAggregateInput
+    _max?: SparepartLogMaxOrderByAggregateInput
+    _min?: SparepartLogMinOrderByAggregateInput
+    _sum?: SparepartLogSumOrderByAggregateInput
+  }
+
+  export type SparepartLogScalarWhereWithAggregatesInput = {
+    AND?: SparepartLogScalarWhereWithAggregatesInput | SparepartLogScalarWhereWithAggregatesInput[]
+    OR?: SparepartLogScalarWhereWithAggregatesInput[]
+    NOT?: SparepartLogScalarWhereWithAggregatesInput | SparepartLogScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"SparepartLog"> | number
+    namaKomponen?: StringWithAggregatesFilter<"SparepartLog"> | string
+    tipe?: StringWithAggregatesFilter<"SparepartLog"> | string
+    qty?: IntWithAggregatesFilter<"SparepartLog"> | number
+    referensi?: StringNullableWithAggregatesFilter<"SparepartLog"> | string | null
+    keterangan?: StringNullableWithAggregatesFilter<"SparepartLog"> | string | null
+    tanggal?: DateTimeWithAggregatesFilter<"SparepartLog"> | Date | string
+  }
+
+  export type UserWhereInput = {
+    AND?: UserWhereInput | UserWhereInput[]
+    OR?: UserWhereInput[]
+    NOT?: UserWhereInput | UserWhereInput[]
+    id?: IntFilter<"User"> | number
+    username?: StringFilter<"User"> | string
+    password?: StringFilter<"User"> | string
+    name?: StringFilter<"User"> | string
+    role?: StringFilter<"User"> | string
+    seksi?: StringNullableFilter<"User"> | string | null
+    description?: StringNullableFilter<"User"> | string | null
+    createdAt?: DateTimeFilter<"User"> | Date | string
+    updatedAt?: DateTimeFilter<"User"> | Date | string
+  }
+
+  export type UserOrderByWithRelationInput = {
+    id?: SortOrder
+    username?: SortOrder
+    password?: SortOrder
+    name?: SortOrder
+    role?: SortOrder
+    seksi?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    username?: string
+    AND?: UserWhereInput | UserWhereInput[]
+    OR?: UserWhereInput[]
+    NOT?: UserWhereInput | UserWhereInput[]
+    password?: StringFilter<"User"> | string
+    name?: StringFilter<"User"> | string
+    role?: StringFilter<"User"> | string
+    seksi?: StringNullableFilter<"User"> | string | null
+    description?: StringNullableFilter<"User"> | string | null
+    createdAt?: DateTimeFilter<"User"> | Date | string
+    updatedAt?: DateTimeFilter<"User"> | Date | string
+  }, "id" | "username">
+
+  export type UserOrderByWithAggregationInput = {
+    id?: SortOrder
+    username?: SortOrder
+    password?: SortOrder
+    name?: SortOrder
+    role?: SortOrder
+    seksi?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: UserCountOrderByAggregateInput
+    _avg?: UserAvgOrderByAggregateInput
+    _max?: UserMaxOrderByAggregateInput
+    _min?: UserMinOrderByAggregateInput
+    _sum?: UserSumOrderByAggregateInput
+  }
+
+  export type UserScalarWhereWithAggregatesInput = {
+    AND?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
+    OR?: UserScalarWhereWithAggregatesInput[]
+    NOT?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"User"> | number
+    username?: StringWithAggregatesFilter<"User"> | string
+    password?: StringWithAggregatesFilter<"User"> | string
+    name?: StringWithAggregatesFilter<"User"> | string
+    role?: StringWithAggregatesFilter<"User"> | string
+    seksi?: StringNullableWithAggregatesFilter<"User"> | string | null
+    description?: StringNullableWithAggregatesFilter<"User"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
 
   export type MasterDaishaCreateInput = {
@@ -11013,122 +15382,6 @@ export namespace Prisma {
     qty?: IntFieldUpdateOperationsInput | number
   }
 
-  export type SparepartCreateInput = {
-    namaKomponen: string
-    stokGudang?: number
-    satuan: string
-  }
-
-  export type SparepartUncheckedCreateInput = {
-    namaKomponen: string
-    stokGudang?: number
-    satuan: string
-  }
-
-  export type SparepartUpdateInput = {
-    namaKomponen?: StringFieldUpdateOperationsInput | string
-    stokGudang?: IntFieldUpdateOperationsInput | number
-    satuan?: StringFieldUpdateOperationsInput | string
-  }
-
-  export type SparepartUncheckedUpdateInput = {
-    namaKomponen?: StringFieldUpdateOperationsInput | string
-    stokGudang?: IntFieldUpdateOperationsInput | number
-    satuan?: StringFieldUpdateOperationsInput | string
-  }
-
-  export type SparepartCreateManyInput = {
-    namaKomponen: string
-    stokGudang?: number
-    satuan: string
-  }
-
-  export type SparepartUpdateManyMutationInput = {
-    namaKomponen?: StringFieldUpdateOperationsInput | string
-    stokGudang?: IntFieldUpdateOperationsInput | number
-    satuan?: StringFieldUpdateOperationsInput | string
-  }
-
-  export type SparepartUncheckedUpdateManyInput = {
-    namaKomponen?: StringFieldUpdateOperationsInput | string
-    stokGudang?: IntFieldUpdateOperationsInput | number
-    satuan?: StringFieldUpdateOperationsInput | string
-  }
-
-  export type UserCreateInput = {
-    username: string
-    password: string
-    name: string
-    role?: string
-    description?: string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type UserUncheckedCreateInput = {
-    id?: number
-    username: string
-    password: string
-    name: string
-    role?: string
-    description?: string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type UserUpdateInput = {
-    username?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type UserUncheckedUpdateInput = {
-    id?: IntFieldUpdateOperationsInput | number
-    username?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type UserCreateManyInput = {
-    id?: number
-    username: string
-    password: string
-    name: string
-    role?: string
-    description?: string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type UserUpdateManyMutationInput = {
-    username?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type UserUncheckedUpdateManyInput = {
-    id?: IntFieldUpdateOperationsInput | number
-    username?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
   export type DaishaTypeCreateInput = {
     name: string
     seksi: string
@@ -11264,6 +15517,437 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     componentId?: IntFieldUpdateOperationsInput | number
     description?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type SectionRequestCreateInput = {
+    nomorRequest: string
+    seksiPemohon: string
+    picPemohon: string
+    kontakPemohon?: string | null
+    namaBarang: string
+    spesifikasi?: string | null
+    jumlah?: number
+    satuan?: string
+    urgensi?: string
+    catatan?: string | null
+    status?: string
+    alasanTolak?: string | null
+    picBengkel?: string | null
+    estimasi?: string | null
+    catatanAdmin?: string | null
+    dibuatOleh: string
+    waktuDibuat?: Date | string
+    waktuUpdate?: Date | string
+    waktuSelesai?: Date | string | null
+    materials?: SectionRequestMaterialCreateNestedManyWithoutSectionRequestInput
+  }
+
+  export type SectionRequestUncheckedCreateInput = {
+    id?: number
+    nomorRequest: string
+    seksiPemohon: string
+    picPemohon: string
+    kontakPemohon?: string | null
+    namaBarang: string
+    spesifikasi?: string | null
+    jumlah?: number
+    satuan?: string
+    urgensi?: string
+    catatan?: string | null
+    status?: string
+    alasanTolak?: string | null
+    picBengkel?: string | null
+    estimasi?: string | null
+    catatanAdmin?: string | null
+    dibuatOleh: string
+    waktuDibuat?: Date | string
+    waktuUpdate?: Date | string
+    waktuSelesai?: Date | string | null
+    materials?: SectionRequestMaterialUncheckedCreateNestedManyWithoutSectionRequestInput
+  }
+
+  export type SectionRequestUpdateInput = {
+    nomorRequest?: StringFieldUpdateOperationsInput | string
+    seksiPemohon?: StringFieldUpdateOperationsInput | string
+    picPemohon?: StringFieldUpdateOperationsInput | string
+    kontakPemohon?: NullableStringFieldUpdateOperationsInput | string | null
+    namaBarang?: StringFieldUpdateOperationsInput | string
+    spesifikasi?: NullableStringFieldUpdateOperationsInput | string | null
+    jumlah?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    urgensi?: StringFieldUpdateOperationsInput | string
+    catatan?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    alasanTolak?: NullableStringFieldUpdateOperationsInput | string | null
+    picBengkel?: NullableStringFieldUpdateOperationsInput | string | null
+    estimasi?: NullableStringFieldUpdateOperationsInput | string | null
+    catatanAdmin?: NullableStringFieldUpdateOperationsInput | string | null
+    dibuatOleh?: StringFieldUpdateOperationsInput | string
+    waktuDibuat?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuUpdate?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuSelesai?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    materials?: SectionRequestMaterialUpdateManyWithoutSectionRequestNestedInput
+  }
+
+  export type SectionRequestUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    nomorRequest?: StringFieldUpdateOperationsInput | string
+    seksiPemohon?: StringFieldUpdateOperationsInput | string
+    picPemohon?: StringFieldUpdateOperationsInput | string
+    kontakPemohon?: NullableStringFieldUpdateOperationsInput | string | null
+    namaBarang?: StringFieldUpdateOperationsInput | string
+    spesifikasi?: NullableStringFieldUpdateOperationsInput | string | null
+    jumlah?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    urgensi?: StringFieldUpdateOperationsInput | string
+    catatan?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    alasanTolak?: NullableStringFieldUpdateOperationsInput | string | null
+    picBengkel?: NullableStringFieldUpdateOperationsInput | string | null
+    estimasi?: NullableStringFieldUpdateOperationsInput | string | null
+    catatanAdmin?: NullableStringFieldUpdateOperationsInput | string | null
+    dibuatOleh?: StringFieldUpdateOperationsInput | string
+    waktuDibuat?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuUpdate?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuSelesai?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    materials?: SectionRequestMaterialUncheckedUpdateManyWithoutSectionRequestNestedInput
+  }
+
+  export type SectionRequestCreateManyInput = {
+    id?: number
+    nomorRequest: string
+    seksiPemohon: string
+    picPemohon: string
+    kontakPemohon?: string | null
+    namaBarang: string
+    spesifikasi?: string | null
+    jumlah?: number
+    satuan?: string
+    urgensi?: string
+    catatan?: string | null
+    status?: string
+    alasanTolak?: string | null
+    picBengkel?: string | null
+    estimasi?: string | null
+    catatanAdmin?: string | null
+    dibuatOleh: string
+    waktuDibuat?: Date | string
+    waktuUpdate?: Date | string
+    waktuSelesai?: Date | string | null
+  }
+
+  export type SectionRequestUpdateManyMutationInput = {
+    nomorRequest?: StringFieldUpdateOperationsInput | string
+    seksiPemohon?: StringFieldUpdateOperationsInput | string
+    picPemohon?: StringFieldUpdateOperationsInput | string
+    kontakPemohon?: NullableStringFieldUpdateOperationsInput | string | null
+    namaBarang?: StringFieldUpdateOperationsInput | string
+    spesifikasi?: NullableStringFieldUpdateOperationsInput | string | null
+    jumlah?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    urgensi?: StringFieldUpdateOperationsInput | string
+    catatan?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    alasanTolak?: NullableStringFieldUpdateOperationsInput | string | null
+    picBengkel?: NullableStringFieldUpdateOperationsInput | string | null
+    estimasi?: NullableStringFieldUpdateOperationsInput | string | null
+    catatanAdmin?: NullableStringFieldUpdateOperationsInput | string | null
+    dibuatOleh?: StringFieldUpdateOperationsInput | string
+    waktuDibuat?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuUpdate?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuSelesai?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type SectionRequestUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    nomorRequest?: StringFieldUpdateOperationsInput | string
+    seksiPemohon?: StringFieldUpdateOperationsInput | string
+    picPemohon?: StringFieldUpdateOperationsInput | string
+    kontakPemohon?: NullableStringFieldUpdateOperationsInput | string | null
+    namaBarang?: StringFieldUpdateOperationsInput | string
+    spesifikasi?: NullableStringFieldUpdateOperationsInput | string | null
+    jumlah?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    urgensi?: StringFieldUpdateOperationsInput | string
+    catatan?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    alasanTolak?: NullableStringFieldUpdateOperationsInput | string | null
+    picBengkel?: NullableStringFieldUpdateOperationsInput | string | null
+    estimasi?: NullableStringFieldUpdateOperationsInput | string | null
+    catatanAdmin?: NullableStringFieldUpdateOperationsInput | string | null
+    dibuatOleh?: StringFieldUpdateOperationsInput | string
+    waktuDibuat?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuUpdate?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuSelesai?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type SectionRequestMaterialCreateInput = {
+    qty?: number
+    keterangan?: string | null
+    sectionRequest: SectionRequestCreateNestedOneWithoutMaterialsInput
+    sparepart: SparepartCreateNestedOneWithoutRequestMaterialsInput
+  }
+
+  export type SectionRequestMaterialUncheckedCreateInput = {
+    id?: number
+    sectionRequestId: number
+    namaKomponen: string
+    qty?: number
+    keterangan?: string | null
+  }
+
+  export type SectionRequestMaterialUpdateInput = {
+    qty?: IntFieldUpdateOperationsInput | number
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+    sectionRequest?: SectionRequestUpdateOneRequiredWithoutMaterialsNestedInput
+    sparepart?: SparepartUpdateOneRequiredWithoutRequestMaterialsNestedInput
+  }
+
+  export type SectionRequestMaterialUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    sectionRequestId?: IntFieldUpdateOperationsInput | number
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type SectionRequestMaterialCreateManyInput = {
+    id?: number
+    sectionRequestId: number
+    namaKomponen: string
+    qty?: number
+    keterangan?: string | null
+  }
+
+  export type SectionRequestMaterialUpdateManyMutationInput = {
+    qty?: IntFieldUpdateOperationsInput | number
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type SectionRequestMaterialUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    sectionRequestId?: IntFieldUpdateOperationsInput | number
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type SparepartCreateInput = {
+    namaKomponen: string
+    kategori?: string
+    stokGudang?: number
+    satuan: string
+    minStok?: number
+    lokasi?: string | null
+    logs?: SparepartLogCreateNestedManyWithoutSparepartInput
+    requestMaterials?: SectionRequestMaterialCreateNestedManyWithoutSparepartInput
+  }
+
+  export type SparepartUncheckedCreateInput = {
+    namaKomponen: string
+    kategori?: string
+    stokGudang?: number
+    satuan: string
+    minStok?: number
+    lokasi?: string | null
+    logs?: SparepartLogUncheckedCreateNestedManyWithoutSparepartInput
+    requestMaterials?: SectionRequestMaterialUncheckedCreateNestedManyWithoutSparepartInput
+  }
+
+  export type SparepartUpdateInput = {
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    kategori?: StringFieldUpdateOperationsInput | string
+    stokGudang?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    minStok?: IntFieldUpdateOperationsInput | number
+    lokasi?: NullableStringFieldUpdateOperationsInput | string | null
+    logs?: SparepartLogUpdateManyWithoutSparepartNestedInput
+    requestMaterials?: SectionRequestMaterialUpdateManyWithoutSparepartNestedInput
+  }
+
+  export type SparepartUncheckedUpdateInput = {
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    kategori?: StringFieldUpdateOperationsInput | string
+    stokGudang?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    minStok?: IntFieldUpdateOperationsInput | number
+    lokasi?: NullableStringFieldUpdateOperationsInput | string | null
+    logs?: SparepartLogUncheckedUpdateManyWithoutSparepartNestedInput
+    requestMaterials?: SectionRequestMaterialUncheckedUpdateManyWithoutSparepartNestedInput
+  }
+
+  export type SparepartCreateManyInput = {
+    namaKomponen: string
+    kategori?: string
+    stokGudang?: number
+    satuan: string
+    minStok?: number
+    lokasi?: string | null
+  }
+
+  export type SparepartUpdateManyMutationInput = {
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    kategori?: StringFieldUpdateOperationsInput | string
+    stokGudang?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    minStok?: IntFieldUpdateOperationsInput | number
+    lokasi?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type SparepartUncheckedUpdateManyInput = {
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    kategori?: StringFieldUpdateOperationsInput | string
+    stokGudang?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    minStok?: IntFieldUpdateOperationsInput | number
+    lokasi?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type SparepartLogCreateInput = {
+    tipe: string
+    qty: number
+    referensi?: string | null
+    keterangan?: string | null
+    tanggal?: Date | string
+    sparepart: SparepartCreateNestedOneWithoutLogsInput
+  }
+
+  export type SparepartLogUncheckedCreateInput = {
+    id?: number
+    namaKomponen: string
+    tipe: string
+    qty: number
+    referensi?: string | null
+    keterangan?: string | null
+    tanggal?: Date | string
+  }
+
+  export type SparepartLogUpdateInput = {
+    tipe?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+    referensi?: NullableStringFieldUpdateOperationsInput | string | null
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+    tanggal?: DateTimeFieldUpdateOperationsInput | Date | string
+    sparepart?: SparepartUpdateOneRequiredWithoutLogsNestedInput
+  }
+
+  export type SparepartLogUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    tipe?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+    referensi?: NullableStringFieldUpdateOperationsInput | string | null
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+    tanggal?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SparepartLogCreateManyInput = {
+    id?: number
+    namaKomponen: string
+    tipe: string
+    qty: number
+    referensi?: string | null
+    keterangan?: string | null
+    tanggal?: Date | string
+  }
+
+  export type SparepartLogUpdateManyMutationInput = {
+    tipe?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+    referensi?: NullableStringFieldUpdateOperationsInput | string | null
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+    tanggal?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SparepartLogUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    tipe?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+    referensi?: NullableStringFieldUpdateOperationsInput | string | null
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+    tanggal?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserCreateInput = {
+    username: string
+    password: string
+    name: string
+    role?: string
+    seksi?: string | null
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserUncheckedCreateInput = {
+    id?: number
+    username: string
+    password: string
+    name: string
+    role?: string
+    seksi?: string | null
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserUpdateInput = {
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    seksi?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    seksi?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserCreateManyInput = {
+    id?: number
+    username: string
+    password: string
+    name: string
+    role?: string
+    seksi?: string | null
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserUpdateManyMutationInput = {
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    seksi?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    seksi?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -11528,73 +16212,6 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
-  export type SparepartCountOrderByAggregateInput = {
-    namaKomponen?: SortOrder
-    stokGudang?: SortOrder
-    satuan?: SortOrder
-  }
-
-  export type SparepartAvgOrderByAggregateInput = {
-    stokGudang?: SortOrder
-  }
-
-  export type SparepartMaxOrderByAggregateInput = {
-    namaKomponen?: SortOrder
-    stokGudang?: SortOrder
-    satuan?: SortOrder
-  }
-
-  export type SparepartMinOrderByAggregateInput = {
-    namaKomponen?: SortOrder
-    stokGudang?: SortOrder
-    satuan?: SortOrder
-  }
-
-  export type SparepartSumOrderByAggregateInput = {
-    stokGudang?: SortOrder
-  }
-
-  export type UserCountOrderByAggregateInput = {
-    id?: SortOrder
-    username?: SortOrder
-    password?: SortOrder
-    name?: SortOrder
-    role?: SortOrder
-    description?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type UserAvgOrderByAggregateInput = {
-    id?: SortOrder
-  }
-
-  export type UserMaxOrderByAggregateInput = {
-    id?: SortOrder
-    username?: SortOrder
-    password?: SortOrder
-    name?: SortOrder
-    role?: SortOrder
-    description?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type UserMinOrderByAggregateInput = {
-    id?: SortOrder
-    username?: SortOrder
-    password?: SortOrder
-    name?: SortOrder
-    role?: SortOrder
-    description?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type UserSumOrderByAggregateInput = {
-    id?: SortOrder
-  }
-
   export type DaishaComponentListRelationFilter = {
     every?: DaishaComponentWhereInput
     some?: DaishaComponentWhereInput
@@ -11716,6 +16333,272 @@ export namespace Prisma {
   export type DaishaSymptomSumOrderByAggregateInput = {
     id?: SortOrder
     componentId?: SortOrder
+  }
+
+  export type SectionRequestMaterialListRelationFilter = {
+    every?: SectionRequestMaterialWhereInput
+    some?: SectionRequestMaterialWhereInput
+    none?: SectionRequestMaterialWhereInput
+  }
+
+  export type SectionRequestMaterialOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SectionRequestCountOrderByAggregateInput = {
+    id?: SortOrder
+    nomorRequest?: SortOrder
+    seksiPemohon?: SortOrder
+    picPemohon?: SortOrder
+    kontakPemohon?: SortOrder
+    namaBarang?: SortOrder
+    spesifikasi?: SortOrder
+    jumlah?: SortOrder
+    satuan?: SortOrder
+    urgensi?: SortOrder
+    catatan?: SortOrder
+    status?: SortOrder
+    alasanTolak?: SortOrder
+    picBengkel?: SortOrder
+    estimasi?: SortOrder
+    catatanAdmin?: SortOrder
+    dibuatOleh?: SortOrder
+    waktuDibuat?: SortOrder
+    waktuUpdate?: SortOrder
+    waktuSelesai?: SortOrder
+  }
+
+  export type SectionRequestAvgOrderByAggregateInput = {
+    id?: SortOrder
+    jumlah?: SortOrder
+  }
+
+  export type SectionRequestMaxOrderByAggregateInput = {
+    id?: SortOrder
+    nomorRequest?: SortOrder
+    seksiPemohon?: SortOrder
+    picPemohon?: SortOrder
+    kontakPemohon?: SortOrder
+    namaBarang?: SortOrder
+    spesifikasi?: SortOrder
+    jumlah?: SortOrder
+    satuan?: SortOrder
+    urgensi?: SortOrder
+    catatan?: SortOrder
+    status?: SortOrder
+    alasanTolak?: SortOrder
+    picBengkel?: SortOrder
+    estimasi?: SortOrder
+    catatanAdmin?: SortOrder
+    dibuatOleh?: SortOrder
+    waktuDibuat?: SortOrder
+    waktuUpdate?: SortOrder
+    waktuSelesai?: SortOrder
+  }
+
+  export type SectionRequestMinOrderByAggregateInput = {
+    id?: SortOrder
+    nomorRequest?: SortOrder
+    seksiPemohon?: SortOrder
+    picPemohon?: SortOrder
+    kontakPemohon?: SortOrder
+    namaBarang?: SortOrder
+    spesifikasi?: SortOrder
+    jumlah?: SortOrder
+    satuan?: SortOrder
+    urgensi?: SortOrder
+    catatan?: SortOrder
+    status?: SortOrder
+    alasanTolak?: SortOrder
+    picBengkel?: SortOrder
+    estimasi?: SortOrder
+    catatanAdmin?: SortOrder
+    dibuatOleh?: SortOrder
+    waktuDibuat?: SortOrder
+    waktuUpdate?: SortOrder
+    waktuSelesai?: SortOrder
+  }
+
+  export type SectionRequestSumOrderByAggregateInput = {
+    id?: SortOrder
+    jumlah?: SortOrder
+  }
+
+  export type SectionRequestScalarRelationFilter = {
+    is?: SectionRequestWhereInput
+    isNot?: SectionRequestWhereInput
+  }
+
+  export type SparepartScalarRelationFilter = {
+    is?: SparepartWhereInput
+    isNot?: SparepartWhereInput
+  }
+
+  export type SectionRequestMaterialCountOrderByAggregateInput = {
+    id?: SortOrder
+    sectionRequestId?: SortOrder
+    namaKomponen?: SortOrder
+    qty?: SortOrder
+    keterangan?: SortOrder
+  }
+
+  export type SectionRequestMaterialAvgOrderByAggregateInput = {
+    id?: SortOrder
+    sectionRequestId?: SortOrder
+    qty?: SortOrder
+  }
+
+  export type SectionRequestMaterialMaxOrderByAggregateInput = {
+    id?: SortOrder
+    sectionRequestId?: SortOrder
+    namaKomponen?: SortOrder
+    qty?: SortOrder
+    keterangan?: SortOrder
+  }
+
+  export type SectionRequestMaterialMinOrderByAggregateInput = {
+    id?: SortOrder
+    sectionRequestId?: SortOrder
+    namaKomponen?: SortOrder
+    qty?: SortOrder
+    keterangan?: SortOrder
+  }
+
+  export type SectionRequestMaterialSumOrderByAggregateInput = {
+    id?: SortOrder
+    sectionRequestId?: SortOrder
+    qty?: SortOrder
+  }
+
+  export type SparepartLogListRelationFilter = {
+    every?: SparepartLogWhereInput
+    some?: SparepartLogWhereInput
+    none?: SparepartLogWhereInput
+  }
+
+  export type SparepartLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SparepartCountOrderByAggregateInput = {
+    namaKomponen?: SortOrder
+    kategori?: SortOrder
+    stokGudang?: SortOrder
+    satuan?: SortOrder
+    minStok?: SortOrder
+    lokasi?: SortOrder
+  }
+
+  export type SparepartAvgOrderByAggregateInput = {
+    stokGudang?: SortOrder
+    minStok?: SortOrder
+  }
+
+  export type SparepartMaxOrderByAggregateInput = {
+    namaKomponen?: SortOrder
+    kategori?: SortOrder
+    stokGudang?: SortOrder
+    satuan?: SortOrder
+    minStok?: SortOrder
+    lokasi?: SortOrder
+  }
+
+  export type SparepartMinOrderByAggregateInput = {
+    namaKomponen?: SortOrder
+    kategori?: SortOrder
+    stokGudang?: SortOrder
+    satuan?: SortOrder
+    minStok?: SortOrder
+    lokasi?: SortOrder
+  }
+
+  export type SparepartSumOrderByAggregateInput = {
+    stokGudang?: SortOrder
+    minStok?: SortOrder
+  }
+
+  export type SparepartLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    namaKomponen?: SortOrder
+    tipe?: SortOrder
+    qty?: SortOrder
+    referensi?: SortOrder
+    keterangan?: SortOrder
+    tanggal?: SortOrder
+  }
+
+  export type SparepartLogAvgOrderByAggregateInput = {
+    id?: SortOrder
+    qty?: SortOrder
+  }
+
+  export type SparepartLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    namaKomponen?: SortOrder
+    tipe?: SortOrder
+    qty?: SortOrder
+    referensi?: SortOrder
+    keterangan?: SortOrder
+    tanggal?: SortOrder
+  }
+
+  export type SparepartLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    namaKomponen?: SortOrder
+    tipe?: SortOrder
+    qty?: SortOrder
+    referensi?: SortOrder
+    keterangan?: SortOrder
+    tanggal?: SortOrder
+  }
+
+  export type SparepartLogSumOrderByAggregateInput = {
+    id?: SortOrder
+    qty?: SortOrder
+  }
+
+  export type UserCountOrderByAggregateInput = {
+    id?: SortOrder
+    username?: SortOrder
+    password?: SortOrder
+    name?: SortOrder
+    role?: SortOrder
+    seksi?: SortOrder
+    description?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type UserMaxOrderByAggregateInput = {
+    id?: SortOrder
+    username?: SortOrder
+    password?: SortOrder
+    name?: SortOrder
+    role?: SortOrder
+    seksi?: SortOrder
+    description?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserMinOrderByAggregateInput = {
+    id?: SortOrder
+    username?: SortOrder
+    password?: SortOrder
+    name?: SortOrder
+    role?: SortOrder
+    seksi?: SortOrder
+    description?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserSumOrderByAggregateInput = {
+    id?: SortOrder
   }
 
   export type TicketCreateNestedManyWithoutDaishaInput = {
@@ -11964,6 +16847,174 @@ export namespace Prisma {
     upsert?: DaishaComponentUpsertWithoutSymptomsInput
     connect?: DaishaComponentWhereUniqueInput
     update?: XOR<XOR<DaishaComponentUpdateToOneWithWhereWithoutSymptomsInput, DaishaComponentUpdateWithoutSymptomsInput>, DaishaComponentUncheckedUpdateWithoutSymptomsInput>
+  }
+
+  export type SectionRequestMaterialCreateNestedManyWithoutSectionRequestInput = {
+    create?: XOR<SectionRequestMaterialCreateWithoutSectionRequestInput, SectionRequestMaterialUncheckedCreateWithoutSectionRequestInput> | SectionRequestMaterialCreateWithoutSectionRequestInput[] | SectionRequestMaterialUncheckedCreateWithoutSectionRequestInput[]
+    connectOrCreate?: SectionRequestMaterialCreateOrConnectWithoutSectionRequestInput | SectionRequestMaterialCreateOrConnectWithoutSectionRequestInput[]
+    createMany?: SectionRequestMaterialCreateManySectionRequestInputEnvelope
+    connect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+  }
+
+  export type SectionRequestMaterialUncheckedCreateNestedManyWithoutSectionRequestInput = {
+    create?: XOR<SectionRequestMaterialCreateWithoutSectionRequestInput, SectionRequestMaterialUncheckedCreateWithoutSectionRequestInput> | SectionRequestMaterialCreateWithoutSectionRequestInput[] | SectionRequestMaterialUncheckedCreateWithoutSectionRequestInput[]
+    connectOrCreate?: SectionRequestMaterialCreateOrConnectWithoutSectionRequestInput | SectionRequestMaterialCreateOrConnectWithoutSectionRequestInput[]
+    createMany?: SectionRequestMaterialCreateManySectionRequestInputEnvelope
+    connect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+  }
+
+  export type SectionRequestMaterialUpdateManyWithoutSectionRequestNestedInput = {
+    create?: XOR<SectionRequestMaterialCreateWithoutSectionRequestInput, SectionRequestMaterialUncheckedCreateWithoutSectionRequestInput> | SectionRequestMaterialCreateWithoutSectionRequestInput[] | SectionRequestMaterialUncheckedCreateWithoutSectionRequestInput[]
+    connectOrCreate?: SectionRequestMaterialCreateOrConnectWithoutSectionRequestInput | SectionRequestMaterialCreateOrConnectWithoutSectionRequestInput[]
+    upsert?: SectionRequestMaterialUpsertWithWhereUniqueWithoutSectionRequestInput | SectionRequestMaterialUpsertWithWhereUniqueWithoutSectionRequestInput[]
+    createMany?: SectionRequestMaterialCreateManySectionRequestInputEnvelope
+    set?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    disconnect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    delete?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    connect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    update?: SectionRequestMaterialUpdateWithWhereUniqueWithoutSectionRequestInput | SectionRequestMaterialUpdateWithWhereUniqueWithoutSectionRequestInput[]
+    updateMany?: SectionRequestMaterialUpdateManyWithWhereWithoutSectionRequestInput | SectionRequestMaterialUpdateManyWithWhereWithoutSectionRequestInput[]
+    deleteMany?: SectionRequestMaterialScalarWhereInput | SectionRequestMaterialScalarWhereInput[]
+  }
+
+  export type SectionRequestMaterialUncheckedUpdateManyWithoutSectionRequestNestedInput = {
+    create?: XOR<SectionRequestMaterialCreateWithoutSectionRequestInput, SectionRequestMaterialUncheckedCreateWithoutSectionRequestInput> | SectionRequestMaterialCreateWithoutSectionRequestInput[] | SectionRequestMaterialUncheckedCreateWithoutSectionRequestInput[]
+    connectOrCreate?: SectionRequestMaterialCreateOrConnectWithoutSectionRequestInput | SectionRequestMaterialCreateOrConnectWithoutSectionRequestInput[]
+    upsert?: SectionRequestMaterialUpsertWithWhereUniqueWithoutSectionRequestInput | SectionRequestMaterialUpsertWithWhereUniqueWithoutSectionRequestInput[]
+    createMany?: SectionRequestMaterialCreateManySectionRequestInputEnvelope
+    set?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    disconnect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    delete?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    connect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    update?: SectionRequestMaterialUpdateWithWhereUniqueWithoutSectionRequestInput | SectionRequestMaterialUpdateWithWhereUniqueWithoutSectionRequestInput[]
+    updateMany?: SectionRequestMaterialUpdateManyWithWhereWithoutSectionRequestInput | SectionRequestMaterialUpdateManyWithWhereWithoutSectionRequestInput[]
+    deleteMany?: SectionRequestMaterialScalarWhereInput | SectionRequestMaterialScalarWhereInput[]
+  }
+
+  export type SectionRequestCreateNestedOneWithoutMaterialsInput = {
+    create?: XOR<SectionRequestCreateWithoutMaterialsInput, SectionRequestUncheckedCreateWithoutMaterialsInput>
+    connectOrCreate?: SectionRequestCreateOrConnectWithoutMaterialsInput
+    connect?: SectionRequestWhereUniqueInput
+  }
+
+  export type SparepartCreateNestedOneWithoutRequestMaterialsInput = {
+    create?: XOR<SparepartCreateWithoutRequestMaterialsInput, SparepartUncheckedCreateWithoutRequestMaterialsInput>
+    connectOrCreate?: SparepartCreateOrConnectWithoutRequestMaterialsInput
+    connect?: SparepartWhereUniqueInput
+  }
+
+  export type SectionRequestUpdateOneRequiredWithoutMaterialsNestedInput = {
+    create?: XOR<SectionRequestCreateWithoutMaterialsInput, SectionRequestUncheckedCreateWithoutMaterialsInput>
+    connectOrCreate?: SectionRequestCreateOrConnectWithoutMaterialsInput
+    upsert?: SectionRequestUpsertWithoutMaterialsInput
+    connect?: SectionRequestWhereUniqueInput
+    update?: XOR<XOR<SectionRequestUpdateToOneWithWhereWithoutMaterialsInput, SectionRequestUpdateWithoutMaterialsInput>, SectionRequestUncheckedUpdateWithoutMaterialsInput>
+  }
+
+  export type SparepartUpdateOneRequiredWithoutRequestMaterialsNestedInput = {
+    create?: XOR<SparepartCreateWithoutRequestMaterialsInput, SparepartUncheckedCreateWithoutRequestMaterialsInput>
+    connectOrCreate?: SparepartCreateOrConnectWithoutRequestMaterialsInput
+    upsert?: SparepartUpsertWithoutRequestMaterialsInput
+    connect?: SparepartWhereUniqueInput
+    update?: XOR<XOR<SparepartUpdateToOneWithWhereWithoutRequestMaterialsInput, SparepartUpdateWithoutRequestMaterialsInput>, SparepartUncheckedUpdateWithoutRequestMaterialsInput>
+  }
+
+  export type SparepartLogCreateNestedManyWithoutSparepartInput = {
+    create?: XOR<SparepartLogCreateWithoutSparepartInput, SparepartLogUncheckedCreateWithoutSparepartInput> | SparepartLogCreateWithoutSparepartInput[] | SparepartLogUncheckedCreateWithoutSparepartInput[]
+    connectOrCreate?: SparepartLogCreateOrConnectWithoutSparepartInput | SparepartLogCreateOrConnectWithoutSparepartInput[]
+    createMany?: SparepartLogCreateManySparepartInputEnvelope
+    connect?: SparepartLogWhereUniqueInput | SparepartLogWhereUniqueInput[]
+  }
+
+  export type SectionRequestMaterialCreateNestedManyWithoutSparepartInput = {
+    create?: XOR<SectionRequestMaterialCreateWithoutSparepartInput, SectionRequestMaterialUncheckedCreateWithoutSparepartInput> | SectionRequestMaterialCreateWithoutSparepartInput[] | SectionRequestMaterialUncheckedCreateWithoutSparepartInput[]
+    connectOrCreate?: SectionRequestMaterialCreateOrConnectWithoutSparepartInput | SectionRequestMaterialCreateOrConnectWithoutSparepartInput[]
+    createMany?: SectionRequestMaterialCreateManySparepartInputEnvelope
+    connect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+  }
+
+  export type SparepartLogUncheckedCreateNestedManyWithoutSparepartInput = {
+    create?: XOR<SparepartLogCreateWithoutSparepartInput, SparepartLogUncheckedCreateWithoutSparepartInput> | SparepartLogCreateWithoutSparepartInput[] | SparepartLogUncheckedCreateWithoutSparepartInput[]
+    connectOrCreate?: SparepartLogCreateOrConnectWithoutSparepartInput | SparepartLogCreateOrConnectWithoutSparepartInput[]
+    createMany?: SparepartLogCreateManySparepartInputEnvelope
+    connect?: SparepartLogWhereUniqueInput | SparepartLogWhereUniqueInput[]
+  }
+
+  export type SectionRequestMaterialUncheckedCreateNestedManyWithoutSparepartInput = {
+    create?: XOR<SectionRequestMaterialCreateWithoutSparepartInput, SectionRequestMaterialUncheckedCreateWithoutSparepartInput> | SectionRequestMaterialCreateWithoutSparepartInput[] | SectionRequestMaterialUncheckedCreateWithoutSparepartInput[]
+    connectOrCreate?: SectionRequestMaterialCreateOrConnectWithoutSparepartInput | SectionRequestMaterialCreateOrConnectWithoutSparepartInput[]
+    createMany?: SectionRequestMaterialCreateManySparepartInputEnvelope
+    connect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+  }
+
+  export type SparepartLogUpdateManyWithoutSparepartNestedInput = {
+    create?: XOR<SparepartLogCreateWithoutSparepartInput, SparepartLogUncheckedCreateWithoutSparepartInput> | SparepartLogCreateWithoutSparepartInput[] | SparepartLogUncheckedCreateWithoutSparepartInput[]
+    connectOrCreate?: SparepartLogCreateOrConnectWithoutSparepartInput | SparepartLogCreateOrConnectWithoutSparepartInput[]
+    upsert?: SparepartLogUpsertWithWhereUniqueWithoutSparepartInput | SparepartLogUpsertWithWhereUniqueWithoutSparepartInput[]
+    createMany?: SparepartLogCreateManySparepartInputEnvelope
+    set?: SparepartLogWhereUniqueInput | SparepartLogWhereUniqueInput[]
+    disconnect?: SparepartLogWhereUniqueInput | SparepartLogWhereUniqueInput[]
+    delete?: SparepartLogWhereUniqueInput | SparepartLogWhereUniqueInput[]
+    connect?: SparepartLogWhereUniqueInput | SparepartLogWhereUniqueInput[]
+    update?: SparepartLogUpdateWithWhereUniqueWithoutSparepartInput | SparepartLogUpdateWithWhereUniqueWithoutSparepartInput[]
+    updateMany?: SparepartLogUpdateManyWithWhereWithoutSparepartInput | SparepartLogUpdateManyWithWhereWithoutSparepartInput[]
+    deleteMany?: SparepartLogScalarWhereInput | SparepartLogScalarWhereInput[]
+  }
+
+  export type SectionRequestMaterialUpdateManyWithoutSparepartNestedInput = {
+    create?: XOR<SectionRequestMaterialCreateWithoutSparepartInput, SectionRequestMaterialUncheckedCreateWithoutSparepartInput> | SectionRequestMaterialCreateWithoutSparepartInput[] | SectionRequestMaterialUncheckedCreateWithoutSparepartInput[]
+    connectOrCreate?: SectionRequestMaterialCreateOrConnectWithoutSparepartInput | SectionRequestMaterialCreateOrConnectWithoutSparepartInput[]
+    upsert?: SectionRequestMaterialUpsertWithWhereUniqueWithoutSparepartInput | SectionRequestMaterialUpsertWithWhereUniqueWithoutSparepartInput[]
+    createMany?: SectionRequestMaterialCreateManySparepartInputEnvelope
+    set?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    disconnect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    delete?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    connect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    update?: SectionRequestMaterialUpdateWithWhereUniqueWithoutSparepartInput | SectionRequestMaterialUpdateWithWhereUniqueWithoutSparepartInput[]
+    updateMany?: SectionRequestMaterialUpdateManyWithWhereWithoutSparepartInput | SectionRequestMaterialUpdateManyWithWhereWithoutSparepartInput[]
+    deleteMany?: SectionRequestMaterialScalarWhereInput | SectionRequestMaterialScalarWhereInput[]
+  }
+
+  export type SparepartLogUncheckedUpdateManyWithoutSparepartNestedInput = {
+    create?: XOR<SparepartLogCreateWithoutSparepartInput, SparepartLogUncheckedCreateWithoutSparepartInput> | SparepartLogCreateWithoutSparepartInput[] | SparepartLogUncheckedCreateWithoutSparepartInput[]
+    connectOrCreate?: SparepartLogCreateOrConnectWithoutSparepartInput | SparepartLogCreateOrConnectWithoutSparepartInput[]
+    upsert?: SparepartLogUpsertWithWhereUniqueWithoutSparepartInput | SparepartLogUpsertWithWhereUniqueWithoutSparepartInput[]
+    createMany?: SparepartLogCreateManySparepartInputEnvelope
+    set?: SparepartLogWhereUniqueInput | SparepartLogWhereUniqueInput[]
+    disconnect?: SparepartLogWhereUniqueInput | SparepartLogWhereUniqueInput[]
+    delete?: SparepartLogWhereUniqueInput | SparepartLogWhereUniqueInput[]
+    connect?: SparepartLogWhereUniqueInput | SparepartLogWhereUniqueInput[]
+    update?: SparepartLogUpdateWithWhereUniqueWithoutSparepartInput | SparepartLogUpdateWithWhereUniqueWithoutSparepartInput[]
+    updateMany?: SparepartLogUpdateManyWithWhereWithoutSparepartInput | SparepartLogUpdateManyWithWhereWithoutSparepartInput[]
+    deleteMany?: SparepartLogScalarWhereInput | SparepartLogScalarWhereInput[]
+  }
+
+  export type SectionRequestMaterialUncheckedUpdateManyWithoutSparepartNestedInput = {
+    create?: XOR<SectionRequestMaterialCreateWithoutSparepartInput, SectionRequestMaterialUncheckedCreateWithoutSparepartInput> | SectionRequestMaterialCreateWithoutSparepartInput[] | SectionRequestMaterialUncheckedCreateWithoutSparepartInput[]
+    connectOrCreate?: SectionRequestMaterialCreateOrConnectWithoutSparepartInput | SectionRequestMaterialCreateOrConnectWithoutSparepartInput[]
+    upsert?: SectionRequestMaterialUpsertWithWhereUniqueWithoutSparepartInput | SectionRequestMaterialUpsertWithWhereUniqueWithoutSparepartInput[]
+    createMany?: SectionRequestMaterialCreateManySparepartInputEnvelope
+    set?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    disconnect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    delete?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    connect?: SectionRequestMaterialWhereUniqueInput | SectionRequestMaterialWhereUniqueInput[]
+    update?: SectionRequestMaterialUpdateWithWhereUniqueWithoutSparepartInput | SectionRequestMaterialUpdateWithWhereUniqueWithoutSparepartInput[]
+    updateMany?: SectionRequestMaterialUpdateManyWithWhereWithoutSparepartInput | SectionRequestMaterialUpdateManyWithWhereWithoutSparepartInput[]
+    deleteMany?: SectionRequestMaterialScalarWhereInput | SectionRequestMaterialScalarWhereInput[]
+  }
+
+  export type SparepartCreateNestedOneWithoutLogsInput = {
+    create?: XOR<SparepartCreateWithoutLogsInput, SparepartUncheckedCreateWithoutLogsInput>
+    connectOrCreate?: SparepartCreateOrConnectWithoutLogsInput
+    connect?: SparepartWhereUniqueInput
+  }
+
+  export type SparepartUpdateOneRequiredWithoutLogsNestedInput = {
+    create?: XOR<SparepartCreateWithoutLogsInput, SparepartUncheckedCreateWithoutLogsInput>
+    connectOrCreate?: SparepartCreateOrConnectWithoutLogsInput
+    upsert?: SparepartUpsertWithoutLogsInput
+    connect?: SparepartWhereUniqueInput
+    update?: XOR<XOR<SparepartUpdateToOneWithWhereWithoutLogsInput, SparepartUpdateWithoutLogsInput>, SparepartUncheckedUpdateWithoutLogsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -12509,6 +17560,366 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
   }
 
+  export type SectionRequestMaterialCreateWithoutSectionRequestInput = {
+    qty?: number
+    keterangan?: string | null
+    sparepart: SparepartCreateNestedOneWithoutRequestMaterialsInput
+  }
+
+  export type SectionRequestMaterialUncheckedCreateWithoutSectionRequestInput = {
+    id?: number
+    namaKomponen: string
+    qty?: number
+    keterangan?: string | null
+  }
+
+  export type SectionRequestMaterialCreateOrConnectWithoutSectionRequestInput = {
+    where: SectionRequestMaterialWhereUniqueInput
+    create: XOR<SectionRequestMaterialCreateWithoutSectionRequestInput, SectionRequestMaterialUncheckedCreateWithoutSectionRequestInput>
+  }
+
+  export type SectionRequestMaterialCreateManySectionRequestInputEnvelope = {
+    data: SectionRequestMaterialCreateManySectionRequestInput | SectionRequestMaterialCreateManySectionRequestInput[]
+  }
+
+  export type SectionRequestMaterialUpsertWithWhereUniqueWithoutSectionRequestInput = {
+    where: SectionRequestMaterialWhereUniqueInput
+    update: XOR<SectionRequestMaterialUpdateWithoutSectionRequestInput, SectionRequestMaterialUncheckedUpdateWithoutSectionRequestInput>
+    create: XOR<SectionRequestMaterialCreateWithoutSectionRequestInput, SectionRequestMaterialUncheckedCreateWithoutSectionRequestInput>
+  }
+
+  export type SectionRequestMaterialUpdateWithWhereUniqueWithoutSectionRequestInput = {
+    where: SectionRequestMaterialWhereUniqueInput
+    data: XOR<SectionRequestMaterialUpdateWithoutSectionRequestInput, SectionRequestMaterialUncheckedUpdateWithoutSectionRequestInput>
+  }
+
+  export type SectionRequestMaterialUpdateManyWithWhereWithoutSectionRequestInput = {
+    where: SectionRequestMaterialScalarWhereInput
+    data: XOR<SectionRequestMaterialUpdateManyMutationInput, SectionRequestMaterialUncheckedUpdateManyWithoutSectionRequestInput>
+  }
+
+  export type SectionRequestMaterialScalarWhereInput = {
+    AND?: SectionRequestMaterialScalarWhereInput | SectionRequestMaterialScalarWhereInput[]
+    OR?: SectionRequestMaterialScalarWhereInput[]
+    NOT?: SectionRequestMaterialScalarWhereInput | SectionRequestMaterialScalarWhereInput[]
+    id?: IntFilter<"SectionRequestMaterial"> | number
+    sectionRequestId?: IntFilter<"SectionRequestMaterial"> | number
+    namaKomponen?: StringFilter<"SectionRequestMaterial"> | string
+    qty?: IntFilter<"SectionRequestMaterial"> | number
+    keterangan?: StringNullableFilter<"SectionRequestMaterial"> | string | null
+  }
+
+  export type SectionRequestCreateWithoutMaterialsInput = {
+    nomorRequest: string
+    seksiPemohon: string
+    picPemohon: string
+    kontakPemohon?: string | null
+    namaBarang: string
+    spesifikasi?: string | null
+    jumlah?: number
+    satuan?: string
+    urgensi?: string
+    catatan?: string | null
+    status?: string
+    alasanTolak?: string | null
+    picBengkel?: string | null
+    estimasi?: string | null
+    catatanAdmin?: string | null
+    dibuatOleh: string
+    waktuDibuat?: Date | string
+    waktuUpdate?: Date | string
+    waktuSelesai?: Date | string | null
+  }
+
+  export type SectionRequestUncheckedCreateWithoutMaterialsInput = {
+    id?: number
+    nomorRequest: string
+    seksiPemohon: string
+    picPemohon: string
+    kontakPemohon?: string | null
+    namaBarang: string
+    spesifikasi?: string | null
+    jumlah?: number
+    satuan?: string
+    urgensi?: string
+    catatan?: string | null
+    status?: string
+    alasanTolak?: string | null
+    picBengkel?: string | null
+    estimasi?: string | null
+    catatanAdmin?: string | null
+    dibuatOleh: string
+    waktuDibuat?: Date | string
+    waktuUpdate?: Date | string
+    waktuSelesai?: Date | string | null
+  }
+
+  export type SectionRequestCreateOrConnectWithoutMaterialsInput = {
+    where: SectionRequestWhereUniqueInput
+    create: XOR<SectionRequestCreateWithoutMaterialsInput, SectionRequestUncheckedCreateWithoutMaterialsInput>
+  }
+
+  export type SparepartCreateWithoutRequestMaterialsInput = {
+    namaKomponen: string
+    kategori?: string
+    stokGudang?: number
+    satuan: string
+    minStok?: number
+    lokasi?: string | null
+    logs?: SparepartLogCreateNestedManyWithoutSparepartInput
+  }
+
+  export type SparepartUncheckedCreateWithoutRequestMaterialsInput = {
+    namaKomponen: string
+    kategori?: string
+    stokGudang?: number
+    satuan: string
+    minStok?: number
+    lokasi?: string | null
+    logs?: SparepartLogUncheckedCreateNestedManyWithoutSparepartInput
+  }
+
+  export type SparepartCreateOrConnectWithoutRequestMaterialsInput = {
+    where: SparepartWhereUniqueInput
+    create: XOR<SparepartCreateWithoutRequestMaterialsInput, SparepartUncheckedCreateWithoutRequestMaterialsInput>
+  }
+
+  export type SectionRequestUpsertWithoutMaterialsInput = {
+    update: XOR<SectionRequestUpdateWithoutMaterialsInput, SectionRequestUncheckedUpdateWithoutMaterialsInput>
+    create: XOR<SectionRequestCreateWithoutMaterialsInput, SectionRequestUncheckedCreateWithoutMaterialsInput>
+    where?: SectionRequestWhereInput
+  }
+
+  export type SectionRequestUpdateToOneWithWhereWithoutMaterialsInput = {
+    where?: SectionRequestWhereInput
+    data: XOR<SectionRequestUpdateWithoutMaterialsInput, SectionRequestUncheckedUpdateWithoutMaterialsInput>
+  }
+
+  export type SectionRequestUpdateWithoutMaterialsInput = {
+    nomorRequest?: StringFieldUpdateOperationsInput | string
+    seksiPemohon?: StringFieldUpdateOperationsInput | string
+    picPemohon?: StringFieldUpdateOperationsInput | string
+    kontakPemohon?: NullableStringFieldUpdateOperationsInput | string | null
+    namaBarang?: StringFieldUpdateOperationsInput | string
+    spesifikasi?: NullableStringFieldUpdateOperationsInput | string | null
+    jumlah?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    urgensi?: StringFieldUpdateOperationsInput | string
+    catatan?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    alasanTolak?: NullableStringFieldUpdateOperationsInput | string | null
+    picBengkel?: NullableStringFieldUpdateOperationsInput | string | null
+    estimasi?: NullableStringFieldUpdateOperationsInput | string | null
+    catatanAdmin?: NullableStringFieldUpdateOperationsInput | string | null
+    dibuatOleh?: StringFieldUpdateOperationsInput | string
+    waktuDibuat?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuUpdate?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuSelesai?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type SectionRequestUncheckedUpdateWithoutMaterialsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    nomorRequest?: StringFieldUpdateOperationsInput | string
+    seksiPemohon?: StringFieldUpdateOperationsInput | string
+    picPemohon?: StringFieldUpdateOperationsInput | string
+    kontakPemohon?: NullableStringFieldUpdateOperationsInput | string | null
+    namaBarang?: StringFieldUpdateOperationsInput | string
+    spesifikasi?: NullableStringFieldUpdateOperationsInput | string | null
+    jumlah?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    urgensi?: StringFieldUpdateOperationsInput | string
+    catatan?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    alasanTolak?: NullableStringFieldUpdateOperationsInput | string | null
+    picBengkel?: NullableStringFieldUpdateOperationsInput | string | null
+    estimasi?: NullableStringFieldUpdateOperationsInput | string | null
+    catatanAdmin?: NullableStringFieldUpdateOperationsInput | string | null
+    dibuatOleh?: StringFieldUpdateOperationsInput | string
+    waktuDibuat?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuUpdate?: DateTimeFieldUpdateOperationsInput | Date | string
+    waktuSelesai?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type SparepartUpsertWithoutRequestMaterialsInput = {
+    update: XOR<SparepartUpdateWithoutRequestMaterialsInput, SparepartUncheckedUpdateWithoutRequestMaterialsInput>
+    create: XOR<SparepartCreateWithoutRequestMaterialsInput, SparepartUncheckedCreateWithoutRequestMaterialsInput>
+    where?: SparepartWhereInput
+  }
+
+  export type SparepartUpdateToOneWithWhereWithoutRequestMaterialsInput = {
+    where?: SparepartWhereInput
+    data: XOR<SparepartUpdateWithoutRequestMaterialsInput, SparepartUncheckedUpdateWithoutRequestMaterialsInput>
+  }
+
+  export type SparepartUpdateWithoutRequestMaterialsInput = {
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    kategori?: StringFieldUpdateOperationsInput | string
+    stokGudang?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    minStok?: IntFieldUpdateOperationsInput | number
+    lokasi?: NullableStringFieldUpdateOperationsInput | string | null
+    logs?: SparepartLogUpdateManyWithoutSparepartNestedInput
+  }
+
+  export type SparepartUncheckedUpdateWithoutRequestMaterialsInput = {
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    kategori?: StringFieldUpdateOperationsInput | string
+    stokGudang?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    minStok?: IntFieldUpdateOperationsInput | number
+    lokasi?: NullableStringFieldUpdateOperationsInput | string | null
+    logs?: SparepartLogUncheckedUpdateManyWithoutSparepartNestedInput
+  }
+
+  export type SparepartLogCreateWithoutSparepartInput = {
+    tipe: string
+    qty: number
+    referensi?: string | null
+    keterangan?: string | null
+    tanggal?: Date | string
+  }
+
+  export type SparepartLogUncheckedCreateWithoutSparepartInput = {
+    id?: number
+    tipe: string
+    qty: number
+    referensi?: string | null
+    keterangan?: string | null
+    tanggal?: Date | string
+  }
+
+  export type SparepartLogCreateOrConnectWithoutSparepartInput = {
+    where: SparepartLogWhereUniqueInput
+    create: XOR<SparepartLogCreateWithoutSparepartInput, SparepartLogUncheckedCreateWithoutSparepartInput>
+  }
+
+  export type SparepartLogCreateManySparepartInputEnvelope = {
+    data: SparepartLogCreateManySparepartInput | SparepartLogCreateManySparepartInput[]
+  }
+
+  export type SectionRequestMaterialCreateWithoutSparepartInput = {
+    qty?: number
+    keterangan?: string | null
+    sectionRequest: SectionRequestCreateNestedOneWithoutMaterialsInput
+  }
+
+  export type SectionRequestMaterialUncheckedCreateWithoutSparepartInput = {
+    id?: number
+    sectionRequestId: number
+    qty?: number
+    keterangan?: string | null
+  }
+
+  export type SectionRequestMaterialCreateOrConnectWithoutSparepartInput = {
+    where: SectionRequestMaterialWhereUniqueInput
+    create: XOR<SectionRequestMaterialCreateWithoutSparepartInput, SectionRequestMaterialUncheckedCreateWithoutSparepartInput>
+  }
+
+  export type SectionRequestMaterialCreateManySparepartInputEnvelope = {
+    data: SectionRequestMaterialCreateManySparepartInput | SectionRequestMaterialCreateManySparepartInput[]
+  }
+
+  export type SparepartLogUpsertWithWhereUniqueWithoutSparepartInput = {
+    where: SparepartLogWhereUniqueInput
+    update: XOR<SparepartLogUpdateWithoutSparepartInput, SparepartLogUncheckedUpdateWithoutSparepartInput>
+    create: XOR<SparepartLogCreateWithoutSparepartInput, SparepartLogUncheckedCreateWithoutSparepartInput>
+  }
+
+  export type SparepartLogUpdateWithWhereUniqueWithoutSparepartInput = {
+    where: SparepartLogWhereUniqueInput
+    data: XOR<SparepartLogUpdateWithoutSparepartInput, SparepartLogUncheckedUpdateWithoutSparepartInput>
+  }
+
+  export type SparepartLogUpdateManyWithWhereWithoutSparepartInput = {
+    where: SparepartLogScalarWhereInput
+    data: XOR<SparepartLogUpdateManyMutationInput, SparepartLogUncheckedUpdateManyWithoutSparepartInput>
+  }
+
+  export type SparepartLogScalarWhereInput = {
+    AND?: SparepartLogScalarWhereInput | SparepartLogScalarWhereInput[]
+    OR?: SparepartLogScalarWhereInput[]
+    NOT?: SparepartLogScalarWhereInput | SparepartLogScalarWhereInput[]
+    id?: IntFilter<"SparepartLog"> | number
+    namaKomponen?: StringFilter<"SparepartLog"> | string
+    tipe?: StringFilter<"SparepartLog"> | string
+    qty?: IntFilter<"SparepartLog"> | number
+    referensi?: StringNullableFilter<"SparepartLog"> | string | null
+    keterangan?: StringNullableFilter<"SparepartLog"> | string | null
+    tanggal?: DateTimeFilter<"SparepartLog"> | Date | string
+  }
+
+  export type SectionRequestMaterialUpsertWithWhereUniqueWithoutSparepartInput = {
+    where: SectionRequestMaterialWhereUniqueInput
+    update: XOR<SectionRequestMaterialUpdateWithoutSparepartInput, SectionRequestMaterialUncheckedUpdateWithoutSparepartInput>
+    create: XOR<SectionRequestMaterialCreateWithoutSparepartInput, SectionRequestMaterialUncheckedCreateWithoutSparepartInput>
+  }
+
+  export type SectionRequestMaterialUpdateWithWhereUniqueWithoutSparepartInput = {
+    where: SectionRequestMaterialWhereUniqueInput
+    data: XOR<SectionRequestMaterialUpdateWithoutSparepartInput, SectionRequestMaterialUncheckedUpdateWithoutSparepartInput>
+  }
+
+  export type SectionRequestMaterialUpdateManyWithWhereWithoutSparepartInput = {
+    where: SectionRequestMaterialScalarWhereInput
+    data: XOR<SectionRequestMaterialUpdateManyMutationInput, SectionRequestMaterialUncheckedUpdateManyWithoutSparepartInput>
+  }
+
+  export type SparepartCreateWithoutLogsInput = {
+    namaKomponen: string
+    kategori?: string
+    stokGudang?: number
+    satuan: string
+    minStok?: number
+    lokasi?: string | null
+    requestMaterials?: SectionRequestMaterialCreateNestedManyWithoutSparepartInput
+  }
+
+  export type SparepartUncheckedCreateWithoutLogsInput = {
+    namaKomponen: string
+    kategori?: string
+    stokGudang?: number
+    satuan: string
+    minStok?: number
+    lokasi?: string | null
+    requestMaterials?: SectionRequestMaterialUncheckedCreateNestedManyWithoutSparepartInput
+  }
+
+  export type SparepartCreateOrConnectWithoutLogsInput = {
+    where: SparepartWhereUniqueInput
+    create: XOR<SparepartCreateWithoutLogsInput, SparepartUncheckedCreateWithoutLogsInput>
+  }
+
+  export type SparepartUpsertWithoutLogsInput = {
+    update: XOR<SparepartUpdateWithoutLogsInput, SparepartUncheckedUpdateWithoutLogsInput>
+    create: XOR<SparepartCreateWithoutLogsInput, SparepartUncheckedCreateWithoutLogsInput>
+    where?: SparepartWhereInput
+  }
+
+  export type SparepartUpdateToOneWithWhereWithoutLogsInput = {
+    where?: SparepartWhereInput
+    data: XOR<SparepartUpdateWithoutLogsInput, SparepartUncheckedUpdateWithoutLogsInput>
+  }
+
+  export type SparepartUpdateWithoutLogsInput = {
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    kategori?: StringFieldUpdateOperationsInput | string
+    stokGudang?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    minStok?: IntFieldUpdateOperationsInput | number
+    lokasi?: NullableStringFieldUpdateOperationsInput | string | null
+    requestMaterials?: SectionRequestMaterialUpdateManyWithoutSparepartNestedInput
+  }
+
+  export type SparepartUncheckedUpdateWithoutLogsInput = {
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    kategori?: StringFieldUpdateOperationsInput | string
+    stokGudang?: IntFieldUpdateOperationsInput | number
+    satuan?: StringFieldUpdateOperationsInput | string
+    minStok?: IntFieldUpdateOperationsInput | number
+    lokasi?: NullableStringFieldUpdateOperationsInput | string | null
+    requestMaterials?: SectionRequestMaterialUncheckedUpdateManyWithoutSparepartNestedInput
+  }
+
   export type TicketCreateManyDaishaInput = {
     idTiket: string
     namaPelapor: string
@@ -12616,6 +18027,95 @@ export namespace Prisma {
   export type DaishaSymptomUncheckedUpdateManyWithoutComponentInput = {
     id?: IntFieldUpdateOperationsInput | number
     description?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type SectionRequestMaterialCreateManySectionRequestInput = {
+    id?: number
+    namaKomponen: string
+    qty?: number
+    keterangan?: string | null
+  }
+
+  export type SectionRequestMaterialUpdateWithoutSectionRequestInput = {
+    qty?: IntFieldUpdateOperationsInput | number
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+    sparepart?: SparepartUpdateOneRequiredWithoutRequestMaterialsNestedInput
+  }
+
+  export type SectionRequestMaterialUncheckedUpdateWithoutSectionRequestInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type SectionRequestMaterialUncheckedUpdateManyWithoutSectionRequestInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    namaKomponen?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type SparepartLogCreateManySparepartInput = {
+    id?: number
+    tipe: string
+    qty: number
+    referensi?: string | null
+    keterangan?: string | null
+    tanggal?: Date | string
+  }
+
+  export type SectionRequestMaterialCreateManySparepartInput = {
+    id?: number
+    sectionRequestId: number
+    qty?: number
+    keterangan?: string | null
+  }
+
+  export type SparepartLogUpdateWithoutSparepartInput = {
+    tipe?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+    referensi?: NullableStringFieldUpdateOperationsInput | string | null
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+    tanggal?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SparepartLogUncheckedUpdateWithoutSparepartInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tipe?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+    referensi?: NullableStringFieldUpdateOperationsInput | string | null
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+    tanggal?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SparepartLogUncheckedUpdateManyWithoutSparepartInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tipe?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+    referensi?: NullableStringFieldUpdateOperationsInput | string | null
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+    tanggal?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SectionRequestMaterialUpdateWithoutSparepartInput = {
+    qty?: IntFieldUpdateOperationsInput | number
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+    sectionRequest?: SectionRequestUpdateOneRequiredWithoutMaterialsNestedInput
+  }
+
+  export type SectionRequestMaterialUncheckedUpdateWithoutSparepartInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    sectionRequestId?: IntFieldUpdateOperationsInput | number
+    qty?: IntFieldUpdateOperationsInput | number
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type SectionRequestMaterialUncheckedUpdateManyWithoutSparepartInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    sectionRequestId?: IntFieldUpdateOperationsInput | number
+    qty?: IntFieldUpdateOperationsInput | number
+    keterangan?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
 

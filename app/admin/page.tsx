@@ -16,8 +16,7 @@ import UserManager from '@/components/admin/UserManager';
 import CatalogManager from '@/components/admin/CatalogManager';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { DAFTAR_SEKSI, getDaishaBySeksi, DAFTAR_SEMUA_DAISHA } from '@/lib/masterData';
-import { Card } from '@/components/ui/card';
-import { ClipboardList, Clock, Wrench, CheckCircle2, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ClipboardList, Clock, Wrench, CheckCircle2, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, ArrowLeft, LayoutDashboard, PlusCircle } from 'lucide-react';
 import { SortOption, SORT_OPTIONS, sortTickets } from '@/lib/sortTickets';
 import PaginationControl from '@/components/common/PaginationControl';
 
@@ -326,6 +325,27 @@ export default function AdminPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-xs">
         <div>
+          <div className="flex items-center gap-2 mb-2 flex-wrap text-xs">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-slate-600 hover:text-red-700 hover:bg-red-50 transition border border-slate-200 hover:border-red-200"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Portal</span>
+            </Link>
+            <span className="text-slate-300">/</span>
+            <Link
+              href="/daisha"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-slate-600 hover:text-red-700 hover:bg-red-50 transition border border-slate-200 hover:border-red-200"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-red-600" />
+              <span>Dashboard Daisha</span>
+            </Link>
+            <span className="text-slate-300">/</span>
+            <span className="font-extrabold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
+              Panel Tindakan
+            </span>
+          </div>
           <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
             ⚙️ Panel Tindakan Admin Workshop
           </h1>
@@ -335,6 +355,30 @@ export default function AdminPage() {
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          <Link
+            href="/daisha"
+            className="flex-1 sm:flex-none px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5"
+          >
+            <LayoutDashboard className="w-3.5 h-3.5 text-slate-600" />
+            <span>Dashboard</span>
+          </Link>
+
+          <Link
+            href="/input"
+            className="flex-1 sm:flex-none px-3.5 py-2.5 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 border border-red-200"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            <span>Input Baru</span>
+          </Link>
+
+          <Link
+            href="/riwayat"
+            className="flex-1 sm:flex-none px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 border border-slate-200"
+          >
+            <ClipboardList className="w-3.5 h-3.5 text-slate-600" />
+            <span>Status Antrean</span>
+          </Link>
+
           {/* Tombol Ekspor Excel Berdasarkan Filter Aktif */}
           <button
             type="button"
@@ -345,30 +389,22 @@ export default function AdminPage() {
               )
             }
             disabled={filteredTickets.length === 0}
-            className="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="flex-1 sm:flex-none px-3.5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             title="Unduh data Excel (.xlsx) sesuai filter yang sedang aktif"
           >
             <span>📥</span>
-            <span>Ekspor Excel ({filteredTickets.length})</span>
+            <span>Ekspor ({filteredTickets.length})</span>
           </button>
 
           <button
             type="button"
             onClick={() => refresh()}
             disabled={loading}
-            className="flex-1 sm:flex-none px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="flex-1 sm:flex-none px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             <span className={loading ? 'animate-spin' : ''}>🔄</span>
             <span>Refresh</span>
           </button>
-
-          <Link
-            href="/"
-            className="flex-1 sm:flex-none px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2"
-          >
-            <span>📊</span>
-            <span>Dashboard</span>
-          </Link>
         </div>
       </div>
 
@@ -424,9 +460,9 @@ export default function AdminPage() {
       {/* KPI Cards Ringkas (4 Status Pipeline) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {/* 1. Total Tiket */}
-        <Card
+        <div
           onClick={() => setFilterTab('all')}
-          className={`p-4 cursor-pointer transition-all flex flex-col justify-between group ${
+          className={`rounded-2xl border border-slate-200/80 bg-white p-4 cursor-pointer transition-all flex flex-col justify-between group ${
             filterTab === 'all'
               ? 'ring-2 ring-red-600 shadow-md scale-[1.02] !bg-white border-red-500'
               : 'hover:shadow-md hover:border-slate-300'
@@ -448,12 +484,12 @@ export default function AdminPage() {
             {countStats.all}
           </div>
           <div className="text-[10px] font-medium text-slate-500 mt-1">Semua Tiket Masuk</div>
-        </Card>
+        </div>
 
         {/* 2. Open / Sedang Dikerjakan */}
-        <Card
+        <div
           onClick={() => setFilterTab('Open')}
-          className={`p-4 cursor-pointer border-amber-200/80 bg-amber-50/20 hover:bg-amber-50/40 hover:shadow-md transition-all flex flex-col justify-between group ${
+          className={`rounded-2xl p-4 cursor-pointer border border-amber-200/80 bg-amber-50/20 hover:bg-amber-50/40 hover:shadow-md transition-all flex flex-col justify-between group ${
             filterTab === 'Open'
               ? 'ring-2 ring-amber-500 shadow-md scale-[1.02] !bg-white !border-amber-500'
               : ''
@@ -467,12 +503,12 @@ export default function AdminPage() {
           </div>
           <div className="text-2xl font-black text-amber-600 group-hover:scale-105 transition">{countStats.open}</div>
           <div className="text-[10px] font-medium text-amber-600/80 mt-1">Antre & Sedang Diproses</div>
-        </Card>
+        </div>
 
         {/* 3. Selesai (Done) */}
-        <Card
+        <div
           onClick={() => setFilterTab('Done')}
-          className={`p-4 cursor-pointer border-emerald-200/80 bg-emerald-50/20 hover:bg-emerald-50/40 hover:shadow-md transition-all flex flex-col justify-between group ${
+          className={`rounded-2xl p-4 cursor-pointer border border-emerald-200/80 bg-emerald-50/20 hover:bg-emerald-50/40 hover:shadow-md transition-all flex flex-col justify-between group ${
             filterTab === 'Done'
               ? 'ring-2 ring-emerald-500 shadow-md scale-[1.02] !bg-white !border-emerald-500'
               : ''
@@ -488,12 +524,12 @@ export default function AdminPage() {
           <div className="text-[10px] font-medium text-emerald-600/80 mt-1">
             Rate: {countStats.all > 0 ? Math.round((countStats.done / countStats.all) * 100) : 0}%
           </div>
-        </Card>
+        </div>
 
         {/* 4. Rusak / Afkir (Scrap) */}
-        <Card
+        <div
           onClick={() => setFilterTab('Scrap')}
-          className={`p-4 cursor-pointer border-rose-200/80 bg-rose-50/20 hover:bg-rose-50/40 hover:shadow-md transition-all flex flex-col justify-between group ${
+          className={`rounded-2xl p-4 cursor-pointer border border-rose-200/80 bg-rose-50/20 hover:bg-rose-50/40 hover:shadow-md transition-all flex flex-col justify-between group ${
             filterTab === 'Scrap'
               ? 'ring-2 ring-rose-500 shadow-md scale-[1.02] !bg-white !border-rose-500'
               : ''
@@ -509,7 +545,7 @@ export default function AdminPage() {
           <div className="text-[10px] font-medium text-rose-600/80 mt-1">
             Rate: {countStats.all > 0 ? Math.round((countStats.scrap / countStats.all) * 100) : 0}%
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Tabel Tiket Antrean & Riwayat (Lebar Penuh) */}

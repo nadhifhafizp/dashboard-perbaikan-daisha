@@ -9,6 +9,7 @@ interface AuthContextType {
   isLoading: boolean;
   isOperator: boolean;
   isAdmin: boolean;
+  isSeksi: boolean;
   isLogoutModalOpen: boolean;
   isLoggingOut: boolean;
   openLogoutModal: () => void;
@@ -82,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isOperator = currentUser?.role === 'OPERATOR';
   const isAdmin = currentUser?.role === 'ADMIN';
+  const isSeksi = currentUser?.role === 'USER_SEKSI';
 
   return (
     <AuthContext.Provider
@@ -90,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isOperator,
         isAdmin,
+        isSeksi,
         isLogoutModalOpen,
         isLoggingOut,
         openLogoutModal: () => setIsLogoutModalOpen(true),
@@ -110,3 +113,4 @@ export function useAuth(): AuthContextType {
   }
   return context;
 }
+

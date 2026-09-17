@@ -13,13 +13,13 @@ export function normalizeStatus(val: unknown): TicketStatus {
 export function getValue(obj: RawTicketData, possibleKeys: string[]): string | null {
   if (!obj) return null;
   for (const key of possibleKeys) {
-    if (obj[key] !== undefined && obj[key] !== null) return String(obj[key]);
-    const cleanKey = key.toLowerCase().replace(/[\s_]/g, "");
-    const found = Object.keys(obj).find((k) => {
-      const cleanK = k.toLowerCase().replace(/[\s_]/g, "");
-      return cleanK === cleanKey;
-    });
-    if (found && obj[found] !== undefined && obj[found] !== null) return String(obj[found]);
+    if (obj[key] != null) return String(obj[key]);
+  }
+  const keys = Object.keys(obj);
+  for (const key of possibleKeys) {
+    const cleanKey = key.toLowerCase().replace(/[\s_]/g, '');
+    const found = keys.find((k) => k.toLowerCase().replace(/[\s_]/g, '') === cleanKey);
+    if (found && obj[found] != null) return String(obj[found]);
   }
   return null;
 }

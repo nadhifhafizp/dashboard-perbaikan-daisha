@@ -4,9 +4,6 @@ import React, { useState, useMemo } from 'react';
 import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useDaishaCatalog, DaishaTreeItem } from '@/hooks/useDaishaCatalog';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   FolderPlus,
   Plus,
@@ -508,14 +505,14 @@ export default function CatalogManager() {
             Tambah jenis Daisha baru, komponen, serta detail kerusakan langsung dari sini. Form input teknisi akan otomatis sinkron tanpa perlu coding ulang.
           </p>
         </div>
-        <Button
+        <button
           type="button"
           onClick={() => setIsAddDaishaModalOpen(true)}
-          className="gap-2 shadow-xs w-full sm:w-auto shrink-0 cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all active:scale-[0.98] w-full sm:w-auto shrink-0 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Jenis Daisha Baru</span>
-        </Button>
+        </button>
       </div>
 
       {/* Filter & Search Bar */}
@@ -584,10 +581,10 @@ export default function CatalogManager() {
             const IconComp = theme.icon;
 
             return (
-              <Card
+              <div
                 key="all"
                 onClick={() => setSelectedSeksi('all')}
-                className={`p-3.5 cursor-pointer transition-all flex flex-col justify-between group ${theme.border} ${theme.bg} ${theme.hoverBg} ${
+                className={`rounded-2xl border p-3.5 cursor-pointer transition-all flex flex-col justify-between group ${theme.border} ${theme.bg} ${theme.hoverBg} ${
                   isSelected
                     ? 'ring-2 ring-red-600 shadow-md scale-[1.02] !bg-white border-red-500'
                     : 'hover:shadow-md'
@@ -607,7 +604,7 @@ export default function CatalogManager() {
                 <div className={`text-[10px] font-medium mt-1 ${isSelected ? 'text-red-600 font-bold' : theme.textSubtitle}`}>
                   Semua Daisha
                 </div>
-              </Card>
+              </div>
             );
           })()}
 
@@ -619,10 +616,10 @@ export default function CatalogManager() {
             const IconComp = theme.icon;
 
             return (
-              <Card
+              <div
                 key={s}
                 onClick={() => setSelectedSeksi(s)}
-                className={`p-3.5 cursor-pointer transition-all flex flex-col justify-between group ${theme.border} ${theme.bg} ${theme.hoverBg} ${
+                className={`rounded-2xl border p-3.5 cursor-pointer transition-all flex flex-col justify-between group ${theme.border} ${theme.bg} ${theme.hoverBg} ${
                   isSelected
                     ? 'ring-2 ring-red-600 shadow-md scale-[1.02] !bg-white border-red-500'
                     : 'hover:shadow-md'
@@ -642,7 +639,7 @@ export default function CatalogManager() {
                 <div className={`text-[10px] font-medium mt-1 truncate ${isSelected ? 'text-red-600 font-bold' : theme.textSubtitle}`}>
                   {count} Jenis Daisha
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
@@ -687,9 +684,9 @@ export default function CatalogManager() {
                         <h3 className="font-black text-base text-slate-900 tracking-tight">
                           Seksi {group.seksi}
                         </h3>
-                        <Badge variant="outline" className={`text-[11px] font-black ${seksiTheme.iconColor} ${seksiTheme.iconBg} ${seksiTheme.border} px-2.5 py-0.5`}>
+                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-black ${seksiTheme.iconColor} ${seksiTheme.iconBg} ${seksiTheme.border}`}>
                           {group.daishas.length} Jenis Daisha
-                        </Badge>
+                        </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5 font-medium">
                         {group.totalKomponen} Komponen Kerusakan &middot; {group.totalGejala} Detail Gejala Masalah
@@ -701,20 +698,18 @@ export default function CatalogManager() {
                     className="flex items-center gap-2 self-stretch sm:self-center justify-end flex-wrap pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
-                      size="sm"
                       onClick={() => {
                         setNewDaishaForm({ name: '', seksi: group.seksi });
                         setIsAddDaishaModalOpen(true);
                       }}
-                      className="gap-1.5 text-red-700 border-red-200 bg-red-50/80 hover:bg-red-100 text-xs font-bold rounded-xl shadow-2xs"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-red-700 border border-red-200 bg-red-50/80 hover:bg-red-100 text-xs font-bold rounded-xl shadow-2xs transition active:scale-[0.98] cursor-pointer"
                       title={`Tambah Daisha baru khusus untuk Seksi ${group.seksi}`}
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>+ Daisha {group.seksi}</span>
-                    </Button>
+                    </button>
 
                     <button
                       type="button"
@@ -776,21 +771,17 @@ export default function CatalogManager() {
                               className="flex items-center gap-1.5 self-stretch sm:self-center justify-end flex-wrap pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <Button
+                              <button
                                 type="button"
-                                variant="outline"
-                                size="sm"
                                 onClick={() => setAddComponentTarget(daisha)}
-                                className="gap-1 text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-emerald-700 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition active:scale-[0.98] cursor-pointer"
                                 title="Tambah komponen baru untuk Daisha ini"
                               >
                                 <Plus className="w-3.5 h-3.5" />
                                 <span>Komponen</span>
-                              </Button>
-                              <Button
+                              </button>
+                              <button
                                 type="button"
-                                variant="outline"
-                                size="sm"
                                 onClick={() =>
                                   setEditItem({
                                     type: 'daisha',
@@ -799,15 +790,13 @@ export default function CatalogManager() {
                                     seksi: daisha.seksi,
                                   })
                                 }
-                                className="gap-1 text-slate-700 hover:bg-slate-100"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-slate-700 border border-slate-200 bg-white hover:bg-slate-100 rounded-xl transition active:scale-[0.98] cursor-pointer"
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                                 <span>Edit</span>
-                              </Button>
-                              <Button
+                              </button>
+                              <button
                                 type="button"
-                                variant="outline"
-                                size="sm"
                                 onClick={() =>
                                   setDeleteItem({
                                     type: 'daisha',
@@ -816,10 +805,10 @@ export default function CatalogManager() {
                                     description: `Apakah Anda yakin ingin menghapus "${daisha.name}"? Semua ${totalKomponen} komponen dan ${totalGejala} gejala di dalamnya akan ikut terhapus secara permanen.`,
                                   })
                                 }
-                                className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 p-2"
+                                className="inline-flex items-center justify-center p-2 text-red-600 border border-red-200 hover:bg-red-50 hover:text-red-700 rounded-xl transition active:scale-[0.98] cursor-pointer"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
+                              </button>
                               <div className="text-slate-400 p-1">
                                 {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                               </div>

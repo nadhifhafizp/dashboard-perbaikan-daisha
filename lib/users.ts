@@ -1,13 +1,14 @@
 import prisma from './prisma';
 import { hashPassword, verifyPassword } from './passwords';
 
-export type UserRole = 'ADMIN' | 'OPERATOR';
+export type UserRole = 'ADMIN' | 'OPERATOR' | 'USER_SEKSI';
 
 export interface UserAccount {
   id: number;
   username: string;
   name: string;
   role: UserRole;
+  seksi?: string | null;
   description?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
@@ -23,34 +24,55 @@ export async function seedInitialUsers(): Promise<void> {
   if (isSeeded) return;
   try {
     const count = await prisma.user.count();
-    if (count > 0) {
-      isSeeded = true;
-      return;
-    }
-
     const initialAdminPassword = process.env.ADMIN_PASSWORD || 'admin123';
     const initialOperatorPassword = process.env.OPERATOR_PASSWORD || 'operator123';
 
-    await prisma.user.createMany({
-      data: [
-        {
-          username: (process.env.ADMIN_USERNAME || 'admin').trim().toLowerCase(),
-          password: hashPassword(initialAdminPassword),
-          name: 'Admin Maintenance & Rekap',
-          role: 'ADMIN',
-          description: 'Melihat rekapitulasi data, grafik statistik, ekspor Excel, kelola katalog, dan manajemen user.',
-        },
-        {
-          username: (process.env.OPERATOR_USERNAME || 'operator').trim().toLowerCase(),
-          password: hashPassword(initialOperatorPassword),
-          name: 'Staff Input / Teknisi Lapangan',
-          role: 'OPERATOR',
-          description: 'Input data kerusakan Daisha baik di plant maupun bengkel maintenance.',
-        },
-      ],
-    });
+    if (count === 0) {
+      await prisma.user.createMany({
+        data: [
+          {
+            username: (process.env.ADMIN_USERNAME || 'admin').trim().toLowerCase(),
+            password: hashPassword(initialAdminPassword),
+            name: 'Admin Maintenance & Rekap',
+            role: 'ADMIN',
+            description: 'Melihat rekapitulasi data, grafik statistik, ekspor Excel, kelola katalog, dan manajemen user.',
+          },
+          {
+            username: (process.env.OPERATOR_USERNAME || 'operator').trim().toLowerCase(),
+            password: hashPassword(initialOperatorPassword),
+            name: 'Staff Input / Teknisi Lapangan',
+            role: 'OPERATOR',
+            description: 'Input data kerusakan Daisha baik di plant maupun bengkel maintenance.',
+          },
+          {
+            username: 'seksi_welding',
+            password: hashPassword('seksi123'),
+            name: 'Seksi Welding & Stamping',
+            role: 'USER_SEKSI',
+            seksi: 'Welding',
+            description: 'User perwakilan seksi untuk request pembuatan barang dan follow up.',
+          },
+        ],
+      });
+      console.log('[Auth] Berhasil inisialisasi akun default (admin, operator, seksi_welding) ke database SQLite.');
+    } else {
+      // Check if USER_SEKSI exists, if not seed one for testing
+      const seksiCount = await prisma.user.count({ where: { role: 'USER_SEKSI' } });
+      if (seksiCount === 0) {
+        await prisma.user.create({
+          data: {
+            username: 'seksi_welding',
+            password: hashPassword('seksi123'),
+            name: 'Seksi Welding & Stamping',
+            role: 'USER_SEKSI',
+            seksi: 'Welding',
+            description: 'User perwakilan seksi untuk request pembuatan barang dan follow up.',
+          },
+        });
+        console.log('[Auth] Berhasil inisialisasi akun seksi_welding ke database SQLite.');
+      }
+    }
     isSeeded = true;
-    console.log('[Auth] Berhasil inisialisasi akun default (admin & operator) ke database SQLite.');
   } catch (err) {
     console.error('[Auth] Error saat inisialisasi akun default:', err);
   }
@@ -94,6 +116,7 @@ export async function findUserByCredentials(
     username: user.username,
     name: user.name,
     role: user.role as UserRole,
+    seksi: user.seksi,
     description: user.description,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -118,6 +141,7 @@ export async function findUserByUsername(usernameInput: string): Promise<UserAcc
     username: user.username,
     name: user.name,
     role: user.role as UserRole,
+    seksi: user.seksi,
     description: user.description,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -137,6 +161,7 @@ export async function getAllUsers(): Promise<UserAccount[]> {
       username: true,
       name: true,
       role: true,
+      seksi: true,
       description: true,
       createdAt: true,
       updatedAt: true,
@@ -157,6 +182,7 @@ export async function createUser(data: {
   passwordPlain: string;
   name: string;
   role: UserRole;
+  seksi?: string;
   description?: string;
 }): Promise<UserAccount> {
   const cleanUsername = data.username.trim().toLowerCase();
@@ -174,6 +200,7 @@ export async function createUser(data: {
       password: hashPassword(data.passwordPlain),
       name: data.name.trim(),
       role: data.role,
+      seksi: data.seksi?.trim() || null,
       description: data.description?.trim() || null,
     },
   });
@@ -183,6 +210,7 @@ export async function createUser(data: {
     username: user.username,
     name: user.name,
     role: user.role as UserRole,
+    seksi: user.seksi,
     description: user.description,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -198,6 +226,7 @@ export async function updateUser(
     username?: string;
     name?: string;
     role?: UserRole;
+    seksi?: string;
     description?: string;
   }
 ): Promise<UserAccount> {
@@ -205,6 +234,7 @@ export async function updateUser(
     username?: string;
     name?: string;
     role?: string;
+    seksi?: string | null;
     description?: string;
   } = {};
 
@@ -221,6 +251,7 @@ export async function updateUser(
 
   if (data.name) updateData.name = data.name.trim();
   if (data.role) updateData.role = data.role;
+  if (data.seksi !== undefined) updateData.seksi = data.seksi?.trim() || null;
   if (data.description !== undefined) updateData.description = data.description.trim() || undefined;
 
   const user = await prisma.user.update({
@@ -233,6 +264,7 @@ export async function updateUser(
     username: user.username,
     name: user.name,
     role: user.role as UserRole,
+    seksi: user.seksi,
     description: user.description,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
