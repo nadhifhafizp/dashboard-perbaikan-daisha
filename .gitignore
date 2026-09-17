@@ -13,16 +13,15 @@
 # testing
 /coverage
 
-# next.js
+# next.js build output
 /.next/
 /out/
-
-# production
 /build
 
-# misc
+# misc & OS
 .DS_Store
 *.pem
+Thumbs.db
 
 # debug & temporary files
 npm-debug.log*
@@ -36,13 +35,19 @@ yarn-error.log*
 cookie.txt
 .next-server.*
 
-# SQLite temporary journal & lock files
+# database (local SQLite files, dev.db, journals)
+*.db
 *.db-journal
 *.db-wal
 *.db-shm
+prisma/*.db
+prisma/*.db-journal
+prisma/*.db-wal
+prisma/*.db-shm
 
-# env files (can opt-in for committing if needed)
+# environment secrets
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -51,5 +56,24 @@ cookie.txt
 *.tsbuildinfo
 next-env.d.ts
 
-# Antigravity / browser profile
+# IDE & Editor folders
+.vscode/
+.idea/
+
+# AI Agents, Prompts, and Vibe-Coding Artifacts
+.agents/
+.claude/
+.cursor/
+.devin/
+.gemini/
+.windsurf/
+.copilot/
 .daisha-profile/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.cursorrules
+.windsurfrules
+implementation_plan.md
+walkthrough.md
+scratchpad*.md
