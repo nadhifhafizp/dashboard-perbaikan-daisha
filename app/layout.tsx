@@ -35,6 +35,9 @@ export async function generateMetadata(): Promise<Metadata> {
         { url: '/apple-touch-icon.png?v=2', sizes: '180x180', type: 'image/png' },
       ],
     },
+    other: {
+      'strix-verification': 'strix-verify-7317054cf78dcaca50761d210d1fa8e6',
+    },
   };
 }
 
@@ -46,6 +49,7 @@ export default function RootLayout({
   return (
     <html lang="id">
       <head>
+        <meta name="strix-verification" content="strix-verify-7317054cf78dcaca50761d210d1fa8e6" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
