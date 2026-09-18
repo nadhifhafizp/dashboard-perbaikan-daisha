@@ -46,7 +46,7 @@ export async function GET() {
               'qty', d."qty"
             )
           ) FILTER (WHERE d."idDetail" IS NOT NULL),
-          '[]'
+          '[]'::json
         ) AS details
       FROM "Ticket" t
       LEFT JOIN "MasterDaisha" m ON t."noDaisha" = m."noDaisha"
@@ -66,7 +66,16 @@ export async function GET() {
 
     // Format output 100% kompatibel dengan frontend tanpa merubah UI/komponen apa pun
     const formattedData = tickets.map((t) => {
-      const detailsList = Array.isArray(t.details) ? t.details : [];
+      let detailsList: Array<{ komponen: string; gejala: string; qty: number; tindakan: string }> = [];
+      try {
+        if (Array.isArray(t.details)) {
+          detailsList = t.details;
+        } else if (typeof t.details === 'string') {
+          detailsList = JSON.parse(t.details || '[]');
+        }
+      } catch {
+        detailsList = [];
+      }
       const kategoriList = Array.from(new Set(detailsList.map((d: { komponen: string }) => d.komponen))).filter(Boolean);
       const detailStr = detailsList.length > 0
         ? detailsList.map((d: { komponen: string; gejala: string; qty: number; tindakan: string }, idx: number) => `${idx + 1}. [${d.komponen}] ${d.gejala} (Qty: ${d.qty}, Tindakan: ${d.tindakan})`).join(' | ')

@@ -63,7 +63,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
       setError(null);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15_000);
+      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
       try {
         const fetchUrl = forceFresh ? `${API_URL}?fresh=${Date.now()}` : API_URL;
