@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   Boxes,
   Menu,
+  ScanLine,
 } from 'lucide-react';
 import PwaInstaller from '../common/PwaInstaller';
 import { useServerInfo } from '@/hooks/useServerInfo';
@@ -64,7 +65,7 @@ export default function Sidebar({
     if (isOperator) {
       return [
         { href: '/input', label: 'Lapor Kerusakan', icon: PenSquare },
-        { href: '/riwayat', label: 'Status Antrean Tiket', icon: ClipboardList },
+        { href: '/riwayat', label: 'Pelacakan & Antrean', icon: ScanLine },
       ];
     }
 
@@ -83,7 +84,7 @@ export default function Sidebar({
         return [
           { href: '/daisha', label: 'Dashboard Analitik', icon: LayoutDashboard },
           { href: '/input', label: 'Lapor Kerusakan', icon: PenSquare },
-          { href: '/riwayat', label: 'Status Antrean Tiket', icon: ClipboardList },
+          { href: '/riwayat', label: 'Pelacakan & Antrean', icon: ScanLine },
           { href: '/admin', label: 'Panel Tindakan Bengkel', icon: Settings },
         ];
     }

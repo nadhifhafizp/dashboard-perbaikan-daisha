@@ -10,13 +10,30 @@ import EditTicketModal from '@/components/riwayat/EditTicketModal';
 import DetailTicketModal from '@/components/riwayat/DetailTicketModal';
 import RiwayatTicketCard from '@/components/riwayat/RiwayatTicketCard';
 import QueueKanbanBoard from '@/components/riwayat/QueueKanbanBoard';
+import DaishaTrackerCard from '@/components/riwayat/DaishaTrackerCard';
+import QrScannerModal from '@/components/input/QrScannerModal';
 import PrintTicketTagModal from '@/components/common/PrintTicketTagModal';
 import PaginationControl from '@/components/common/PaginationControl';
 import { useAuth } from '@/context/AuthContext';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { DAFTAR_SEKSI, getDaishaBySeksi, DAFTAR_SEMUA_DAISHA } from '@/lib/masterData';
 import { SortOption, SORT_OPTIONS, sortTickets } from '@/lib/sortTickets';
-import { ArrowLeft, LayoutDashboard, PlusCircle, Settings, RefreshCw, Columns3, ListFilter, Eye } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  LayoutDashboard, 
+  PlusCircle, 
+  Settings, 
+  RefreshCw, 
+  Columns3, 
+  ListFilter, 
+  Eye, 
+  QrCode, 
+  ScanLine, 
+  Search, 
+  X,
+  History,
+  Activity
+} from 'lucide-react';
 
 const API_URL = '/api/repair';
 
@@ -26,6 +43,11 @@ export default function RiwayatLaporanPage() {
 
   // View Mode: 'kanban' (default) atau 'list'
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+
+  // State Pelacakan Cepat Unit Daisha (Scan QR / Barcode / Ketik Manual)
+  const [trackedDaisha, setTrackedDaisha] = useState<string>('');
+  const [trackerInput, setTrackerInput] = useState<string>('');
+  const [isQrScannerOpen, setIsQrScannerOpen] = useState<boolean>(false);
 
   // Filter States
   const [search, setSearch] = useState('');
@@ -309,10 +331,69 @@ export default function RiwayatLaporanPage() {
     setCurrentPage(1);
   }, [filteredTickets.length, sortBy, itemsPerPage]);
 
-  // Data terpaginasi
-  const totalPages = itemsPerPage === -1 ? 1 : Math.ceil(filteredTickets.length / itemsPerPage) || 1;
-  const startIndex = itemsPerPage === -1 ? 0 : (currentPage - 1) * itemsPerPage;
-  const paginatedTickets = itemsPerPage === -1 ? filteredTickets : filteredTickets.slice(startIndex, startIndex + itemsPerPage);
+  // Data Pagination untuk tampilan List
+  const paginatedTickets = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredTickets.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredTickets, currentPage, itemsPerPage]);
+
+  // Daftar semua nomor unit Daisha unik untuk autocomplete dan pill pencarian cepat
+  const availableDaishaNumbers = useMemo(() => {
+    const map = new Map<string, { count: number; name: string; seksi: string }>();
+    tickets.forEach((t) => {
+      const num = t.noDaisha?.trim().toUpperCase();
+      if (num && num !== '-') {
+        const existing = map.get(num) || { count: 0, name: t.namaDaisha, seksi: t.seksi };
+        existing.count += 1;
+        map.set(num, existing);
+      }
+    });
+    return Array.from(map.entries())
+      .map(([noDaisha, info]) => ({
+        noDaisha,
+        name: info.name,
+        seksi: info.seksi,
+        count: info.count,
+      }))
+      .sort((a, b) => b.count - a.count); // Paling sering servis di atas
+  }, [tickets]);
+
+  // Tiket khusus untuk unit yang sedang dilacak
+  const trackedTickets = useMemo(() => {
+    if (!trackedDaisha) return [];
+    return tickets.filter(
+      (t) => t.noDaisha?.trim().toUpperCase() === trackedDaisha.trim().toUpperCase()
+    );
+  }, [tickets, trackedDaisha]);
+
+  const handleScanSuccess = (decoded: string) => {
+    setIsQrScannerOpen(false);
+    let cleaned = decoded.trim();
+    try {
+      const parsed = JSON.parse(cleaned);
+      if (parsed.noDaisha) cleaned = parsed.noDaisha;
+      else if (parsed.no) cleaned = parsed.no;
+    } catch {
+      if (cleaned.includes('noDaisha=')) {
+        const match = cleaned.match(/noDaisha=([^&]+)/);
+        if (match) cleaned = decodeURIComponent(match[1]);
+      } else if (cleaned.includes('no=')) {
+        const match = cleaned.match(/no=([^&]+)/);
+        if (match) cleaned = decodeURIComponent(match[1]);
+      }
+    }
+    const finalNo = cleaned.toUpperCase();
+    setTrackedDaisha(finalNo);
+    setTrackerInput(finalNo);
+    showFeedback('success', 'Scan Berhasil', `Unit ${finalNo} ditemukan. Memuat status & rekam medis...`);
+  };
+
+  const handleManualSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!trackerInput.trim()) return;
+    const finalNo = trackerInput.trim().toUpperCase();
+    setTrackedDaisha(finalNo);
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 p-3 sm:p-5 md:p-8 flex justify-center pb-24 md:pb-12">
@@ -337,17 +418,17 @@ export default function RiwayatLaporanPage() {
             </Link>
             <span className="text-slate-300">/</span>
             <span className="font-extrabold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
-              Status Antrean Tiket
+              Pelacakan & Antrean
             </span>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
             <div>
               <h1 className="text-base sm:text-xl font-black text-slate-900 leading-tight flex items-center gap-2">
-                <span>🚦</span> Status Antrean & Tracking Daisha
+                <span>🔍</span> Pelacakan & Antrean Daisha
               </h1>
               <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 font-medium">
-                Pantau posisi giliran dan perkembangan perbaikan unit Daisha secara real-time
+                Pusat pelacakan cepat unit Daisha, riwayat rekam medis perbaikan, dan status antrean bengkel real-time
               </p>
             </div>
 
@@ -415,7 +496,144 @@ export default function RiwayatLaporanPage() {
           </div>
         </div>
 
-        {/* 2. Kartu Indikator Cepat Antrean (Live Queue KPI Cards) */}
+        {/* 2. Bar Pelacakan Cepat Unit Daisha (Scan QR / Barcode / Ketik Manual) */}
+        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-red-950 p-5 sm:p-6 rounded-3xl text-white shadow-xl border border-slate-700/50 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-black bg-red-600/30 text-red-300 border border-red-500/30 mb-1.5">
+                <ScanLine className="w-3.5 h-3.5 text-red-400" />
+                <span>Pelacakan Unit Cepat & Rekam Medis</span>
+              </span>
+              <h2 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
+                <span>🔍</span> Cek Status & Rekam Medis Daisha
+              </h2>
+              <p className="text-xs text-slate-300 font-medium mt-0.5">
+                Scan QR/Barcode fisik unit atau ketik nomor Daisha untuk melihat status perbaikan & histori servis
+              </p>
+            </div>
+
+            {/* Tombol Kamera Scan QR / Barcode */}
+            <button
+              type="button"
+              onClick={() => setIsQrScannerOpen(true)}
+              className="px-4 py-2.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer border border-red-400/30 shrink-0"
+            >
+              <QrCode className="w-4 h-4" />
+              <span>Scan QR / Barcode</span>
+            </button>
+          </div>
+
+          {/* Form Input Nomor Daisha Cepat */}
+          <form onSubmit={handleManualSearch} className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Search className="w-4 h-4" />
+              </span>
+              <input
+                type="text"
+                list="daisha-numbers-list"
+                value={trackerInput}
+                onChange={(e) => setTrackerInput(e.target.value)}
+                placeholder="Ketik Nomor Daisha (contoh: S3 034, D-102, S 396)..."
+                className="w-full pl-10 pr-10 py-3 bg-white/10 hover:bg-white/15 focus:bg-white text-white focus:text-slate-900 placeholder-slate-400 font-bold text-xs sm:text-sm rounded-2xl border border-white/20 focus:border-red-500 focus:ring-2 focus:ring-red-500/50 outline-none transition"
+              />
+              {trackerInput && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTrackerInput('');
+                    setTrackedDaisha('');
+                  }}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              <datalist id="daisha-numbers-list">
+                {availableDaishaNumbers.map((d) => (
+                  <option key={d.noDaisha} value={d.noDaisha}>
+                    {d.name} • Seksi: {d.seksi} ({d.count}x servis)
+                  </option>
+                ))}
+              </datalist>
+            </div>
+
+            <button
+              type="submit"
+              className="px-5 py-3 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-black text-xs sm:text-sm shadow-md transition shrink-0 cursor-pointer"
+            >
+              Lacak Unit
+            </button>
+          </form>
+
+          {/* Quick Unit Suggestions (Pills Unit yang Ada) */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-1">
+            <span className="text-[11px] text-slate-400 font-bold shrink-0">Unit Tersedia:</span>
+            {availableDaishaNumbers.slice(0, 8).map((item) => (
+              <button
+                key={item.noDaisha}
+                type="button"
+                onClick={() => {
+                  setTrackerInput(item.noDaisha);
+                  setTrackedDaisha(item.noDaisha);
+                }}
+                className={`px-2.5 py-1 rounded-xl text-xs font-mono font-bold transition shrink-0 border cursor-pointer ${
+                  trackedDaisha === item.noDaisha
+                    ? 'bg-red-600 text-white border-red-500 shadow-xs'
+                    : 'bg-white/10 hover:bg-white/20 text-slate-200 border-white/10'
+                }`}
+              >
+                {item.noDaisha}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. Kartu Hasil Pelacakan Unit Daisha (Jika Ada Unit yang Dipilih) */}
+        {trackedDaisha && trackedTickets.length > 0 && (
+          <DaishaTrackerCard
+            noDaisha={trackedDaisha}
+            unitTickets={trackedTickets}
+            onClose={() => {
+              setTrackedDaisha('');
+              setTrackerInput('');
+            }}
+            onViewDetail={(t) => setTicketForDetail(t)}
+            onPrintTag={(t) => setTicketForTag(t)}
+            isAdmin={isAdmin}
+          />
+        )}
+
+        {trackedDaisha && trackedTickets.length === 0 && (
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs text-center space-y-2 animate-in fade-in">
+            <span className="text-3xl block mb-1">🔍</span>
+            <h3 className="text-sm font-black text-slate-800">Unit Daisha &quot;{trackedDaisha}&quot; Belum Pernah Masuk Servis</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Nomor unit ini belum tercatat memiliki riwayat kerusakan di bengkel maintenance.
+            </p>
+            <div className="pt-2 flex items-center justify-center gap-2">
+              <Link
+                href={`/input`}
+                className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition inline-flex items-center gap-1.5"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>Buat Laporan Baru untuk Unit Ini</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setTrackedDaisha('');
+                  setTrackerInput('');
+                }}
+                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 4. Kartu Indikator Cepat Antrean (Live Queue KPI Cards) */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-white p-3.5 rounded-2xl border border-amber-200 shadow-2xs flex items-center justify-between">
             <div>
@@ -744,6 +962,14 @@ export default function RiwayatLaporanPage() {
         message={feedback.message}
         detail={feedback.detail}
         onClose={() => setFeedback((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* Modal Scanner Kamera QR / Barcode Fisik Daisha */}
+      <QrScannerModal
+        isOpen={isQrScannerOpen}
+        onClose={() => setIsQrScannerOpen(false)}
+        onScanSuccess={handleScanSuccess}
+        onError={(err) => console.warn('[QR/Barcode Scanner Error]:', err)}
       />
     </div>
   );
