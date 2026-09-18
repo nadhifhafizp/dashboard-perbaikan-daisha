@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { parseAndVerifySession, SESSION_COOKIE_NAME } from '@/lib/auth';
-import prisma from '@/lib/prisma';
+import sql from '@/lib/db';
 import { masterDataDaisha, DAFTAR_SEKSI } from '@/lib/masterData';
 
 /**
@@ -27,41 +27,45 @@ let isCatalogSeeded = false;
 async function ensureCatalogSeeded(): Promise<void> {
   if (isCatalogSeeded) return;
 
-  const count = await prisma.daishaType.count();
+  const [{ count }] = await sql<[{ count: number }]>`
+    SELECT COUNT(*)::int as count FROM "DaishaType"
+  `;
   if (count > 0) {
     isCatalogSeeded = true;
     return;
   }
 
-  console.log('[Catalog] Melakukan inisialisasi awal (auto-seeding) katalog Daisha ke database SQLite...');
+  console.log('[Catalog] Melakukan inisialisasi awal (auto-seeding) katalog Daisha ke database PostgreSQL...');
 
-  for (const [daishaName, info] of Object.entries(masterDataDaisha)) {
-    const createdDaisha = await prisma.daishaType.create({
-      data: {
-        name: daishaName.trim(),
-        seksi: info.seksi || 'All seksi',
-      },
-    });
+  await sql.begin(async (tx) => {
+    for (const [daishaName, info] of Object.entries(masterDataDaisha)) {
+      const [createdDaisha] = await tx<[{ id: number }]>`
+        INSERT INTO "DaishaType" (name, seksi, "updatedAt")
+        VALUES (${daishaName.trim()}, ${info.seksi || 'All seksi'}, NOW())
+        RETURNING id
+      `;
 
-    for (const [compName, symptoms] of Object.entries(info.jenisKerusakan)) {
-      const createdComp = await prisma.daishaComponent.create({
-        data: {
-          daishaTypeId: createdDaisha.id,
-          name: compName.trim(),
-        },
-      });
+      for (const [compName, symptoms] of Object.entries(info.jenisKerusakan)) {
+        const [createdComp] = await tx<[{ id: number }]>`
+          INSERT INTO "DaishaComponent" ("daishaTypeId", name)
+          VALUES (${createdDaisha.id}, ${compName.trim()})
+          RETURNING id
+        `;
 
-      if (Array.isArray(symptoms) && symptoms.length > 0) {
-        await prisma.daishaSymptom.createMany({
-          data: symptoms.map((s) => ({
+        if (Array.isArray(symptoms) && symptoms.length > 0) {
+          const symptomRows = symptoms.map((s) => ({
             componentId: createdComp.id,
             description: String(s).trim(),
-          })),
-        });
+          }));
+          await tx`
+            INSERT INTO "DaishaSymptom" ${tx(symptomRows, 'componentId', 'description')}
+          `;
+        }
       }
     }
-  }
+  });
 
+  isCatalogSeeded = true;
   console.log('[Catalog] Selesai seeder katalog Daisha.');
 }
 
@@ -72,24 +76,54 @@ export async function GET() {
   try {
     await ensureCatalogSeeded();
 
-    const daishaTypes = await prisma.daishaType.findMany({
-      include: {
-        components: {
-          include: {
-            symptoms: true,
-          },
-          orderBy: { name: 'asc' },
-        },
-      },
-      orderBy: { name: 'asc' },
-    });
+    const rows = await sql<
+      Array<{
+        id: number;
+        name: string;
+        seksi: string;
+        components: Array<{
+          id: number;
+          name: string;
+          symptoms: Array<{ id: number; description: string }>;
+        }>;
+      }>
+    >`
+      SELECT 
+        dt.id, 
+        dt.name, 
+        dt.seksi,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', dc.id,
+              'name', dc.name,
+              'symptoms', COALESCE(symptoms_sub.symptoms, '[]'::json)
+            ) ORDER BY dc.name ASC
+          ) FILTER (WHERE dc.id IS NOT NULL),
+          '[]'::json
+        ) as components
+      FROM "DaishaType" dt
+      LEFT JOIN "DaishaComponent" dc ON dc."daishaTypeId" = dt.id
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          json_build_object(
+            'id', ds.id,
+            'description', ds.description
+          ) ORDER BY ds.id ASC
+        ) as symptoms
+        FROM "DaishaSymptom" ds
+        WHERE ds."componentId" = dc.id
+      ) symptoms_sub ON true
+      GROUP BY dt.id
+      ORDER BY dt.name ASC
+    `;
 
     // Susun format pohon data lengkap untuk UI Admin
     const rawCatalog: Record<string, { seksi: string; jenisKerusakan: Record<string, string[]> }> = {};
-    const detailedList = daishaTypes.map((d) => {
+    const detailedList = rows.map((d) => {
       const jenisKerusakan: Record<string, string[]> = {};
-      d.components.forEach((c) => {
-        jenisKerusakan[c.name] = c.symptoms.map((s) => s.description);
+      (d.components || []).forEach((c) => {
+        jenisKerusakan[c.name] = (c.symptoms || []).map((s) => s.description);
       });
 
       rawCatalog[d.name] = {
@@ -101,10 +135,10 @@ export async function GET() {
         id: d.id,
         name: d.name,
         seksi: d.seksi,
-        components: d.components.map((c) => ({
+        components: (d.components || []).map((c) => ({
           id: c.id,
           name: c.name,
-          symptoms: c.symptoms.map((s) => ({
+          symptoms: (c.symptoms || []).map((s) => ({
             id: s.id,
             description: s.description,
           })),
@@ -114,7 +148,7 @@ export async function GET() {
 
     // Kumpulkan daftar seksi unik
     const seksiSet = new Set<string>(DAFTAR_SEKSI);
-    daishaTypes.forEach((d) => {
+    rows.forEach((d) => {
       if (d.seksi) seksiSet.add(d.seksi);
     });
 
@@ -157,19 +191,16 @@ export async function POST(request: Request) {
       }
 
       const trimmedName = name.trim();
-      const existing = await prisma.daishaType.findUnique({
-        where: { name: trimmedName },
-      });
+      const [existing] = await sql`SELECT id FROM "DaishaType" WHERE name = ${trimmedName} LIMIT 1`;
       if (existing) {
         return NextResponse.json({ error: `Jenis Daisha "${trimmedName}" sudah ada.` }, { status: 400 });
       }
 
-      const newDaisha = await prisma.daishaType.create({
-        data: {
-          name: trimmedName,
-          seksi: (seksi || 'All seksi').trim(),
-        },
-      });
+      const [newDaisha] = await sql`
+        INSERT INTO "DaishaType" (name, seksi, "updatedAt")
+        VALUES (${trimmedName}, ${(seksi || 'All seksi').trim()}, NOW())
+        RETURNING *
+      `;
 
       return NextResponse.json({
         success: true,
@@ -186,19 +217,20 @@ export async function POST(request: Request) {
       }
 
       const trimmedName = name.trim();
-      const existing = await prisma.daishaComponent.findFirst({
-        where: { daishaTypeId: Number(daishaTypeId), name: trimmedName },
-      });
+      const [existing] = await sql`
+        SELECT id FROM "DaishaComponent"
+        WHERE "daishaTypeId" = ${Number(daishaTypeId)} AND name = ${trimmedName}
+        LIMIT 1
+      `;
       if (existing) {
         return NextResponse.json({ error: `Komponen "${trimmedName}" sudah ada pada Daisha ini.` }, { status: 400 });
       }
 
-      const newComp = await prisma.daishaComponent.create({
-        data: {
-          daishaTypeId: Number(daishaTypeId),
-          name: trimmedName,
-        },
-      });
+      const [newComp] = await sql`
+        INSERT INTO "DaishaComponent" ("daishaTypeId", name)
+        VALUES (${Number(daishaTypeId)}, ${trimmedName})
+        RETURNING *
+      `;
 
       return NextResponse.json({
         success: true,
@@ -214,12 +246,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'ID Komponen dan Gejala Kerusakan wajib diisi.' }, { status: 400 });
       }
 
-      const newSymptom = await prisma.daishaSymptom.create({
-        data: {
-          componentId: Number(componentId),
-          description: description.trim(),
-        },
-      });
+      const [newSymptom] = await sql`
+        INSERT INTO "DaishaSymptom" ("componentId", description)
+        VALUES (${Number(componentId)}, ${description.trim()})
+        RETURNING *
+      `;
 
       return NextResponse.json({
         success: true,
@@ -254,13 +285,19 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'ID dan Nama Daisha wajib diisi.' }, { status: 400 });
       }
 
-      const updated = await prisma.daishaType.update({
-        where: { id: Number(id) },
-        data: {
-          name: name.trim(),
-          seksi: seksi ? seksi.trim() : undefined,
-        },
-      });
+      const [updated] = seksi !== undefined
+        ? await sql`
+            UPDATE "DaishaType"
+            SET name = ${name.trim()}, seksi = ${seksi.trim()}, "updatedAt" = NOW()
+            WHERE id = ${Number(id)}
+            RETURNING *
+          `
+        : await sql`
+            UPDATE "DaishaType"
+            SET name = ${name.trim()}, "updatedAt" = NOW()
+            WHERE id = ${Number(id)}
+            RETURNING *
+          `;
 
       return NextResponse.json({
         success: true,
@@ -276,10 +313,12 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'ID dan Nama Komponen wajib diisi.' }, { status: 400 });
       }
 
-      const updated = await prisma.daishaComponent.update({
-        where: { id: Number(id) },
-        data: { name: name.trim() },
-      });
+      const [updated] = await sql`
+        UPDATE "DaishaComponent"
+        SET name = ${name.trim()}
+        WHERE id = ${Number(id)}
+        RETURNING *
+      `;
 
       return NextResponse.json({
         success: true,
@@ -295,10 +334,12 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'ID dan Deskripsi Gejala wajib diisi.' }, { status: 400 });
       }
 
-      const updated = await prisma.daishaSymptom.update({
-        where: { id: Number(id) },
-        data: { description: description.trim() },
-      });
+      const [updated] = await sql`
+        UPDATE "DaishaSymptom"
+        SET description = ${description.trim()}
+        WHERE id = ${Number(id)}
+        RETURNING *
+      `;
 
       return NextResponse.json({
         success: true,
@@ -334,17 +375,24 @@ export async function DELETE(request: Request) {
     const id = Number(idParam);
 
     if (type === 'daisha') {
-      await prisma.daishaType.delete({ where: { id } });
+      await sql.begin(async (tx) => {
+        await tx`DELETE FROM "DaishaSymptom" WHERE "componentId" IN (SELECT id FROM "DaishaComponent" WHERE "daishaTypeId" = ${id})`;
+        await tx`DELETE FROM "DaishaComponent" WHERE "daishaTypeId" = ${id}`;
+        await tx`DELETE FROM "DaishaType" WHERE id = ${id}`;
+      });
       return NextResponse.json({ success: true, message: 'Jenis Daisha beserta seluruh komponennya berhasil dihapus.' });
     }
 
     if (type === 'component') {
-      await prisma.daishaComponent.delete({ where: { id } });
+      await sql.begin(async (tx) => {
+        await tx`DELETE FROM "DaishaSymptom" WHERE "componentId" = ${id}`;
+        await tx`DELETE FROM "DaishaComponent" WHERE id = ${id}`;
+      });
       return NextResponse.json({ success: true, message: 'Komponen beserta gejalanya berhasil dihapus.' });
     }
 
     if (type === 'symptom') {
-      await prisma.daishaSymptom.delete({ where: { id } });
+      await sql`DELETE FROM "DaishaSymptom" WHERE id = ${id}`;
       return NextResponse.json({ success: true, message: 'Gejala kerusakan berhasil dihapus.' });
     }
 

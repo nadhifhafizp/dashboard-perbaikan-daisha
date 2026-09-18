@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import sql from '@/lib/db';
 import { parseAndVerifySession } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
@@ -17,10 +17,13 @@ async function generateRequestNumber(): Promise<string> {
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
   const prefix = `REQ-${dateStr}-`;
 
-  const lastRequest = await prisma.sectionRequest.findFirst({
-    where: { nomorRequest: { startsWith: prefix } },
-    orderBy: { nomorRequest: 'desc' },
-  });
+  const [lastRequest] = await sql<Array<{ nomorRequest: string }>>`
+    SELECT "nomorRequest"
+    FROM "SectionRequest"
+    WHERE "nomorRequest" LIKE ${prefix + '%'}
+    ORDER BY "nomorRequest" DESC
+    LIMIT 1
+  `;
 
   let seq = 1;
   if (lastRequest) {
@@ -43,25 +46,34 @@ export async function GET(request: Request) {
     const status = searchParams.get('status');
     const seksi = searchParams.get('seksi');
 
-    const where: Record<string, unknown> = {};
+    const filterByUser = session.user.role === 'USER_SEKSI' ? session.user.username : null;
+    const filterStatus = status && status !== 'all' ? status : null;
+    const filterSeksi = seksi && seksi !== 'all' ? seksi : null;
 
-    // USER_SEKSI hanya bisa lihat request dari seksinya sendiri
-    if (session.user.role === 'USER_SEKSI') {
-      where.dibuatOleh = session.user.username;
-    }
-
-    if (status && status !== 'all') {
-      where.status = status;
-    }
-    if (seksi && seksi !== 'all') {
-      where.seksiPemohon = seksi;
-    }
-
-    const requests = await prisma.sectionRequest.findMany({
-      where,
-      include: { materials: true },
-      orderBy: { waktuDibuat: 'desc' },
-    });
+    const requests = await sql`
+      SELECT 
+        sr.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', srm.id,
+              'sectionRequestId', srm."sectionRequestId",
+              'namaKomponen', srm."namaKomponen",
+              'qty', srm.qty,
+              'keterangan', srm.keterangan
+            ) ORDER BY srm.id ASC
+          ) FILTER (WHERE srm.id IS NOT NULL),
+          '[]'::json
+        ) as materials
+      FROM "SectionRequest" sr
+      LEFT JOIN "SectionRequestMaterial" srm ON srm."sectionRequestId" = sr.id
+      WHERE 
+        (${filterByUser}::text IS NULL OR sr."dibuatOleh" = ${filterByUser})
+        AND (${filterStatus}::text IS NULL OR sr.status = ${filterStatus})
+        AND (${filterSeksi}::text IS NULL OR sr."seksiPemohon" = ${filterSeksi})
+      GROUP BY sr.id
+      ORDER BY sr."waktuDibuat" DESC
+    `;
 
     return NextResponse.json({ success: true, requests });
   } catch (error) {
@@ -93,21 +105,39 @@ export async function POST(request: Request) {
 
       const nomorRequest = await generateRequestNumber();
 
-      const created = await prisma.sectionRequest.create({
-        data: {
-          nomorRequest,
-          seksiPemohon,
-          picPemohon,
-          kontakPemohon: kontakPemohon || null,
-          namaBarang,
-          spesifikasi: spesifikasi || null,
-          jumlah: jumlah || 1,
-          satuan: satuan || 'pcs',
-          urgensi: urgensi || 'Normal',
-          catatan: catatan || null,
-          dibuatOleh: session.user.username,
-        },
-      });
+      const [created] = await sql`
+        INSERT INTO "SectionRequest" (
+          "nomorRequest",
+          "seksiPemohon",
+          "picPemohon",
+          "kontakPemohon",
+          "namaBarang",
+          "spesifikasi",
+          "jumlah",
+          "satuan",
+          "urgensi",
+          "catatan",
+          "dibuatOleh",
+          "waktuDibuat",
+          "waktuUpdate"
+        )
+        VALUES (
+          ${nomorRequest},
+          ${seksiPemohon},
+          ${picPemohon},
+          ${kontakPemohon || null},
+          ${namaBarang},
+          ${spesifikasi || null},
+          ${jumlah || 1},
+          ${satuan || 'pcs'},
+          ${urgensi || 'Normal'},
+          ${catatan || null},
+          ${session.user.username},
+          NOW(),
+          NOW()
+        )
+        RETURNING *
+      `;
 
       return NextResponse.json({
         success: true,
@@ -128,17 +158,35 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'ID dan status baru wajib diisi.' }, { status: 400 });
       }
 
-      const updateData: Record<string, unknown> = { status: newStatus };
-      if (alasanTolak !== undefined) updateData.alasanTolak = alasanTolak;
-      if (picBengkel !== undefined) updateData.picBengkel = picBengkel;
-      if (estimasi !== undefined) updateData.estimasi = estimasi;
-      if (catatanAdmin !== undefined) updateData.catatanAdmin = catatanAdmin;
-      if (newStatus === 'Selesai') updateData.waktuSelesai = new Date();
+      const [current] = await sql<Array<{
+        alasanTolak: string | null;
+        picBengkel: string | null;
+        estimasi: string | null;
+        catatanAdmin: string | null;
+        waktuSelesai: Date | null;
+      }>>`
+        SELECT "alasanTolak", "picBengkel", "estimasi", "catatanAdmin", "waktuSelesai"
+        FROM "SectionRequest"
+        WHERE id = ${Number(id)}
+      `;
 
-      const updated = await prisma.sectionRequest.update({
-        where: { id },
-        data: updateData,
-      });
+      if (!current) {
+        return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
+      }
+
+      const [updated] = await sql<Array<{ nomorRequest: string }>>`
+        UPDATE "SectionRequest"
+        SET
+          status = ${newStatus},
+          "alasanTolak" = ${alasanTolak !== undefined ? alasanTolak : current.alasanTolak},
+          "picBengkel" = ${picBengkel !== undefined ? picBengkel : current.picBengkel},
+          "estimasi" = ${estimasi !== undefined ? estimasi : current.estimasi},
+          "catatanAdmin" = ${catatanAdmin !== undefined ? catatanAdmin : current.catatanAdmin},
+          "waktuSelesai" = ${newStatus === 'Selesai' ? new Date() : current.waktuSelesai},
+          "waktuUpdate" = NOW()
+        WHERE id = ${Number(id)}
+        RETURNING *
+      `;
 
       return NextResponse.json({
         success: true,
@@ -159,7 +207,9 @@ export async function POST(request: Request) {
       }
 
       // Cek stok mencukupi
-      const sparepart = await prisma.sparepart.findUnique({ where: { namaKomponen } });
+      const [sparepart] = await sql<Array<{ namaKomponen: string; stokGudang: number }>>`
+        SELECT "namaKomponen", "stokGudang" FROM "Sparepart" WHERE "namaKomponen" = ${namaKomponen} LIMIT 1
+      `;
       if (!sparepart) {
         return NextResponse.json({ error: `Sparepart "${namaKomponen}" tidak ditemukan.` }, { status: 404 });
       }
@@ -167,27 +217,33 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `Stok "${namaKomponen}" tidak mencukupi (sisa: ${sparepart.stokGudang}).` }, { status: 400 });
       }
 
-      const reqData = await prisma.sectionRequest.findUnique({ where: { id: sectionRequestId } });
+      const [reqData] = await sql<Array<{ nomorRequest: string; namaBarang: string }>>`
+        SELECT "nomorRequest", "namaBarang" FROM "SectionRequest" WHERE id = ${Number(sectionRequestId)} LIMIT 1
+      `;
 
       // Transaksi: tambah material + kurangi stok + catat log
-      await prisma.$transaction([
-        prisma.sectionRequestMaterial.create({
-          data: { sectionRequestId, namaKomponen, qty, keterangan: keterangan || null },
-        }),
-        prisma.sparepart.update({
-          where: { namaKomponen },
-          data: { stokGudang: { decrement: qty } },
-        }),
-        prisma.sparepartLog.create({
-          data: {
-            namaKomponen,
-            tipe: 'OUT',
-            qty,
-            referensi: reqData?.nomorRequest || `REQ-${sectionRequestId}`,
-            keterangan: `Pemakaian untuk request seksi: ${reqData?.namaBarang || '-'}`,
-          },
-        }),
-      ]);
+      await sql.begin(async (tx) => {
+        await tx`
+          INSERT INTO "SectionRequestMaterial" ("sectionRequestId", "namaKomponen", qty, keterangan)
+          VALUES (${Number(sectionRequestId)}, ${namaKomponen}, ${Number(qty)}, ${keterangan || null})
+        `;
+        await tx`
+          UPDATE "Sparepart"
+          SET "stokGudang" = "stokGudang" - ${Number(qty)}
+          WHERE "namaKomponen" = ${namaKomponen}
+        `;
+        await tx`
+          INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
+          VALUES (
+            ${namaKomponen},
+            'OUT',
+            ${Number(qty)},
+            ${reqData?.nomorRequest || `REQ-${sectionRequestId}`},
+            ${`Pemakaian untuk request seksi: ${reqData?.namaBarang || '-'}`},
+            NOW()
+          )
+        `;
+      });
 
       return NextResponse.json({ success: true, message: 'Material berhasil ditambahkan dan stok dipotong.' });
     }
@@ -202,7 +258,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'ID request wajib diisi.' }, { status: 400 });
       }
 
-      await prisma.sectionRequest.delete({ where: { id } });
+      await sql.begin(async (tx) => {
+        await tx`DELETE FROM "SectionRequestMaterial" WHERE "sectionRequestId" = ${Number(id)}`;
+        await tx`DELETE FROM "SectionRequest" WHERE id = ${Number(id)}`;
+      });
 
       return NextResponse.json({ success: true, message: 'Request berhasil dihapus.' });
     }

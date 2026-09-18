@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { parseAndVerifySession, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { sanitizeString } from '@/lib/sanitize';
-import { prisma } from '@/lib/prisma';
+import sql from '@/lib/db';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { parseToTimestamp } from '@/lib/date';
@@ -10,7 +10,7 @@ import { parseToTimestamp } from '@/lib/date';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// 1. FUNGSI GET: Membaca data langsung dari SQLite via Prisma (Kecepatan Instan < 5ms)
+// 1. FUNGSI GET: Membaca data langsung dari PostgreSQL via postgres.js (< 5ms)
 export async function GET() {
   // Proteksi: Wajib login (Admin atau Operator)
   const cookieStore = await cookies();
@@ -25,37 +25,60 @@ export async function GET() {
   }
 
   try {
-    const tickets = await prisma.ticket.findMany({
-      include: {
-        daisha: true,
-        details: true,
-      },
-      orderBy: {
-        waktuMasuk: 'desc',
-      },
-    });
+    const tickets = await sql`
+      SELECT 
+        t."idTiket",
+        t."status",
+        t."namaPelapor",
+        t."noDaisha",
+        t."waktuMasuk",
+        t."waktuSelesai",
+        t."catatan",
+        m."namaDaisha",
+        m."seksi",
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'idDetail', d."idDetail",
+              'komponen', d."komponen",
+              'gejala', d."gejala",
+              'tindakan', d."tindakan",
+              'qty', d."qty"
+            )
+          ) FILTER (WHERE d."idDetail" IS NOT NULL),
+          '[]'
+        ) AS details
+      FROM "Ticket" t
+      LEFT JOIN "MasterDaisha" m ON t."noDaisha" = m."noDaisha"
+      LEFT JOIN "TicketDetail" d ON t."idTiket" = d."idTiket"
+      GROUP BY t."idTiket", m."namaDaisha", m."seksi"
+      ORDER BY t."waktuMasuk" DESC
+    `;
 
     // Helper format tanggal ke format standar tampilan Indonesia: DD/MM/YYYY HH:mm
     const pad = (n: number) => String(n).padStart(2, '0');
-    const formatIndoDate = (d: Date | null) => {
+    const formatIndoDate = (d: Date | string | null) => {
       if (!d) return '-';
-      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      const date = typeof d === 'string' ? new Date(d) : d;
+      if (isNaN(date.getTime())) return '-';
+      return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
     };
 
     // Format output 100% kompatibel dengan frontend tanpa merubah UI/komponen apa pun
     const formattedData = tickets.map((t) => {
-      const kategoriList = Array.from(new Set(t.details.map((d) => d.komponen))).filter(Boolean);
-      const detailStr = t.details.length > 0
-        ? t.details.map((d, idx) => `${idx + 1}. [${d.komponen}] ${d.gejala} (Qty: ${d.qty}, Tindakan: ${d.tindakan})`).join(' | ')
+      const detailsList = Array.isArray(t.details) ? t.details : [];
+      const kategoriList = Array.from(new Set(detailsList.map((d: { komponen: string }) => d.komponen))).filter(Boolean);
+      const detailStr = detailsList.length > 0
+        ? detailsList.map((d: { komponen: string; gejala: string; qty: number; tindakan: string }, idx: number) => `${idx + 1}. [${d.komponen}] ${d.gejala} (Qty: ${d.qty}, Tindakan: ${d.tindakan})`).join(' | ')
         : '-';
 
       return {
         ID_Tiket: t.idTiket,
         Status: t.status,
         Nama_Pelapor: t.namaPelapor,
-        Seksi: t.daisha?.seksi || '-',
+        Seksi: t.seksi || '-',
         No_Daisha: t.noDaisha,
-        Nama_Daisha: t.daisha?.namaDaisha || '-',
+        Nama_Daisha: t.namaDaisha || '-',
         Kategori_Kerusakan: kategoriList.join(', ') || 'Umum',
         Detail_Kerusakan: detailStr,
         Catatan: t.catatan || '-',
@@ -66,20 +89,20 @@ export async function GET() {
 
     return NextResponse.json(formattedData, {
       headers: {
-        'X-Database': 'SQLite-Prisma',
+        'X-Database': 'PostgreSQL-Native',
         'Cache-Control': 'no-store',
       },
     });
   } catch (error: unknown) {
-    console.error("Prisma GET Error:", error);
+    console.error("Database GET Error:", error);
     return NextResponse.json(
-      { error: "Gagal memuat data tiket dari database lokal" },
+      { error: "Gagal memuat data tiket dari database" },
       { status: 500 }
     );
   }
 }
 
-// 2. FUNGSI POST: Create, Update, Delete tiket langsung ke SQLite via Prisma
+// 2. FUNGSI POST: Create, Update, Delete tiket langsung via postgres.js
 export async function POST(request: Request) {
   // Proteksi Autentikasi Umum
   const cookieStore = await cookies();
@@ -133,11 +156,12 @@ export async function POST(request: Request) {
       // Pastikan Master Daisha terdaftar
       const sizeInfo = detectDaishaSize(noDaisha);
       const ukuran = sizeInfo?.code || 'Standard';
-      await prisma.masterDaisha.upsert({
-        where: { noDaisha },
-        update: { namaDaisha, seksi, ukuran },
-        create: { noDaisha, namaDaisha, seksi, ukuran },
-      });
+      await sql`
+        INSERT INTO "MasterDaisha" ("noDaisha", "namaDaisha", "ukuran", "seksi")
+        VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi})
+        ON CONFLICT ("noDaisha") DO UPDATE 
+        SET "namaDaisha" = EXCLUDED."namaDaisha", "ukuran" = EXCLUDED."ukuran", "seksi" = EXCLUDED."seksi"
+      `;
 
       // Parse waktu masuk secara konsisten (aman format DD/MM/YYYY maupun ISO)
       let parsedDateMasuk = new Date();
@@ -147,51 +171,37 @@ export async function POST(request: Request) {
       }
 
       // Buat Tiket
-      await prisma.ticket.create({
-        data: {
-          idTiket,
-          noDaisha,
-          namaPelapor,
-          status: 'Open',
-          waktuMasuk: parsedDateMasuk,
-          catatan: '-',
-        },
-      });
+      await sql`
+        INSERT INTO "Ticket" ("idTiket", "noDaisha", "namaPelapor", "status", "waktuMasuk", "catatan")
+        VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, 'Open', ${parsedDateMasuk}, '-')
+      `;
 
-      // Pecah rincian kerusakan ke TicketDetail (createMany lebih efisien dari loop sequential)
+      // Pecah rincian kerusakan ke TicketDetail
       const parsedDetails = parseTicketDamageDetail(detail);
       if (parsedDetails.items.length > 0) {
-        await prisma.ticketDetail.createMany({
-          data: parsedDetails.items.map((it) => ({
-            idTiket,
-            komponen: it.komponen,
-            gejala: it.gejala,
-            tindakan: it.tindakan || 'Repair',
-            qty: it.qty || 1,
-          })),
-        });
+        await sql`
+          INSERT INTO "TicketDetail" ("idTiket", "komponen", "gejala", "tindakan", "qty")
+          VALUES ${sql(parsedDetails.items.map(it => [idTiket, it.komponen, it.gejala, it.tindakan || 'Repair', it.qty || 1]))}
+        `;
       }
 
       // Pengurangan stok otomatis untuk komponen Ganti Baru (Projek 3)
       const gantiItems = parsedDetails.items.filter((it) => it.tindakan === 'Ganti');
       await Promise.allSettled(
         gantiItems.map((it) =>
-          prisma.sparepart
-            .update({
-              where: { namaKomponen: it.komponen },
-              data: { stokGudang: { decrement: it.qty || 1 } },
-            })
-            .catch((e) => {
-              // Lanjutkan jika komponen belum terdaftar di tabel Sparepart
-              console.warn(`[Sparepart] Komponen '${it.komponen}' tidak ditemukan, skip pengurangan stok:`, e);
-            })
+          sql`
+            UPDATE "Sparepart"
+            SET "stokGudang" = "stokGudang" - ${it.qty || 1}
+            WHERE "namaKomponen" = ${it.komponen}
+          `.catch((e) => {
+            console.warn(`[Sparepart] Komponen '${it.komponen}' tidak ditemukan, skip pengurangan stok:`, e);
+          })
         )
       );
 
-
       return NextResponse.json({
         success: true,
-        message: `Tiket ${idTiket} berhasil dibuat di database lokal`,
+        message: `Tiket ${idTiket} berhasil dibuat di database`,
         idTiket,
       });
     }
@@ -225,7 +235,7 @@ export async function POST(request: Request) {
         );
       }
 
-      // Parse waktu selesai secara konsisten (aman format DD/MM/YYYY maupun ISO)
+      // Parse waktu selesai secara konsisten
       let parsedWaktuSelesai: Date | null = null;
       if (normalizedStatus === 'Done') {
         if (waktuKeluar && waktuKeluar !== '-') {
@@ -236,15 +246,14 @@ export async function POST(request: Request) {
         }
       }
 
-      await prisma.ticket.update({
-        where: { idTiket },
-        data: {
-          status: normalizedStatus,
-          waktuSelesai: parsedWaktuSelesai,
-          catatan: catatan && catatan !== '-' ? catatan : undefined,
-        },
-      });
-
+      await sql`
+        UPDATE "Ticket"
+        SET 
+          "status" = ${normalizedStatus},
+          "waktuSelesai" = ${parsedWaktuSelesai},
+          "catatan" = ${catatan && catatan !== '-' ? catatan : null}
+        WHERE "idTiket" = ${idTiket}
+      `;
 
       return NextResponse.json({
         success: true,
@@ -269,9 +278,8 @@ export async function POST(request: Request) {
         );
       }
 
-      await prisma.ticketDetail.deleteMany({ where: { idTiket } });
-      await prisma.ticket.delete({ where: { idTiket } });
-
+      await sql`DELETE FROM "TicketDetail" WHERE "idTiket" = ${idTiket}`;
+      await sql`DELETE FROM "Ticket" WHERE "idTiket" = ${idTiket}`;
 
       return NextResponse.json({
         success: true,
@@ -298,42 +306,38 @@ export async function POST(request: Request) {
       // Update Master Daisha
       const sizeInfo = detectDaishaSize(noDaisha);
       const ukuran = sizeInfo?.code || 'Standard';
-      await prisma.masterDaisha.upsert({
-        where: { noDaisha },
-        update: { namaDaisha, seksi, ukuran },
-        create: { noDaisha, namaDaisha, seksi, ukuran },
-      });
+      await sql`
+        INSERT INTO "MasterDaisha" ("noDaisha", "namaDaisha", "ukuran", "seksi")
+        VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi})
+        ON CONFLICT ("noDaisha") DO UPDATE 
+        SET "namaDaisha" = EXCLUDED."namaDaisha", "ukuran" = EXCLUDED."ukuran", "seksi" = EXCLUDED."seksi"
+      `;
 
       // Update Ticket
       const waktuMasukRaw = sanitizeString(body.waktuMasuk, 30);
-      let parsedWaktuMasuk: Date | undefined;
+      let parsedWaktuMasuk: Date | null = null;
       if (waktuMasukRaw && waktuMasukRaw !== '-') {
         const d = new Date(waktuMasukRaw);
         if (!isNaN(d.getTime())) parsedWaktuMasuk = d;
       }
 
-      await prisma.ticket.update({
-        where: { idTiket },
-        data: {
-          noDaisha,
-          namaPelapor: namaPelapor || session.user.name || 'Operator',
-          ...(parsedWaktuMasuk ? { waktuMasuk: parsedWaktuMasuk } : {}),
-        },
-      });
+      await sql`
+        UPDATE "Ticket"
+        SET 
+          "noDaisha" = ${noDaisha},
+          "namaPelapor" = ${namaPelapor || session.user.name || 'Operator'},
+          "waktuMasuk" = COALESCE(${parsedWaktuMasuk}, "waktuMasuk")
+        WHERE "idTiket" = ${idTiket}
+      `;
 
-      // Update Rincian Kerusakan (createMany lebih efisien dari loop sequential)
-      await prisma.ticketDetail.deleteMany({ where: { idTiket } });
+      // Update Rincian Kerusakan
+      await sql`DELETE FROM "TicketDetail" WHERE "idTiket" = ${idTiket}`;
       const parsedDetails = parseTicketDamageDetail(detail);
       if (parsedDetails.items.length > 0) {
-        await prisma.ticketDetail.createMany({
-          data: parsedDetails.items.map((it) => ({
-            idTiket,
-            komponen: it.komponen,
-            gejala: it.gejala,
-            tindakan: it.tindakan || 'Repair',
-            qty: it.qty || 1,
-          })),
-        });
+        await sql`
+          INSERT INTO "TicketDetail" ("idTiket", "komponen", "gejala", "tindakan", "qty")
+          VALUES ${sql(parsedDetails.items.map(it => [idTiket, it.komponen, it.gejala, it.tindakan || 'Repair', it.qty || 1]))}
+        `;
       }
 
       return NextResponse.json({
@@ -344,7 +348,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: "Aksi tidak dikenali" }, { status: 400 });
   } catch (error: unknown) {
-    console.error("Prisma POST Error:", error);
+    console.error("Database POST Error:", error);
     return NextResponse.json(
       { error: "Terjadi kesalahan internal pada server database" },
       { status: 500 }

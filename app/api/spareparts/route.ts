@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import sql from '@/lib/db';
 import { parseAndVerifySession } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
@@ -27,17 +27,35 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const withLogs = searchParams.get('logs') === 'true';
     const kategori = searchParams.get('kategori');
+    const filterKategori = kategori && kategori !== 'all' ? kategori : null;
 
-    const where: Record<string, unknown> = {};
-    if (kategori && kategori !== 'all') {
-      where.kategori = kategori;
-    }
-
-    const spareparts = await prisma.sparepart.findMany({
-      where,
-      include: withLogs ? { logs: { orderBy: { tanggal: 'desc' }, take: 50 } } : undefined,
-      orderBy: { namaKomponen: 'asc' },
-    });
+    const spareparts = withLogs
+      ? await sql`
+          SELECT 
+            s.*,
+            COALESCE(
+              (
+                SELECT json_agg(l)
+                FROM (
+                  SELECT sl.*
+                  FROM "SparepartLog" sl
+                  WHERE sl."namaKomponen" = s."namaKomponen"
+                  ORDER BY sl.tanggal DESC
+                  LIMIT 50
+                ) l
+              ),
+              '[]'::json
+            ) as logs
+          FROM "Sparepart" s
+          WHERE (${filterKategori}::text IS NULL OR s.kategori = ${filterKategori})
+          ORDER BY s."namaKomponen" ASC
+        `
+      : await sql`
+          SELECT *
+          FROM "Sparepart"
+          WHERE (${filterKategori}::text IS NULL OR kategori = ${filterKategori})
+          ORDER BY "namaKomponen" ASC
+        `;
 
     return NextResponse.json({ success: true, spareparts });
   } catch (error) {
@@ -65,32 +83,23 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama komponen dan satuan wajib diisi.' }, { status: 400 });
       }
 
-      const exists = await prisma.sparepart.findUnique({ where: { namaKomponen } });
+      const [exists] = await sql`SELECT "namaKomponen" FROM "Sparepart" WHERE "namaKomponen" = ${namaKomponen} LIMIT 1`;
       if (exists) {
         return NextResponse.json({ error: `Sparepart "${namaKomponen}" sudah ada.` }, { status: 400 });
       }
 
-      const created = await prisma.sparepart.create({
-        data: {
-          namaKomponen,
-          kategori: kategori || 'Umum',
-          stokGudang: stokGudang || 0,
-          satuan,
-          minStok: minStok || 0,
-          lokasi: lokasi || null,
-        },
-      });
+      const [created] = await sql`
+        INSERT INTO "Sparepart" ("namaKomponen", kategori, "stokGudang", satuan, "minStok", lokasi)
+        VALUES (${namaKomponen}, ${kategori || 'Umum'}, ${Number(stokGudang) || 0}, ${satuan}, ${Number(minStok) || 0}, ${lokasi || null})
+        RETURNING *
+      `;
 
       // Log stok awal jika ada
-      if (stokGudang && stokGudang > 0) {
-        await prisma.sparepartLog.create({
-          data: {
-            namaKomponen,
-            tipe: 'IN',
-            qty: stokGudang,
-            keterangan: 'Stok awal saat pendaftaran',
-          },
-        });
+      if (stokGudang && Number(stokGudang) > 0) {
+        await sql`
+          INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, keterangan, tanggal)
+          VALUES (${namaKomponen}, 'IN', ${Number(stokGudang)}, 'Stok awal saat pendaftaran', NOW())
+        `;
       }
 
       return NextResponse.json({ success: true, message: `Sparepart "${namaKomponen}" berhasil ditambahkan.`, sparepart: created });
@@ -104,16 +113,31 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama komponen wajib diisi.' }, { status: 400 });
       }
 
-      const updateData: Record<string, unknown> = {};
-      if (kategori !== undefined) updateData.kategori = kategori;
-      if (satuan !== undefined) updateData.satuan = satuan;
-      if (minStok !== undefined) updateData.minStok = minStok;
-      if (lokasi !== undefined) updateData.lokasi = lokasi;
+      const [current] = await sql<Array<{
+        kategori: string;
+        satuan: string;
+        minStok: number;
+        lokasi: string | null;
+      }>>`
+        SELECT kategori, satuan, "minStok", lokasi
+        FROM "Sparepart"
+        WHERE "namaKomponen" = ${namaKomponen}
+      `;
 
-      const updated = await prisma.sparepart.update({
-        where: { namaKomponen },
-        data: updateData,
-      });
+      if (!current) {
+        return NextResponse.json({ error: 'Sparepart tidak ditemukan.' }, { status: 404 });
+      }
+
+      const [updated] = await sql`
+        UPDATE "Sparepart"
+        SET
+          kategori = ${kategori !== undefined ? kategori : current.kategori},
+          satuan = ${satuan !== undefined ? satuan : current.satuan},
+          "minStok" = ${minStok !== undefined ? Number(minStok) : current.minStok},
+          lokasi = ${lokasi !== undefined ? lokasi : current.lokasi}
+        WHERE "namaKomponen" = ${namaKomponen}
+        RETURNING *
+      `;
 
       return NextResponse.json({ success: true, message: 'Info sparepart diperbarui.', sparepart: updated });
     }
@@ -122,24 +146,21 @@ export async function POST(request: Request) {
     if (action === 'RESTOCK') {
       const { namaKomponen, qty, keterangan } = body;
 
-      if (!namaKomponen || !qty || qty <= 0) {
+      if (!namaKomponen || !qty || Number(qty) <= 0) {
         return NextResponse.json({ error: 'Nama komponen dan jumlah restock wajib diisi.' }, { status: 400 });
       }
 
-      await prisma.$transaction([
-        prisma.sparepart.update({
-          where: { namaKomponen },
-          data: { stokGudang: { increment: qty } },
-        }),
-        prisma.sparepartLog.create({
-          data: {
-            namaKomponen,
-            tipe: 'IN',
-            qty,
-            keterangan: keterangan || 'Restock manual',
-          },
-        }),
-      ]);
+      await sql.begin(async (tx) => {
+        await tx`
+          UPDATE "Sparepart"
+          SET "stokGudang" = "stokGudang" + ${Number(qty)}
+          WHERE "namaKomponen" = ${namaKomponen}
+        `;
+        await tx`
+          INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, keterangan, tanggal)
+          VALUES (${namaKomponen}, 'IN', ${Number(qty)}, ${keterangan || 'Restock manual'}, NOW())
+        `;
+      });
 
       return NextResponse.json({ success: true, message: `Restock ${qty} unit berhasil.` });
     }
@@ -148,33 +169,31 @@ export async function POST(request: Request) {
     if (action === 'USE') {
       const { namaKomponen, qty, referensi, keterangan } = body;
 
-      if (!namaKomponen || !qty || qty <= 0) {
+      if (!namaKomponen || !qty || Number(qty) <= 0) {
         return NextResponse.json({ error: 'Nama komponen dan jumlah pemakaian wajib diisi.' }, { status: 400 });
       }
 
-      const sparepart = await prisma.sparepart.findUnique({ where: { namaKomponen } });
+      const [sparepart] = await sql<Array<{ stokGudang: number }>>`
+        SELECT "stokGudang" FROM "Sparepart" WHERE "namaKomponen" = ${namaKomponen} LIMIT 1
+      `;
       if (!sparepart) {
         return NextResponse.json({ error: `Sparepart "${namaKomponen}" tidak ditemukan.` }, { status: 404 });
       }
-      if (sparepart.stokGudang < qty) {
+      if (sparepart.stokGudang < Number(qty)) {
         return NextResponse.json({ error: `Stok tidak mencukupi (sisa: ${sparepart.stokGudang}).` }, { status: 400 });
       }
 
-      await prisma.$transaction([
-        prisma.sparepart.update({
-          where: { namaKomponen },
-          data: { stokGudang: { decrement: qty } },
-        }),
-        prisma.sparepartLog.create({
-          data: {
-            namaKomponen,
-            tipe: 'OUT',
-            qty,
-            referensi: referensi || null,
-            keterangan: keterangan || 'Pemakaian manual',
-          },
-        }),
-      ]);
+      await sql.begin(async (tx) => {
+        await tx`
+          UPDATE "Sparepart"
+          SET "stokGudang" = "stokGudang" - ${Number(qty)}
+          WHERE "namaKomponen" = ${namaKomponen}
+        `;
+        await tx`
+          INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
+          VALUES (${namaKomponen}, 'OUT', ${Number(qty)}, ${referensi || null}, ${keterangan || 'Pemakaian manual'}, NOW())
+        `;
+      });
 
       return NextResponse.json({ success: true, message: `Pengeluaran ${qty} unit berhasil.` });
     }
@@ -186,10 +205,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama komponen wajib diisi.' }, { status: 400 });
       }
 
-      // Hapus log dulu (cascade), lalu sparepart
-      await prisma.sparepartLog.deleteMany({ where: { namaKomponen } });
-      await prisma.sectionRequestMaterial.deleteMany({ where: { namaKomponen } });
-      await prisma.sparepart.delete({ where: { namaKomponen } });
+      await sql.begin(async (tx) => {
+        await tx`DELETE FROM "SparepartLog" WHERE "namaKomponen" = ${namaKomponen}`;
+        await tx`DELETE FROM "SectionRequestMaterial" WHERE "namaKomponen" = ${namaKomponen}`;
+        await tx`DELETE FROM "Sparepart" WHERE "namaKomponen" = ${namaKomponen}`;
+      });
 
       return NextResponse.json({ success: true, message: `Sparepart "${namaKomponen}" berhasil dihapus.` });
     }
@@ -197,11 +217,18 @@ export async function POST(request: Request) {
     // GET logs untuk sparepart tertentu
     if (action === 'GET_LOGS') {
       const { namaKomponen } = body;
-      const logs = await prisma.sparepartLog.findMany({
-        where: namaKomponen ? { namaKomponen } : undefined,
-        orderBy: { tanggal: 'desc' },
-        take: 100,
-      });
+      const logs = namaKomponen
+        ? await sql`
+            SELECT * FROM "SparepartLog"
+            WHERE "namaKomponen" = ${namaKomponen}
+            ORDER BY tanggal DESC
+            LIMIT 100
+          `
+        : await sql`
+            SELECT * FROM "SparepartLog"
+            ORDER BY tanggal DESC
+            LIMIT 100
+          `;
       return NextResponse.json({ success: true, logs });
     }
 

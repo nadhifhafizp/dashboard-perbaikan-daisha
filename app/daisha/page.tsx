@@ -31,10 +31,6 @@ export default function DaishaDashboardPage() {
   const [search, setSearch] = useState('');
   const [filterSeksi, setFilterSeksi] = useState('');
   const [filterDaisha, setFilterDaisha] = useState('');
-  const [filterNoDaisha, setFilterNoDaisha] = useState('');
-  const [filterKerusakan, setFilterKerusakan] = useState('');
-  const [filterDetail, setFilterDetail] = useState('');
-  const [filterPelapor, setFilterPelapor] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterHanyaBerulang, setFilterHanyaBerulang] = useState(false);
   const [startDate, setStartDate] = useState('');
@@ -45,10 +41,10 @@ export default function DaishaDashboardPage() {
     search,
     filterSeksi,
     filterDaisha,
-    filterNoDaisha,
-    filterKerusakan,
-    filterDetail,
-    filterPelapor,
+    filterNoDaisha: '',
+    filterKerusakan: '',
+    filterDetail: '',
+    filterPelapor: '',
     filterStatus,
     filterHanyaBerulang,
     startDate,
@@ -76,10 +72,6 @@ export default function DaishaDashboardPage() {
     setSearch('');
     setFilterSeksi('');
     setFilterDaisha('');
-    setFilterNoDaisha('');
-    setFilterKerusakan('');
-    setFilterDetail('');
-    setFilterPelapor('');
     setFilterStatus('');
     setFilterHanyaBerulang(false);
     setStartDate('');
@@ -93,10 +85,10 @@ export default function DaishaDashboardPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header Halaman dengan Breadcrumb Kembali ke Portal Utama */}
-      <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+      {/* 1. Header & Quick Actions */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 hover:text-red-700 hover:bg-red-50 transition border border-slate-200 hover:border-red-200"
@@ -163,14 +155,6 @@ export default function DaishaDashboardPage() {
         setFilterSeksi={setFilterSeksi}
         filterDaisha={filterDaisha}
         setFilterDaisha={setFilterDaisha}
-        filterNoDaisha={filterNoDaisha}
-        setFilterNoDaisha={setFilterNoDaisha}
-        filterKerusakan={filterKerusakan}
-        setFilterKerusakan={setFilterKerusakan}
-        filterDetail={filterDetail}
-        setFilterDetail={setFilterDetail}
-        filterPelapor={filterPelapor}
-        setFilterPelapor={setFilterPelapor}
         filterStatus={filterStatus}
         setFilterStatus={setFilterStatus}
         startDate={startDate}
@@ -180,10 +164,6 @@ export default function DaishaDashboardPage() {
         filterHanyaBerulang={filterHanyaBerulang}
         setFilterHanyaBerulang={setFilterHanyaBerulang}
         pilihanDaishaFiltered={filterOptions.pilihanDaisha}
-        pilihanKomponenFiltered={filterOptions.pilihanKomponen}
-        pilihanDetailFiltered={filterOptions.pilihanDetail}
-        pilihanNoDaisha={filterOptions.pilihanNoDaisha}
-        pilihanPelapor={filterOptions.pilihanPelapor}
         handleQuickPreset={handleQuickPreset}
         handleResetFilter={handleResetFilter}
         filteredCount={filteredData.length}

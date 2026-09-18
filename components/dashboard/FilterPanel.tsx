@@ -23,19 +23,6 @@ interface FilterPanelProps {
   handleResetFilter: () => void;
   filteredCount: number;
   totalCount: number;
-  // Props opsional yang telah dihilangkan dari tampilan UI (kompatibilitas backward)
-  filterNoDaisha?: string;
-  setFilterNoDaisha?: (v: string) => void;
-  filterKerusakan?: string;
-  setFilterKerusakan?: (v: string) => void;
-  filterDetail?: string;
-  setFilterDetail?: (v: string) => void;
-  filterPelapor?: string;
-  setFilterPelapor?: (v: string) => void;
-  pilihanKomponenFiltered?: string[];
-  pilihanDetailFiltered?: string[];
-  pilihanNoDaisha?: string[];
-  pilihanPelapor?: string[];
 }
 
 export default function FilterPanel({
