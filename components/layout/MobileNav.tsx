@@ -6,6 +6,20 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useServerInfo } from '@/hooks/useServerInfo';
+import {
+  Home,
+  BarChart2,
+  PenSquare,
+  ClipboardList,
+  Settings,
+  SendHorizonal,
+  Package,
+  LogOut,
+  Menu,
+  X,
+  Copy,
+  Check,
+} from 'lucide-react';
 
 interface MobileNavProps {
   isMobileMenuOpen: boolean;
@@ -21,41 +35,41 @@ export default function MobileNav({
   const { serverInfo, copied, copyUrl } = useServerInfo();
 
   // Build bottom nav items based on role and active module
-  const navItems: { href: string; emoji: string; label: string }[] = [];
+  const navItems: { href: string; icon: React.ElementType; label: string }[] = [];
 
   if (isAdmin) {
     if (pathname.startsWith('/request')) {
       navItems.push(
-        { href: '/', emoji: '🏠', label: 'Portal' },
-        { href: '/request', emoji: '📨', label: 'Request' },
-        { href: '/daisha', emoji: '📊', label: 'Daisha' },
-        { href: '/spareparts', emoji: '📦', label: 'Stok' },
+        { href: '/', icon: Home, label: 'Portal' },
+        { href: '/request', icon: SendHorizonal, label: 'Request' },
+        { href: '/daisha', icon: BarChart2, label: 'Daisha' },
+        { href: '/spareparts', icon: Package, label: 'Stok' },
       );
     } else if (pathname.startsWith('/spareparts')) {
       navItems.push(
-        { href: '/', emoji: '🏠', label: 'Portal' },
-        { href: '/spareparts', emoji: '📦', label: 'Stok' },
-        { href: '/daisha', emoji: '📊', label: 'Daisha' },
-        { href: '/request', emoji: '📨', label: 'Request' },
+        { href: '/', icon: Home, label: 'Portal' },
+        { href: '/spareparts', icon: Package, label: 'Stok' },
+        { href: '/daisha', icon: BarChart2, label: 'Daisha' },
+        { href: '/request', icon: SendHorizonal, label: 'Request' },
       );
     } else {
       // Modul Daisha (termasuk /daisha, /input, /riwayat, /admin)
       navItems.push(
-        { href: '/', emoji: '🏠', label: 'Portal' },
-        { href: '/daisha', emoji: '📊', label: 'Analitik' },
-        { href: '/input', emoji: '📝', label: 'Lapor' },
-        { href: '/riwayat', emoji: '📋', label: 'Antrean' },
-        { href: '/admin', emoji: '⚙️', label: 'Tindakan' },
+        { href: '/', icon: Home, label: 'Portal' },
+        { href: '/daisha', icon: BarChart2, label: 'Analitik' },
+        { href: '/input', icon: PenSquare, label: 'Lapor' },
+        { href: '/riwayat', icon: ClipboardList, label: 'Antrean' },
+        { href: '/admin', icon: Settings, label: 'Tindakan' },
       );
     }
   } else if (isOperator) {
     navItems.push(
-      { href: '/input', emoji: '📝', label: 'Lapor' },
-      { href: '/riwayat', emoji: '📋', label: 'Status' },
+      { href: '/input', icon: PenSquare, label: 'Lapor' },
+      { href: '/riwayat', icon: ClipboardList, label: 'Status' },
     );
   } else if (isSeksi) {
     navItems.push(
-      { href: '/request', emoji: '📨', label: 'Request' },
+      { href: '/request', icon: SendHorizonal, label: 'Request' },
     );
   }
 
@@ -84,45 +98,58 @@ export default function MobileNav({
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>{serverInfo.ip}:{serverInfo.port}</span>
-              <span className="text-[9px]">{copied ? '✓' : '📋'}</span>
+              {copied ? (
+                <Check className="w-3 h-3 text-emerald-300" />
+              ) : (
+                <Copy className="w-3 h-3 text-red-300" />
+              )}
             </button>
           )}
         </div>
         <button
           type="button"
           onClick={onToggleMobileMenu}
-          className="p-2 rounded-lg bg-red-800 text-white focus:outline-none font-bold text-sm cursor-pointer"
+          className="p-2 rounded-lg bg-red-800 text-white focus:outline-none cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+          aria-label={isMobileMenuOpen ? 'Tutup menu' : 'Buka menu'}
         >
-          {isMobileMenuOpen ? '✕ Tutup' : '☰ Menu'}
+          {isMobileMenuOpen ? (
+            <><X className="w-4 h-4" /><span>Tutup</span></>
+          ) : (
+            <><Menu className="w-4 h-4" /><span>Menu</span></>
+          )}
         </button>
       </div>
 
       {/* Bottom Navigation Bar (Khusus Smartphone) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1 flex items-center justify-around shadow-lg">
-        {navItems.map(item => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
-              pathname === item.href ? 'text-red-700 font-black' : 'text-slate-500 font-medium'
-            }`}
-          >
-            <span className="text-base">{item.emoji}</span>
-            <span className="text-[10px] mt-0.5">{item.label}</span>
-            {pathname === item.href && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
-          </Link>
-        ))}
+        {navItems.map(item => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
+                isActive ? 'text-red-700 font-black' : 'text-slate-500 font-medium'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="text-[10px] mt-0.5">{item.label}</span>
+              {isActive && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
+            </Link>
+          );
+        })}
 
         <button
           type="button"
           onClick={openLogoutModal}
           className="flex flex-col items-center justify-center py-1 px-2 text-slate-500 hover:text-red-600 rounded-xl transition cursor-pointer"
+          aria-label="Keluar"
         >
-          <span className="text-base">🚪</span>
+          <LogOut className="w-5 h-5" />
           <span className="text-[10px] mt-0.5">Keluar</span>
         </button>
       </nav>
     </>
   );
 }
-

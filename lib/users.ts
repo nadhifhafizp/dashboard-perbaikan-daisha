@@ -68,21 +68,7 @@ export async function findUserByCredentials(
 
   if (!user) return null;
 
-  let isPasswordValid = verifyPassword(passwordInput, user.password);
-
-  if (!isPasswordValid) {
-    const envPassword = user.role === 'ADMIN' ? process.env.ADMIN_PASSWORD : process.env.OPERATOR_PASSWORD;
-    if (envPassword && passwordInput === envPassword) {
-      isPasswordValid = true;
-      await sql`
-        UPDATE "User"
-        SET "password" = ${hashPassword(passwordInput)}, "updatedAt" = NOW()
-        WHERE "id" = ${user.id}
-      `.catch(() => {});
-    }
-  }
-
-  if (!isPasswordValid) return null;
+  if (!verifyPassword(passwordInput, user.password)) return null;
 
   return {
     id: user.id,

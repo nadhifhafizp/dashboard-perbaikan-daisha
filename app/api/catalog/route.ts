@@ -69,6 +69,9 @@ async function ensureCatalogSeeded(): Promise<void> {
   console.log('[Catalog] Selesai seeder katalog Daisha.');
 }
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * GET /api/catalog - Mengambil data katalog Daisha, Komponen, dan Gejala
  */

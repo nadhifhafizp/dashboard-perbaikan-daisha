@@ -266,13 +266,45 @@ export default function DetailTicketModal({
 
             {/* JIKA TIDAK ADA DATA SAMA SEKALI */}
             {parsed.items.length === 0 && (
-              <div className="p-4 bg-white rounded-xl border border-slate-200 text-slate-400 italic text-center">
-                Tidak ada rincian keluhan spesifik dari pelapor.
-              </div>
+              parsed.isWaitingDiagnosis ? (
+                <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-950 space-y-2.5 animate-fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <span className="font-black text-amber-900 flex items-center gap-1.5 text-xs">
+                      <span>🔍</span>
+                      <span>Menunggu Diagnosa Bengkel</span>
+                    </span>
+                    {onEdit && isOpenStatus && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onEdit(ticket);
+                        }}
+                        className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs rounded-lg transition cursor-pointer flex items-center gap-1 shadow-2xs self-start sm:self-auto"
+                      >
+                        <span>🔧</span>
+                        <span>Input Diagnosa Sekarang</span>
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-slate-600 font-medium leading-relaxed">
+                    Unit didaftarkan langsung ke bengkel dari lini produksi. Teknisi bengkel perlu menginspeksi kondisi fisik Daisha dan menentukan komponen yang perlu diperbaiki atau diganti.
+                  </p>
+                  {parsed.catatan && (
+                    <div className="p-2.5 bg-white rounded-lg border border-amber-300/80 text-[11px] font-semibold text-amber-900">
+                      📝 Catatan Gejala / Indikasi Awal: {parsed.catatan}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="p-4 bg-white rounded-xl border border-slate-200 text-slate-400 italic text-center">
+                  Tidak ada rincian keluhan spesifik dari pelapor.
+                </div>
+              )
             )}
 
             {/* Catatan Tambahan Lokasi / Keterangan Posisi */}
-            {parsed.catatan && (
+            {!parsed.isWaitingDiagnosis && parsed.catatan && (
               <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-950 flex items-start gap-2">
                 <span className="text-sm shrink-0 mt-0.5">📌</span>
                 <div>

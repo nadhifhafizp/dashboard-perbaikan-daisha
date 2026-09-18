@@ -17,9 +17,10 @@ import {
   SendHorizonal,
   Users,
   ArrowLeft,
-  Boxes,
   Menu,
   ScanLine,
+  Copy,
+  Check,
 } from 'lucide-react';
 import PwaInstaller from '../common/PwaInstaller';
 import { useServerInfo } from '@/hooks/useServerInfo';
@@ -160,9 +161,11 @@ export default function Sidebar({
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
               <span className="font-mono">IP: {serverInfo.ip}:{serverInfo.port}</span>
-              <span className="text-[9px] text-emerald-600 group-hover:text-emerald-950 ml-0.5 font-sans">
-                {copied ? '✓ Salin' : '📋'}
-              </span>
+              {copied ? (
+                <Check className="w-3 h-3 text-emerald-600" />
+              ) : (
+                <Copy className="w-3 h-3 text-emerald-600" />
+              )}
             </button>
           )}
         </div>

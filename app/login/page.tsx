@@ -104,7 +104,7 @@ function LoginForm() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} action="javascript:void(0);" className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-800 mb-1.5">
                 Username / Akun

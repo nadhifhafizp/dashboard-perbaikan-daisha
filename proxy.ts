@@ -27,9 +27,12 @@ async function verifyTokenEdge(token: string): Promise<{ valid: boolean; role?: 
     }
 
     const parts = cleanToken.split('|');
-    if (parts.length !== 4) return { valid: false };
+    if (parts.length !== 4 && parts.length !== 5) return { valid: false };
 
-    const [, role, timestampStr, providedSignature] = parts;
+    const role = parts[1];
+    const timestampStr = parts[2];
+    const providedSignature = parts[parts.length - 1];
+
     const timestamp = parseInt(timestampStr, 10);
     if (isNaN(timestamp)) return { valid: false };
 
@@ -47,7 +50,7 @@ async function verifyTokenEdge(token: string): Promise<{ valid: boolean; role?: 
       ['sign']
     );
 
-    const data = parts.slice(0, 3).join('|');
+    const data = parts.slice(0, parts.length - 1).join('|');
     const signatureBytes = await globalThis.crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(data));
     const expectedSignature = Array.from(new Uint8Array(signatureBytes))
       .map(b => b.toString(16).padStart(2, '0'))
@@ -78,20 +81,27 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Sudah login tapi buka /login → redirect ke dashboard
+  // 2. Sudah login tapi buka /login → redirect ke halaman utama masing-masing role
   if (isLoginPage) {
-    const destination = role === 'OPERATOR' ? '/input' : '/';
+    const destination = role === 'OPERATOR' ? '/input' : role === 'USER_SEKSI' ? '/request' : '/';
     return NextResponse.redirect(new URL(destination, request.url));
   }
 
-  // 3. Hak akses OPERATOR: hanya /input
+  // 3. Hak akses OPERATOR: hanya /input dan /riwayat
   if (role === 'OPERATOR') {
-    if (pathname === '/' || pathname.startsWith('/admin')) {
+    if (pathname === '/' || pathname.startsWith('/admin') || pathname.startsWith('/request') || pathname.startsWith('/spareparts')) {
       return NextResponse.redirect(new URL('/input', request.url));
     }
   }
 
-  // 4. ADMIN memiliki akses ke semua halaman
+  // 4. Hak akses USER_SEKSI: hanya /request
+  if (role === 'USER_SEKSI') {
+    if (pathname === '/' || pathname.startsWith('/admin') || pathname.startsWith('/input') || pathname.startsWith('/spareparts')) {
+      return NextResponse.redirect(new URL('/request', request.url));
+    }
+  }
+
+  // 5. ADMIN memiliki akses ke semua halaman
   return NextResponse.next();
 }
 
@@ -101,8 +111,8 @@ export const config = {
      * Cocokkan semua path kecuali:
      * - api (API routes — diproteksi oleh verifySessionToken masing-masing)
      * - _next/static, _next/image (aset statis)
-     * - favicon.ico dan file publik lainnya
+     * - favicon.ico, manifest.json, sw.js dan file publik lainnya
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.svg).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest\\.json|manifest\\.webmanifest|sw\\.js|.*\\.png|.*\\.svg|.*\\.ico).*)',
   ],
 };

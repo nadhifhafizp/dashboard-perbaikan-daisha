@@ -821,6 +821,7 @@ export default function RiwayatLaporanPage() {
             tickets={filteredTickets}
             onViewDetail={(t) => setTicketForDetail(t)}
             onPrintTag={(t) => setTicketForTag(t)}
+            onDiagnose={(t) => setTicketToEdit(t)}
             isAdmin={isAdmin}
           />
         ) : (

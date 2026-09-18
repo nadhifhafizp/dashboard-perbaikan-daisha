@@ -65,6 +65,10 @@ export default function InputKerusakanPage() {
   const [showAllDaisha, setShowAllDaisha] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Mode Fleksibel: Kerusakan Belum Diketahui / Cek di Bengkel
+  const [isDiagnosaBengkel, setIsDiagnosaBengkel] = useState(false);
+  const [catatanGejala, setCatatanGejala] = useState('');
+
   // Modal States
   const [isScanning, setIsScanning] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -267,8 +271,12 @@ export default function InputKerusakanPage() {
       showFeedback('error', 'Nomor Unit Diperlukan', 'Harap isi atau scan nomor fisik unit Daisha.');
       return;
     }
-    if (totalDipilih === 0) {
-      showFeedback('error', 'Pilih Kerusakan', 'Harap klik/pilih minimal 1 kerusakan pada kartu di bawah.');
+    if (!isDiagnosaBengkel && totalDipilih === 0) {
+      showFeedback(
+        'error',
+        'Pilih Kerusakan',
+        'Harap klik/pilih minimal 1 kerusakan pada katalog di bawah atau pilih mode "Cek di Bengkel" jika kerusakan belum diketahui.'
+      );
       return;
     }
 
@@ -283,28 +291,36 @@ export default function InputKerusakanPage() {
     if (customKerusakanList.length > 0 && !listKomponenUnik.includes('Others')) {
       listKomponenUnik.push('Others');
     }
-    const finalKategori = listKomponenUnik.join(', ');
+    const finalKategori = isDiagnosaBengkel
+      ? 'Menunggu Diagnosa Bengkel'
+      : listKomponenUnik.join(', ') || 'Umum';
 
-    const detailList: string[] = [
-      ...parsedItems.map((p, idx) => {
-        const num = parsedItems.length + customKerusakanList.length > 1 ? `${idx + 1}. ` : '';
-        const qtyStr = `(Qty: ${p.qty}, Tindakan: ${p.tindakan})`;
-        return `${num}[${p.komponen}] ${p.detail} ${qtyStr}`;
-      }),
-      ...customKerusakanList.map((c, idx) => {
-        const tindakan = customTindakanMap[c] || 'Repair';
-        const qty = customQtyMap[c] || 1;
-        const num =
-          parsedItems.length + customKerusakanList.length > 1
-            ? `${parsedItems.length + idx + 1}. `
-            : '';
-        const qtyStr = `(Qty: ${qty}, Tindakan: ${tindakan})`;
-        return `${num}[Others] ${c} ${qtyStr}`;
-      }),
-    ];
+    const detailList: string[] = isDiagnosaBengkel
+      ? [
+          `• [Pemeriksaan Bengkel] Kerusakan belum diidentifikasi di lapangan.${
+            catatanGejala.trim() ? ` Catatan Gejala: ${catatanGejala.trim()}` : ''
+          }`,
+        ]
+      : [
+          ...parsedItems.map((p, idx) => {
+            const num = parsedItems.length + customKerusakanList.length > 1 ? `${idx + 1}. ` : '';
+            const qtyStr = `(Qty: ${p.qty}, Tindakan: ${p.tindakan})`;
+            return `${num}[${p.komponen}] ${p.detail} ${qtyStr}`;
+          }),
+          ...customKerusakanList.map((c, idx) => {
+            const tindakan = customTindakanMap[c] || 'Repair';
+            const qty = customQtyMap[c] || 1;
+            const num =
+              parsedItems.length + customKerusakanList.length > 1
+                ? `${parsedItems.length + idx + 1}. `
+                : '';
+            const qtyStr = `(Qty: ${qty}, Tindakan: ${tindakan})`;
+            return `${num}[Others] ${c} ${qtyStr}`;
+          }),
+        ];
 
     let finalDetail = detailList.join(' | ');
-    if (formData.catatanTambahan.trim()) {
+    if (!isDiagnosaBengkel && formData.catatanTambahan.trim()) {
       finalDetail = `${finalDetail} (Catatan: ${formData.catatanTambahan.trim()})`;
     }
 
@@ -409,6 +425,8 @@ export default function InputKerusakanPage() {
         setQtyMap({});
         setCustomQtyMap({});
         setShowAllDaisha(false);
+        setIsDiagnosaBengkel(false);
+        setCatatanGejala('');
         setPendingPayload(null);
       } else {
         setIsReviewModalOpen(false); // Tutup review modal agar tidak tumpang tindih dengan popup error
@@ -720,32 +738,112 @@ export default function InputKerusakanPage() {
             )}
           </div>
 
-          {/* Section 3: Titik Kerusakan Unit Daisha */}
-          <DamageCatalogSelector
-            jenisDaisha={formData.jenisDaisha}
-            katalogKerusakan={katalogKerusakan}
-            selectedKerusakan={selectedKerusakan}
-            tindakanMap={tindakanMap}
-            qtyMap={qtyMap}
-            customKerusakanList={customKerusakanList}
-            customTindakanMap={customTindakanMap}
-            customQtyMap={customQtyMap}
-            onToggleKerusakan={toggleKerusakan}
-            onSetTindakan={setItemTindakan}
-            onSetQty={setItemQty}
-            onAddCustom={handleAddCustom}
-            onRemoveCustom={handleRemoveCustom}
-            onSetCustomTindakan={setCustomTindakan}
-            onSetCustomQty={setCustomItemQty}
-            catatanTambahan={formData.catatanTambahan}
-            onCatatanChange={(val) => setFormData((prev) => ({ ...prev, catatanTambahan: val }))}
-          />
+          {/* Section 3: Status / Mode Kerusakan Unit */}
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <span>🔧</span> 3. Identifikasi Kerusakan Unit
+                </h2>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  Pilih apakah kerusakan sudah diketahui atau perlu diinspeksi teknisi saat tiba di bengkel.
+                </p>
+              </div>
+
+              {/* Segmented Mode Toggle */}
+              <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/80 shrink-0 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setIsDiagnosaBengkel(false)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    !isDiagnosaBengkel
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Sudah Tahu Kerusakan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsDiagnosaBengkel(true)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    isDiagnosaBengkel
+                      ? 'bg-amber-600 text-white shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <span>🔍</span>
+                  <span>Cek di Bengkel</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Mode Cek di Bengkel Info Box & Symptom Note */}
+            {isDiagnosaBengkel && (
+              <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-xl space-y-3 animate-fade-in text-xs">
+                <div className="flex items-start gap-2.5">
+                  <span className="text-xl shrink-0 mt-0.5">💡</span>
+                  <div className="leading-relaxed">
+                    <p className="font-black text-amber-950">
+                      Mode Fleksibel: Kerusakan Belum Diketahui Lapangan
+                    </p>
+                    <p className="text-slate-600 mt-0.5">
+                      Unit akan didaftarkan ke antrean bengkel dengan status <strong className="text-amber-900">Menunggu Diagnosa Bengkel</strong>. Daisha dapat segera diangkut ke bengkel, dan teknisi bengkel akan melengkapi rincian komponen rusak saat memeriksa unit fisik.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-amber-200/70">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Catatan Gejala / Indikasi Awal (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={catatanGejala}
+                    onChange={(e) => setCatatanGejala(e.target.value)}
+                    placeholder="Contoh: Roda seret saat didorong, rangka miring, bunyi kasar di bearing..."
+                    className="w-full p-3 border border-amber-300/90 bg-white rounded-xl text-xs text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 outline-none placeholder-slate-400"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Bantu teknisi bengkel dengan menuliskan apa yang Anda rasakan/lihat saat menggunakan unit ini.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 3B: Titik Kerusakan Unit Daisha (Hanya jika mode "Sudah Tahu Kerusakan") */}
+          {!isDiagnosaBengkel && (
+            <DamageCatalogSelector
+              jenisDaisha={formData.jenisDaisha}
+              katalogKerusakan={katalogKerusakan}
+              selectedKerusakan={selectedKerusakan}
+              tindakanMap={tindakanMap}
+              qtyMap={qtyMap}
+              customKerusakanList={customKerusakanList}
+              customTindakanMap={customTindakanMap}
+              customQtyMap={customQtyMap}
+              onToggleKerusakan={toggleKerusakan}
+              onSetTindakan={setItemTindakan}
+              onSetQty={setItemQty}
+              onAddCustom={handleAddCustom}
+              onRemoveCustom={handleRemoveCustom}
+              onSetCustomTindakan={setCustomTindakan}
+              onSetCustomQty={setCustomItemQty}
+              catatanTambahan={formData.catatanTambahan}
+              onCatatanChange={(val) => setFormData((prev) => ({ ...prev, catatanTambahan: val }))}
+            />
+          )}
 
           {/* Submit Action Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-red-700 hover:bg-red-800 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-red-900/20 transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+            className={`w-full py-4 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-lg transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${
+              isDiagnosaBengkel
+                ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-900/20'
+                : 'bg-red-700 hover:bg-red-800 shadow-red-900/20'
+            }`}
           >
             {loading ? (
               <>
@@ -771,6 +869,8 @@ export default function InputKerusakanPage() {
                 </svg>
                 <span>Menyimpan ke Sistem Workshop...</span>
               </>
+            ) : isDiagnosaBengkel ? (
+              '🚚 Daftarkan Unit ke Antrean Bengkel'
             ) : (
               '💾 Simpan Laporan Kerusakan Daisha'
             )}

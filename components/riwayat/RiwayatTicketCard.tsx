@@ -5,6 +5,18 @@ import { Ticket } from '@/types/ticket';
 import StatusBadge from '@/components/common/StatusBadge';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
+import {
+  Wrench,
+  Search,
+  RotateCw,
+  Hammer,
+  MessageSquare,
+  Clock,
+  User,
+  Tag,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 
 interface RiwayatTicketCardProps {
   ticket: Ticket;
@@ -26,6 +38,12 @@ export default function RiwayatTicketCard({
   // Parse detail gejala menjadi objek terstruktur dan terkelompok
   const parsed = parseTicketDamageDetail(ticket.detail);
   const sizeInfo = detectDaishaSize(ticket.noDaisha);
+
+  const isNeedsDiagnosis =
+    parsed.isWaitingDiagnosis ||
+    ticket.jenisKerusakan?.toLowerCase().includes('diagnosa') ||
+    ticket.detail?.toLowerCase().includes('pemeriksaan bengkel') ||
+    ticket.detail?.toLowerCase().includes('belum diidentifikasi');
 
   const komponenList =
     ticket.jenisKerusakan && ticket.jenisKerusakan !== '-'
@@ -63,10 +81,16 @@ export default function RiwayatTicketCard({
       <div className="text-xs bg-slate-50 p-3 rounded-xl border border-slate-200/80 space-y-2">
         {/* Komponen Badges */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
-            🔧 Kerusakan:
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1">
+            <Wrench className="w-3 h-3" />
+            Kerusakan:
           </span>
-          {komponenList.length > 0 ? (
+          {isNeedsDiagnosis ? (
+            <span className="px-2 py-0.5 rounded-md font-extrabold text-[11px] text-amber-900 bg-amber-100 border border-amber-300 flex items-center gap-1">
+              <Search className="w-3 h-3" />
+              <span>Menunggu Diagnosa Bengkel</span>
+            </span>
+          ) : komponenList.length > 0 ? (
             komponenList.map((k) => (
               <span
                 key={k}
@@ -89,7 +113,7 @@ export default function RiwayatTicketCard({
             {parsed.gantiItems.length > 0 && (
               <div className="flex items-start gap-2 bg-blue-50/80 p-2 rounded-xl border border-blue-200/80">
                 <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white font-black text-[10px] shrink-0 flex items-center gap-1 shadow-2xs">
-                  <span>🔄</span>
+                  <RotateCw className="w-3 h-3" />
                   <span>Ganti ({parsed.totalQtyGanti} pcs)</span>
                 </span>
                 <div className="min-w-0 text-[11px] text-slate-800 leading-relaxed">
@@ -101,7 +125,7 @@ export default function RiwayatTicketCard({
                       )}{' '}
                       <span className="font-semibold text-slate-900">{item.gejala}</span>
                       {item.qty > 1 && (
-                        <span className="ml-1 text-[10px] font-black text-blue-700 bg-blue-100/80 px-1.5 py-0.2 rounded">
+                        <span className="ml-1 text-[10px] font-black text-blue-700 bg-blue-100/80 px-1.5 py-0.5 rounded">
                           {item.qty} pcs
                         </span>
                       )}
@@ -115,7 +139,7 @@ export default function RiwayatTicketCard({
             {parsed.repairItems.length > 0 && (
               <div className="flex items-start gap-2 bg-amber-50/80 p-2 rounded-xl border border-amber-200/80">
                 <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white font-black text-[10px] shrink-0 flex items-center gap-1 shadow-2xs">
-                  <span>🔨</span>
+                  <Hammer className="w-3 h-3" />
                   <span>Repair ({parsed.totalQtyRepair} pcs)</span>
                 </span>
                 <div className="min-w-0 text-[11px] text-slate-800 leading-relaxed">
@@ -127,7 +151,7 @@ export default function RiwayatTicketCard({
                       )}{' '}
                       <span className="font-semibold text-slate-900">{item.gejala}</span>
                       {item.qty > 1 && (
-                        <span className="ml-1 text-[10px] font-black text-amber-700 bg-amber-100/80 px-1.5 py-0.2 rounded">
+                        <span className="ml-1 text-[10px] font-black text-amber-700 bg-amber-100/80 px-1.5 py-0.5 rounded">
                           {item.qty} pcs
                         </span>
                       )}
@@ -145,6 +169,18 @@ export default function RiwayatTicketCard({
               </div>
             )}
           </div>
+        ) : isNeedsDiagnosis ? (
+          <div className="p-2.5 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-1 text-xs">
+            <p className="font-bold text-amber-950 flex items-center gap-1.5">
+              <Search className="w-3.5 h-3.5" />
+              <span>Unit Belum Diinspeksi Spesifik</span>
+            </p>
+            <p className="text-slate-600 text-[11px]">
+              {parsed.catatan
+                ? `Catatan Gejala dari Operator: "${parsed.catatan}"`
+                : 'Unit didaftarkan langsung ke bengkel. Detail kerusakan akan diinput setelah pemeriksaan fisik.'}
+            </p>
+          </div>
         ) : (
           <p className="text-[11px] text-slate-400 italic">
             Belum ada rincian titik kerusakan spesifik.
@@ -154,7 +190,7 @@ export default function RiwayatTicketCard({
         {/* Catatan Tindakan Workshop (jika ada) */}
         {ticket.reason && (
           <div className="pt-1 text-[11px] text-emerald-800 font-medium flex items-start gap-1">
-            <span>💬</span>
+            <MessageSquare className="w-3.5 h-3.5 shrink-0 mt-px" />
             <span>Catatan Teknisi: {ticket.reason}</span>
           </div>
         )}
@@ -162,10 +198,12 @@ export default function RiwayatTicketCard({
 
       {/* Baris 3: Footer Info & Action Buttons */}
       <div className="flex flex-wrap items-center justify-between pt-1 gap-2 text-[11px]">
-        <div className="text-slate-400 font-medium truncate">
-          <span>🕒 {ticket.tglMasuk}</span>
-          <span className="mx-1.5">•</span>
-          <span>👤 {ticket.pelapor}</span>
+        <div className="text-slate-400 font-medium truncate flex items-center gap-1.5">
+          <Clock className="w-3 h-3" />
+          <span>{ticket.tglMasuk}</span>
+          <span className="mx-1">•</span>
+          <User className="w-3 h-3" />
+          <span>{ticket.pelapor}</span>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
@@ -177,7 +215,7 @@ export default function RiwayatTicketCard({
               className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1 shadow-2xs"
               title="Cetak Tag Fisik Daisha untuk digantungkan di unit"
             >
-              <span>🏷️</span>
+              <Tag className="w-3.5 h-3.5" />
               <span>Cetak Tag</span>
             </button>
           )}
@@ -188,7 +226,7 @@ export default function RiwayatTicketCard({
             onClick={() => onViewDetail(ticket)}
             className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
           >
-            <span>🔍</span>
+            <Search className="w-3.5 h-3.5" />
             <span>Detail</span>
           </button>
 
@@ -197,17 +235,24 @@ export default function RiwayatTicketCard({
               <button
                 type="button"
                 onClick={() => onEdit(ticket)}
-                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
+                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1 ${isNeedsDiagnosis
+                    ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-2xs font-extrabold'
+                    : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200'
+                  }`}
               >
-                <span>✏️</span>
-                <span>Edit</span>
+                {isNeedsDiagnosis ? (
+                  <Wrench className="w-3.5 h-3.5" />
+                ) : (
+                  <Pencil className="w-3.5 h-3.5" />
+                )}
+                <span>{isNeedsDiagnosis ? 'Diagnosa Kerusakan' : 'Edit'}</span>
               </button>
               <button
                 type="button"
                 onClick={() => onCancel(ticket)}
                 className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
               >
-                <span>🗑️</span>
+                <Trash2 className="w-3.5 h-3.5" />
                 <span>Batal</span>
               </button>
             </>

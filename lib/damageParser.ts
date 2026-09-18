@@ -16,6 +16,8 @@ export interface ParsedTicketDetail {
   totalQtyAll: number;
   catatan?: string;
   hasStructuredItems: boolean;
+  isWaitingDiagnosis?: boolean;
+  symptomNote?: string;
 }
 
 /**
@@ -34,11 +36,38 @@ export function parseTicketDamageDetail(detailStr?: string | null): ParsedTicket
       totalQtyRepair: 0,
       totalQtyAll: 0,
       hasStructuredItems: false,
+      isWaitingDiagnosis: false,
     };
   }
 
   let text = detailStr.trim();
   let catatan: string | undefined;
+
+  // Deteksi jika tiket merupakan pendaftaran fleksibel (Cek di Bengkel / Menunggu Diagnosa)
+  const isWaitingDiagnosis =
+    text.toLowerCase().includes('pemeriksaan bengkel') ||
+    text.toLowerCase().includes('belum diidentifikasi') ||
+    text.toLowerCase().includes('belum diketahui') ||
+    text.toLowerCase().includes('menunggu diagnosa');
+
+  if (isWaitingDiagnosis) {
+    // Ekstrak catatan gejala dari teks
+    const matchGejala = text.match(/(?:Catatan Gejala|Gejala(?:\/Catatan)?|Indikasi|Catatan):\s*(.+)$/i);
+    const symptomNote = matchGejala ? matchGejala[1].trim().replace(/\)$/, '') : undefined;
+    return {
+      items: [],
+      gantiItems: [],
+      repairItems: [],
+      otherItems: [],
+      totalQtyGanti: 0,
+      totalQtyRepair: 0,
+      totalQtyAll: 0,
+      catatan: symptomNote,
+      symptomNote,
+      hasStructuredItems: false,
+      isWaitingDiagnosis: true,
+    };
+  }
 
   // Ekstrak catatan tambahan jika ada: (Catatan: ...)
   const noteMatch = text.match(/\(Catatan:\s*(.*?)\)\s*$/i);

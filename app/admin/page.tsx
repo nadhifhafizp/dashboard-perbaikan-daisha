@@ -11,6 +11,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
 import StatusBadge from '@/components/common/StatusBadge';
 import AdminTicketForm from '@/components/admin/AdminTicketForm';
+import EditTicketModal from '@/components/riwayat/EditTicketModal';
 import PrintTicketTagModal from '@/components/common/PrintTicketTagModal';
 import UserManager from '@/components/admin/UserManager';
 import CatalogManager from '@/components/admin/CatalogManager';
@@ -40,6 +41,10 @@ export default function AdminPage() {
 
   // Selected Ticket Edit Form State
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+
+  // Diagnosa / Edit Ticket State
+  const [ticketToEdit, setTicketToEdit] = useState<Ticket | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Modal Cetak Tag Fisik Daisha
   const [ticketForTag, setTicketForTag] = useState<Ticket | null>(null);
@@ -136,6 +141,64 @@ export default function AdminPage() {
       showFeedback('error', 'Gangguan Koneksi', 'Gagal menghubungi server. Periksa koneksi internet Anda.');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleSaveEdit = async (data: {
+    waktuMasuk: string;
+    noDaisha: string;
+    seksi: string;
+    namaDaisha: string;
+    jenisKerusakan: string;
+    detail: string;
+  }) => {
+    if (!ticketToEdit) return;
+
+    const trimmedNo = data.noDaisha.trim().toUpperCase();
+    if (!trimmedNo) {
+      showFeedback('error', 'Nomor Daisha Kosong', 'Nomor unit Daisha wajib diisi.');
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'EDIT_TICKET',
+          idTiket: ticketToEdit.idTiketAsli,
+          waktuMasuk: data.waktuMasuk,
+          noDaisha: trimmedNo,
+          seksi: data.seksi,
+          namaDaisha: data.namaDaisha,
+          jenisKerusakan: data.jenisKerusakan,
+          detail: data.detail,
+        }),
+      });
+
+      const resData = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        showFeedback(
+          'success',
+          'Diagnosa Berhasil Disimpan',
+          `Data diagnosa unit ${trimmedNo} (${data.namaDaisha}) berhasil diperbarui ke sistem.`
+        );
+        setTicketToEdit(null);
+        void refresh(true, true);
+        broadcastTicketChange();
+      } else {
+        showFeedback(
+          'error',
+          'Gagal Menyimpan Diagnosa',
+          resData.error || 'Terjadi kesalahan saat menyimpan diagnosa.'
+        );
+      }
+    } catch {
+      showFeedback('error', 'Gangguan Koneksi', 'Gagal menghubungi server.');
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -757,7 +820,17 @@ export default function AdminPage() {
 
                   {/* Kerusakan */}
                   <div className="text-xs bg-gray-50 p-2.5 rounded-lg border border-gray-100">
-                    {parsed.items.length > 0 ? (
+                    {parsed.isWaitingDiagnosis ? (
+                      <div className="space-y-1 py-0.5">
+                        <span className="text-[10px] font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 inline-flex items-center gap-1">
+                          <span>🔍</span>
+                          <span>Menunggu Diagnosa Bengkel</span>
+                        </span>
+                        <p className="text-[11px] text-slate-600 font-medium">
+                          {parsed.catatan ? `Gejala: ${parsed.catatan}` : 'Kerusakan belum diidentifikasi di lapangan'}
+                        </p>
+                      </div>
+                    ) : parsed.items.length > 0 ? (
                       <div className="space-y-1">
                         {parsed.items.map((it, idx) => (
                           <div key={idx} className="flex items-start justify-between gap-1 text-[11px]">
@@ -789,6 +862,16 @@ export default function AdminPage() {
 
                   {/* Action buttons */}
                   <div className="flex items-center gap-2 pt-1">
+                    {parsed.isWaitingDiagnosis && t.status !== 'Done' && t.status !== 'Scrap' && (
+                      <button
+                        onClick={() => setTicketToEdit(t)}
+                        className="py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black rounded-xl shadow-2xs transition flex items-center justify-center gap-1 cursor-pointer"
+                        title="Diagnosa & Input Titik Kerusakan di Bengkel"
+                      >
+                        <span>🔧</span>
+                        <span>Diagnosa</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => setSelectedTicket(t)}
                       className="flex-1 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-1 cursor-pointer"
@@ -884,12 +967,15 @@ export default function AdminPage() {
                   </td>
                 </tr>
               ) : (
-                paginatedTickets.map((t) => (
-                  <tr key={t.id} className="hover:bg-gray-50 transition">
-                    <td className="p-3">
-                      <span className="font-mono font-bold text-gray-900 block">
-                        {t.idTiketAsli || t.noTiket}
-                      </span>
+                paginatedTickets.map((t) => {
+                  const parsed = parseTicketDamageDetail(t.detail);
+                  const sizeInfo = detectDaishaSize(t.noDaisha);
+                  return (
+                    <tr key={t.id} className="hover:bg-gray-50 transition">
+                      <td className="p-3">
+                        <span className="font-mono font-bold text-gray-900 block">
+                          {t.idTiketAsli || t.noTiket}
+                        </span>
                       <span className="text-[11px] text-gray-500">{t.tglMasuk}</span>
                     </td>
 
@@ -961,6 +1047,19 @@ export default function AdminPage() {
                               </div>
                             );
                           }
+                          if (parsed.isWaitingDiagnosis) {
+                            return (
+                              <div className="space-y-1 py-0.5">
+                                <span className="text-[10px] font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 inline-flex items-center gap-1">
+                                  <span>🔍</span>
+                                  <span>Menunggu Diagnosa Bengkel</span>
+                                </span>
+                                <p className="text-[11px] text-slate-600 font-medium">
+                                  {parsed.catatan ? `Gejala: ${parsed.catatan}` : 'Kerusakan belum diidentifikasi di lapangan'}
+                                </p>
+                              </div>
+                            );
+                          }
                           return (
                             <div className="text-[11px] text-gray-600">
                               <span className="font-semibold text-gray-900 block">{t.jenisKerusakan}</span>
@@ -981,6 +1080,16 @@ export default function AdminPage() {
 
                       <td className="p-3 text-center">
                         <div className="flex items-center justify-center gap-1.5">
+                          {parsed.isWaitingDiagnosis && t.status !== 'Done' && t.status !== 'Scrap' && (
+                            <button
+                              onClick={() => setTicketToEdit(t)}
+                              className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
+                              title="Diagnosa & Input Titik Kerusakan di Bengkel"
+                            >
+                              <span>🔧</span>
+                              <span>Diagnosa</span>
+                            </button>
+                          )}
                           <button
                             onClick={() => setTicketForTag(t)}
                             className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
@@ -1007,8 +1116,9 @@ export default function AdminPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
+                  );
+                })
+              )}
               </tbody>
             </table>
           </div>
@@ -1087,6 +1197,15 @@ export default function AdminPage() {
         message={feedback.message}
         detail={feedback.detail}
         onClose={() => setFeedback((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* Modal Diagnosa / Koreksi Data Tiket Bengkel */}
+      <EditTicketModal
+        isOpen={!!ticketToEdit}
+        ticket={ticketToEdit}
+        isLoading={isSavingEdit}
+        onSave={handleSaveEdit}
+        onClose={() => setTicketToEdit(null)}
       />
     </div>
   );

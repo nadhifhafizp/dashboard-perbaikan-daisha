@@ -5,13 +5,14 @@ import { Ticket } from '@/types/ticket';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { parseToTimestamp } from '@/lib/date';
-import { Clock, Wrench, CheckCircle2, AlertCircle, ArrowRight, Printer, Eye, User, Sparkles } from 'lucide-react';
+import { Clock, Wrench, CheckCircle2, ArrowRight, Printer, Search, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
 interface QueueKanbanBoardProps {
   tickets: Ticket[];
   onViewDetail: (ticket: Ticket) => void;
   onPrintTag?: (ticket: Ticket) => void;
+  onDiagnose?: (ticket: Ticket) => void;
   isAdmin?: boolean;
 }
 
@@ -33,6 +34,7 @@ export default function QueueKanbanBoard({
   tickets,
   onViewDetail,
   onPrintTag,
+  onDiagnose,
   isAdmin = false,
 }: QueueKanbanBoardProps) {
   // State untuk toggle batas tampilan unit selesai di kolom 3
@@ -70,8 +72,8 @@ export default function QueueKanbanBoard({
         {/* Header Kolom */}
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-amber-200/50 shrink-0">
           <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs border border-amber-200">
-              ⏳
+            <span className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center border border-amber-200">
+              <Clock className="w-3.5 h-3.5" />
             </span>
             <h2 className="text-xs font-black text-slate-800 tracking-tight">
               Menunggu
@@ -93,6 +95,12 @@ export default function QueueKanbanBoard({
               const sizeInfo = detectDaishaSize(ticket.noDaisha);
               const queueNumber = index + 1;
               const isTopPriority = queueNumber === 1;
+              const parsed = parseTicketDamageDetail(ticket.detail);
+              const isNeedsDiagnosis =
+                parsed.isWaitingDiagnosis ||
+                ticket.jenisKerusakan?.toLowerCase().includes('diagnosa') ||
+                ticket.detail?.toLowerCase().includes('pemeriksaan bengkel') ||
+                ticket.detail?.toLowerCase().includes('belum diidentifikasi');
 
               return (
                 <div
@@ -100,6 +108,8 @@ export default function QueueKanbanBoard({
                   className={`bg-white rounded-xl p-2.5 border transition hover:shadow-xs space-y-1.5 cursor-pointer ${
                     isTopPriority
                       ? 'border-amber-400 ring-1.5 ring-amber-200/50 shadow-2xs'
+                      : isNeedsDiagnosis
+                      ? 'border-amber-300/90 bg-amber-50/20'
                       : 'border-slate-200 hover:border-amber-300'
                   }`}
                   onClick={() => onViewDetail(ticket)}
@@ -136,7 +146,14 @@ export default function QueueKanbanBoard({
                   <div className="text-xs">
                     <span className="font-bold text-slate-800">{ticket.namaDaisha || 'Daisha'}</span>
                     <span className="text-slate-400 mx-1">•</span>
-                    <span className="text-amber-800 font-medium truncate">{ticket.jenisKerusakan || 'Umum'}</span>
+                    {isNeedsDiagnosis ? (
+                      <span className="text-amber-900 font-extrabold bg-amber-100 px-1.5 py-0.5 rounded text-[10px] border border-amber-300 inline-flex items-center gap-1">
+                        <Search className="w-3 h-3" />
+                        <span>Perlu Diagnosa</span>
+                      </span>
+                    ) : (
+                      <span className="text-amber-800 font-medium truncate">{ticket.jenisKerusakan || 'Umum'}</span>
+                    )}
                   </div>
 
                   {/* Baris 3: Pelapor, Waktu & Aksi */}
@@ -148,6 +165,25 @@ export default function QueueKanbanBoard({
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
+                      {onDiagnose && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDiagnose(ticket);
+                          }}
+                          className={`px-2 py-0.5 rounded text-[11px] transition cursor-pointer flex items-center gap-1 ${
+                            isNeedsDiagnosis
+                              ? 'bg-amber-500 hover:bg-amber-600 text-white font-extrabold shadow-2xs'
+                              : 'text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 font-bold'
+                          }`}
+                          title={isNeedsDiagnosis ? 'Input Komponen Kerusakan di Bengkel' : 'Koreksi Data Tiket'}
+                        >
+                          {isNeedsDiagnosis ? <Wrench className="w-3 h-3" /> : <Pencil className="w-3 h-3" />}
+                          <span>{isNeedsDiagnosis ? 'Diagnosa' : 'Edit'}</span>
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         onClick={(e) => {
@@ -183,8 +219,8 @@ export default function QueueKanbanBoard({
         {/* Header Kolom */}
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-blue-200/50 shrink-0">
           <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs border border-blue-200">
-              ⚙️
+            <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center border border-blue-200">
+              <Wrench className="w-3.5 h-3.5" />
             </span>
             <h2 className="text-xs font-black text-slate-800 tracking-tight">
               Dikerjakan
@@ -204,6 +240,12 @@ export default function QueueKanbanBoard({
           ) : (
             inProgressTickets.map((ticket) => {
               const sizeInfo = detectDaishaSize(ticket.noDaisha);
+              const parsed = parseTicketDamageDetail(ticket.detail);
+              const isNeedsDiagnosis =
+                parsed.isWaitingDiagnosis ||
+                ticket.jenisKerusakan?.toLowerCase().includes('diagnosa') ||
+                ticket.detail?.toLowerCase().includes('pemeriksaan bengkel') ||
+                ticket.detail?.toLowerCase().includes('belum diidentifikasi');
 
               return (
                 <div
@@ -237,7 +279,14 @@ export default function QueueKanbanBoard({
                   <div className="text-xs">
                     <span className="font-bold text-slate-800">{ticket.namaDaisha || 'Daisha'}</span>
                     <span className="text-slate-400 mx-1">•</span>
-                    <span className="text-blue-800 font-medium truncate">{ticket.jenisKerusakan || 'Servis'}</span>
+                    {isNeedsDiagnosis ? (
+                      <span className="text-amber-900 font-extrabold bg-amber-100 px-1.5 py-0.5 rounded text-[10px] border border-amber-300 inline-flex items-center gap-1">
+                        <Search className="w-3 h-3" />
+                        <span>Perlu Diagnosa</span>
+                      </span>
+                    ) : (
+                      <span className="text-blue-800 font-medium truncate">{ticket.jenisKerusakan || 'Servis'}</span>
+                    )}
                   </div>
 
                   {/* Baris 3 */}
@@ -249,6 +298,21 @@ export default function QueueKanbanBoard({
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
+                      {onDiagnose && isNeedsDiagnosis && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDiagnose(ticket);
+                          }}
+                          className="px-2 py-0.5 rounded text-[11px] font-extrabold text-white bg-amber-500 hover:bg-amber-600 shadow-2xs transition cursor-pointer flex items-center gap-1"
+                          title="Input Komponen Kerusakan di Bengkel"
+                        >
+                          <Wrench className="w-3 h-3" />
+                          <span>Diagnosa</span>
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         onClick={(e) => {
@@ -284,8 +348,8 @@ export default function QueueKanbanBoard({
         {/* Header Kolom */}
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-emerald-200/50 shrink-0">
           <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs border border-emerald-200">
-              
+            <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center border border-emerald-200">
+              <CheckCircle2 className="w-3.5 h-3.5" />
             </span>
             <h2 className="text-xs font-black text-slate-800 tracking-tight">
               Siap Ambil

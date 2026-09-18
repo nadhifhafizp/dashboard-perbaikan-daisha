@@ -11,19 +11,31 @@ const globalForDb = globalThis as unknown as {
   sql: postgres.Sql | undefined;
 };
 
+// Tutup koneksi lama jika ada yang menggantung saat dev reload
+if (process.env.NODE_ENV !== 'production' && globalForDb.sql) {
+  try {
+    globalForDb.sql.end({ timeout: 1 }).catch(() => {});
+  } catch {
+    // Abaikan jika sudah tertutup
+  }
+  globalForDb.sql = undefined;
+}
+
 export const sql =
   globalForDb.sql ??
   postgres(connectionString || '', {
     ssl: 'require',
-    max: 1, // Di serverless (Vercel), 1 koneksi per container adalah best practice
-    idle_timeout: 20,
-    connect_timeout: 10,
+    prepare: false, // Wajib false untuk Supabase PgBouncer transaction pooler (port 6543)
+    max: process.env.NODE_ENV === 'production' ? 1 : 10, // Beri pool connection cukup saat concurrent requests di dev
+    idle_timeout: 30,
+    connect_timeout: 15,
     transform: {
       undefined: null,
     },
   });
 
-// Simpan di globalThis agar container warm di Vercel selalu memakai ulang koneksi yang sudah terbuka
-globalForDb.sql = sql;
+if (process.env.NODE_ENV !== 'production') {
+  globalForDb.sql = sql;
+}
 
 export default sql;

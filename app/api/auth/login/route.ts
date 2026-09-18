@@ -11,7 +11,9 @@ export async function POST(request: Request) {
     const now = Date.now();
     const attempt = loginAttempts.get(ip);
 
-    if (attempt && now < attempt.resetAt && attempt.count >= 5) {
+    // Rate limiting hanya diterapkan di mode production agar saat development lokal tidak terkunci
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction && attempt && now < attempt.resetAt && attempt.count >= 5) {
       return NextResponse.json(
         { error: 'Terlalu banyak percobaan login gagal. Coba lagi dalam 5 menit.' },
         { status: 429 }

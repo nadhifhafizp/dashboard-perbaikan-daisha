@@ -72,11 +72,33 @@ export default function ReviewTicketModal({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-slate-500 font-semibold">
-                  Rincian Titik Kerusakan ({parsed.items.length} Titik / {parsed.totalQtyAll} pcs):
+                  {parsed.isWaitingDiagnosis
+                    ? 'Status Diagnosa Unit:'
+                    : `Rincian Titik Kerusakan (${parsed.items.length} Titik / ${parsed.totalQtyAll} pcs):`}
                 </span>
+                {parsed.isWaitingDiagnosis && (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                    🔍 Cek di Bengkel
+                  </span>
+                )}
               </div>
 
-              {parsed.items.length > 0 ? (
+              {parsed.isWaitingDiagnosis ? (
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-950 space-y-1.5 animate-fade-in">
+                  <div className="flex items-center gap-1.5 font-black text-amber-900">
+                    <span>🔍</span>
+                    <span>Menunggu Diagnosa Bengkel</span>
+                  </div>
+                  <p className="text-slate-600 font-medium leading-relaxed">
+                    Kerusakan belum diidentifikasi di lapangan. Unit akan segera diangkut ke bengkel dan diinspeksi oleh teknisi.
+                  </p>
+                  {parsed.catatan && (
+                    <div className="p-2 bg-white rounded-lg border border-amber-300/80 text-[11px] font-semibold text-amber-900">
+                      📝 Catatan Gejala: {parsed.catatan}
+                    </div>
+                  )}
+                </div>
+              ) : parsed.items.length > 0 ? (
                 <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
                   {parsed.items.map((item, idx) => (
                     <div

@@ -26,6 +26,11 @@ interface EditTicketModalProps {
 
 function parseInitialTicketData(ticket: Ticket) {
   const parsed = parseTicketDamageDetail(ticket.detail);
+  const isNeedsDiagnosis =
+    parsed.isWaitingDiagnosis ||
+    ticket.jenisKerusakan?.toLowerCase().includes('diagnosa') ||
+    ticket.detail?.toLowerCase().includes('pemeriksaan bengkel') ||
+    ticket.detail?.toLowerCase().includes('belum diidentifikasi');
 
   const initSelected: string[] = [];
   const initTindakanMap: Record<string, TindakanType> = {};
@@ -34,33 +39,37 @@ function parseInitialTicketData(ticket: Ticket) {
   const initCustomTindakan: Record<string, TindakanType> = {};
   const initCustomQty: Record<string, number> = {};
 
-  for (const item of parsed.items) {
-    const tindakan = (item.tindakan as TindakanType) || 'Repair';
-    const qty = item.qty || 1;
+  if (!isNeedsDiagnosis) {
+    for (const item of parsed.items) {
+      const tindakan = (item.tindakan as TindakanType) || 'Repair';
+      const qty = item.qty || 1;
 
-    if (item.komponen.toLowerCase() === 'others' || item.komponen === 'Umum') {
-      if (!initCustom.includes(item.gejala)) {
-        initCustom.push(item.gejala);
-        initCustomTindakan[item.gejala] = tindakan;
-        initCustomQty[item.gejala] = qty;
-      }
-    } else {
-      const key = `${item.komponen}:::${item.gejala}`;
-      if (!initSelected.includes(key)) {
-        initSelected.push(key);
-        initTindakanMap[key] = tindakan;
-        initQtyMap[key] = qty;
+      if (item.komponen.toLowerCase() === 'others' || item.komponen === 'Umum') {
+        if (!initCustom.includes(item.gejala)) {
+          initCustom.push(item.gejala);
+          initCustomTindakan[item.gejala] = tindakan;
+          initCustomQty[item.gejala] = qty;
+        }
+      } else {
+        const key = `${item.komponen}:::${item.gejala}`;
+        if (!initSelected.includes(key)) {
+          initSelected.push(key);
+          initTindakanMap[key] = tindakan;
+          initQtyMap[key] = qty;
+        }
       }
     }
   }
 
   return {
+    isNeedsDiagnosis,
+    symptomNote: parsed.catatan || '',
     formData: {
       waktuMasuk: toDateTimeLocalValue(ticket.tglMasuk),
       noDaisha: ticket.noDaisha || '',
       seksi: ticket.seksi && ticket.seksi !== '-' ? ticket.seksi : '',
       namaDaisha: ticket.namaDaisha && ticket.namaDaisha !== '-' ? ticket.namaDaisha : '',
-      catatanTambahan: parsed.catatan || '',
+      catatanTambahan: !isNeedsDiagnosis ? (parsed.catatan || '') : '',
     },
     selectedKerusakan: initSelected,
     tindakanMap: initTindakanMap,
@@ -253,10 +262,12 @@ function EditTicketModalDialog({
         {/* Header Modal */}
         <div className="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/80">
           <div className="flex items-center gap-2.5">
-            <span className="text-xl">✏️</span>
+            <span className="text-xl">{initial.isNeedsDiagnosis ? '🔍' : '✏️'}</span>
             <div>
               <h2 className="text-sm font-extrabold text-slate-900">
-                Edit Data Tiket Perbaikan
+                {initial.isNeedsDiagnosis
+                  ? 'Diagnosa Kerusakan Unit Daisha'
+                  : 'Edit Data Tiket Perbaikan'}
               </h2>
               <p className="text-[11px] text-slate-500 font-mono">
                 {ticket.idTiketAsli || ticket.noTiket}
@@ -276,6 +287,23 @@ function EditTicketModalDialog({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+          {/* Banner Mode Diagnosa Bengkel */}
+          {initial.isNeedsDiagnosis && (
+            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1.5 text-xs text-amber-950 animate-fade-in">
+              <div className="flex items-center gap-1.5 font-black text-amber-900">
+                <span>💡</span>
+                <span>Pemeriksaan Fisik Bengkel</span>
+              </div>
+              <p className="text-slate-600 font-medium leading-relaxed">
+                Unit Daisha ini didaftarkan dari lini produksi tanpa detail kerusakan spesifik. Silakan periksa kondisi fisik Daisha, lalu pilih komponen rusak, tindakan (Repair / Ganti), dan jumlahnya pada katalog di bawah.
+              </p>
+              {initial.symptomNote && (
+                <div className="p-2 bg-white rounded-lg border border-amber-300/80 text-[11px] font-semibold text-amber-900 mt-1">
+                  📝 Indikasi / Gejala dari Operator: {initial.symptomNote}
+                </div>
+              )}
+            </div>
+          )}
           {/* Identitas Unit & Pelapor */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
             <div>
@@ -398,7 +426,11 @@ function EditTicketModalDialog({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full sm:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl shadow-xs transition cursor-pointer flex items-center justify-center gap-2 text-xs disabled:opacity-50"
+              className={`w-full sm:w-auto px-5 py-2.5 text-white font-black rounded-xl shadow-xs transition cursor-pointer flex items-center justify-center gap-2 text-xs disabled:opacity-50 ${
+                initial.isNeedsDiagnosis
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-red-600 hover:bg-red-700'
+              }`}
             >
               {isLoading ? (
                 <>
@@ -424,6 +456,8 @@ function EditTicketModalDialog({
                   </svg>
                   <span>Menyimpan...</span>
                 </>
+              ) : initial.isNeedsDiagnosis ? (
+                'Simpan Hasil Diagnosa'
               ) : (
                 'Simpan Perubahan'
               )}

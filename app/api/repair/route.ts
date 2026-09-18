@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { parseAndVerifySession, SESSION_COOKIE_NAME } from '@/lib/auth';
-import { sanitizeString } from '@/lib/sanitize';
 import sql from '@/lib/db';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { parseToTimestamp } from '@/lib/date';
+
+function sanitizeString(val: unknown, maxLength = 255): string {
+  if (typeof val !== 'string') return '';
+  return val.trim().replace(/[\x00-\x1F\x7F<>]/g, '').slice(0, maxLength);
+}
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
