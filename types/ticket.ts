@@ -42,6 +42,7 @@ export interface UpdateTicketPayload {
   status: TicketStatus | string;
   waktuKeluar: string;
   catatan?: string;
+  detail?: string;
 }
 
 export interface DeleteTicketPayload {

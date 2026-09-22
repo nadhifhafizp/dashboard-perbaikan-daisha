@@ -43,6 +43,7 @@ function getInitialTree(): DaishaTreeItem[] {
 let globalCatalogCache: CatalogMap | null = null;
 let globalSeksiCache: string[] | null = null;
 let globalTreeCache: DaishaTreeItem[] | null = null;
+let lastCatalogFetchTimestamp = 0;
 
 export function useDaishaCatalog() {
   const [catalog, setCatalog] = useState<CatalogMap>(globalCatalogCache || masterDataDaisha);
@@ -50,8 +51,12 @@ export function useDaishaCatalog() {
   const [tree, setTree] = useState<DaishaTreeItem[]>(() => globalTreeCache || getInitialTree());
   const [loading, setLoading] = useState(false);
 
+  const fetchCatalog = useCallback(async (force = false) => {
+    // Lewati jika cache masih baru (< 5 menit) dan tidak dipaksa
+    if (!force && globalCatalogCache && Date.now() - lastCatalogFetchTimestamp < 5 * 60 * 1000) {
+      return;
+    }
 
-  const fetchCatalog = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch('/api/catalog');
@@ -62,6 +67,7 @@ export function useDaishaCatalog() {
         globalCatalogCache = data.catalog;
         globalSeksiCache = data.seksiList;
         globalTreeCache = data.tree;
+        lastCatalogFetchTimestamp = Date.now();
 
         setCatalog(data.catalog);
         setSeksiList(data.seksiList);

@@ -3,14 +3,13 @@
 import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { useServerInfo } from '@/hooks/useServerInfo';
+import { Clock, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
   const reason = searchParams.get('reason');
-  const { serverInfo, copied, copyUrl } = useServerInfo();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -35,7 +34,6 @@ function LoginForm() {
       if (response.ok && data.success) {
         let target = data.redirectUrl || '/input';
         if (from && from !== '/login') {
-          // Jika operator mencoba membuka dashboard rekap (/), tetap arahkan ke /input
           if (data.user?.role === 'OPERATOR' && (from === '/' || from.startsWith('/admin') || from.startsWith('/request') || from.startsWith('/spareparts'))) {
             target = '/input';
           } else if (data.user?.role === 'USER_SEKSI' && (from === '/' || from.startsWith('/admin') || from.startsWith('/input') || from.startsWith('/spareparts'))) {
@@ -48,10 +46,8 @@ function LoginForm() {
         window.location.href = target;
         return;
       } else {
-        setErrorMsg(data.error || 'Username atau password salah.');
+        setErrorMsg(data.error || 'Username atau kata sandi tidak valid.');
       }
-
-
     } catch (err) {
       console.error('Login error:', err);
       setErrorMsg('Gagal terhubung ke server. Silakan coba lagi.');
@@ -61,86 +57,86 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-red-950 flex flex-col justify-center items-center p-4 sm:p-6">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+    <div className="min-h-screen bg-black flex flex-col justify-center items-center p-4 sm:p-6">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-xl border border-neutral-200 overflow-hidden">
 
-        {/* Header Kartu */}
-        <div className="bg-red-700 p-6 text-center text-white flex flex-col items-center justify-center">
-          <div className="bg-white px-4 py-2 rounded-lg shadow-md mb-3">
+        {/* Card Header */}
+        <div className="pt-8 pb-5 px-6 text-center border-b border-slate-100 flex flex-col items-center justify-center bg-slate-50/50">
+          <div className="mb-3 bg-white p-2 rounded-lg border border-slate-200/60 shadow-2xs">
             <Image
               src="/logo-bs.png"
               alt="Logo Bridgestone"
-              width={160}
-              height={40}
-              className="h-8 w-auto object-contain"
-              style={{ width: 'auto', height: '2rem' }}
+              width={140}
+              height={32}
+              className="h-7 w-auto object-contain"
               priority
             />
           </div>
-          <h1 className="text-xl font-black tracking-wide uppercase">Internal Maintenance Login</h1>
-          <p className="text-xs text-red-100 mt-1 font-medium">Sistem Pencatatan, Monitoring Daisha dan Follow up Request</p>
+          <h1 className="text-base font-bold text-slate-900 tracking-tight">Workshop Management System</h1>
+          <p className="text-xs text-slate-500 mt-1 font-normal">PT Bridgestone Tire Indonesia</p>
         </div>
 
-        {/* Isi Form */}
-        <div className="p-6 sm:p-8">
+        {/* Form Body */}
+        <div className="p-6 sm:p-7">
           {reason === 'idle' && !errorMsg && (
-            <div className="mb-5 p-3.5 bg-amber-50 border border-amber-300 text-amber-900 rounded-xl text-xs font-medium flex items-start gap-2.5 shadow-xs">
-              <span className="text-base shrink-0 leading-tight">⏳</span>
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs font-normal flex items-start gap-2.5 text-amber-800">
+              <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <p className="font-bold text-amber-950">Sesi Berakhir Otomatis (Idle Timeout)</p>
-                <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
-                  Tidak ada aktivitas terdeteksi selama 30 menit. Akun otomatis keluar demi keamanan. Silakan login kembali.
+                <p className="font-semibold text-amber-900">Sesi Berakhir (Idle Timeout)</p>
+                <p className="mt-0.5 leading-relaxed text-[11px]">
+                  Tidak ada aktivitas selama 30 menit demi keamanan. Silakan masuk kembali.
                 </p>
               </div>
             </div>
           )}
 
           {errorMsg && (
-            <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-bold flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-medium flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-800 mb-1.5">
+              <label htmlFor="login-username" className="block text-xs font-medium text-slate-700 mb-1.5">
                 Username / Akun
               </label>
               <input
+                id="login-username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                placeholder="Masukkan username Anda"
-                className="w-full p-3 border border-gray-300 rounded-xl text-sm text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-600 focus:border-red-600 outline-none transition font-medium"
+                placeholder="Masukkan username akun"
+                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white placeholder:text-slate-400 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition font-medium"
                 autoComplete="username"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-800 mb-1.5">
-                Kata Sandi (Password)
+              <label htmlFor="login-password" className="block text-xs font-medium text-slate-700 mb-1.5">
+                Kata Sandi
               </label>
               <div className="relative">
                 <input
+                  id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full p-3 pr-11 border border-gray-300 rounded-xl text-sm text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-600 focus:border-red-600 outline-none transition font-medium"
+                  className="w-full h-10 px-3 pr-10 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white placeholder:text-slate-400 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition font-medium"
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 text-xs font-bold"
-                  aria-label="Toggle password visibility"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-md cursor-pointer focus:outline-none"
+                  aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                  aria-pressed={showPassword}
                 >
-                  {showPassword ? 'Sembunyikan' : 'Lihat'}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -148,14 +144,11 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-red-700 hover:bg-red-800 text-white font-extrabold rounded-xl shadow-lg transition duration-150 disabled:opacity-50 text-sm tracking-wide uppercase mt-2 flex items-center justify-center gap-2"
+              className="w-full h-10 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-2xs transition disabled:opacity-50 text-xs mt-2 flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500/30"
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
                   <span>Memverifikasi...</span>
                 </>
               ) : (
@@ -165,25 +158,8 @@ function LoginForm() {
           </form>
         </div>
 
-        {serverInfo && (
-          <div className="bg-emerald-50/90 px-6 py-2.5 border-t border-emerald-100 flex items-center justify-between text-[11px] text-emerald-800">
-            <span className="flex items-center gap-1.5 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span>Akses Jaringan:</span>
-              <code className="font-bold bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-mono text-[11px]">{serverInfo.url}</code>
-            </span>
-            <button
-              type="button"
-              onClick={copyUrl}
-              className="text-emerald-700 hover:text-emerald-950 font-bold underline cursor-pointer text-[10.5px] ml-2 shrink-0"
-            >
-              {copied ? 'Tersalin ✓' : 'Salin Link'}
-            </button>
-          </div>
-        )}
-
-        <div className="bg-gray-100 px-6 py-3 border-t border-gray-200 text-center text-[11px] text-gray-500 font-medium">
-          PT Bridgestone Tire Indonesia • Daisha Management System
+        <div className="px-6 py-3 border-t border-slate-100 text-center text-[11px] text-slate-400 font-normal">
+          © 2026 PT Bridgestone Tire Indonesia • Workshop Management
         </div>
       </div>
     </div>
@@ -192,7 +168,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Memuat...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-neutral-400 text-xs">Memuat sesi...</div>}>
       <LoginForm />
     </Suspense>
   );

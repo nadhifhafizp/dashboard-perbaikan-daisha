@@ -43,12 +43,11 @@ export function getServerInfo(): ServerInfo {
   const port = getServerPort();
   const isLocal = ip === 'localhost' || ip === '127.0.0.1';
   const url = `http://${isLocal ? 'localhost' : ip}:${port}`;
-  const ipDisplay = !isLocal ? ` [IP: ${ip}:${port}]` : ` [Port: ${port}]`;
 
   return {
     ip,
     port,
     url,
-    formattedTitle: `Daisha Maintenance | PT Bridgestone Tire Indonesia${ipDisplay}`,
+    formattedTitle: 'Workshop & Daisha Maintenance | PT Bridgestone Tire Indonesia',
   };
 }

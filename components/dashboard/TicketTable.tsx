@@ -7,7 +7,7 @@ import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 
 import { SortOption, SORT_OPTIONS, sortTickets } from '@/lib/sortTickets';
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Download, MapPin, Search, ClipboardList } from 'lucide-react';
 import PaginationControl from '@/components/common/PaginationControl';
 
 interface TicketTableProps {
@@ -43,36 +43,45 @@ export default function TicketTable({
     setCurrentPage(1);
   };
 
+  const getAriaSort = (ascOption: SortOption, descOption: SortOption): 'ascending' | 'descending' | 'none' => {
+    if (sortBy === ascOption) return 'ascending';
+    if (sortBy === descOption) return 'descending';
+    return 'none';
+  };
+
   const getSortIcon = (ascOption: SortOption, descOption: SortOption) => {
-    if (sortBy === ascOption) return <ArrowUp className="w-3.5 h-3.5 text-blue-600 inline ml-1" />;
-    if (sortBy === descOption) return <ArrowDown className="w-3.5 h-3.5 text-blue-600 inline ml-1" />;
+    if (sortBy === ascOption) return <ArrowUp className="w-3.5 h-3.5 text-red-600 inline ml-1" />;
+    if (sortBy === descOption) return <ArrowDown className="w-3.5 h-3.5 text-red-600 inline ml-1" />;
     return <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-60 inline ml-1" />;
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden flex flex-col">
       {/* Header Tabel */}
-      <div className="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-slate-50/50">
+      <div className="p-3.5 sm:p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-slate-50/50">
         <div>
-          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
-            <span>📋</span> Rincian Tiket Perbaikan ({filteredData.length} Tiket)
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
+            <ClipboardList className="w-4 h-4 text-slate-700" />
+            <span>Rincian Tiket Perbaikan (Raw Data)</span>
+            <span className="text-[11px] font-normal text-slate-500">({filteredData.length} Tiket)</span>
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Daftar lengkap laporan yang sesuai dengan filter yang sedang aktif
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            Data mentah seluruh riwayat dan antrean perbaikan Daisha workshop
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
           {/* Selector Urutan Data */}
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
-            <span className="text-slate-400">🔃 Urutkan:</span>
+          <div className="flex items-center gap-1.5 text-xs text-slate-600">
+            <span className="text-slate-500 font-normal text-[11px]">Urutkan:</span>
             <select
               value={sortBy}
               onChange={(e) => {
                 setSortBy(e.target.value as SortOption);
                 setCurrentPage(1);
               }}
-              className="bg-transparent font-black text-slate-800 focus:outline-none cursor-pointer border-none py-0.5 text-xs"
+              aria-label="Pilih opsi pengurutan data tiket"
+              className="h-8 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer shadow-2xs"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -83,15 +92,16 @@ export default function TicketTable({
           </div>
 
           {/* Selector Jumlah Baris per Halaman */}
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
-            <span className="text-slate-400">📄 Tampilkan:</span>
+          <div className="flex items-center gap-1.5 text-xs text-slate-600">
+            <span className="text-slate-500 font-normal text-[11px]">Tampilkan:</span>
             <select
               value={itemsPerPage}
               onChange={(e) => {
                 setItemsPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              className="bg-transparent font-black text-slate-800 focus:outline-none cursor-pointer border-none py-0.5"
+              aria-label="Pilih jumlah baris tiket per halaman"
+              className="h-8 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer shadow-2xs"
             >
               <option value={10}>10 baris</option>
               <option value={20}>20 baris</option>
@@ -102,93 +112,99 @@ export default function TicketTable({
             </select>
           </div>
 
+          {/* Tombol Export Excel */}
           <button
             type="button"
             onClick={exportToExcel}
-            disabled={filteredData.length === 0}
-            className="px-3.5 sm:px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="h-8 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition flex items-center gap-1.5 cursor-pointer text-xs shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
           >
-            <span>📥</span>
-            <span>Ekspor ke Excel</span>
+            <Download className="w-3.5 h-3.5" />
+            <span>Ekspor Excel</span>
           </button>
         </div>
       </div>
 
       {/* Kontainer Tabel Desktop (Khusus Layar md ke atas) */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
           <thead>
-            <tr className="bg-slate-100/75 text-[11px] font-black text-slate-600 uppercase tracking-wider border-b border-slate-200 select-none">
-              <th className="py-3 px-4">No</th>
-              <th className="py-3 px-4">ID Tiket</th>
-              <th
-                onClick={() => toggleSort('unit_asc', 'unit_desc')}
-                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition"
-                title="Klik untuk urutkan nomor unit daisha"
-              >
-                <div className="flex items-center gap-1">
+            <tr className="bg-slate-50/50 text-[11px] font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200/80 select-none">
+              <th scope="col" className="py-3 px-3 text-center w-12">No</th>
+              <th scope="col" className="py-3 px-3.5">ID Tiket</th>
+              <th scope="col" aria-sort={getAriaSort('unit_asc', 'unit_desc')} className="py-3 px-3.5">
+                <button
+                  type="button"
+                  onClick={() => toggleSort('unit_asc', 'unit_desc')}
+                  className="flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-600 hover:text-red-700 focus:outline-none focus:ring-1 focus:ring-red-600 rounded px-1 py-0.5 transition cursor-pointer"
+                  aria-label="Urutkan nomor unit Daisha"
+                >
                   <span>No Daisha</span>
                   {getSortIcon('unit_asc', 'unit_desc')}
-                </div>
+                </button>
               </th>
-              <th
-                onClick={() => toggleSort('daisha_asc', 'daisha_desc')}
-                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition"
-                title="Klik untuk urutkan jenis daisha"
-              >
-                <div className="flex items-center gap-1">
+              <th scope="col" aria-sort={getAriaSort('daisha_asc', 'daisha_desc')} className="py-3 px-3.5">
+                <button
+                  type="button"
+                  onClick={() => toggleSort('daisha_asc', 'daisha_desc')}
+                  className="flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-600 hover:text-red-700 focus:outline-none focus:ring-1 focus:ring-red-600 rounded px-1 py-0.5 transition cursor-pointer"
+                  aria-label="Urutkan jenis Daisha"
+                >
                   <span>Nama Daisha</span>
                   {getSortIcon('daisha_asc', 'daisha_desc')}
-                </div>
+                </button>
               </th>
-              <th
-                onClick={() => toggleSort('seksi_asc', 'seksi_desc')}
-                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition"
-                title="Klik untuk urutkan seksi (A-Z / Z-A)"
-              >
-                <div className="flex items-center gap-1">
+              <th scope="col" aria-sort={getAriaSort('seksi_asc', 'seksi_desc')} className="py-3 px-3.5">
+                <button
+                  type="button"
+                  onClick={() => toggleSort('seksi_asc', 'seksi_desc')}
+                  className="flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-600 hover:text-red-700 focus:outline-none focus:ring-1 focus:ring-red-600 rounded px-1 py-0.5 transition cursor-pointer"
+                  aria-label="Urutkan seksi asal"
+                >
                   <span>Seksi</span>
                   {getSortIcon('seksi_asc', 'seksi_desc')}
-                </div>
+                </button>
               </th>
-              <th className="py-3 px-4">Komponen & Rincian Titik Kerusakan</th>
-              <th
-                onClick={() => toggleSort('pelapor_asc', 'pelapor_desc')}
-                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition"
-                title="Klik untuk urutkan nama pelapor (A-Z / Z-A)"
-              >
-                <div className="flex items-center gap-1">
+              <th scope="col" className="py-3 px-3.5">Kerusakan & Tindakan</th>
+              <th scope="col" aria-sort={getAriaSort('pelapor_asc', 'pelapor_desc')} className="py-3 px-3.5">
+                <button
+                  type="button"
+                  onClick={() => toggleSort('pelapor_asc', 'pelapor_desc')}
+                  className="flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-600 hover:text-red-700 focus:outline-none focus:ring-1 focus:ring-red-600 rounded px-1 py-0.5 transition cursor-pointer"
+                  aria-label="Urutkan nama pelapor"
+                >
                   <span>Pelapor</span>
                   {getSortIcon('pelapor_asc', 'pelapor_desc')}
-                </div>
+                </button>
               </th>
-              <th
-                onClick={() => toggleSort('input_desc', 'input_asc')}
-                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition whitespace-nowrap"
-                title="Klik untuk urutkan tanggal masuk (terbaru / terlama)"
-              >
-                <div className="flex items-center gap-1">
+              <th scope="col" aria-sort={getAriaSort('input_asc', 'input_desc')} className="py-3 px-3.5 whitespace-nowrap">
+                <button
+                  type="button"
+                  onClick={() => toggleSort('input_desc', 'input_asc')}
+                  className="flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-600 hover:text-red-700 focus:outline-none focus:ring-1 focus:ring-red-600 rounded px-1 py-0.5 transition cursor-pointer"
+                  aria-label="Urutkan tanggal masuk"
+                >
                   <span>Tgl Masuk</span>
                   {getSortIcon('input_asc', 'input_desc')}
-                </div>
+                </button>
               </th>
-              <th
-                onClick={() => toggleSort('done_desc', 'done_asc')}
-                className="py-3 px-4 cursor-pointer hover:bg-slate-200/70 transition whitespace-nowrap"
-                title="Klik untuk urutkan tanggal selesai perbaikan (terbaru / terlama)"
-              >
-                <div className="flex items-center gap-1">
+              <th scope="col" aria-sort={getAriaSort('done_asc', 'done_desc')} className="py-3 px-3.5 whitespace-nowrap">
+                <button
+                  type="button"
+                  onClick={() => toggleSort('done_desc', 'done_asc')}
+                  className="flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-600 hover:text-red-700 focus:outline-none focus:ring-1 focus:ring-red-600 rounded px-1 py-0.5 transition cursor-pointer"
+                  aria-label="Urutkan tanggal selesai perbaikan"
+                >
                   <span>Tgl Keluar</span>
                   {getSortIcon('done_asc', 'done_desc')}
-                </div>
+                </button>
               </th>
-              <th className="py-3 px-4 text-center">Status</th>
+              <th scope="col" className="py-3 px-3.5 text-center">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
             {loading ? (
               <tr>
-                <td colSpan={10} className="py-12 text-center text-slate-400">
+                <td colSpan={10} className="py-12 text-center text-slate-500">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <span className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></span>
                     <span>Memuat data tiket perbaikan...</span>
@@ -197,7 +213,7 @@ export default function TicketTable({
               </tr>
             ) : paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={10} className="py-12 text-center text-slate-400">
+                <td colSpan={10} className="py-12 text-center text-slate-500 font-medium">
                   Tidak ada tiket perbaikan yang cocok dengan kriteria filter saat ini.
                 </td>
               </tr>
@@ -207,15 +223,19 @@ export default function TicketTable({
                 const sizeInfo = detectDaishaSize(item.noDaisha);
 
                 return (
-                  <tr key={item.id} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-4 text-slate-400 font-medium">{startIndex + idx + 1}</td>
-                    <td className="py-3 px-4 font-mono font-bold text-slate-800 text-[11px]">{item.idTiketAsli}</td>
-                    <td className="py-3 px-4 font-black text-red-700">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span>{item.noDaisha}</span>
+                  <tr key={item.id} className="hover:bg-slate-50/70 transition">
+                    <td className="py-3 px-3 text-center text-slate-400 font-mono text-[11px] tabular-nums">
+                      {startIndex + idx + 1}
+                    </td>
+                    <td className="py-3 px-3.5 font-mono font-medium text-slate-600 text-xs tabular-nums">
+                      {item.idTiketAsli}
+                    </td>
+                    <td className="py-3 px-3.5 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-bold text-slate-900 text-xs">{item.noDaisha}</span>
                         {sizeInfo && (
                           <span
-                            className={`px-1.5 py-0.2 rounded text-[10px] font-black border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
+                            className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
                             title={sizeInfo.description}
                           >
                             {sizeInfo.code}
@@ -223,58 +243,83 @@ export default function TicketTable({
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-4 font-semibold text-slate-800">{item.namaDaisha}</td>
-                    <td className="py-3 px-4 text-slate-600">{item.seksi}</td>
-                    <td className="py-3 px-4 min-w-[260px] max-w-sm">
-                      {parsed.items.length > 0 ? (
-                        <div className="space-y-1.5 py-0.5">
-                          {parsed.items.map((it, i) => (
-                            <div
-                              key={i}
-                              className="flex items-start justify-between gap-1.5 p-1.5 rounded-lg bg-slate-50 border border-slate-200/70 text-[11px]"
-                            >
-                              <div className="flex items-start gap-1 leading-snug">
-                                <span className="text-slate-400 font-bold">•</span>
-                                <div>
-                                  {it.komponen && it.komponen !== 'Umum' && (
-                                    <span className="font-extrabold text-slate-800 mr-1">
-                                      [{it.komponen}]
-                                    </span>
-                                  )}
-                                  <span className="text-slate-700 font-medium">{it.gejala}</span>
-                                  {it.qty > 1 && (
-                                    <span className="ml-1 text-[10px] font-black text-slate-800 bg-slate-200/80 px-1.5 py-0.2 rounded">
-                                      {it.qty} pcs
+                    <td className="py-3 px-3.5 font-medium text-slate-800 text-xs">{item.namaDaisha}</td>
+                    <td className="py-3 px-3.5 text-slate-600 text-xs font-normal">{item.seksi}</td>
+                    <td className="py-3 px-3.5 min-w-[260px] max-w-sm whitespace-normal">
+                      {(() => {
+                        if (parsed.items.length > 0) {
+                          return (
+                            <div className="space-y-1.5 py-0.5">
+                              {parsed.items.map((it, i) => (
+                                <div
+                                  key={i}
+                                  className="flex items-start justify-between gap-2 text-xs leading-relaxed"
+                                >
+                                  <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                                    {it.komponen && it.komponen !== 'Umum' && (
+                                      <span className="font-semibold text-slate-900">
+                                        {it.komponen}:
+                                      </span>
+                                    )}
+                                    <span className="text-slate-700">{it.gejala.replace(/^[•\s-]+/, '')}</span>
+                                    {it.qty > 1 && (
+                                      <span className="text-slate-500 font-medium tabular-nums text-[11px]">
+                                        ({it.qty}x)
+                                      </span>
+                                    )}
+                                  </div>
+                                  {it.tindakan && (
+                                    <span
+                                      className={`px-2 py-0.5 rounded-md text-[11px] font-medium shrink-0 ${
+                                        it.tindakan === 'Ganti'
+                                          ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
+                                          : 'bg-amber-50 text-amber-800 border border-amber-200/60'
+                                      }`}
+                                    >
+                                      {it.tindakan}
                                     </span>
                                   )}
                                 </div>
-                              </div>
-                              {it.tindakan && (
-                                <span
-                                  className={`px-1.5 py-0.2 rounded text-[9px] font-black shrink-0 ${it.tindakan === 'Ganti' ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-amber-100 text-amber-800 border border-amber-200'}`}
-                                >
-                                  {it.tindakan === 'Ganti' ? '🔄 Ganti' : '🔨 Repair'}
-                                </span>
+                              ))}
+                              {parsed.catatan && (
+                                <div className="text-[11px] text-amber-800 flex items-center gap-1 mt-1">
+                                  <MapPin className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                                  <span>Posisi: {parsed.catatan}</span>
+                                </div>
                               )}
                             </div>
-                          ))}
-                          {parsed.catatan && (
-                            <div className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                              📌 Posisi: {parsed.catatan}
+                          );
+                        }
+                        if (parsed.isWaitingDiagnosis) {
+                          return (
+                            <div className="space-y-1 py-0.5">
+                              <span className="text-[11px] font-medium text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                                <Search className="w-3 h-3 text-amber-800" />
+                                <span>Menunggu Diagnosa</span>
+                              </span>
+                              <p className="text-[11px] text-slate-600 font-normal">
+                                {parsed.catatan ? `Gejala: ${parsed.catatan}` : 'Kerusakan belum diidentifikasi di lapangan'}
+                              </p>
                             </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div>
-                          <div className="font-bold text-slate-800">{item.jenisKerusakan}</div>
-                          <div className="text-[11px] text-slate-500">{item.detail}</div>
-                        </div>
+                          );
+                        }
+                        return (
+                          <div>
+                            <span className="font-semibold text-slate-900 block text-xs">{item.jenisKerusakan}</span>
+                            <span className="text-[11px] text-slate-600">{item.detail && item.detail !== '-' ? item.detail : 'Kerusakan umum'}</span>
+                          </div>
+                        );
+                      })()}
+                      {item.reason && item.reason !== '-' && item.reason.trim() !== '' && (
+                        <p className="text-[11px] text-emerald-800 mt-1 font-normal">
+                          Catatan: {item.reason}
+                        </p>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-slate-600">{item.pelapor}</td>
-                    <td className="py-3 px-4 text-[11px] text-slate-500 whitespace-nowrap">{item.tglMasuk}</td>
-                    <td className="py-3 px-4 text-[11px] text-slate-500 whitespace-nowrap">{item.tglKeluar}</td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-3 px-3.5 text-slate-600 text-xs font-normal">{item.pelapor}</td>
+                    <td className="py-3 px-3.5 text-xs text-slate-500 whitespace-nowrap tabular-nums">{item.tglMasuk}</td>
+                    <td className="py-3 px-3.5 text-xs text-slate-500 whitespace-nowrap tabular-nums">{item.tglKeluar || '-'}</td>
+                    <td className="py-3 px-3.5 text-center">
                       <StatusBadge status={item.status} />
                     </td>
                   </tr>
@@ -306,14 +351,14 @@ export default function TicketTable({
                 {/* Baris 1: ID Tiket, No Daisha & Status */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                    <span className="font-mono text-xs text-slate-500 tabular-nums">
                       #{item.idTiketAsli}
                     </span>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-black text-sm text-red-700">{item.noDaisha}</span>
+                      <span className="font-mono font-bold text-sm text-slate-900">{item.noDaisha}</span>
                       {sizeInfo && (
                         <span
-                          className={`px-1.5 py-0.2 rounded text-[9px] font-black border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
+                          className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
                           title={sizeInfo.description}
                         >
                           {sizeInfo.code}
@@ -325,74 +370,87 @@ export default function TicketTable({
                 </div>
 
                 {/* Baris 2: Nama Daisha & Seksi */}
-                <div className="text-xs font-semibold text-slate-700 flex items-center gap-2 flex-wrap">
-                  <span className="text-slate-900 font-bold">{item.namaDaisha}</span>
+                <div className="text-xs font-medium text-slate-700 flex items-center gap-2 flex-wrap">
+                  <span className="text-slate-900 font-semibold">{item.namaDaisha}</span>
                   <span className="text-slate-300">•</span>
-                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[11px] font-bold">
+                  <span className="text-slate-600 font-normal">
                     {item.seksi}
                   </span>
                 </div>
 
                 {/* Baris 3: Titik Kerusakan */}
-                <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/70 space-y-1.5">
-                  <div className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                <div className="border-l-2 border-slate-200 pl-3 py-1 space-y-1">
+                  <div className="text-[11px] font-medium text-slate-500 mb-0.5 uppercase tracking-wider">
                     Rincian Kerusakan:
                   </div>
-                  {parsed.items.length > 0 ? (
+                  {parsed.isWaitingDiagnosis ? (
+                    <div className="space-y-1 py-0.5">
+                      <span className="text-[11px] font-medium text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                        <Search className="w-3 h-3 text-amber-800" />
+                        <span>Menunggu Diagnosa</span>
+                      </span>
+                      <p className="text-[11px] text-slate-600 font-normal">
+                        {parsed.catatan ? `Gejala: ${parsed.catatan}` : 'Kerusakan belum diidentifikasi di lapangan'}
+                      </p>
+                    </div>
+                  ) : parsed.items.length > 0 ? (
                     parsed.items.map((it, i) => (
                       <div
                         key={i}
-                        className="flex items-start justify-between gap-1.5 text-[11px]"
+                        className="flex items-start justify-between gap-1.5 text-xs py-0.5"
                       >
-                        <div className="flex items-start gap-1 leading-snug">
-                          <span className="text-slate-400 font-bold">•</span>
-                          <div>
-                            {it.komponen && it.komponen !== 'Umum' && (
-                              <span className="font-extrabold text-slate-800 mr-1">
-                                [{it.komponen}]
-                              </span>
-                            )}
-                            <span className="text-slate-700 font-medium">{it.gejala}</span>
-                            {it.qty > 1 && (
-                              <span className="ml-1 text-[10px] font-black text-slate-800 bg-slate-200/80 px-1.5 py-0.2 rounded">
-                                {it.qty} pcs
-                              </span>
-                            )}
-                          </div>
+                        <div className="flex items-center gap-1.5 leading-relaxed text-slate-700 flex-wrap">
+                          {it.komponen && it.komponen !== 'Umum' && (
+                            <span className="font-semibold text-slate-900">
+                              {it.komponen}:
+                            </span>
+                          )}
+                          <span className="text-slate-700">{it.gejala.replace(/^[•\s-]+/, '')}</span>
+                          {it.qty > 1 && (
+                            <span className="text-slate-500 font-medium tabular-nums text-[11px]">
+                              ({it.qty}x)
+                            </span>
+                          )}
                         </div>
                         {it.tindakan && (
                           <span
-                            className={`px-1.5 py-0.2 rounded text-[9px] font-black shrink-0 ${
+                            className={`px-2 py-0.5 rounded-md text-[11px] font-medium shrink-0 ${
                               it.tindakan === 'Ganti'
-                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                : 'bg-amber-100 text-amber-800 border border-amber-200'
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
+                                : 'bg-amber-50 text-amber-800 border border-amber-200/60'
                             }`}
                           >
-                            {it.tindakan === 'Ganti' ? '🔄 Ganti' : '🔨 Repair'}
+                            {it.tindakan}
                           </span>
                         )}
                       </div>
                     ))
                   ) : (
                     <div>
-                      <div className="font-bold text-slate-800 text-xs">{item.jenisKerusakan}</div>
-                      <div className="text-[11px] text-slate-500">{item.detail}</div>
+                      <div className="font-medium text-slate-800 text-xs">{item.jenisKerusakan}</div>
+                      <div className="text-xs text-slate-500">{item.detail}</div>
                     </div>
                   )}
-                  {parsed.catatan && (
-                    <div className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                      📌 Posisi: {parsed.catatan}
+                  {parsed.catatan && !parsed.isWaitingDiagnosis && (
+                    <div className="text-[11px] text-amber-800 flex items-center gap-1 mt-1">
+                      <MapPin className="w-3 h-3 text-amber-700 shrink-0" />
+                      <span>Posisi: {parsed.catatan}</span>
                     </div>
+                  )}
+                  {item.reason && item.reason !== '-' && item.reason.trim() !== '' && (
+                    <p className="text-[11px] text-emerald-800 mt-1 font-normal">
+                      Catatan: {item.reason}
+                    </p>
                   )}
                 </div>
 
                 {/* Baris 4: Info Pelapor & Waktu */}
-                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 flex-wrap gap-1">
+                <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100 flex-wrap gap-1">
                   <div>
                     <span>Pelapor: </span>
-                    <strong className="text-slate-700">{item.pelapor}</strong>
+                    <strong className="text-slate-700 font-semibold">{item.pelapor}</strong>
                   </div>
-                  <div className="text-[10px]">
+                  <div className="text-xs">
                     <span>Masuk: {item.tglMasuk}</span>
                     {item.tglKeluar && <span> • Selesai: {item.tglKeluar}</span>}
                   </div>

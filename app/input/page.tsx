@@ -11,10 +11,10 @@ import ReviewTicketModal from '@/components/input/ReviewTicketModal';
 import DamageCatalogSelector, { TindakanType } from '@/components/input/DamageCatalogSelector';
 import PrintTicketTagModal, { PrintableTicketData } from '@/components/common/PrintTicketTagModal';
 import IndoDateTimeInput from '@/components/common/IndoDateTimeInput';
-import { useTickets, broadcastTicketChange } from '@/hooks/useTickets';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
-import { ArrowLeft, LayoutDashboard, ClipboardList, Settings } from 'lucide-react';
+import { useTickets, broadcastTicketChange } from '@/hooks/useTickets';
+import { ArrowLeft, LayoutDashboard, ClipboardList, Settings, User, Layers, Ruler, Camera, AlertTriangle, Search, Wrench, Lightbulb, Truck, Save, Tag, X } from 'lucide-react';
 
 const INVALID_OPERATOR_NAMES = [
   'Staff Input / Teknisi Lapangan',
@@ -74,7 +74,7 @@ export default function InputKerusakanPage() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<CreateTicketPayload | null>(null);
 
-  const { tickets, refresh, setTickets } = useTickets({ autoRefreshIntervalMs: 10_000 });
+  const { tickets, refresh, setTickets } = useTickets({ autoRefreshIntervalMs: 0 });
   const { catalog, seksiList, daishaList, getDaishaBySeksi } = useDaishaCatalog();
 
   // State untuk Cetak Tag Fisik Daisha setelah submit
@@ -91,7 +91,7 @@ export default function InputKerusakanPage() {
     if (dismissedDuplicateUnit === normalizedNoDaisha) return null;
     return (
       tickets.find(
-        (t) =>
+        (t: Ticket) =>
           t.noDaisha.trim().toUpperCase() === normalizedNoDaisha &&
           (t.status === 'Open' || t.status === 'Progress')
       ) || null
@@ -388,7 +388,7 @@ export default function InputKerusakanPage() {
           detail: pendingPayload.detail,
           reason: '-',
         };
-        setTickets((prev) => [optimisticTicket, ...prev.filter((t) => t.idTiketAsli !== optimisticTicket.idTiketAsli)]);
+        setTickets((prev: Ticket[]) => [optimisticTicket, ...prev.filter((t: Ticket) => t.idTiketAsli !== optimisticTicket.idTiketAsli)]);
 
         // 2. Fetch fresh data dari server di background dan siarkan ke seluruh jendela/tab
         void refresh(true, true);
@@ -403,7 +403,7 @@ export default function InputKerusakanPage() {
           `Laporan unit ${pendingPayload.noDaisha} (${pendingPayload.namaDaisha}) berhasil dikirim ke antrean workshop. Anda dapat mencetak Tag Fisik Unit sekarang untuk digantungkan pada Daisha.`,
           `Seksi: ${pendingPayload.seksi} | Komponen: ${pendingPayload.kategori} | Gejala: ${pendingPayload.detail}`,
           'Tutup',
-          '🏷️ Cetak Tag Fisik Unit',
+          'Cetak Tag Fisik Unit',
           () => {
             setFeedback((prev) => ({ ...prev, isOpen: false }));
             setIsPrintTagOpen(true);
@@ -450,14 +450,14 @@ export default function InputKerusakanPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 p-3 sm:p-5 md:p-8 flex justify-center items-start pb-24 md:pb-10">
-      <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200 w-full max-w-3xl">
+    <div className="min-h-screen bg-slate-50 p-3 sm:p-5 md:p-8 flex justify-center items-start pb-24 md:pb-10">
+      <div className="bg-white p-5 sm:p-7 rounded-xl shadow-2xs border border-slate-200/80 w-full max-w-3xl">
         {/* Header Form dengan Breadcrumb & Quick Nav */}
         <div className="border-b border-slate-100 pb-4 mb-5">
-          <div className="flex items-center gap-2 mb-2 flex-wrap text-xs">
+          <div className="flex items-center gap-2 mb-2.5 flex-wrap text-xs">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-slate-600 hover:text-red-700 hover:bg-red-50 transition border border-slate-200 hover:border-red-200"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition border border-slate-200"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Portal</span>
@@ -465,48 +465,48 @@ export default function InputKerusakanPage() {
             <span className="text-slate-300">/</span>
             <Link
               href="/daisha"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-slate-600 hover:text-red-700 hover:bg-red-50 transition border border-slate-200 hover:border-red-200"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition border border-slate-200"
             >
               <LayoutDashboard className="w-3.5 h-3.5 text-red-600" />
               <span>Dashboard Daisha</span>
             </Link>
             <span className="text-slate-300">/</span>
-            <span className="font-extrabold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
+            <span className="font-semibold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
               Input Rusak
             </span>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 mt-2">
             <div>
-              <h1 className="text-base sm:text-2xl font-black text-slate-900 leading-tight">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
                 Input Daisha Rusak
               </h1>
-              <p className="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">
-                Catat laporan perbaikan unit sesuai katalog workshop
+              <p className="text-[11px] sm:text-xs text-slate-500 font-normal mt-0.5">
+                Catat laporan perbaikan unit sesuai katalog workshop maintenance
               </p>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
               <Link
                 href="/daisha"
-                className="text-xs font-bold text-slate-700 hover:text-red-700 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                className="h-8 px-3 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs"
               >
-                <LayoutDashboard className="w-3.5 h-3.5 text-slate-600" />
+                <LayoutDashboard className="w-3.5 h-3.5 text-slate-500" />
                 <span>Dashboard</span>
               </Link>
               <Link
                 href="/riwayat"
-                className="text-xs font-bold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer border border-red-100 shadow-2xs"
+                className="h-8 px-3 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs"
               >
-                <ClipboardList className="w-3.5 h-3.5 text-red-600" />
+                <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
                 <span>Status Antrean</span>
               </Link>
               {isAdmin && (
                 <Link
                   href="/admin"
-                  className="text-xs font-bold text-slate-800 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer border border-slate-200 shadow-2xs"
+                  className="h-8 px-3 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs"
                 >
-                  <Settings className="w-3.5 h-3.5 text-slate-700" />
+                  <Settings className="w-3.5 h-3.5 text-slate-500" />
                   <span>Panel Admin</span>
                 </Link>
               )}
@@ -514,16 +514,17 @@ export default function InputKerusakanPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Section 1: Informasi Pelapor & Waktu */}
-          <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200">
-            <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span>👤</span> 1. Informasi Pelapor & Waktu
+          <div className="p-4 sm:p-5 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+            <h2 className="text-xs font-semibold text-slate-900 mb-3 flex items-center gap-2">
+              <User className="w-4 h-4 text-red-600" />
+              <span>1. Informasi Pelapor & Waktu</span>
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 mb-1.5">
                   Waktu Temuan / Masuk *
                 </label>
                 <IndoDateTimeInput
@@ -534,10 +535,11 @@ export default function InputKerusakanPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label htmlFor="input-nama-pelapor" className="block text-xs font-medium text-slate-700 mb-1.5">
                   Nama Pelapor / Teknisi *
                 </label>
                 <input
+                  id="input-nama-pelapor"
                   type="text"
                   name="namaPelapor"
                   value={formData.namaPelapor}
@@ -547,29 +549,31 @@ export default function InputKerusakanPage() {
                   }}
                   placeholder="Ketik nama Anda..."
                   required
-                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-bold bg-white focus:ring-2 focus:ring-red-600 outline-none placeholder-slate-400"
+                  className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none placeholder:font-normal placeholder-slate-400"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 2: Identifikasi Unit Daisha */}
-          <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200">
-            <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span>🛒</span> 2. Identifikasi Unit Daisha
+          <div className="p-4 sm:p-5 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+            <h2 className="text-xs font-semibold text-slate-900 mb-3 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-red-600" />
+              <span>2. Identifikasi Unit Daisha</span>
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label htmlFor="input-seksi" className="block text-xs font-medium text-slate-700 mb-1.5">
                   Seksi Asal Unit *
                 </label>
                 <select
+                  id="input-seksi"
                   name="seksi"
                   value={formData.seksi}
                   onChange={handleChange}
                   required
-                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-bold bg-white focus:ring-2 focus:ring-red-600 outline-none cursor-pointer"
+                  className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
                 >
                   <option value="">-- Pilih Seksi --</option>
                   {seksiList.filter((s) => s.toLowerCase() !== 'all seksi').map((s) => (
@@ -581,16 +585,17 @@ export default function InputKerusakanPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label htmlFor="input-jenis-daisha" className="block text-xs font-medium text-slate-700 mb-1.5">
                   Tipe / Jenis Daisha *
                 </label>
                 <select
+                  id="input-jenis-daisha"
                   name="jenisDaisha"
                   value={formData.jenisDaisha}
                   onChange={handleChange}
                   required
                   disabled={!formData.seksi && !showAllDaisha}
-                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-medium bg-white focus:ring-2 focus:ring-red-600 outline-none disabled:bg-slate-100 disabled:text-slate-400 cursor-pointer"
+                  className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none disabled:bg-slate-100 disabled:text-slate-400 cursor-pointer"
                 >
                   <option value="">
                     {formData.seksi || showAllDaisha
@@ -613,33 +618,34 @@ export default function InputKerusakanPage() {
                 id="showAll"
                 checked={showAllDaisha}
                 onChange={handleChange}
-                className="mr-2 h-4 w-4 text-red-600 rounded accent-red-600 cursor-pointer"
+                className="mr-2 h-4 w-4 text-red-600 rounded border-slate-300 accent-red-600 cursor-pointer"
               />
               <label
                 htmlFor="showAll"
-                className="text-xs text-slate-600 font-semibold cursor-pointer select-none"
+                className="text-xs text-slate-600 font-medium cursor-pointer select-none"
               >
                 Tampilkan seluruh jenis Daisha di dropdown tanpa terikat filter Seksi
               </label>
             </div>
 
             {/* Nomor Unit & Barcode Scanner Button */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end pt-3 border-t border-slate-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end pt-3 border-t border-slate-100">
               <div>
                 <div className="flex items-center justify-between mb-1.5 gap-2">
-                  <label className="block text-xs font-bold text-slate-700">
+                  <label htmlFor="input-no-daisha" className="block text-xs font-medium text-slate-700">
                     Nomor Unit Daisha *
                   </label>
                   {detectedSize && (
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-black border ${detectedSize.badgeBg} ${detectedSize.textColor} ${detectedSize.borderColor} animate-fade-in shadow-2xs`}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${detectedSize.badgeBg} ${detectedSize.textColor} ${detectedSize.borderColor}`}
                     >
-                      <span>📐</span>
+                      <Ruler className="w-3 h-3" />
                       <span>Ukuran: {detectedSize.label}</span>
                     </span>
                   )}
                 </div>
                 <input
+                  id="input-no-daisha"
                   type="text"
                   name="noDaisha"
                   value={formData.noDaisha}
@@ -649,14 +655,14 @@ export default function InputKerusakanPage() {
                   }}
                   placeholder="Ketik atau scan barcode (Cth: M00287, S00064)"
                   required
-                  className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-900 font-black bg-white focus:ring-2 focus:ring-red-600 outline-none uppercase placeholder-slate-400"
+                  className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none uppercase placeholder-slate-400"
                 />
                 {detectedSize ? (
-                  <span className={`text-[10px] font-bold mt-1 block ${detectedSize.textColor}`}>
+                  <span className={`text-[11px] font-normal mt-1 block ${detectedSize.textColor}`}>
                     Otomatis terdeteksi: <strong>{detectedSize.description}</strong> dari awalan &apos;{detectedSize.code}&apos;
                   </span>
                 ) : (
-                  <span className="text-[10px] text-slate-400 mt-1 block">
+                  <span className="text-[11px] text-slate-400 mt-1 block">
                     Awalan kode: <strong>S</strong> = Small, <strong>M</strong> = Medium, <strong>L</strong> = Large
                   </span>
                 )}
@@ -666,9 +672,9 @@ export default function InputKerusakanPage() {
                 <button
                   type="button"
                   onClick={() => setIsScanning(true)}
-                  className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
                 >
-                  <span>📷</span>
+                  <Camera className="w-4 h-4" />
                   <span>Scan Barcode / QR Kamera</span>
                 </button>
               </div>
@@ -676,29 +682,29 @@ export default function InputKerusakanPage() {
 
             {/* Warning Card Duplikasi Unit Aktif */}
             {duplicateActiveTicket && (
-              <div className="mt-4 p-4 bg-amber-50 border border-amber-300 rounded-2xl shadow-xs animate-fade-in text-xs">
+              <div className="mt-4 p-4 bg-amber-50/80 border border-amber-300/80 rounded-xl text-xs">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-2.5">
-                    <span className="text-2xl mt-0.5">⚠️</span>
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-black text-amber-950 text-xs tracking-tight">
-                          PERINGATAN: Unit {duplicateActiveTicket.noDaisha} Sedang Dalam Antrean Bengkel!
+                        <h4 className="font-semibold text-amber-950 text-xs">
+                          Unit {duplicateActiveTicket.noDaisha} Sedang Dalam Antrean Bengkel
                         </h4>
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-200 text-amber-900 border border-amber-300">
+                        <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-100 text-amber-900">
                           Status: {duplicateActiveTicket.status}
                         </span>
                       </div>
 
-                      <p className="text-slate-600 mt-1 font-medium">
-                        Tiket ID: <strong className="font-mono text-slate-900">{duplicateActiveTicket.idTiketAsli}</strong> • Seksi:{' '}
+                      <p className="text-slate-600 mt-1 font-normal text-[11px]">
+                        Tiket ID: <strong className="font-mono text-slate-900 tabular-nums">{duplicateActiveTicket.idTiketAsli}</strong> • Seksi:{' '}
                         <strong>{duplicateActiveTicket.seksi}</strong> • Dilaporkan oleh:{' '}
                         <strong>{duplicateActiveTicket.pelapor}</strong> ({duplicateActiveTicket.tglMasuk})
                       </p>
 
                       {duplicateActiveTicket.detail && duplicateActiveTicket.detail !== '-' && (
-                        <div className="mt-2 p-2.5 bg-white rounded-xl border border-amber-200/80 text-[11px] text-slate-700 font-medium leading-relaxed">
-                          <span className="font-bold text-amber-900 block mb-0.5">
+                        <div className="mt-2 p-2.5 bg-white rounded-lg border border-amber-200 text-xs text-slate-700 leading-relaxed">
+                          <span className="font-medium text-amber-900 block mb-0.5">
                             Rincian Kerusakan yang Sedang Berjalan:
                           </span>
                           {duplicateActiveTicket.detail}
@@ -710,26 +716,26 @@ export default function InputKerusakanPage() {
                   <button
                     type="button"
                     onClick={() => setDismissedDuplicateUnit(normalizedNoDaisha)}
-                    className="text-slate-400 hover:text-slate-700 font-black text-xs p-1 rounded-lg hover:bg-amber-100 transition cursor-pointer shrink-0"
+                    className="text-amber-700 hover:text-amber-950 p-1 rounded-lg hover:bg-amber-100 transition cursor-pointer shrink-0"
                     title="Abaikan peringatan ini"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-amber-200/80 flex flex-wrap items-center justify-between gap-2">
+                <div className="mt-3 pt-2.5 border-t border-amber-200/70 flex flex-wrap items-center justify-between gap-2">
                   <Link
                     href="/riwayat"
-                    className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
+                    className="h-8 px-3 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
                   >
-                    <span>🔍</span>
+                    <Search className="w-3.5 h-3.5" />
                     <span>Buka Tiket di Riwayat Laporan</span>
                   </Link>
 
                   <button
                     type="button"
                     onClick={() => setDismissedDuplicateUnit(normalizedNoDaisha)}
-                    className="text-[11px] font-bold text-slate-600 hover:text-slate-900 underline cursor-pointer"
+                    className="text-xs font-medium text-slate-600 hover:text-slate-900 underline cursor-pointer"
                   >
                     Abaikan & Tetap Buat Laporan Baru
                   </button>
@@ -739,26 +745,27 @@ export default function InputKerusakanPage() {
           </div>
 
           {/* Section 3: Status / Mode Kerusakan Unit */}
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
+          <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <span>🔧</span> 3. Identifikasi Kerusakan Unit
+                <h2 className="text-xs font-semibold text-slate-900 flex items-center gap-2">
+                  <Wrench className="w-4 h-4 text-red-600" />
+                  <span>3. Identifikasi Kerusakan Unit</span>
                 </h2>
-                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                <p className="text-[11px] text-slate-500 font-normal mt-0.5">
                   Pilih apakah kerusakan sudah diketahui atau perlu diinspeksi teknisi saat tiba di bengkel.
                 </p>
               </div>
 
               {/* Segmented Mode Toggle */}
-              <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/80 shrink-0 self-start sm:self-auto">
+              <div className="inline-flex p-1 bg-slate-100 rounded-lg shrink-0 self-start sm:self-auto border border-slate-200">
                 <button
                   type="button"
                   onClick={() => setIsDiagnosaBengkel(false)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer ${
                     !isDiagnosaBengkel
-                      ? 'bg-white text-slate-900 shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-white text-slate-900 shadow-2xs font-semibold'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   Sudah Tahu Kerusakan
@@ -766,13 +773,13 @@ export default function InputKerusakanPage() {
                 <button
                   type="button"
                   onClick={() => setIsDiagnosaBengkel(true)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
                     isDiagnosaBengkel
-                      ? 'bg-amber-600 text-white shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-amber-600 text-white shadow-2xs font-semibold'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <span>🔍</span>
+                  <Search className="w-3.5 h-3.5" />
                   <span>Cek di Bengkel</span>
                 </button>
               </div>
@@ -780,21 +787,21 @@ export default function InputKerusakanPage() {
 
             {/* Mode Cek di Bengkel Info Box & Symptom Note */}
             {isDiagnosaBengkel && (
-              <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-xl space-y-3 animate-fade-in text-xs">
+              <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl space-y-3 text-xs">
                 <div className="flex items-start gap-2.5">
-                  <span className="text-xl shrink-0 mt-0.5">💡</span>
+                  <Lightbulb className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div className="leading-relaxed">
-                    <p className="font-black text-amber-950">
+                    <p className="font-semibold text-amber-950 text-xs">
                       Mode Fleksibel: Kerusakan Belum Diketahui Lapangan
                     </p>
-                    <p className="text-slate-600 mt-0.5">
+                    <p className="text-slate-600 mt-0.5 text-xs">
                       Unit akan didaftarkan ke antrean bengkel dengan status <strong className="text-amber-900">Menunggu Diagnosa Bengkel</strong>. Daisha dapat segera diangkut ke bengkel, dan teknisi bengkel akan melengkapi rincian komponen rusak saat memeriksa unit fisik.
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-amber-200/70">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <div className="pt-2 border-t border-amber-200/60">
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
                     Catatan Gejala / Indikasi Awal (Opsional)
                   </label>
                   <input
@@ -802,10 +809,10 @@ export default function InputKerusakanPage() {
                     value={catatanGejala}
                     onChange={(e) => setCatatanGejala(e.target.value)}
                     placeholder="Contoh: Roda seret saat didorong, rangka miring, bunyi kasar di bearing..."
-                    className="w-full p-3 border border-amber-300/90 bg-white rounded-xl text-xs text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 outline-none placeholder-slate-400"
+                    className="w-full h-10 px-3 border border-amber-300/80 bg-white rounded-lg text-xs text-slate-900 font-normal focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none placeholder-slate-400"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    Bantu teknisi bengkel dengan menuliskan apa yang Anda rasakan/lihat saat menggunakan unit ini.
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Bantu teknisi bengkel dengan menuliskan apa yang Anda rasakan atau lihat saat menggunakan unit ini.
                   </p>
                 </div>
               </div>
@@ -839,40 +846,27 @@ export default function InputKerusakanPage() {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-4 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-lg transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${
+            className={`w-full h-11 text-white font-medium text-xs sm:text-sm rounded-lg transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-2xs ${
               isDiagnosaBengkel
-                ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-900/20'
-                : 'bg-red-700 hover:bg-red-800 shadow-red-900/20'
+                ? 'bg-amber-600 hover:bg-amber-700'
+                : 'bg-red-600 hover:bg-red-700'
             }`}
           >
             {loading ? (
               <>
-                <svg
-                  className="animate-spin h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                 <span>Menyimpan ke Sistem Workshop...</span>
               </>
             ) : isDiagnosaBengkel ? (
-              '🚚 Daftarkan Unit ke Antrean Bengkel'
+              <>
+                <Truck className="w-4 h-4" />
+                <span>Daftarkan Unit ke Antrean Bengkel</span>
+              </>
             ) : (
-              '💾 Simpan Laporan Kerusakan Daisha'
+              <>
+                <Save className="w-4 h-4" />
+                <span>Simpan Laporan Kerusakan Daisha</span>
+              </>
             )}
           </button>
         </form>

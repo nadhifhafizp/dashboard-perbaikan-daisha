@@ -22,11 +22,11 @@ export interface SortOptionItem {
 }
 
 export const SORT_OPTIONS: SortOptionItem[] = [
-  { value: 'input_desc', label: '🕒 Masuk: Terbaru', shortLabel: 'Masuk Terbaru' },
-  { value: 'input_asc', label: '⏳ Masuk: Terlama', shortLabel: 'Masuk Terlama' },
-  { value: 'done_desc', label: '✅ Selesai: Terbaru', shortLabel: 'Selesai Terbaru' },
-  { value: 'done_asc', label: '⌛ Selesai: Terlama', shortLabel: 'Selesai Terlama' },
-  { value: 'unit_asc', label: '🔢 No Unit: (0-9)', shortLabel: 'No Unit' },
+  { value: 'input_desc', label: 'Masuk: Terbaru', shortLabel: 'Masuk Terbaru' },
+  { value: 'input_asc', label: 'Masuk: Terlama', shortLabel: 'Masuk Terlama' },
+  { value: 'done_desc', label: 'Selesai: Terbaru', shortLabel: 'Selesai Terbaru' },
+  { value: 'done_asc', label: 'Selesai: Terlama', shortLabel: 'Selesai Terlama' },
+  { value: 'unit_asc', label: 'No Unit: (0-9)', shortLabel: 'No Unit' },
 ];
 
 export function sortTickets(tickets: Ticket[], sortBy: SortOption): Ticket[] {

@@ -9,7 +9,6 @@ import {
   Wrench,
   Search,
   RotateCw,
-  Hammer,
   MessageSquare,
   Clock,
   User,
@@ -20,17 +19,17 @@ import {
 
 interface RiwayatTicketCardProps {
   ticket: Ticket;
-  onEdit: (ticket: Ticket) => void;
-  onCancel: (ticket: Ticket) => void;
   onViewDetail: (ticket: Ticket) => void;
+  onEdit?: (ticket: Ticket) => void;
+  onCancel?: (ticket: Ticket) => void;
   onPrintTag?: (ticket: Ticket) => void;
 }
 
-export default function RiwayatTicketCard({
+function RiwayatTicketCardComponent({
   ticket,
+  onViewDetail,
   onEdit,
   onCancel,
-  onViewDetail,
   onPrintTag,
 }: RiwayatTicketCardProps) {
   const isOpen = ticket.status === 'Open';
@@ -51,25 +50,25 @@ export default function RiwayatTicketCard({
       : [];
 
   return (
-    <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition space-y-2.5">
+    <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-slate-300 transition space-y-2.5">
       {/* Baris 1: No Unit + Tipe Daisha + Seksi + Status */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
-          <span className="px-2.5 py-0.5 bg-red-600 text-white font-mono font-black text-xs sm:text-sm rounded-lg shadow-2xs shrink-0">
+          <span className="px-2.5 py-0.5 bg-red-600 text-white font-mono font-semibold text-xs sm:text-sm rounded shadow-2xs shrink-0">
             {ticket.noDaisha}
           </span>
           {sizeInfo && (
             <span
-              className={`px-2 py-0.5 text-[10px] font-black rounded-md border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor} shrink-0`}
+              className={`px-2 py-0.5 text-xs font-semibold rounded border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor} shrink-0`}
             >
               {sizeInfo.label}
             </span>
           )}
-          <span className="text-xs sm:text-sm font-black text-slate-800 truncate">
+          <span className="text-xs sm:text-sm font-semibold text-slate-800 truncate">
             {ticket.namaDaisha}
           </span>
           <span className="text-slate-300 hidden sm:inline">•</span>
-          <span className="text-[11px] text-slate-600 font-bold px-2 py-0.5 bg-slate-100 rounded-md shrink-0 border border-slate-200/60">
+          <span className="text-xs text-slate-600 font-medium px-2 py-0.5 bg-slate-100 rounded shrink-0 border border-slate-200/60">
             Seksi: {ticket.seksi}
           </span>
         </div>
@@ -78,15 +77,15 @@ export default function RiwayatTicketCard({
       </div>
 
       {/* Baris 2: Kerusakan Visual Dikelompokkan (Ganti vs Repair) */}
-      <div className="text-xs bg-slate-50 p-3 rounded-xl border border-slate-200/80 space-y-2">
+      <div className="text-xs bg-slate-50 p-3 rounded-lg border border-slate-200/80 space-y-2">
         {/* Komponen Badges */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1">
+          <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
             <Wrench className="w-3 h-3" />
             Kerusakan:
           </span>
           {isNeedsDiagnosis ? (
-            <span className="px-2 py-0.5 rounded-md font-extrabold text-[11px] text-amber-900 bg-amber-100 border border-amber-300 flex items-center gap-1">
+            <span className="px-2 py-0.5 rounded font-medium text-xs text-amber-900 bg-amber-100 border border-amber-300 flex items-center gap-1">
               <Search className="w-3 h-3" />
               <span>Menunggu Diagnosa Bengkel</span>
             </span>
@@ -94,13 +93,13 @@ export default function RiwayatTicketCard({
             komponenList.map((k) => (
               <span
                 key={k}
-                className="px-2 py-0.5 rounded-md font-extrabold text-[11px] text-slate-800 bg-white border border-slate-200 shadow-2xs"
+                className="px-2 py-0.5 rounded font-medium text-xs text-slate-800 bg-white border border-slate-200 shadow-2xs"
               >
                 {k}
               </span>
             ))
           ) : (
-            <span className="px-2 py-0.5 rounded-md font-bold text-[11px] text-slate-500 bg-white border border-slate-200">
+            <span className="px-2 py-0.5 rounded font-medium text-xs text-slate-500 bg-white border border-slate-200">
               Kerusakan Umum
             </span>
           )}
@@ -111,21 +110,23 @@ export default function RiwayatTicketCard({
           <div className="space-y-1.5 pt-0.5">
             {/* 1. Kelompok Ganti Baru */}
             {parsed.gantiItems.length > 0 && (
-              <div className="flex items-start gap-2 bg-blue-50/80 p-2 rounded-xl border border-blue-200/80">
-                <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white font-black text-[10px] shrink-0 flex items-center gap-1 shadow-2xs">
+              <div className="flex items-start gap-2 bg-blue-50/80 p-2 rounded-lg border border-blue-200/80">
+                <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-medium text-xs shrink-0 flex items-center gap-1 shadow-2xs tabular-nums">
                   <RotateCw className="w-3 h-3" />
                   <span>Ganti ({parsed.totalQtyGanti} pcs)</span>
                 </span>
-                <div className="min-w-0 text-[11px] text-slate-800 leading-relaxed">
+                <div className="min-w-0 text-xs text-slate-800 leading-relaxed">
                   {parsed.gantiItems.map((item, idx) => (
                     <span key={idx}>
                       {idx > 0 && <span className="text-slate-300 mx-1.5">•</span>}
                       {item.komponen && item.komponen !== 'Umum' && (
-                        <span className="font-extrabold text-slate-700">[{item.komponen}]</span>
-                      )}{' '}
-                      <span className="font-semibold text-slate-900">{item.gejala}</span>
+                        <span className="font-medium text-slate-700 bg-blue-100/70 px-1 py-0.2 rounded mr-1">
+                          {item.komponen}
+                        </span>
+                      )}
+                      <span className="font-medium text-slate-900">{item.gejala}</span>
                       {item.qty > 1 && (
-                        <span className="ml-1 text-[10px] font-black text-blue-700 bg-blue-100/80 px-1.5 py-0.5 rounded">
+                        <span className="ml-1 text-xs font-medium text-blue-700 bg-blue-100/80 px-1.5 py-0.2 rounded tabular-nums">
                           {item.qty} pcs
                         </span>
                       )}
@@ -137,21 +138,23 @@ export default function RiwayatTicketCard({
 
             {/* 2. Kelompok Repair / Servis */}
             {parsed.repairItems.length > 0 && (
-              <div className="flex items-start gap-2 bg-amber-50/80 p-2 rounded-xl border border-amber-200/80">
-                <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white font-black text-[10px] shrink-0 flex items-center gap-1 shadow-2xs">
-                  <Hammer className="w-3 h-3" />
+              <div className="flex items-start gap-2 bg-amber-50/80 p-2 rounded-lg border border-amber-200/80">
+                <span className="px-2 py-0.5 rounded bg-amber-600 text-white font-medium text-xs shrink-0 flex items-center gap-1 shadow-2xs tabular-nums">
+                  <Wrench className="w-3 h-3" />
                   <span>Repair ({parsed.totalQtyRepair} pcs)</span>
                 </span>
-                <div className="min-w-0 text-[11px] text-slate-800 leading-relaxed">
+                <div className="min-w-0 text-xs text-slate-800 leading-relaxed">
                   {parsed.repairItems.map((item, idx) => (
                     <span key={idx}>
                       {idx > 0 && <span className="text-slate-300 mx-1.5">•</span>}
                       {item.komponen && item.komponen !== 'Umum' && (
-                        <span className="font-extrabold text-slate-700">[{item.komponen}]</span>
-                      )}{' '}
-                      <span className="font-semibold text-slate-900">{item.gejala}</span>
+                        <span className="font-medium text-slate-700 bg-amber-100/70 px-1 py-0.2 rounded mr-1">
+                          {item.komponen}
+                        </span>
+                      )}
+                      <span className="font-medium text-slate-900">{item.gejala}</span>
                       {item.qty > 1 && (
-                        <span className="ml-1 text-[10px] font-black text-amber-700 bg-amber-100/80 px-1.5 py-0.5 rounded">
+                        <span className="ml-1 text-xs font-medium text-amber-700 bg-amber-100/80 px-1.5 py-0.2 rounded tabular-nums">
                           {item.qty} pcs
                         </span>
                       )}
@@ -161,35 +164,34 @@ export default function RiwayatTicketCard({
               </div>
             )}
 
-            {/* 3. Kelompok Lainnya (jika teks bebas) */}
+            {/* 3. Kelompok Lainnya */}
             {parsed.otherItems.length > 0 && (
-              <div className="text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200">
-                <span className="font-bold text-slate-500">Keluhan: </span>
+              <div className="text-xs text-slate-700 bg-white p-2 rounded-lg border border-slate-200">
+                <span className="font-medium text-slate-500">Keluhan: </span>
                 {parsed.otherItems.map((i) => i.gejala).join(', ')}
               </div>
             )}
           </div>
         ) : isNeedsDiagnosis ? (
-          <div className="p-2.5 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-1 text-xs">
-            <p className="font-bold text-amber-950 flex items-center gap-1.5">
+          <div className="p-2.5 bg-amber-50/70 border border-amber-200/80 rounded-lg space-y-1 text-xs">
+            <p className="font-semibold text-amber-950 flex items-center gap-1.5">
               <Search className="w-3.5 h-3.5" />
               <span>Unit Belum Diinspeksi Spesifik</span>
             </p>
-            <p className="text-slate-600 text-[11px]">
+            <p className="text-slate-600 text-xs font-normal">
               {parsed.catatan
                 ? `Catatan Gejala dari Operator: "${parsed.catatan}"`
                 : 'Unit didaftarkan langsung ke bengkel. Detail kerusakan akan diinput setelah pemeriksaan fisik.'}
             </p>
           </div>
         ) : (
-          <p className="text-[11px] text-slate-400 italic">
+          <p className="text-xs text-slate-400 italic">
             Belum ada rincian titik kerusakan spesifik.
           </p>
         )}
 
-        {/* Catatan Tindakan Workshop (jika ada) */}
         {ticket.reason && (
-          <div className="pt-1 text-[11px] text-emerald-800 font-medium flex items-start gap-1">
+          <div className="pt-1 text-xs text-emerald-800 font-medium flex items-start gap-1">
             <MessageSquare className="w-3.5 h-3.5 shrink-0 mt-px" />
             <span>Catatan Teknisi: {ticket.reason}</span>
           </div>
@@ -197,22 +199,21 @@ export default function RiwayatTicketCard({
       </div>
 
       {/* Baris 3: Footer Info & Action Buttons */}
-      <div className="flex flex-wrap items-center justify-between pt-1 gap-2 text-[11px]">
-        <div className="text-slate-400 font-medium truncate flex items-center gap-1.5">
-          <Clock className="w-3 h-3" />
-          <span>{ticket.tglMasuk}</span>
+      <div className="flex flex-wrap items-center justify-between pt-1 gap-2 text-xs">
+        <div className="text-slate-400 font-normal truncate flex items-center gap-1.5">
+          <Clock className="w-3.5 h-3.5 text-slate-400" />
+          <span className="tabular-nums">{ticket.tglMasuk}</span>
           <span className="mx-1">•</span>
-          <User className="w-3 h-3" />
+          <User className="w-3.5 h-3.5 text-slate-400" />
           <span>{ticket.pelapor}</span>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Tombol Cetak Tag Fisik Daisha Langsung */}
           {onPrintTag && (
             <button
               type="button"
               onClick={() => onPrintTag(ticket)}
-              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1 shadow-2xs"
+              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1 shadow-2xs"
               title="Cetak Tag Fisik Daisha untuk digantungkan di unit"
             >
               <Tag className="w-3.5 h-3.5" />
@@ -220,49 +221,48 @@ export default function RiwayatTicketCard({
             </button>
           )}
 
-          {/* Tombol Lihat Detail untuk Cross-Check */}
           <button
             type="button"
             onClick={() => onViewDetail(ticket)}
-            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
+            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1"
           >
             <Search className="w-3.5 h-3.5" />
             <span>Detail</span>
           </button>
 
-          {isOpen ? (
-            <>
-              <button
-                type="button"
-                onClick={() => onEdit(ticket)}
-                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1 ${isNeedsDiagnosis
-                    ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-2xs font-extrabold'
-                    : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200'
-                  }`}
-              >
-                {isNeedsDiagnosis ? (
-                  <Wrench className="w-3.5 h-3.5" />
-                ) : (
-                  <Pencil className="w-3.5 h-3.5" />
-                )}
-                <span>{isNeedsDiagnosis ? 'Diagnosa Kerusakan' : 'Edit'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onCancel(ticket)}
-                className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Batal</span>
-              </button>
-            </>
-          ) : (
-            <span className="text-[10px] text-slate-400 font-semibold italic">
-              Tiket Diproses Bengkel
-            </span>
+          {isOpen && onEdit && (
+            <button
+              type="button"
+              onClick={() => onEdit(ticket)}
+              className={`px-2.5 py-1 text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1 ${
+                isNeedsDiagnosis
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-2xs'
+                  : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200'
+              }`}
+            >
+              {isNeedsDiagnosis ? (
+                <Wrench className="w-3.5 h-3.5" />
+              ) : (
+                <Pencil className="w-3.5 h-3.5" />
+              )}
+              <span>{isNeedsDiagnosis ? 'Diagnosa' : 'Edit'}</span>
+            </button>
+          )}
+
+          {isOpen && onCancel && (
+            <button
+              type="button"
+              onClick={() => onCancel(ticket)}
+              className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Batal</span>
+            </button>
           )}
         </div>
       </div>
     </div>
   );
 }
+
+export default React.memo(RiwayatTicketCardComponent);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -23,22 +23,15 @@ export default function DaishaCharts({
   chartUnitFreq,
   chartSemuaDaisha,
 }: DaishaChartsProps) {
-  // Mode toggle: 'unit' (Pilihan 1: Per nomor unit dengan nama daishanya) vs 'jenis' (Pilihan 2: Model/jenis daisha tanpa nomor secara keseluruhan)
   const [activeMode, setActiveMode] = useState<'unit' | 'jenis'>('unit');
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Gradien warna biru bertingkat persis seperti referensi foto (Top bar biru tua -> menurun ke biru muda)
-  const blueShades = [
-    '#1d4ed8', // 1: Deep Royal Blue
-    '#2563eb', // 2: Royal Blue
-    '#3b82f6', // 3: Bright Blue
-    '#60a5fa', // 4: Sky Blue
-    '#60a5fa', // 5: Sky Blue
-    '#93c5fd', // 6: Light Blue
-    '#93c5fd', // 7: Light Blue
-    '#bfdbfe', // 8: Soft Blue
-    '#bfdbfe', // 9: Soft Blue
-    '#cbd5e1', // 10: Slate
-  ];
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const currentData = activeMode === 'unit'
     ? chartUnitFreq.slice(0, 10).map((d) => ({
@@ -59,60 +52,72 @@ export default function DaishaCharts({
   const xDomainMax = Math.ceil(maxVal * 1.25);
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col h-full">
-      {/* 1. Header Card Sesuai Poin 2 Permintaan Mentor */}
+    <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col h-full">
+      {/* 1. Header Card */}
       <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
         <div>
-          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-1.5">
             <span>
               {activeMode === 'unit'
-                ? 'TOP UNIT DAISHA SERING MASUK (NO. UNIT + NAMA)'
-                : 'TOP MODEL DAISHA (KESELURUHAN TANPA NOMOR)'}
+                ? 'Unit Daisha Paling Sering Masuk'
+                : 'Model Daisha Paling Sering Masuk'}
             </span>
-            <span title="Peringkat daisha yang paling sering masuk bengkel perbaikan">
+            <span title="Peringkat daisha berdasarkan frekuensi perbaikan">
               <Info className="w-3.5 h-3.5 text-slate-400 cursor-help" />
             </span>
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-[11px] text-slate-500 mt-0.5">
             {activeMode === 'unit'
-              ? 'Peringkat nomor fisik unit beserta modelnya yang paling sering mengalami kerusakan'
-              : 'Akumulasi seluruh volume kerusakan berdasarkan kategori jenis daisha di bengkel'}
+              ? 'Peringkat nomor unit fisik dengan intensitas perbaikan tertinggi di bengkel'
+              : 'Akumulasi frekuensi perbaikan berdasarkan kategori model daisha'}
           </p>
         </div>
 
-        {/* 2 Opsi Toggle Persis Poin 2 User */}
-        <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+        {/* Toggle Mode */}
+        <div className="flex items-center p-0.5 bg-slate-100/90 rounded-lg text-xs font-semibold">
           <button
             type="button"
             onClick={() => setActiveMode('unit')}
-            className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
               activeMode === 'unit'
                 ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Truck className="w-3.5 h-3.5 text-blue-600" />
-            <span>Nomor & Nama Unit</span>
+            <Truck className="w-3.5 h-3.5 text-red-600" />
+            <span>Per Unit Daisha</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveMode('jenis')}
-            className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
               activeMode === 'jenis'
                 ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Layers className="w-3.5 h-3.5 text-blue-600" />
-            <span>Model Keseluruhan</span>
+            <Layers className="w-3.5 h-3.5 text-red-600" />
+            <span>Per Model / Jenis</span>
           </button>
         </div>
       </div>
 
-      {/* Sub-Header Kolom */}
-      <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-1">
-        <span>{activeMode === 'unit' ? 'Nomor Unit Fisik • Nama Daisha' : 'Kategori Model / Jenis Daisha'}</span>
-        <span>Frekuensi Masuk (Kali)</span>
+      {/* Sub-Header: Indikator Makna Warna & Kolom */}
+      <div className="flex flex-wrap justify-between items-center gap-2 text-xs mb-2 px-1">
+        <div className="flex items-center gap-2 text-[11px] text-slate-600 bg-red-50/60 px-2.5 py-1 rounded-lg border border-red-100">
+          <span className="font-semibold text-red-950">Makna Warna:</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-xs bg-[#E60012] opacity-35 inline-block" />
+            <span className="text-slate-600">Jarang (1x)</span>
+            <span className="text-red-300 font-bold">──▶</span>
+            <span className="w-2.5 h-2.5 rounded-xs bg-[#E60012] inline-block shadow-2xs" />
+            <span className="font-bold text-red-700">Kritis / Sering ({maxVal}x)</span>
+          </div>
+        </div>
+
+        <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+          {activeMode === 'unit' ? 'Nomor Unit Fisik • Model' : 'Model Daisha'}
+        </span>
       </div>
 
       {/* 2. Horizontal Ranked Bar Chart */}
@@ -122,51 +127,72 @@ export default function DaishaCharts({
             <BarChart
               data={currentData}
               layout="vertical"
-              margin={{ top: 5, right: 55, left: 10, bottom: 5 }}
+              margin={{ top: 5, right: isMobile ? 36 : 55, left: isMobile ? 0 : 10, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
               <XAxis
                 type="number"
                 domain={[0, xDomainMax]}
-                tick={{ fontSize: 11, fill: '#64748b' }}
+                tick={{ fontSize: 12, fill: '#64748b' }}
                 axisLine={{ stroke: '#cbd5e1' }}
                 tickLine={false}
               />
               <YAxis
                 dataKey="name"
                 type="category"
-                tick={{ fontSize: 11, fill: '#1e293b', fontWeight: 600 }}
-                width={175}
+                tick={{ fontSize: isMobile ? 11 : 12, fill: '#1e293b', fontWeight: 600 }}
+                tickFormatter={(val: string) => isMobile && val.length > 13 ? `${val.slice(0, 12)}…` : val}
+                width={isMobile ? 115 : 175}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
-                formatter={(val: unknown) => [`${val} Kali Masuk`, 'Frekuensi Masuk']}
-                labelFormatter={(label, payload) => {
-                  const item = payload && payload[0] ? (payload[0].payload as { sub?: string; unit?: string }) : null;
-                  return item?.unit
-                    ? `Nomor Unit: ${item.unit} | Model: ${item.sub}`
-                    : `Model Daisha: ${label}`;
-                }}
-                contentStyle={{
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  fontSize: '12px',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+                content={({ active, payload, label }) => {
+                  if (!active || !payload || !payload.length) return null;
+                  const item = payload[0]?.payload as { total: number; sub?: string; unit?: string };
+                  const count = item?.total || 0;
+                  const ratio = maxVal > 0 ? count / maxVal : 1;
+                  const statusTag =
+                    ratio >= 0.75
+                      ? { label: '🔴 Kritis (Prioritas Penanganan Bengkel)', cls: 'text-red-700 bg-red-50 border-red-200' }
+                      : ratio >= 0.4
+                      ? { label: '🟡 Perlu Pemantauan Rutin', cls: 'text-amber-700 bg-amber-50 border-amber-200' }
+                      : { label: '🟢 Frekuensi Wajar / Normal', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+
+                  return (
+                    <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs shadow-lg space-y-1.5 min-w-[200px]">
+                      <p className="font-bold text-slate-800 border-b border-slate-100 pb-1">
+                        {item?.unit ? `Unit: ${item.unit} (${item.sub})` : `Model: ${label}`}
+                      </p>
+                      <div className="flex items-center justify-between font-semibold">
+                        <span className="text-slate-500">Frekuensi Masuk:</span>
+                        <span className="text-red-700 font-extrabold text-sm">{count}x Masuk</span>
+                      </div>
+                      <div className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${statusTag.cls}`}>
+                        {statusTag.label}
+                      </div>
+                    </div>
+                  );
                 }}
               />
-              <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={15}>
-                {currentData.map((_, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={blueShades[index % blueShades.length]}
-                  />
-                ))}
+              <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={16}>
+                {currentData.map((entry, idx) => {
+                  const ratio = maxVal > 0 ? entry.total / maxVal : 1;
+                  // Gradien intensitas data-driven: nilai tertinggi = opacity 1.0 (merah pekat), nilai terendah = opacity 0.35 (merah muda)
+                  const opacity = Math.max(0.35, 0.35 + 0.65 * ratio);
+                  return (
+                    <Cell
+                      key={`cell-daisha-${idx}`}
+                      fill="#E60012"
+                      fillOpacity={opacity}
+                    />
+                  );
+                })}
                 <LabelList
                   dataKey="total"
                   position="right"
                   fill="#0f172a"
-                  fontSize={11}
+                  fontSize={12}
                   fontWeight={700}
                   formatter={(val: unknown) => `${Number(val).toLocaleString()}x`}
                 />
@@ -174,7 +200,7 @@ export default function DaishaCharts({
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-full flex items-center justify-center text-xs text-slate-400">
+          <div className="h-full flex items-center justify-center text-xs text-slate-500">
             Belum ada data unit daisha
           </div>
         )}

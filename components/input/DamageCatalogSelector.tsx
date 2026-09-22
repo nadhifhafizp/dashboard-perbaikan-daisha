@@ -1,6 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
+import {
+  AlertTriangle,
+  Layers,
+  Search,
+  Check,
+  Plus,
+  Wrench,
+  RefreshCw,
+  PenTool,
+  X,
+} from 'lucide-react';
 
 export type TindakanType = 'Repair' | 'Ganti';
 
@@ -57,20 +68,21 @@ export default function DamageCatalogSelector({
   };
 
   return (
-    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+    <div className="p-4 sm:p-5 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
       {/* Header Section */}
       <div className="flex flex-wrap justify-between items-center gap-2">
         <div>
-          <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
-            <span>⚠️</span> 3. Titik Kerusakan Unit Daisha
+          <h2 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <span>Titik Kerusakan Unit Daisha</span>
           </h2>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Cukup klik / tap kerusakan di bawah (bisa pilih banyak sekaligus, atur jumlah pcs & tindakan)
+          <p className="text-xs text-slate-500 mt-0.5">
+            Pilih kerusakan di bawah (bisa pilih banyak sekaligus, atur jumlah unit & tindakan)
           </p>
         </div>
 
         {jenisDaisha && totalDipilih > 0 && (
-          <span className="px-3 py-1 bg-red-600 text-white font-black text-xs rounded-full shadow-xs">
+          <span className="px-3 py-1 bg-red-600 text-white font-medium text-xs rounded-full shadow-xs tabular-nums">
             {totalDipilih} Titik Kerusakan Dipilih
           </span>
         )}
@@ -79,11 +91,13 @@ export default function DamageCatalogSelector({
       {/* Jika belum memilih jenis daisha */}
       {!jenisDaisha ? (
         <div className="p-8 text-center bg-white rounded-xl border border-dashed border-slate-300 text-slate-400">
-          <span className="text-2xl block mb-1">🛒</span>
-          <p className="text-xs font-bold text-slate-600">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
+            <Layers className="w-5 h-5" />
+          </div>
+          <p className="text-xs font-semibold text-slate-600">
             Pilih Jenis Daisha di atas terlebih dahulu
           </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-400 mt-0.5">
             Katalog komponen dan daftar kerusakan akan otomatis muncul di sini
           </p>
         </div>
@@ -91,18 +105,21 @@ export default function DamageCatalogSelector({
         <div className="space-y-4">
           {/* Quick Filter / Search Gejala */}
           <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="🔍 Cari nama komponen atau gejala kerusakan (misal: roda, kait, tiang)..."
-              value={searchGejala}
-              onChange={(e) => setSearchGejala(e.target.value)}
-              className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-red-600 outline-none placeholder-slate-400"
-            />
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Cari nama komponen atau gejala kerusakan (misal: roda, kait, tiang)..."
+                value={searchGejala}
+                onChange={(e) => setSearchGejala(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:ring-2 focus:ring-red-600 outline-none placeholder-slate-400"
+              />
+            </div>
             {searchGejala && (
               <button
                 type="button"
                 onClick={() => setSearchGejala('')}
-                className="px-3 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
+                className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-medium transition cursor-pointer"
               >
                 Reset
               </button>
@@ -125,10 +142,11 @@ export default function DamageCatalogSelector({
               return (
                 <div
                   key={komponen}
-                  className="p-3.5 bg-white rounded-xl border border-slate-200/90 shadow-2xs space-y-2"
+                  className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2"
                 >
-                  <span className="text-[11px] font-black text-slate-800 uppercase tracking-wider block">
-                    ⚙️ {komponen}
+                  <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{komponen}</span>
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {filteredGejala.map((gejala) => {
@@ -142,20 +160,29 @@ export default function DamageCatalogSelector({
                           key={gejala}
                           type="button"
                           onClick={() => onToggleKerusakan(komponen, gejala)}
-                          className={`px-3 py-1.5 text-xs rounded-xl font-bold transition flex items-center gap-1.5 cursor-pointer text-left ${
+                          className={`px-3 py-1.5 text-xs rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer text-left ${
                             isSelected
                               ? tindakan === 'Ganti'
-                                ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-400 scale-[1.02]'
-                                : 'bg-red-600 text-white shadow-sm ring-2 ring-red-400 scale-[1.02]'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/80 hover:border-slate-300'
+                                ? 'bg-blue-600 text-white shadow-xs'
+                                : 'bg-amber-600 text-white shadow-xs'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 hover:border-slate-300'
                           }`}
                         >
-                          <span>{isSelected ? '✓' : '+'}</span>
+                          {isSelected ? (
+                            <Check className="w-3.5 h-3.5 shrink-0" />
+                          ) : (
+                            <Plus className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          )}
                           <span>{gejala}</span>
                           {isSelected && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-black/25 rounded-md font-black flex items-center gap-1">
+                            <span className="text-xs px-1.5 py-0.2 bg-black/20 rounded font-medium flex items-center gap-1 tabular-nums">
                               {currentQty > 1 && <span>({currentQty}x)</span>}
-                              <span>{tindakan === 'Ganti' ? '🔄 Ganti' : '🔨 Repair'}</span>
+                              {tindakan === 'Ganti' ? (
+                                <RefreshCw className="w-3 h-3 inline" />
+                              ) : (
+                                <Wrench className="w-3 h-3 inline" />
+                              )}
+                              <span>{tindakan}</span>
                             </span>
                           )}
                         </button>
@@ -167,19 +194,20 @@ export default function DamageCatalogSelector({
             })}
           </div>
 
-          {/* Panel Tindakan & Jumlah (Qty): Atur Repair/Ganti dan Jumlah Pcs */}
+          {/* Panel Tindakan & Jumlah (Qty) */}
           {totalDipilih > 0 && (
-            <div className="p-4 bg-white rounded-2xl border-2 border-red-200 shadow-sm space-y-3 animate-fade-in">
+            <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-3 animate-fade-in">
               <div className="flex flex-wrap justify-between items-center gap-2 border-b border-slate-100 pb-2.5">
                 <div>
-                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                    <span>🛠️</span> Tentukan Jumlah (Qty) & Tindakan (Repair / Ganti)
+                  <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                    <Wrench className="w-4 h-4 text-slate-600" />
+                    <span>Tentukan Jumlah & Tindakan (Repair / Ganti)</span>
                   </span>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Tentukan berapa jumlah unit/komponen yang rusak serta apakah diservis atau diganti baru
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Tentukan jumlah unit/komponen yang rusak serta pilihan servis atau ganti baru
                   </p>
                 </div>
-                <span className="text-[11px] font-bold px-2.5 py-1 bg-red-100 text-red-800 rounded-lg">
+                <span className="text-xs font-medium px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded-md tabular-nums">
                   {totalDipilih} Titik Kerusakan
                 </span>
               </div>
@@ -193,18 +221,18 @@ export default function DamageCatalogSelector({
                   return (
                     <div
                       key={key}
-                      className="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 transition"
+                      className="p-3 bg-slate-50 hover:bg-slate-100/70 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 transition"
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[10px] flex items-center justify-center font-bold shrink-0">
+                        <span className="w-5 h-5 rounded-md bg-slate-200 text-slate-700 text-xs flex items-center justify-center font-medium shrink-0 tabular-nums">
                           {idx + 1}
                         </span>
                         <div className="min-w-0 flex-1 leading-snug">
-                          <span className="text-xs font-bold text-slate-800">
+                          <span className="text-xs font-medium text-slate-600">
                             {komponen}
                           </span>
                           <span className="text-slate-400 mx-1.5">•</span>
-                          <span className="text-xs text-red-700 font-extrabold break-words">
+                          <span className="text-xs text-slate-900 font-semibold break-words">
                             {detail}
                           </span>
                         </div>
@@ -212,14 +240,14 @@ export default function DamageCatalogSelector({
 
                       <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 flex-wrap sm:flex-nowrap pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 shrink-0">
                         {/* Qty Stepper */}
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-xl border border-slate-200 shadow-2xs">
-                          <span className="text-[10px] font-bold text-slate-500 mr-0.5">Jumlah:</span>
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                          <span className="text-xs text-slate-500 mr-0.5">Jumlah:</span>
                           <button
                             type="button"
                             onClick={() =>
                               onSetQty && onSetQty(key, Math.max(1, currentQty - 1))
                             }
-                            className="w-5 h-5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs flex items-center justify-center cursor-pointer transition"
+                            className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center justify-center cursor-pointer transition"
                           >
                             -
                           </button>
@@ -232,42 +260,42 @@ export default function DamageCatalogSelector({
                               onSetQty &&
                               onSetQty(key, Math.max(1, parseInt(e.target.value, 10) || 1))
                             }
-                            className="w-7 text-center font-black text-xs text-slate-900 focus:outline-none"
+                            className="w-7 text-center font-semibold text-xs text-slate-900 focus:outline-none tabular-nums"
                           />
                           <button
                             type="button"
                             onClick={() => onSetQty && onSetQty(key, currentQty + 1)}
-                            className="w-5 h-5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs flex items-center justify-center cursor-pointer transition"
+                            className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center justify-center cursor-pointer transition"
                           >
                             +
                           </button>
-                          <span className="text-[10px] font-semibold text-slate-400">pcs</span>
+                          <span className="text-xs text-slate-400">pcs</span>
                         </div>
 
                         {/* Tindakan Buttons */}
-                        <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+                        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => onSetTindakan(key, 'Repair')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
+                            className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
                               currentTindakan === 'Repair'
-                                ? 'bg-amber-500 text-white shadow-xs'
+                                ? 'bg-amber-600 text-white shadow-xs'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
-                            <span>🔨</span>
+                            <Wrench className="w-3.5 h-3.5" />
                             <span>Repair</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => onSetTindakan(key, 'Ganti')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
+                            className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
                               currentTindakan === 'Ganti'
                                 ? 'bg-blue-600 text-white shadow-xs'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
-                            <span>🔄</span>
+                            <RefreshCw className="w-3.5 h-3.5" />
                             <span>Ganti</span>
                           </button>
                         </div>
@@ -283,18 +311,18 @@ export default function DamageCatalogSelector({
                   return (
                     <div
                       key={text}
-                      className="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 transition"
+                      className="p-3 bg-slate-50 hover:bg-slate-100/70 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 transition"
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[10px] flex items-center justify-center font-bold shrink-0">
+                        <span className="w-5 h-5 rounded-md bg-slate-200 text-slate-700 text-xs flex items-center justify-center font-medium shrink-0 tabular-nums">
                           {selectedKerusakan.length + idx + 1}
                         </span>
                         <div className="min-w-0 flex-1 leading-snug">
-                          <span className="text-xs font-bold text-slate-800">
-                            Others / Manual
+                          <span className="text-xs font-medium text-slate-600">
+                            Lainnya (Manual)
                           </span>
                           <span className="text-slate-400 mx-1.5">•</span>
-                          <span className="text-xs text-red-700 font-extrabold break-words">
+                          <span className="text-xs text-slate-900 font-semibold break-words">
                             {text}
                           </span>
                         </div>
@@ -302,15 +330,15 @@ export default function DamageCatalogSelector({
 
                       <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 flex-wrap sm:flex-nowrap pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 shrink-0">
                         {/* Custom Qty Stepper */}
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-xl border border-slate-200 shadow-2xs">
-                          <span className="text-[10px] font-bold text-slate-500 mr-0.5">Jumlah:</span>
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                          <span className="text-xs text-slate-500 mr-0.5">Jumlah:</span>
                           <button
                             type="button"
                             onClick={() =>
                               onSetCustomQty &&
                               onSetCustomQty(text, Math.max(1, currentQty - 1))
                             }
-                            className="w-5 h-5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs flex items-center justify-center cursor-pointer transition"
+                            className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center justify-center cursor-pointer transition"
                           >
                             -
                           </button>
@@ -323,44 +351,44 @@ export default function DamageCatalogSelector({
                               onSetCustomQty &&
                               onSetCustomQty(text, Math.max(1, parseInt(e.target.value, 10) || 1))
                             }
-                            className="w-7 text-center font-black text-xs text-slate-900 focus:outline-none"
+                            className="w-7 text-center font-semibold text-xs text-slate-900 focus:outline-none tabular-nums"
                           />
                           <button
                             type="button"
                             onClick={() =>
                               onSetCustomQty && onSetCustomQty(text, currentQty + 1)
                             }
-                            className="w-5 h-5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs flex items-center justify-center cursor-pointer transition"
+                            className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center justify-center cursor-pointer transition"
                           >
                             +
                           </button>
-                          <span className="text-[10px] font-semibold text-slate-400">pcs</span>
+                          <span className="text-xs text-slate-400">pcs</span>
                         </div>
 
                         {/* Custom Tindakan Buttons */}
-                        <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+                        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => onSetCustomTindakan(text, 'Repair')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
+                            className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
                               currentTindakan === 'Repair'
-                                ? 'bg-amber-500 text-white shadow-xs'
+                                ? 'bg-amber-600 text-white shadow-xs'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
-                            <span>🔨</span>
+                            <Wrench className="w-3.5 h-3.5" />
                             <span>Repair</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => onSetCustomTindakan(text, 'Ganti')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
+                            className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
                               currentTindakan === 'Ganti'
                                 ? 'bg-blue-600 text-white shadow-xs'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
-                            <span>🔄</span>
+                            <RefreshCw className="w-3.5 h-3.5" />
                             <span>Ganti</span>
                           </button>
                         </div>
@@ -373,9 +401,10 @@ export default function DamageCatalogSelector({
           )}
 
           {/* Input Manual Tambahan Jika Kerusakan Tidak Ada di Daftar */}
-          <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2">
-            <span className="text-[11px] font-bold text-slate-700 block">
-              ✍️ Kerusakan Lainnya / Manual (Jika tidak ada pada pilihan di atas):
+          <div className="p-3.5 bg-white rounded-lg border border-slate-200 space-y-2">
+            <span className="text-xs font-medium text-slate-700 flex items-center gap-1.5">
+              <PenTool className="w-3.5 h-3.5 text-slate-500" />
+              <span>Kerusakan Lainnya / Manual (Jika tidak ada pada pilihan di atas):</span>
             </span>
             <div className="flex gap-2">
               <input
@@ -389,14 +418,15 @@ export default function DamageCatalogSelector({
                   }
                 }}
                 placeholder="Ketik kerusakan lainnya, lalu klik Tambah..."
-                className="flex-1 p-2 border border-slate-300 rounded-xl text-xs text-slate-900 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none"
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs text-slate-900 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none"
               />
               <button
                 type="button"
                 onClick={() => handleAddManualSubmit()}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1"
               >
-                + Tambah
+                <Plus className="w-3.5 h-3.5" />
+                <span>Tambah</span>
               </button>
             </div>
 
@@ -405,15 +435,16 @@ export default function DamageCatalogSelector({
                 {customKerusakanList.map((text) => (
                   <span
                     key={text}
-                    className="px-2.5 py-1 bg-red-100 text-red-800 border border-red-200 text-xs font-bold rounded-xl flex items-center gap-1.5"
+                    className="px-2.5 py-1 bg-red-50 text-red-800 border border-red-200 text-xs font-medium rounded-lg flex items-center gap-1.5"
                   >
                     <span>{text}</span>
                     <button
                       type="button"
                       onClick={() => onRemoveCustom(text)}
-                      className="text-red-600 hover:text-red-900 font-black text-xs cursor-pointer ml-1"
+                      className="text-red-600 hover:text-red-900 cursor-pointer ml-1"
+                      aria-label={`Hapus ${text}`}
                     >
-                      ✕
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </span>
                 ))}
@@ -425,7 +456,7 @@ export default function DamageCatalogSelector({
 
       {/* Catatan Tambahan Posisi / Detail Tambahan */}
       <div className="pt-2">
-        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+        <label className="block text-xs font-medium text-slate-700 mb-1.5">
           Catatan Tambahan Lokasi / Keterangan Posisi (Opsional)
         </label>
         <textarea
@@ -434,7 +465,7 @@ export default function DamageCatalogSelector({
           onChange={(e) => onCatatanChange(e.target.value)}
           rows={2}
           placeholder="Contoh: Roda depan kiri aus parah, kait gandengan aus, unit tertahan di line..."
-          className="w-full p-3 border border-slate-300 rounded-xl text-xs text-slate-800 font-medium bg-white focus:ring-2 focus:ring-red-600 outline-none"
+          className="w-full p-2.5 border border-slate-300 rounded-lg text-xs text-slate-800 font-normal bg-white focus:ring-2 focus:ring-red-600 outline-none"
         ></textarea>
       </div>
     </div>

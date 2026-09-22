@@ -331,11 +331,11 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
       .slice(-12);
 
-    // 5.2 Status Donut Data (3 Status Pipeline Sesuai Request)
+    // 5.2 Status Donut Data (Standar Semantik: Amber = Open, Emerald = Selesai, Bridgestone Red = Scrap)
     const statusData = [
       { name: 'Open / Sedang Dikerjakan', value: kpi.open, color: '#f59e0b' },
       { name: 'Selesai', value: kpi.done, color: '#10b981' },
-      { name: 'Rusak (Scrap)', value: kpi.scrap, color: '#e11d48' },
+      { name: 'Rusak (Scrap)', value: kpi.scrap, color: '#E60012' },
     ];
 
     // 5.3 Top 10 Repeat Failure Units

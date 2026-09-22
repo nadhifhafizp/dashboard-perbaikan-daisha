@@ -3,19 +3,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Ticket } from '@/types/ticket';
-import { useTickets, broadcastTicketChange } from '@/hooks/useTickets';
-import ConfirmModal from '@/components/ConfirmModal';
-import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
-import EditTicketModal from '@/components/riwayat/EditTicketModal';
+import { useTickets } from '@/hooks/useTickets';
 import DetailTicketModal from '@/components/riwayat/DetailTicketModal';
 import RiwayatTicketCard from '@/components/riwayat/RiwayatTicketCard';
 import QueueKanbanBoard from '@/components/riwayat/QueueKanbanBoard';
-import DaishaTrackerCard from '@/components/riwayat/DaishaTrackerCard';
-import QrScannerModal from '@/components/input/QrScannerModal';
 import PrintTicketTagModal from '@/components/common/PrintTicketTagModal';
 import PaginationControl from '@/components/common/PaginationControl';
 import { useAuth } from '@/context/AuthContext';
 import { detectDaishaSize } from '@/lib/daishaSize';
+import { matchesAgingFilter } from '@/lib/date';
 import { DAFTAR_SEKSI, getDaishaBySeksi, DAFTAR_SEMUA_DAISHA } from '@/lib/masterData';
 import { SortOption, SORT_OPTIONS, sortTickets } from '@/lib/sortTickets';
 import { 
@@ -27,15 +23,19 @@ import {
   Columns3, 
   ListFilter, 
   Eye, 
-  QrCode, 
-  ScanLine, 
   Search, 
   X,
   History,
-  Activity
+  Activity,
+  RotateCcw,
+  CheckCircle2,
+  ClipboardList,
+  Wrench,
+  ArrowUpDown,
+  Inbox,
+  FileText,
+  Clock
 } from 'lucide-react';
-
-const API_URL = '/api/repair';
 
 export default function RiwayatLaporanPage() {
   const { isAdmin } = useAuth();
@@ -44,17 +44,12 @@ export default function RiwayatLaporanPage() {
   // View Mode: 'kanban' (default) atau 'list'
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
-  // State Pelacakan Cepat Unit Daisha (Scan QR / Barcode / Ketik Manual)
-  const [trackedDaisha, setTrackedDaisha] = useState<string>('');
-  const [trackerInput, setTrackerInput] = useState<string>('');
-  const [isQrScannerOpen, setIsQrScannerOpen] = useState<boolean>(false);
-
   // Filter States
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'Open' | 'Done' | 'Scrap'>('all');
   const [selectedSeksi, setSelectedSeksi] = useState<string>('all');
   const [selectedDaisha, setSelectedDaisha] = useState<string>('all');
-  const [selectedSize, setSelectedSize] = useState<string>('all');
+  const [selectedAging, setSelectedAging] = useState<string>('all');
 
   // Sorting State (Default: Input Terbaru)
   const [sortBy, setSortBy] = useState<SortOption>('input_desc');
@@ -68,141 +63,6 @@ export default function RiwayatLaporanPage() {
 
   // Modal Cetak Tag Fisik Langsung
   const [ticketForTag, setTicketForTag] = useState<Ticket | null>(null);
-
-  // Modal Cancel State
-  const [ticketToCancel, setTicketToCancel] = useState<Ticket | null>(null);
-  const [isCancelling, setIsCancelling] = useState(false);
-
-  // Modal Edit State
-  const [ticketToEdit, setTicketToEdit] = useState<Ticket | null>(null);
-  const [isSavingEdit, setIsSavingEdit] = useState(false);
-
-  const [feedback, setFeedback] = useState<{
-    isOpen: boolean;
-    type: FeedbackType;
-    title: string;
-    message: string;
-    detail?: string;
-  }>({
-    isOpen: false,
-    type: 'success',
-    title: '',
-    message: '',
-  });
-
-  const showFeedback = (type: FeedbackType, title: string, message: string, detail?: string) => {
-    setFeedback({ isOpen: true, type, title, message, detail });
-  };
-
-  // Simpan Hasil Koreksi / Edit
-  const handleSaveEdit = async (data: {
-    waktuMasuk: string;
-    noDaisha: string;
-    seksi: string;
-    namaDaisha: string;
-    jenisKerusakan: string;
-    detail: string;
-  }) => {
-    if (!ticketToEdit) return;
-
-    const trimmedNo = data.noDaisha.trim().toUpperCase();
-    if (!trimmedNo) {
-      showFeedback('error', 'Nomor Daisha Kosong', 'Nomor unit Daisha wajib diisi.');
-      return;
-    }
-
-    setIsSavingEdit(true);
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'EDIT_TICKET',
-          idTiket: ticketToEdit.idTiketAsli,
-          noDaisha: trimmedNo,
-          seksi: data.seksi,
-          namaDaisha: data.namaDaisha,
-          kategori: data.jenisKerusakan,
-          detail: data.detail,
-          namaPelapor: ticketToEdit.pelapor,
-          waktuMasuk: data.waktuMasuk || ticketToEdit.tglMasuk,
-        }),
-      });
-
-      const resJson = await res.json().catch(() => ({}));
-
-      if (res.ok) {
-        showFeedback(
-          'success',
-          'Koreksi Disimpan',
-          `Data laporan unit ${trimmedNo} (${data.jenisKerusakan}) telah berhasil diperbarui di bengkel.`
-        );
-        setTickets((prev) =>
-          prev.map((t) => {
-            if (t.idTiketAsli === ticketToEdit.idTiketAsli) {
-              return {
-                ...t,
-                noDaisha: trimmedNo,
-                seksi: data.seksi,
-                namaDaisha: data.namaDaisha,
-                jenisKerusakan: data.jenisKerusakan,
-                detail: data.detail,
-                tglMasuk: data.waktuMasuk || t.tglMasuk,
-              };
-            }
-            return t;
-          })
-        );
-        setTicketToEdit(null);
-        refresh(true);
-        broadcastTicketChange();
-      } else {
-        showFeedback('error', 'Gagal Mengubah', resJson.error || 'Gagal menyimpan perubahan.');
-      }
-    } catch (err) {
-      console.error('Save edit error:', err);
-      showFeedback('error', 'Gangguan Jaringan', 'Gagal menghubungi server untuk menyimpan koreksi.');
-    } finally {
-      setIsSavingEdit(false);
-    }
-  };
-
-  // Eksekusi Pembatalan
-  const executeCancelTicket = async () => {
-    if (!ticketToCancel) return;
-    setIsCancelling(true);
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'DELETE',
-          idTiket: ticketToCancel.idTiketAsli,
-        }),
-      });
-
-      const resJson = await res.json().catch(() => ({}));
-
-      if (res.ok) {
-        showFeedback(
-          'success',
-          'Laporan Dibatalkan',
-          `Unit ${ticketToCancel.noDaisha} telah dihapus dari antrean bengkel.`
-        );
-        setTickets((prev) => prev.filter((t) => t.idTiketAsli !== ticketToCancel.idTiketAsli));
-        setTicketToCancel(null);
-        refresh(true);
-        broadcastTicketChange();
-      } else {
-        showFeedback('error', 'Gagal Membatalkan', resJson.error || 'Gagal membatalkan tiket.');
-      }
-    } catch (err) {
-      console.error(err);
-      showFeedback('error', 'Gangguan Jaringan', 'Gagal menghubungi server.');
-    } finally {
-      setIsCancelling(false);
-    }
-  };
 
   // Daftar Seksi yang tersedia (Master data + Tiket)
   const seksiList = useMemo(() => {
@@ -228,7 +88,7 @@ export default function RiwayatLaporanPage() {
   const hasActiveFilters =
     selectedSeksi !== 'all' ||
     selectedDaisha !== 'all' ||
-    selectedSize !== 'all' ||
+    selectedAging !== 'all' ||
     statusFilter !== 'all' ||
     sortBy !== 'input_desc' ||
     Boolean(search.trim());
@@ -236,7 +96,7 @@ export default function RiwayatLaporanPage() {
   const resetAllFilters = () => {
     setSelectedSeksi('all');
     setSelectedDaisha('all');
-    setSelectedSize('all');
+    setSelectedAging('all');
     setStatusFilter('all');
     setSortBy('input_desc');
     setSearch('');
@@ -252,9 +112,8 @@ export default function RiwayatLaporanPage() {
       if (selectedDaisha !== 'all' && t.namaDaisha?.toLowerCase() !== selectedDaisha.toLowerCase()) {
         return false;
       }
-      if (selectedSize !== 'all') {
-        const size = detectDaishaSize(t.noDaisha)?.size;
-        if (size !== selectedSize) return false;
+      if (!matchesAgingFilter(t.tglMasuk, selectedAging)) {
+        return false;
       }
       if (!search.trim()) return true;
       const q = search.toLowerCase().trim();
@@ -282,7 +141,7 @@ export default function RiwayatLaporanPage() {
       scrap: scrapOnly,
       activeInWorkshop: openOnly + progressOnly,
     };
-  }, [tickets, selectedSeksi, selectedDaisha, selectedSize, search]);
+  }, [tickets, selectedSeksi, selectedDaisha, selectedAging, search]);
 
   // Filter dan Pengurutan Data
   const filteredTickets = useMemo(() => {
@@ -304,10 +163,9 @@ export default function RiwayatLaporanPage() {
         return false;
       }
 
-      // 4. Ukuran Daisha Filter
-      if (selectedSize !== 'all') {
-        const size = detectDaishaSize(t.noDaisha)?.size;
-        if (size !== selectedSize) return false;
+      // 4. Durasi Menginap (Aging) Filter
+      if (!matchesAgingFilter(t.tglMasuk, selectedAging)) {
+        return false;
       }
 
       // 5. Pencarian Cepat
@@ -324,7 +182,7 @@ export default function RiwayatLaporanPage() {
     });
 
     return sortTickets(list, sortBy);
-  }, [tickets, statusFilter, selectedSeksi, selectedDaisha, selectedSize, search, sortBy]);
+  }, [tickets, statusFilter, selectedSeksi, selectedDaisha, selectedAging, search, sortBy]);
 
   // Reset ke halaman 1 saat filter atau itemsPerPage berubah
   useEffect(() => {
@@ -337,133 +195,75 @@ export default function RiwayatLaporanPage() {
     return filteredTickets.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredTickets, currentPage, itemsPerPage]);
 
-  // Daftar semua nomor unit Daisha unik untuk autocomplete dan pill pencarian cepat
-  const availableDaishaNumbers = useMemo(() => {
-    const map = new Map<string, { count: number; name: string; seksi: string }>();
-    tickets.forEach((t) => {
-      const num = t.noDaisha?.trim().toUpperCase();
-      if (num && num !== '-') {
-        const existing = map.get(num) || { count: 0, name: t.namaDaisha, seksi: t.seksi };
-        existing.count += 1;
-        map.set(num, existing);
-      }
-    });
-    return Array.from(map.entries())
-      .map(([noDaisha, info]) => ({
-        noDaisha,
-        name: info.name,
-        seksi: info.seksi,
-        count: info.count,
-      }))
-      .sort((a, b) => b.count - a.count); // Paling sering servis di atas
-  }, [tickets]);
-
-  // Tiket khusus untuk unit yang sedang dilacak
-  const trackedTickets = useMemo(() => {
-    if (!trackedDaisha) return [];
-    return tickets.filter(
-      (t) => t.noDaisha?.trim().toUpperCase() === trackedDaisha.trim().toUpperCase()
-    );
-  }, [tickets, trackedDaisha]);
-
-  const handleScanSuccess = (decoded: string) => {
-    setIsQrScannerOpen(false);
-    let cleaned = decoded.trim();
-    try {
-      const parsed = JSON.parse(cleaned);
-      if (parsed.noDaisha) cleaned = parsed.noDaisha;
-      else if (parsed.no) cleaned = parsed.no;
-    } catch {
-      if (cleaned.includes('noDaisha=')) {
-        const match = cleaned.match(/noDaisha=([^&]+)/);
-        if (match) cleaned = decodeURIComponent(match[1]);
-      } else if (cleaned.includes('no=')) {
-        const match = cleaned.match(/no=([^&]+)/);
-        if (match) cleaned = decodeURIComponent(match[1]);
-      }
-    }
-    const finalNo = cleaned.toUpperCase();
-    setTrackedDaisha(finalNo);
-    setTrackerInput(finalNo);
-    showFeedback('success', 'Scan Berhasil', `Unit ${finalNo} ditemukan. Memuat status & rekam medis...`);
-  };
-
-  const handleManualSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!trackerInput.trim()) return;
-    const finalNo = trackerInput.trim().toUpperCase();
-    setTrackedDaisha(finalNo);
-  };
-
   return (
-    <div className="min-h-screen bg-slate-100 p-3 sm:p-5 md:p-8 flex justify-center pb-24 md:pb-12">
-      <div className="w-full max-w-7xl space-y-4">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 max-w-7xl mx-auto pb-24 md:pb-8">
+      <div className="w-full space-y-4">
         {/* 1. Header Utama */}
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <Link
               href="/daisha"
-              className="p-2 rounded-xl text-slate-500 hover:text-red-700 hover:bg-red-50 border border-slate-200 transition"
+              className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition"
               title="Kembali ke Dashboard"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div>
-              <h1 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
                 Pelacakan & Antrean Daisha
               </h1>
-              <p className="text-[11px] text-slate-500 font-medium">
-                Tracking unit & live queue perbaikan bengkel
+              <p className="text-xs text-slate-500 font-normal">
+                Pelacakan unit & live antrean status pengerjaan bengkel
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* Toggle View Mode */}
-            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
               <button
                 type="button"
                 onClick={() => setViewMode('kanban')}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
                   viewMode === 'kanban'
                     ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-500 hover:text-slate-800'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
-                title="Papan Antrean"
+                title="Tampilan Papan Antrean Kanban"
               >
                 <Columns3 className="w-3.5 h-3.5 text-amber-600" />
-                <span>Papan</span>
+                <span>Kanban</span>
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode('list')}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
                   viewMode === 'list'
                     ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-500 hover:text-slate-800'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
-                title="Daftar List"
+                title="Tampilan Daftar Tabel"
               >
                 <ListFilter className="w-3.5 h-3.5 text-blue-600" />
-                <span>List</span>
+                <span>Tabel</span>
               </button>
             </div>
 
             <Link
               href="/input"
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1 shadow-2xs cursor-pointer"
+              className="h-8 px-3 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
               <PlusCircle className="w-3.5 h-3.5" />
-              <span>Lapor</span>
+              <span>Lapor Rusak</span>
             </Link>
 
             {isAdmin && (
               <Link
                 href="/admin"
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1 border border-slate-200 cursor-pointer"
+                className="h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg transition flex items-center gap-1.5 border border-slate-300 shadow-2xs cursor-pointer"
               >
-                <Settings className="w-3.5 h-3.5" />
-                <span>Bengkel</span>
+                <Settings className="w-3.5 h-3.5 text-slate-500" />
+                <span>Panel Admin</span>
               </Link>
             )}
 
@@ -472,174 +272,62 @@ export default function RiwayatLaporanPage() {
               onClick={() => refresh()}
               disabled={loading}
               title="Refresh antrean"
-              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition disabled:opacity-50 cursor-pointer border border-slate-200"
+              className="h-8 w-8 bg-white hover:bg-slate-50 text-slate-600 rounded-lg transition disabled:opacity-50 cursor-pointer border border-slate-300 shadow-2xs flex items-center justify-center"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
 
-        {/* 2. Pelacakan Cepat Unit Daisha */}
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <form onSubmit={handleManualSearch} className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                list="daisha-numbers-list"
-                value={trackerInput}
-                onChange={(e) => setTrackerInput(e.target.value)}
-                placeholder="Cari nomor Daisha (contoh: S3 034, D-102)..."
-                className="w-full pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-slate-900 font-bold text-xs sm:text-sm rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition"
-              />
-              {trackerInput && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTrackerInput('');
-                    setTrackedDaisha('');
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-              <datalist id="daisha-numbers-list">
-                {availableDaishaNumbers.map((d) => (
-                  <option key={d.noDaisha} value={d.noDaisha}>
-                    {d.name} ({d.seksi})
-                  </option>
-                ))}
-              </datalist>
-            </form>
-
-            <button
-              type="button"
-              onClick={() => setIsQrScannerOpen(true)}
-              className="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-2xs"
-            >
-              <QrCode className="w-4 h-4 text-red-400" />
-              <span>Scan Barcode / QR</span>
-            </button>
-          </div>
-
-          {/* Quick chips unit */}
-          {availableDaishaNumbers.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pt-0.5 text-xs">
-              <span className="text-[11px] text-slate-400 font-medium shrink-0">Unit:</span>
-              {availableDaishaNumbers.slice(0, 10).map((item) => (
-                <button
-                  key={item.noDaisha}
-                  type="button"
-                  onClick={() => {
-                    setTrackerInput(item.noDaisha);
-                    setTrackedDaisha(item.noDaisha);
-                  }}
-                  className={`px-2 py-0.5 rounded-lg text-xs font-mono font-bold transition shrink-0 border cursor-pointer ${
-                    trackedDaisha === item.noDaisha
-                      ? 'bg-red-700 text-white border-red-700 shadow-2xs'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                  }`}
-                >
-                  {item.noDaisha}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* 3. Kartu Hasil Pelacakan Unit Daisha (Jika Ada Unit yang Dipilih) */}
-        {trackedDaisha && trackedTickets.length > 0 && (
-          <DaishaTrackerCard
-            noDaisha={trackedDaisha}
-            unitTickets={trackedTickets}
-            onClose={() => {
-              setTrackedDaisha('');
-              setTrackerInput('');
-            }}
-            onViewDetail={(t) => setTicketForDetail(t)}
-            onPrintTag={(t) => setTicketForTag(t)}
-            isAdmin={isAdmin}
-          />
-        )}
-
-        {trackedDaisha && trackedTickets.length === 0 && (
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs text-center space-y-2 animate-in fade-in">
-            <h3 className="text-sm font-bold text-slate-800">Unit &quot;{trackedDaisha}&quot; belum ada riwayat servis</h3>
-            <p className="text-xs text-slate-400">
-              Belum tercatat laporan perbaikan untuk nomor unit ini.
-            </p>
-            <div className="pt-1 flex items-center justify-center gap-2">
-              <Link
-                href={`/input`}
-                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl transition inline-flex items-center gap-1.5"
-              >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>Buat Laporan</span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  setTrackedDaisha('');
-                  setTrackerInput('');
-                }}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 4. Indikator Antrean (KPI Cards) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-          <div className="bg-white p-3 rounded-2xl border border-amber-200/80 shadow-2xs flex items-center justify-between">
+        {/* Indikator Antrean (KPI Cards) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Menunggu</p>
-              <h3 className="text-lg font-black text-slate-800 mt-0.5">{counts.waiting} <span className="text-xs font-bold text-slate-400">unit</span></h3>
+              <p className="text-[11px] font-medium text-amber-700">Menunggu</p>
+              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.waiting} <span className="text-xs font-normal text-slate-400">unit</span></h3>
             </div>
-            <span className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-sm font-bold">
-              ⏳
+            <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/60">
+              <Clock className="w-4 h-4" />
             </span>
           </div>
 
-          <div className="bg-white p-3 rounded-2xl border border-blue-200/80 shadow-2xs flex items-center justify-between">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Dikerjakan</p>
-              <h3 className="text-lg font-black text-slate-800 mt-0.5">{counts.inProgress} <span className="text-xs font-bold text-slate-400">unit</span></h3>
+              <p className="text-[11px] font-medium text-blue-700">Dikerjakan</p>
+              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.inProgress} <span className="text-xs font-normal text-slate-400">unit</span></h3>
             </div>
-            <span className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center text-sm font-bold">
-              ⚙️
+            <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200/60">
+              <Wrench className="w-4 h-4" />
             </span>
           </div>
 
-          <div className="bg-white p-3 rounded-2xl border border-emerald-200/80 shadow-2xs flex items-center justify-between">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Siap Ambil</p>
-              <h3 className="text-lg font-black text-slate-800 mt-0.5">{counts.done} <span className="text-xs font-bold text-slate-400">unit</span></h3>
+              <p className="text-[11px] font-medium text-emerald-700">Siap Ambil</p>
+              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.done} <span className="text-xs font-normal text-slate-400">unit</span></h3>
             </div>
-            <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center text-sm font-bold">
-              
+            <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200/60">
+              <CheckCircle2 className="w-4 h-4" />
             </span>
           </div>
 
-          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Antrean</p>
-              <h3 className="text-lg font-black text-slate-800 mt-0.5">{counts.activeInWorkshop} <span className="text-xs font-bold text-slate-400">unit</span></h3>
+              <p className="text-[11px] font-medium text-slate-500">Total Antrean</p>
+              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.activeInWorkshop} <span className="text-xs font-normal text-slate-400">unit</span></h3>
             </div>
-            <span className="w-8 h-8 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 flex items-center justify-center text-sm font-bold">
-              📋
+            <span className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200">
+              <ClipboardList className="w-4 h-4" />
             </span>
           </div>
         </div>
 
         {/* 5. Filter & Pencarian */}
-        <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-2xs space-y-2.5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs space-y-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
             {/* Filter Seksi */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+              <label className="block text-[11px] font-medium text-slate-700 mb-1">
                 Seksi
               </label>
               <select
@@ -648,7 +336,7 @@ export default function RiwayatLaporanPage() {
                   setSelectedSeksi(e.target.value);
                   setSelectedDaisha('all');
                 }}
-                className="w-full p-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none cursor-pointer"
+                className="w-full h-8 px-2.5 border border-slate-300 rounded-md text-xs font-medium text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none cursor-pointer transition"
               >
                 <option value="all">Semua Seksi ({tickets.length})</option>
                 {seksiList.map((s) => {
@@ -664,13 +352,13 @@ export default function RiwayatLaporanPage() {
 
             {/* Filter Jenis Daisha */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+              <label className="block text-[11px] font-medium text-slate-700 mb-1">
                 Jenis Daisha
               </label>
               <select
                 value={selectedDaisha}
                 onChange={(e) => setSelectedDaisha(e.target.value)}
-                className="w-full p-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none cursor-pointer"
+                className="w-full h-8 px-2.5 border border-slate-300 rounded-md text-xs font-medium text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none cursor-pointer transition"
               >
                 <option value="all">
                   {selectedSeksi !== 'all' ? `Semua Jenis (${selectedSeksi})` : 'Semua Jenis'}
@@ -691,20 +379,21 @@ export default function RiwayatLaporanPage() {
               </select>
             </div>
 
-            {/* Filter Ukuran Daisha */}
+            {/* Filter Durasi Menginap */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                Ukuran
+              <label className="block text-[11px] font-medium text-slate-700 mb-1 flex items-center gap-1">
+                <Clock className="w-3 h-3 text-slate-400" />
+                <span>Durasi Menginap</span>
               </label>
               <select
-                value={selectedSize}
-                onChange={(e) => setSelectedSize(e.target.value)}
-                className="w-full p-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none cursor-pointer"
+                value={selectedAging}
+                onChange={(e) => setSelectedAging(e.target.value)}
+                className="w-full h-8 px-2.5 border border-slate-300 rounded-md text-xs font-medium text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none cursor-pointer transition"
               >
-                <option value="all">Semua Ukuran</option>
-                <option value="Small">Small (S)</option>
-                <option value="Medium">Medium (M)</option>
-                <option value="Large">Large (L)</option>
+                <option value="all">Semua Durasi</option>
+                <option value="today">Hari Ini (&lt; 24 Jam)</option>
+                <option value="overdue">Menginap (&ge; 24 Jam)</option>
+                <option value="critical">Tertunda Lama (&ge; 3 Hari)</option>
               </select>
             </div>
 
@@ -714,12 +403,13 @@ export default function RiwayatLaporanPage() {
                 <button
                   type="button"
                   onClick={resetAllFilters}
-                  className="w-full py-2 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full h-8 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/60 rounded-md text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <span>✕ Reset Filter</span>
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset Filter</span>
                 </button>
               ) : (
-                <div className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-400 font-medium text-center select-none">
+                <div className="w-full h-8 px-3 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-400 font-normal flex items-center justify-center select-none">
                   Default
                 </div>
               )}
@@ -730,33 +420,33 @@ export default function RiwayatLaporanPage() {
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 pt-2 border-t border-slate-100">
             <div className="relative flex-1">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
-                🔍
+                <Search className="w-3.5 h-3.5" />
               </span>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari tiket, seksi, atau pelapor..."
-                className="w-full pl-8 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none transition"
+                className="w-full pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 font-normal placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none transition"
               />
               {search && (
                 <button
                   onClick={() => setSearch('')}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
                 >
-                  ✕
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
 
             {viewMode === 'list' && (
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-1 text-xs font-semibold text-slate-700 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-300">
-                  <span className="text-slate-400 text-[11px]">🔃</span>
+                <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <span className="text-slate-500 font-medium">Urutkan:</span>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer border-none py-0.5 text-xs"
+                    className="bg-white font-medium text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-red-600 cursor-pointer"
                   >
                     {SORT_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -766,15 +456,15 @@ export default function RiwayatLaporanPage() {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-1 text-xs font-semibold text-slate-700 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-300">
-                  <span className="text-slate-400 text-[11px]">📄</span>
+                <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <span className="text-slate-500 font-medium">Tampilkan:</span>
                   <select
                     value={itemsPerPage}
                     onChange={(e) => {
                       setItemsPerPage(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer border-none py-0.5 text-xs"
+                    className="bg-white font-medium text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-red-600 cursor-pointer"
                   >
                     <option value={10}>10 data</option>
                     <option value={20}>20 data</option>
@@ -790,29 +480,38 @@ export default function RiwayatLaporanPage() {
 
         {/* 4. Konten Utama: Papan Antrean Kanban ATAU Daftar Tabel */}
         {loading && tickets.length === 0 ? (
-          <div className="py-16 text-center text-slate-400 text-xs flex flex-col items-center gap-2 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <div className="py-16 text-center text-slate-400 text-xs flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
             <span className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
             <span>Memuat status antrean...</span>
           </div>
         ) : filteredTickets.length === 0 ? (
-          <div className="py-12 text-center bg-white rounded-2xl border border-dashed border-slate-200 p-6 shadow-2xs">
-            <span className="text-3xl block mb-1">📭</span>
-            <p className="text-xs font-bold text-slate-700">Tidak ada tiket laporan ditemukan</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+          <div className="py-12 text-center bg-white rounded-xl border border-dashed border-slate-200 p-6 shadow-2xs">
+            <Inbox className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+            <p className="text-xs font-semibold text-slate-800">Tidak ada tiket laporan ditemukan</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
               {search
-                ? 'Coba cari dengan kata kunci lain atau bersihkan filter di atas.'
+                ? `Tidak ada tiket yang cocok dengan kata kunci "${search}". Coba periksa ejaan atau bersihkan filter pencarian.`
                 : selectedSeksi !== 'all'
-                ? `Belum ada tiket laporan untuk seksi ${selectedSeksi}.`
-                : 'Belum ada tiket dalam antrean saat ini.'}
+                ? `Belum ada tiket laporan kerusakan aktif untuk seksi ${selectedSeksi}.`
+                : 'Belum ada tiket laporan kerusakan dalam antrean bengkel saat ini.'}
             </p>
-            {hasActiveFilters && (
+            {hasActiveFilters ? (
               <button
                 type="button"
                 onClick={resetAllFilters}
-                className="mt-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-2xs hover:bg-slate-800 transition cursor-pointer"
+                className="mt-3 px-3.5 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg hover:bg-slate-800 transition cursor-pointer inline-flex items-center gap-1.5"
               >
-                Reset Semua Filter
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Semua Filter</span>
               </button>
+            ) : (
+              <Link
+                href="/input"
+                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-2xs transition cursor-pointer"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>Buat Laporan Daisha Baru</span>
+              </Link>
             )}
           </div>
         ) : viewMode === 'kanban' ? (
@@ -821,8 +520,6 @@ export default function RiwayatLaporanPage() {
             tickets={filteredTickets}
             onViewDetail={(t) => setTicketForDetail(t)}
             onPrintTag={(t) => setTicketForTag(t)}
-            onDiagnose={(t) => setTicketToEdit(t)}
-            isAdmin={isAdmin}
           />
         ) : (
           /* TAMPILAN 2: DAFTAR KARTU / LIST */
@@ -833,9 +530,6 @@ export default function RiwayatLaporanPage() {
                   key={ticket.idTiketAsli}
                   ticket={ticket}
                   onViewDetail={(t) => setTicketForDetail(t)}
-                  onEdit={(t) => setTicketToEdit(t)}
-                  onCancel={(t) => setTicketToCancel(t)}
-                  onPrintTag={(t) => setTicketForTag(t)}
                 />
               ))}
             </div>
@@ -854,15 +548,14 @@ export default function RiwayatLaporanPage() {
         )}
       </div>
 
-      {/* Modal Detail Tiket (Cross-check Lengkap) */}
+      {/* Modal Detail Tiket (Tampilan Baca-Saja & Log Pemeriksaan) */}
       <DetailTicketModal
         isOpen={!!ticketForDetail}
         ticket={ticketForDetail}
         onClose={() => setTicketForDetail(null)}
-        onEdit={(t) => setTicketToEdit(t)}
       />
 
-      {/* Modal Cetak Tag Fisik Daisha Langsung */}
+      {/* Modal Cetak Tag Fisik Daisha */}
       <PrintTicketTagModal
         isOpen={!!ticketForTag}
         ticket={
@@ -881,52 +574,6 @@ export default function RiwayatLaporanPage() {
             : null
         }
         onClose={() => setTicketForTag(null)}
-      />
-
-      {/* Modal Edit / Koreksi Laporan */}
-      <EditTicketModal
-        isOpen={!!ticketToEdit}
-        ticket={ticketToEdit}
-        isLoading={isSavingEdit}
-        onSave={handleSaveEdit}
-        onClose={() => setTicketToEdit(null)}
-      />
-
-      {/* Modal Batal Cepat */}
-      <ConfirmModal
-        isOpen={!!ticketToCancel}
-        title="Batalkan Laporan Ini?"
-        message="Laporan unit ini akan dihapus dari antrean bengkel jika terjadi salah input."
-        detail={
-          ticketToCancel
-            ? `Unit: ${ticketToCancel.noDaisha} (${ticketToCancel.namaDaisha})`
-            : undefined
-        }
-        confirmText="Ya, Batalkan"
-        cancelText="Kembali"
-        isDestructive={true}
-        isLoading={isCancelling}
-        loadingText="Membatalkan..."
-        onConfirm={executeCancelTicket}
-        onCancel={() => setTicketToCancel(null)}
-      />
-
-      {/* Feedback Alert */}
-      <FeedbackModal
-        isOpen={feedback.isOpen}
-        type={feedback.type}
-        title={feedback.title}
-        message={feedback.message}
-        detail={feedback.detail}
-        onClose={() => setFeedback((prev) => ({ ...prev, isOpen: false }))}
-      />
-
-      {/* Modal Scanner Kamera QR / Barcode Fisik Daisha */}
-      <QrScannerModal
-        isOpen={isQrScannerOpen}
-        onClose={() => setIsQrScannerOpen(false)}
-        onScanSuccess={handleScanSuccess}
-        onError={(err) => console.warn('[QR/Barcode Scanner Error]:', err)}
       />
     </div>
   );

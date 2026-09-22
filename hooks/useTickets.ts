@@ -13,7 +13,34 @@ const FETCH_TIMEOUT_MS = 35_000;
 
 // Shared in-memory cache antar halaman (Dashboard, Admin, Riwayat, Input)
 let sharedTicketCache: Ticket[] | null = null;
+let lastFetchTimestamp = 0;
+let inFlightFetchPromise: Promise<Ticket[]> | null = null;
 const sharedListeners = new Set<(tickets: Ticket[]) => void>();
+
+/**
+ * Mengecek apakah dua daftar tiket identik secara struktural.
+ * Menghindari pergantian referensi array jika tidak ada perubahan data di database.
+ */
+function areTicketListsEqual(prev: Ticket[] | null, next: Ticket[]): boolean {
+  if (prev === next) return true;
+  if (!prev || prev.length !== next.length) return false;
+
+  for (let i = 0; i < prev.length; i++) {
+    const a = prev[i];
+    const b = next[i];
+    if (
+      a.idTiketAsli !== b.idTiketAsli ||
+      a.status !== b.status ||
+      a.tglMasuk !== b.tglMasuk ||
+      a.tglKeluar !== b.tglKeluar ||
+      a.detail !== b.detail ||
+      a.reason !== b.reason
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
 
 function notifySharedListeners(tickets: Ticket[]) {
   sharedTicketCache = tickets;
@@ -59,55 +86,74 @@ export function useTickets(options: UseTicketsOptions = {}) {
 
   const fetchTickets = useCallback(
     async (isSilent = false, forceFresh = false): Promise<Ticket[]> => {
+      // Jika request sedang berjalan dan bukan force fresh, gunakan promise yang sama (deduplikasi)
+      if (inFlightFetchPromise && !forceFresh) {
+        return inFlightFetchPromise;
+      }
+
       if (!isSilent) setIsRefreshing(true);
       setError(null);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+      const runFetch = async (): Promise<Ticket[]> => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-      try {
-        const fetchUrl = forceFresh ? `${API_URL}?fresh=${Date.now()}` : API_URL;
-        const response = await fetch(fetchUrl, {
-          cache: 'no-store',
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
+        try {
+          const fetchUrl = forceFresh ? `${API_URL}?fresh=${Date.now()}` : API_URL;
+          const response = await fetch(fetchUrl, {
+            cache: 'no-store',
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
 
-        if (response.status === 401) {
-          router.push('/login');
-          return [];
+          if (response.status === 401) {
+            router.push('/login');
+            return [];
+          }
+
+          if (!response.ok) {
+            const errJson = await response.json().catch(() => ({}));
+            throw new Error(errJson.error || `Gagal mengambil data (Status: ${response.status})`);
+          }
+
+          const jsonResult = await response.json();
+          const rawArray = extractRawTicketArray(jsonResult);
+          const processed = processRawTicketData(rawArray);
+          lastFetchTimestamp = Date.now();
+
+          // Anti-Looping & Anti Re-render: Cek apakah data benar-benar berubah
+          if (areTicketListsEqual(sharedTicketCache, processed)) {
+            // Data identik! Pertahankan referensi array yang sudah ada agar React TIDAK re-render
+            return sharedTicketCache!;
+          }
+
+          // Data benar-benar ada perubahan: perbarui cache & notifikasi listener
+          notifySharedListeners(processed);
+
+          if (isMountedRef.current) {
+            setTickets(processed);
+            setError(null);
+          }
+
+          return processed;
+        } catch (err: unknown) {
+          clearTimeout(timeoutId);
+          if (isMountedRef.current) {
+            const msg = err instanceof Error ? err.message : 'Terjadi gangguan saat memuat tiket';
+            setError(msg);
+          }
+          return sharedTicketCache || [];
+        } finally {
+          inFlightFetchPromise = null;
+          if (isMountedRef.current) {
+            setLoading(false);
+            setIsRefreshing(false);
+          }
         }
+      };
 
-        if (!response.ok) {
-          const errJson = await response.json().catch(() => ({}));
-          throw new Error(errJson.error || `Gagal mengambil data (Status: ${response.status})`);
-        }
-
-        const jsonResult = await response.json();
-        const rawArray = extractRawTicketArray(jsonResult);
-        const processed = processRawTicketData(rawArray);
-
-        notifySharedListeners(processed);
-
-        if (isMountedRef.current) {
-          setTickets(processed);
-          setError(null);
-        }
-
-        return processed;
-      } catch (err: unknown) {
-        clearTimeout(timeoutId);
-        if (isMountedRef.current) {
-          const msg = err instanceof Error ? err.message : 'Terjadi gangguan saat memuat tiket';
-          setError(msg);
-        }
-        return sharedTicketCache || [];
-      } finally {
-        if (isMountedRef.current) {
-          setLoading(false);
-          setIsRefreshing(false);
-        }
-      }
+      inFlightFetchPromise = runFetch();
+      return inFlightFetchPromise;
     },
     [router]
   );
@@ -118,7 +164,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
 
     const handleSharedUpdate = (newTickets: Ticket[]) => {
       if (isMountedRef.current) {
-        setTickets(newTickets);
+        setTickets((prev) => (prev === newTickets ? prev : newTickets));
       }
     };
     sharedListeners.add(handleSharedUpdate);
@@ -128,7 +174,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
     };
   }, []);
 
-  // 2. BroadcastChannel & Window Focus Auto-Refresh
+  // 2. BroadcastChannel & Window Focus Auto-Refresh (Dibatasi Throttle 10 Detik)
   useEffect(() => {
     let bc: BroadcastChannel | null = null;
     try {
@@ -145,6 +191,9 @@ export function useTickets(options: UseTicketsOptions = {}) {
     }
 
     const handleFocusOrVisibility = () => {
+      // Throttle: Jangan re-fetch jika baru saja fetch kurang dari 10 detik lalu
+      if (Date.now() - lastFetchTimestamp < 10_000) return;
+
       if (document.visibilityState === 'visible' && isMountedRef.current) {
         void fetchTickets(true);
       }
@@ -166,11 +215,15 @@ export function useTickets(options: UseTicketsOptions = {}) {
 
     if (initialFetch) {
       const isSilent = sharedTicketCache !== null;
-      queueMicrotask(() => {
-        if (isMountedRef.current) {
-          void fetchTickets(isSilent);
-        }
-      });
+      // Jika cache masih sangat baru (< 15 detik), tidak perlu re-fetch instan
+      const isCacheRecent = sharedTicketCache !== null && Date.now() - lastFetchTimestamp < 15_000;
+      if (!isCacheRecent) {
+        queueMicrotask(() => {
+          if (isMountedRef.current) {
+            void fetchTickets(isSilent);
+          }
+        });
+      }
     }
 
     let intervalId: NodeJS.Timeout | null = null;

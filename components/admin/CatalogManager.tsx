@@ -14,175 +14,17 @@ import {
   ChevronDown,
   ChevronUp,
   Layers,
-  Globe,
-  Cog,
   Building2,
-  Flame,
-  Scissors,
-  Factory,
-  Film,
   Boxes,
+  Tag,
+  RefreshCw,
 } from 'lucide-react';
-
-
-export function getSeksiIcon(seksi: string): string {
-  const lower = seksi.toLowerCase();
-  if (lower.includes('all') || lower.includes('semua')) return '🌐';
-  if (lower.includes('banbury') || lower.includes('bunbury')) return '🌋';
-  if (lower.includes('bead')) return '⚙️';
-  if (lower.includes('building')) return '🏗️';
-  if (lower.includes('cutt') || lower.includes('cal')) return '✂️';
-  if (lower.includes('extrud')) return '🏭';
-  if (lower.includes('polyfilm') || lower.includes('film')) return '📜';
-  if (lower.includes('curing')) return '♨️';
-  if (lower.includes('qc') || lower.includes('inspect')) return '🔍';
-  return '🏢';
-}
-
-export const SEKSI_THEMES: Record<
-  string,
-  {
-    icon: React.ComponentType<{ className?: string }>;
-    emoji: string;
-    border: string;
-    bg: string;
-    hoverBg: string;
-    textTitle: string;
-    textNumber: string;
-    textSubtitle: string;
-    iconBg: string;
-    iconColor: string;
-  }
-> = {
-  all: {
-    icon: Boxes,
-    emoji: '📋',
-    border: 'border-slate-200/90',
-    bg: 'bg-white',
-    hoverBg: 'hover:bg-slate-50/80',
-    textTitle: 'text-slate-500',
-    textNumber: 'text-slate-900',
-    textSubtitle: 'text-slate-500',
-    iconBg: 'bg-slate-100',
-    iconColor: 'text-slate-600',
-  },
-  'all seksi': {
-    icon: Globe,
-    emoji: '🌐',
-    border: 'border-indigo-200/80',
-    bg: 'bg-indigo-50/20',
-    hoverBg: 'hover:bg-indigo-50/40',
-    textTitle: 'text-indigo-700',
-    textNumber: 'text-indigo-600',
-    textSubtitle: 'text-indigo-600/80',
-    iconBg: 'bg-indigo-100',
-    iconColor: 'text-indigo-700',
-  },
-  bead: {
-    icon: Cog,
-    emoji: '⚙️',
-    border: 'border-amber-200/80',
-    bg: 'bg-amber-50/20',
-    hoverBg: 'hover:bg-amber-50/40',
-    textTitle: 'text-amber-700',
-    textNumber: 'text-amber-600',
-    textSubtitle: 'text-amber-600/80',
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-700',
-  },
-  building: {
-    icon: Building2,
-    emoji: '🏗️',
-    border: 'border-blue-200/80',
-    bg: 'bg-blue-50/20',
-    hoverBg: 'hover:bg-blue-50/40',
-    textTitle: 'text-blue-700',
-    textNumber: 'text-blue-600',
-    textSubtitle: 'text-blue-600/80',
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-700',
-  },
-  bunbury: {
-    icon: Flame,
-    emoji: '🌋',
-    border: 'border-rose-200/80',
-    bg: 'bg-rose-50/20',
-    hoverBg: 'hover:bg-rose-50/40',
-    textTitle: 'text-rose-700',
-    textNumber: 'text-rose-600',
-    textSubtitle: 'text-rose-600/80',
-    iconBg: 'bg-rose-100',
-    iconColor: 'text-rose-700',
-  },
-  banbury: {
-    icon: Flame,
-    emoji: '🌋',
-    border: 'border-rose-200/80',
-    bg: 'bg-rose-50/20',
-    hoverBg: 'hover:bg-rose-50/40',
-    textTitle: 'text-rose-700',
-    textNumber: 'text-rose-600',
-    textSubtitle: 'text-rose-600/80',
-    iconBg: 'bg-rose-100',
-    iconColor: 'text-rose-700',
-  },
-  'cutt/cal': {
-    icon: Scissors,
-    emoji: '✂️',
-    border: 'border-emerald-200/80',
-    bg: 'bg-emerald-50/20',
-    hoverBg: 'hover:bg-emerald-50/40',
-    textTitle: 'text-emerald-700',
-    textNumber: 'text-emerald-600',
-    textSubtitle: 'text-emerald-600/80',
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-700',
-  },
-  extruding: {
-    icon: Factory,
-    emoji: '🏭',
-    border: 'border-purple-200/80',
-    bg: 'bg-purple-50/20',
-    hoverBg: 'hover:bg-purple-50/40',
-    textTitle: 'text-purple-700',
-    textNumber: 'text-purple-600',
-    textSubtitle: 'text-purple-600/80',
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-700',
-  },
-  polyfilm: {
-    icon: Film,
-    emoji: '📜',
-    border: 'border-cyan-200/80',
-    bg: 'bg-cyan-50/20',
-    hoverBg: 'hover:bg-cyan-50/40',
-    textTitle: 'text-cyan-700',
-    textNumber: 'text-cyan-600',
-    textSubtitle: 'text-cyan-600/80',
-    iconBg: 'bg-cyan-100',
-    iconColor: 'text-cyan-700',
-  },
-};
-
-export function getSeksiTheme(seksi: string) {
-  const key = seksi.toLowerCase().trim();
-  if (SEKSI_THEMES[key]) return SEKSI_THEMES[key];
-  for (const [k, val] of Object.entries(SEKSI_THEMES)) {
-    if (key.includes(k)) return val;
-  }
-  return {
-    icon: Layers,
-    emoji: '🏢',
-    border: 'border-slate-200/90',
-    bg: 'bg-slate-50/20',
-    hoverBg: 'hover:bg-slate-100/50',
-    textTitle: 'text-slate-500',
-    textNumber: 'text-slate-900',
-    textSubtitle: 'text-slate-500',
-    iconBg: 'bg-slate-100',
-    iconColor: 'text-slate-700',
-  };
-}
+import {
+  AddDaishaModal,
+  AddComponentModal,
+  AddSymptomModal,
+  EditCatalogItemModal,
+} from './CatalogModals';
 
 export default function CatalogManager() {
   const { tree, seksiList, loading, refreshCatalog } = useDaishaCatalog();
@@ -190,10 +32,10 @@ export default function CatalogManager() {
   const [search, setSearch] = useState('');
   const [selectedSeksi, setSelectedSeksi] = useState('all');
 
-  // Expanded Daisha Accordions
+  // Expanded Daisha rows
   const [expandedDaishaIds, setExpandedDaishaIds] = useState<number[]>([]);
 
-  // Collapsed Seksi Cards
+  // Collapsed Seksi sections
   const [collapsedSeksi, setCollapsedSeksi] = useState<string[]>([]);
 
   const toggleCollapseSeksi = (seksi: string) => {
@@ -213,7 +55,11 @@ export default function CatalogManager() {
   // Modals state
   const [isAddDaishaModalOpen, setIsAddDaishaModalOpen] = useState(false);
   const [addComponentTarget, setAddComponentTarget] = useState<DaishaTreeItem | null>(null);
-  const [addSymptomTarget, setAddSymptomTarget] = useState<{ componentId: number; componentName: string; daishaName: string } | null>(null);
+  const [addSymptomTarget, setAddSymptomTarget] = useState<{
+    componentId: number;
+    componentName: string;
+    daishaName: string;
+  } | null>(null);
 
   // Edit states
   const [editItem, setEditItem] = useState<{
@@ -268,17 +114,17 @@ export default function CatalogManager() {
       }
       if (!q) return true;
 
-      // Cek apakah nama daisha, komponen, atau gejala cocok dengan query
       const matchDaisha = d.name.toLowerCase().includes(q) || d.seksi.toLowerCase().includes(q);
-      const matchComponent = d.components.some((c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.symptoms.some((s) => s.description.toLowerCase().includes(q))
+      const matchComponent = d.components.some(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.symptoms.some((s) => s.description.toLowerCase().includes(q))
       );
       return matchDaisha || matchComponent;
     });
   }, [tree, selectedSeksi, search]);
 
-  // Kelompokkan data per Seksi menjadi struktur Card
+  // Group data per Seksi
   const groupedBySeksi = useMemo(() => {
     const groups: Record<string, DaishaTreeItem[]> = {};
 
@@ -290,7 +136,6 @@ export default function CatalogManager() {
       groups[s].push(daisha);
     });
 
-    // Urutan Seksi: 'All seksi' pertama jika ada, selebihnya urut abjad
     const sortedKeys = Object.keys(groups).sort((a, b) => {
       if (a.toLowerCase() === 'all seksi') return -1;
       if (b.toLowerCase() === 'all seksi') return 1;
@@ -313,7 +158,7 @@ export default function CatalogManager() {
     });
   }, [filteredTree]);
 
-  // Hitung jumlah total Daisha per Seksi di seluruh database
+  // Total daisha per Seksi
   const seksiCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     tree.forEach((d) => {
@@ -323,7 +168,7 @@ export default function CatalogManager() {
     return counts;
   }, [tree]);
 
-  // Daftar unik Seksi untuk Quick Filter
+  // Unique Seksi list
   const uniqueSeksiList = useMemo(() => {
     const set = new Set<string>();
     seksiList.forEach((s) => {
@@ -336,7 +181,7 @@ export default function CatalogManager() {
     return ['All seksi', ...sorted];
   }, [seksiList, tree]);
 
-  // 1. Tambah Daisha Baru
+  // 1. Submit Tambah Daisha Baru
   const handleAddDaishaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDaishaForm.name.trim()) return;
@@ -367,7 +212,7 @@ export default function CatalogManager() {
     }
   };
 
-  // 2. Tambah Komponen Baru
+  // 2. Submit Tambah Komponen Baru
   const handleAddComponentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!addComponentTarget || !newComponentName.trim()) return;
@@ -378,7 +223,7 @@ export default function CatalogManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'ADD_COMPONENT',
-          daishaTypeId: addComponentTarget.id,
+          daishaId: addComponentTarget.id,
           name: newComponentName.trim(),
         }),
       });
@@ -398,7 +243,7 @@ export default function CatalogManager() {
     }
   };
 
-  // 3. Tambah Gejala Baru
+  // 3. Submit Tambah Gejala Baru
   const handleAddSymptomSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!addSymptomTarget || !newSymptomText.trim()) return;
@@ -429,39 +274,36 @@ export default function CatalogManager() {
     }
   };
 
-  // 4. Edit Item
+  // 4. Submit Edit
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editItem || !editItem.name.trim()) return;
 
     try {
-      let action = 'EDIT_DAISHA';
-      let payload: Record<string, unknown> = { id: editItem.id };
-
-      if (editItem.type === 'daisha') {
-        action = 'EDIT_DAISHA';
-        payload = { ...payload, name: editItem.name, seksi: editItem.seksi };
-      } else if (editItem.type === 'component') {
-        action = 'EDIT_COMPONENT';
-        payload = { ...payload, name: editItem.name };
-      } else if (editItem.type === 'symptom') {
-        action = 'EDIT_SYMPTOM';
-        payload = { ...payload, description: editItem.name };
-      }
-
       const res = await fetch('/api/catalog', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, ...payload }),
+        body: JSON.stringify({
+          action:
+            editItem.type === 'daisha'
+              ? 'UPDATE_DAISHA'
+              : editItem.type === 'component'
+              ? 'UPDATE_COMPONENT'
+              : 'UPDATE_SYMPTOM',
+          id: editItem.id,
+          name: editItem.name.trim(),
+          description: editItem.name.trim(),
+          seksi: editItem.seksi,
+        }),
       });
       const data = await res.json();
 
       if (res.ok) {
-        showFeedback('success', 'Berhasil Diperbarui', data.message);
+        showFeedback('success', 'Perubahan Disimpan', data.message);
         setEditItem(null);
         await refreshCatalog();
       } else {
-        showFeedback('error', 'Gagal Memperbarui', data.error || 'Terjadi kesalahan.');
+        showFeedback('error', 'Gagal Mengubah Data', data.error || 'Terjadi kesalahan.');
       }
     } catch (err) {
       console.error(err);
@@ -469,18 +311,28 @@ export default function CatalogManager() {
     }
   };
 
-  // 5. Delete Item
-  const handleDeleteConfirm = async () => {
+  // 5. Confirm Delete
+  const handleConfirmDelete = async () => {
     if (!deleteItem) return;
 
     try {
-      const res = await fetch(`/api/catalog?type=${deleteItem.type}&id=${deleteItem.id}`, {
+      const res = await fetch('/api/catalog', {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action:
+            deleteItem.type === 'daisha'
+              ? 'DELETE_DAISHA'
+              : deleteItem.type === 'component'
+              ? 'DELETE_COMPONENT'
+              : 'DELETE_SYMPTOM',
+          id: deleteItem.id,
+        }),
       });
       const data = await res.json();
 
       if (res.ok) {
-        showFeedback('success', 'Berhasil Dihapus', data.message);
+        showFeedback('success', 'Data Dihapus', data.message);
         setDeleteItem(null);
         await refreshCatalog();
       } else {
@@ -493,293 +345,229 @@ export default function CatalogManager() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header Katalog Auto-Pilot */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-5">
+      {/* 1. Header Toolbar & Quick Stats */}
+      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-semibold text-slate-900 flex items-center gap-2">
             <Layers className="w-5 h-5 text-red-600" />
-            <span>Katalog Daisha & Kerusakan (Auto-Pilot)</span>
+            <span>Katalog Master Unit & Kerusakan Daisha</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Tambah jenis Daisha baru, komponen, serta detail kerusakan langsung dari sini. Form input teknisi akan otomatis sinkron tanpa perlu coding ulang.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Sistem pohon relasi unit Daisha, komponen sparepart, dan rincian gejala kerusakan untuk formulir input operasional.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsAddDaishaModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all active:scale-[0.98] w-full sm:w-auto shrink-0 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Jenis Daisha Baru</span>
-        </button>
-      </div>
 
-      {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-3">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-3 text-slate-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Cari jenis Daisha, komponen, atau gejala..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600 focus:outline-hidden text-slate-800"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">Filter Seksi:</span>
-          <select
-            value={selectedSeksi}
-            onChange={(e) => setSelectedSeksi(e.target.value)}
-            className="text-xs font-semibold px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-red-600 focus:outline-hidden text-slate-800 cursor-pointer"
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => refreshCatalog()}
+            className="h-9 px-3 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            title="Muat ulang data katalog"
           >
-            <option value="all">Semua Seksi ({tree.length} Daisha)</option>
-            {uniqueSeksiList
-              .filter((s) => s.toLowerCase() !== 'all seksi')
-              .map((s) => (
-                <option key={s} value={s}>
-                  {s} ({seksiCounts[s] || 0} Daisha)
-                </option>
-              ))}
-          </select>
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-red-600' : 'text-slate-500'}`} />
+            <span>Refresh</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAddDaishaModalOpen(true)}
+            className="h-9 px-3.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Jenis Daisha</span>
+          </button>
         </div>
       </div>
 
-      {/* Kotak-Kotak Kartu Seksi (Persis Desain KPI Cards) */}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between gap-2 px-0.5">
-          <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
-            <span>🏷️</span> Pilih Seksi Plant Daisha
+      {/* 2. Filter Bar & Quick Stats Bar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/80 shadow-2xs space-y-3">
+        {/* Quick Seksi Filter Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+          <span className="text-[11px] font-medium text-slate-500 shrink-0 mr-1 flex items-center gap-1">
+            <Building2 className="w-3.5 h-3.5" /> Seksi:
           </span>
-          {groupedBySeksi.length > 1 && (
-            <div className="flex items-center gap-1.5 text-xs">
-              <button
-                type="button"
-                onClick={expandAllSeksi}
-                className="px-2.5 py-1 text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 font-bold transition cursor-pointer shadow-2xs text-[11px]"
-              >
-                Perluas Semua
-              </button>
-              <button
-                type="button"
-                onClick={collapseAllSeksi}
-                className="px-2.5 py-1 text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 font-bold transition cursor-pointer shadow-2xs text-[11px]"
-              >
-                Ciutkan Semua
-              </button>
-            </div>
-          )}
-        </div>
+          <button
+            type="button"
+            onClick={() => setSelectedSeksi('all')}
+            className={`h-7 px-2.5 rounded-md text-xs font-medium transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
+              selectedSeksi === 'all'
+                ? 'bg-red-600 text-white shadow-2xs'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <span>Semua Seksi</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums ${selectedSeksi === 'all' ? 'bg-red-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
+              {tree.length}
+            </span>
+          </button>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 sm:gap-3">
-          {/* Card 'Semua Seksi' */}
-          {(() => {
-            const isSelected = selectedSeksi === 'all';
-            const theme = getSeksiTheme('all');
-            const IconComp = theme.icon;
-
-            return (
-              <div
-                key="all"
-                onClick={() => setSelectedSeksi('all')}
-                className={`rounded-2xl border p-3.5 cursor-pointer transition-all flex flex-col justify-between group ${theme.border} ${theme.bg} ${theme.hoverBg} ${
-                  isSelected
-                    ? 'ring-2 ring-red-600 shadow-md scale-[1.02] !bg-white border-red-500'
-                    : 'hover:shadow-md'
-                }`}
-              >
-                <div className="flex justify-between items-center mb-1">
-                  <span className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider ${isSelected ? 'text-red-700' : theme.textTitle}`}>
-                    SEMUA SEKSI
-                  </span>
-                  <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-red-100 text-red-700' : `${theme.iconBg} ${theme.iconColor}`} transition`}>
-                    <IconComp className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-                <div className={`text-2xl font-black ${isSelected ? 'text-red-700' : theme.textNumber} transition`}>
-                  {tree.length}
-                </div>
-                <div className={`text-[10px] font-medium mt-1 ${isSelected ? 'text-red-600 font-bold' : theme.textSubtitle}`}>
-                  Semua Daisha
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Card Setiap Seksi */}
           {uniqueSeksiList.map((s) => {
             const count = seksiCounts[s] || 0;
             const isSelected = selectedSeksi.toLowerCase() === s.toLowerCase();
-            const theme = getSeksiTheme(s);
-            const IconComp = theme.icon;
-
             return (
-              <div
+              <button
                 key={s}
+                type="button"
                 onClick={() => setSelectedSeksi(s)}
-                className={`rounded-2xl border p-3.5 cursor-pointer transition-all flex flex-col justify-between group ${theme.border} ${theme.bg} ${theme.hoverBg} ${
+                className={`h-7 px-2.5 rounded-md text-xs font-medium transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
                   isSelected
-                    ? 'ring-2 ring-red-600 shadow-md scale-[1.02] !bg-white border-red-500'
-                    : 'hover:shadow-md'
+                    ? 'bg-red-600 text-white shadow-2xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                <div className="flex justify-between items-center mb-1">
-                  <span className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider truncate mr-1 ${isSelected ? 'text-red-700' : theme.textTitle}`} title={s}>
-                    {s}
-                  </span>
-                  <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-red-100 text-red-700' : `${theme.iconBg} ${theme.iconColor}`} transition shrink-0`}>
-                    <IconComp className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-                <div className={`text-2xl font-black ${isSelected ? 'text-red-700' : theme.textNumber} transition`}>
+                <span>{s}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums ${isSelected ? 'bg-red-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
                   {count}
-                </div>
-                <div className={`text-[10px] font-medium mt-1 truncate ${isSelected ? 'text-red-600 font-bold' : theme.textSubtitle}`}>
-                  {count} Jenis Daisha
-                </div>
-              </div>
+                </span>
+              </button>
             );
           })}
         </div>
+
+        {/* Search input & Collapse controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Cari jenis Daisha, komponen, atau rincian gejala..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-8 pl-8 pr-3 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none placeholder:text-slate-400 shadow-2xs"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={expandAllSeksi}
+              className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-md transition cursor-pointer"
+            >
+              Buka Semua Seksi
+            </button>
+            <button
+              type="button"
+              onClick={collapseAllSeksi}
+              className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-md transition cursor-pointer"
+            >
+              Tutup Semua Seksi
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Daftar Jenis Daisha Dikelompokkan per Seksi Menjadi Card */}
-      <div className="space-y-6">
+      {/* 3. Daftar Katalog: Flat Hierarchical List (Bebas Nested Cards) */}
+      <div className="space-y-4">
         {loading && tree.length === 0 ? (
-          <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400 text-xs">
-            <span className="inline-block animate-spin mr-2">🔄</span> Memuat katalog master Daisha dari database...
+          <div className="bg-white p-12 text-center rounded-xl border border-slate-200/80 text-slate-400 text-xs flex items-center justify-center gap-2">
+            <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />
+            <span>Memuat katalog master Daisha dari database...</span>
           </div>
         ) : groupedBySeksi.length === 0 ? (
-          <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400 text-xs">
+          <div className="bg-white p-12 text-center rounded-xl border border-slate-200/80 text-slate-400 text-xs">
             Tidak ada jenis Daisha yang sesuai dengan filter atau pencarian Anda.
           </div>
         ) : (
           groupedBySeksi.map((group) => {
             const isSeksiCollapsed = !search.trim() && collapsedSeksi.includes(group.seksi);
-            const seksiTheme = getSeksiTheme(group.seksi);
-            const SeksiIcon = seksiTheme.icon;
 
             return (
               <div
                 key={group.seksi}
-                className={`bg-white rounded-2xl sm:rounded-3xl border ${seksiTheme.border} shadow-sm overflow-hidden transition`}
+                className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden"
               >
-                {/* Header Card Seksi */}
+                {/* Header Seksi */}
                 <div
-                  className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 select-none cursor-pointer transition border-b ${
+                  className={`p-3.5 sm:p-4 flex items-center justify-between gap-3 select-none cursor-pointer transition border-b ${
                     isSeksiCollapsed
                       ? 'bg-slate-50/70 border-transparent hover:bg-slate-100/60'
-                      : 'bg-gradient-to-r from-slate-50 via-slate-50/50 to-white border-slate-200/80'
+                      : 'bg-slate-50/50 border-slate-200/80'
                   }`}
                   onClick={() => toggleCollapseSeksi(group.seksi)}
                 >
-                  <div className="flex items-center gap-3.5">
-                    <div className={`w-11 h-11 rounded-2xl ${seksiTheme.iconBg} ${seksiTheme.iconColor} border ${seksiTheme.border} flex items-center justify-center font-black text-xl shrink-0 shadow-2xs`}>
-                      <SeksiIcon className="w-5 h-5" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center font-bold shrink-0">
+                      <Building2 className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-black text-base text-slate-900 tracking-tight">
+                        <h3 className="font-semibold text-sm text-slate-900">
                           Seksi {group.seksi}
                         </h3>
-                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-black ${seksiTheme.iconColor} ${seksiTheme.iconBg} ${seksiTheme.border}`}>
-                          {group.daishas.length} Jenis Daisha
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                          {group.daishas.length} Jenis Unit
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                        {group.totalKomponen} Komponen Kerusakan &middot; {group.totalGejala} Detail Gejala Masalah
+                      <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                        {group.totalKomponen} Komponen Kerusakan &bull; {group.totalGejala} Rincian Gejala
                       </p>
                     </div>
                   </div>
 
-                  <div
-                    className="flex items-center gap-2 self-stretch sm:self-center justify-end flex-wrap pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setNewDaishaForm({ name: '', seksi: group.seksi });
                         setIsAddDaishaModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-red-700 border border-red-200 bg-red-50/80 hover:bg-red-100 text-xs font-bold rounded-xl shadow-2xs transition active:scale-[0.98] cursor-pointer"
-                      title={`Tambah Daisha baru khusus untuk Seksi ${group.seksi}`}
+                      className="text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-2.5 py-1 rounded-md border border-red-200/60 transition cursor-pointer flex items-center gap-1"
+                      title={`Tambah Jenis Daisha pada Seksi ${group.seksi}`}
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>+ Daisha {group.seksi}</span>
+                      <span className="hidden sm:inline">Tambah Unit</span>
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={() => toggleCollapseSeksi(group.seksi)}
-                      className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 rounded-xl transition cursor-pointer flex items-center gap-1.5"
-                    >
-                      {isSeksiCollapsed ? (
-                        <>
-                          <span>Buka ({group.daishas.length})</span>
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </>
-                      ) : (
-                        <>
-                          <span>Tutup</span>
-                          <ChevronUp className="w-3.5 h-3.5" />
-                        </>
-                      )}
-                    </button>
+                    <span className="text-slate-400 p-1">
+                      {isSeksiCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                    </span>
                   </div>
                 </div>
 
-                {/* Body Card Seksi: Daftar Daisha dalam Seksi Ini (Grid 2 Kolom) */}
+                {/* Flat List Unit Daisha di Seksi Ini */}
                 {!isSeksiCollapsed && (
-                  <div className="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-2 gap-3.5 bg-slate-50/40">
+                  <div className="divide-y divide-slate-100">
                     {group.daishas.map((daisha) => {
-                      const isExpanded = expandedDaishaIds.includes(daisha.id) || search.trim().length > 0;
-                      const totalKomponen = daisha.components.length;
-                      const totalGejala = daisha.components.reduce((acc, c) => acc + c.symptoms.length, 0);
+                      const isExpanded = expandedDaishaIds.includes(daisha.id);
+                      const totalSymptoms = daisha.components.reduce(
+                        (acc, c) => acc + c.symptoms.length,
+                        0
+                      );
 
                       return (
-                        <div
-                          key={daisha.id}
-                          className={`bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden transition hover:border-slate-300 ${
-                            isExpanded ? 'lg:col-span-2 shadow-sm border-slate-300 ring-1 ring-slate-200' : ''
-                          }`}
-                        >
-                          {/* Header Daisha Card */}
+                        <div key={daisha.id} className="transition">
+                          {/* Daisha List Row */}
                           <div
-                            className={`p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 select-none cursor-pointer transition ${
-                              isExpanded ? 'bg-slate-50/80 border-b border-slate-200' : 'hover:bg-slate-50/50'
+                            className={`p-3 sm:p-3.5 flex items-center justify-between gap-3 select-none cursor-pointer transition ${
+                              isExpanded ? 'bg-slate-50/80 border-b border-slate-200/70' : 'hover:bg-slate-50/60'
                             }`}
                             onClick={() => toggleAccordion(daisha.id)}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold shrink-0">
-                                <FolderPlus className="w-5 h-5" />
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-7 h-7 rounded-md bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-100">
+                                <FolderPlus className="w-3.5 h-3.5" />
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <h4 className="font-extrabold text-sm text-slate-900">{daisha.name}</h4>
+                                  <h4 className="font-semibold text-xs text-slate-900">{daisha.name}</h4>
+                                  <span className="text-[11px] text-slate-500 font-normal">
+                                    ({daisha.components.length} komponen, {totalSymptoms} gejala)
+                                  </span>
                                 </div>
-                                <p className="text-[11px] text-slate-500 mt-0.5">
-                                  {totalKomponen} Komponen Kerusakan &middot; {totalGejala} Detail Gejala
-                                </p>
                               </div>
                             </div>
 
-                            <div
-                              className="flex items-center gap-1.5 self-stretch sm:self-center justify-end flex-wrap pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100"
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                            <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                               <button
                                 type="button"
                                 onClick={() => setAddComponentTarget(daisha)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-emerald-700 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition active:scale-[0.98] cursor-pointer"
-                                title="Tambah komponen baru untuk Daisha ini"
+                                className="h-7 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/60 rounded-md font-medium text-[11px] transition flex items-center gap-1 cursor-pointer"
+                                title="Tambah komponen kerusakan baru"
                               >
-                                <Plus className="w-3.5 h-3.5" />
-                                <span>Komponen</span>
+                                <Plus className="w-3 h-3" />
+                                <span className="hidden sm:inline">Komponen</span>
                               </button>
+
                               <button
                                 type="button"
                                 onClick={() =>
@@ -790,11 +578,13 @@ export default function CatalogManager() {
                                     seksi: daisha.seksi,
                                   })
                                 }
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-slate-700 border border-slate-200 bg-white hover:bg-slate-100 rounded-xl transition active:scale-[0.98] cursor-pointer"
+                                className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md cursor-pointer transition"
+                                title="Edit nama unit Daisha"
+                                aria-label="Edit nama unit Daisha"
                               >
                                 <Pencil className="w-3.5 h-3.5" />
-                                <span>Edit</span>
                               </button>
+
                               <button
                                 type="button"
                                 onClick={() =>
@@ -802,38 +592,48 @@ export default function CatalogManager() {
                                     type: 'daisha',
                                     id: daisha.id,
                                     title: `Hapus Jenis Daisha: ${daisha.name}`,
-                                    description: `Apakah Anda yakin ingin menghapus "${daisha.name}"? Semua ${totalKomponen} komponen dan ${totalGejala} gejala di dalamnya akan ikut terhapus secara permanen.`,
+                                    description: `Apakah Anda yakin ingin menghapus "${daisha.name}"? Semua ${daisha.components.length} komponen dan ${totalSymptoms} gejala di dalamnya akan ikut terhapus.`,
                                   })
                                 }
-                                className="inline-flex items-center justify-center p-2 text-red-600 border border-red-200 hover:bg-red-50 hover:text-red-700 rounded-xl transition active:scale-[0.98] cursor-pointer"
+                                className="w-7 h-7 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md cursor-pointer transition"
+                                title="Hapus unit Daisha"
+                                aria-label="Hapus unit Daisha"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
-                              <div className="text-slate-400 p-1">
+
+                              <button
+                                type="button"
+                                onClick={() => toggleAccordion(daisha.id)}
+                                className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-md cursor-pointer"
+                                aria-label="Buka/tutup detail"
+                              >
                                 {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                              </div>
+                              </button>
                             </div>
                           </div>
 
-                          {/* Body: Daftar Komponen & Gejala */}
+                          {/* Detail Komponen & Gejala: Inset Panel Tanpa Nested Card Berat */}
                           {isExpanded && (
-                            <div className="p-4 bg-gray-50/50 space-y-4">
+                            <div className="p-3.5 sm:p-4 bg-slate-50/50 border-b border-slate-200/60 space-y-3">
                               {daisha.components.length === 0 ? (
-                                <div className="text-center py-6 text-gray-400 text-xs">
-                                  Belum ada komponen kerusakan yang ditambahkan pada unit ini.
+                                <div className="text-center py-5 text-slate-400 text-xs">
+                                  Belum ada komponen kerusakan pada jenis unit ini. Klik &quot;+ Komponen&quot; untuk menambahkan.
                                 </div>
                               ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   {daisha.components.map((comp) => (
                                     <div
                                       key={comp.id}
-                                      className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-2xs space-y-2.5"
+                                      className="bg-white rounded-lg border border-slate-200/80 p-3 shadow-2xs space-y-2"
                                     >
                                       {/* Header Komponen */}
-                                      <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                                        <span className="font-black text-xs text-slate-800 flex items-center gap-1.5">
-                                          <span>🔧</span> {comp.name}
+                                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                        <span className="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
+                                          <Wrench className="w-3.5 h-3.5 text-slate-500" />
+                                          <span>{comp.name}</span>
                                         </span>
+
                                         <div className="flex items-center gap-1">
                                           <button
                                             type="button"
@@ -844,7 +644,7 @@ export default function CatalogManager() {
                                                 daishaName: daisha.name,
                                               })
                                             }
-                                            className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 px-1.5 py-0.5 bg-emerald-50 rounded cursor-pointer"
+                                            className="text-[11px] font-medium text-emerald-700 hover:text-emerald-900 px-1.5 py-0.5 bg-emerald-50 rounded cursor-pointer transition"
                                             title="Tambah gejala kerusakan pada komponen ini"
                                           >
                                             + Gejala
@@ -858,10 +658,11 @@ export default function CatalogManager() {
                                                 name: comp.name,
                                               })
                                             }
-                                            className="text-[10px] text-gray-500 hover:text-gray-800 px-1 cursor-pointer"
+                                            className="p-1 text-slate-400 hover:text-slate-700 rounded cursor-pointer"
                                             title="Edit nama komponen"
+                                            aria-label="Edit nama komponen"
                                           >
-                                            ✏️
+                                            <Pencil className="w-3 h-3" />
                                           </button>
                                           <button
                                             type="button"
@@ -873,28 +674,29 @@ export default function CatalogManager() {
                                                 description: `Apakah Anda yakin ingin menghapus komponen "${comp.name}" dari unit ${daisha.name}? Semua ${comp.symptoms.length} gejala di dalamnya akan ikut terhapus.`,
                                               })
                                             }
-                                            className="text-[10px] text-red-500 hover:text-red-800 px-1 cursor-pointer"
+                                            className="p-1 text-red-500 hover:text-red-700 rounded cursor-pointer"
                                             title="Hapus komponen ini"
+                                            aria-label="Hapus komponen ini"
                                           >
-                                            🗑️
+                                            <Trash2 className="w-3 h-3" />
                                           </button>
                                         </div>
                                       </div>
 
-                                      {/* Daftar Gejala Kerusakan */}
-                                      <div className="space-y-1.5">
+                                      {/* Daftar Gejala */}
+                                      <div className="space-y-1">
                                         {comp.symptoms.length === 0 ? (
-                                          <div className="text-[11px] text-gray-400 italic">
-                                            Belum ada detail gejala kerusakan.
+                                          <div className="text-[11px] text-slate-400 italic py-1">
+                                            Belum ada rincian gejala kerusakan.
                                           </div>
                                         ) : (
                                           comp.symptoms.map((sym) => (
                                             <div
                                               key={sym.id}
-                                              className="flex items-center justify-between p-2 rounded-lg bg-gray-50/80 hover:bg-gray-100/80 transition text-xs group"
+                                              className="flex items-center justify-between p-1.5 rounded bg-slate-50 border border-slate-100 text-xs text-slate-700 group hover:bg-slate-100/70 transition"
                                             >
-                                              <span className="text-gray-700 font-medium">{sym.description}</span>
-                                              <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100">
+                                              <span className="text-[11px] leading-tight">{sym.description}</span>
+                                              <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 shrink-0 ml-2">
                                                 <button
                                                   type="button"
                                                   onClick={() =>
@@ -904,10 +706,11 @@ export default function CatalogManager() {
                                                       name: sym.description,
                                                     })
                                                   }
-                                                  className="text-[10px] text-gray-400 hover:text-gray-700 px-1 cursor-pointer"
+                                                  className="p-0.5 text-slate-400 hover:text-slate-700 rounded cursor-pointer"
                                                   title="Edit deskripsi gejala"
+                                                  aria-label="Edit deskripsi gejala"
                                                 >
-                                                  ✏️
+                                                  <Pencil className="w-2.5 h-2.5" />
                                                 </button>
                                                 <button
                                                   type="button"
@@ -916,13 +719,14 @@ export default function CatalogManager() {
                                                       type: 'symptom',
                                                       id: sym.id,
                                                       title: `Hapus Gejala Kerusakan`,
-                                                      description: `Apakah Anda yakin ingin menghapus gejala "${sym.description}"?`,
+                                                      description: `Hapus gejala "${sym.description}" dari komponen ${comp.name}?`,
                                                     })
                                                   }
-                                                  className="text-[10px] text-red-400 hover:text-red-700 px-1 cursor-pointer"
-                                                  title="Hapus gejala ini"
+                                                  className="p-0.5 text-red-400 hover:text-red-700 rounded cursor-pointer"
+                                                  title="Hapus gejala"
+                                                  aria-label="Hapus gejala"
                                                 >
-                                                  🗑️
+                                                  <Trash2 className="w-2.5 h-2.5" />
                                                 </button>
                                               </div>
                                             </div>
@@ -946,269 +750,58 @@ export default function CatalogManager() {
         )}
       </div>
 
-      {/* MODAL: Tambah Jenis Daisha Baru */}
-      {isAddDaishaModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-base font-black text-gray-900 flex items-center gap-2">
-                <span>🛞</span> Tambah Jenis Daisha Baru
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsAddDaishaModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 text-lg cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
+      {/* 4. Modals (Terisolasi di CatalogModals.tsx) */}
+      <AddDaishaModal
+        isOpen={isAddDaishaModalOpen}
+        onClose={() => setIsAddDaishaModalOpen(false)}
+        form={newDaishaForm}
+        setForm={setNewDaishaForm}
+        onSubmit={handleAddDaishaSubmit}
+        seksiList={uniqueSeksiList}
+      />
 
-            <form onSubmit={handleAddDaishaSubmit} className="space-y-3 text-xs">
-              <div>
-                <label className="font-bold text-gray-700 block mb-1">Nama Jenis Daisha</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Daisha AGV Otomatis"
-                  value={newDaishaForm.name}
-                  onChange={(e) => setNewDaishaForm({ ...newDaishaForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-hidden font-bold"
-                />
-              </div>
+      <AddComponentModal
+        target={addComponentTarget}
+        onClose={() => setAddComponentTarget(null)}
+        componentName={newComponentName}
+        setComponentName={setNewComponentName}
+        onSubmit={handleAddComponentSubmit}
+      />
 
-              <div>
-                <label className="font-bold text-gray-700 block mb-1">Seksi Plant Penempatan</label>
-                <input
-                  type="text"
-                  required
-                  list="seksi-options"
-                  placeholder="Pilih atau ketik seksi baru..."
-                  value={newDaishaForm.seksi}
-                  onChange={(e) => setNewDaishaForm({ ...newDaishaForm, seksi: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-hidden"
-                />
-                <datalist id="seksi-options">
-                  {seksiList.map((s) => (
-                    <option key={s} value={s} />
-                  ))}
-                </datalist>
-              </div>
+      <AddSymptomModal
+        target={addSymptomTarget}
+        onClose={() => setAddSymptomTarget(null)}
+        symptomText={newSymptomText}
+        setSymptomText={setNewSymptomText}
+        onSubmit={handleAddSymptomSubmit}
+      />
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setIsAddDaishaModalOpen(false)}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white font-bold rounded-xl cursor-pointer shadow-xs"
-                >
-                  Simpan Daisha
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <EditCatalogItemModal
+        item={editItem}
+        onClose={() => setEditItem(null)}
+        setItem={setEditItem}
+        onSubmit={handleEditSubmit}
+        seksiList={uniqueSeksiList}
+      />
 
-      {/* MODAL: Tambah Komponen Baru */}
-      {addComponentTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-base font-black text-gray-900 flex items-center gap-2">
-                <span>🔧</span> Tambah Komponen: {addComponentTarget.name}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setAddComponentTarget(null)}
-                className="text-gray-400 hover:text-gray-600 text-lg cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleAddComponentSubmit} className="space-y-3 text-xs">
-              <div>
-                <label className="font-bold text-gray-700 block mb-1">Nama Komponen / Bagian</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Roda Putar, Sensor, Hanger, Body frame..."
-                  value={newComponentName}
-                  onChange={(e) => setNewComponentName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-hidden font-bold"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setAddComponentTarget(null)}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl cursor-pointer shadow-xs"
-                >
-                  Simpan Komponen
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: Tambah Gejala Baru */}
-      {addSymptomTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <div>
-                <h3 className="text-base font-black text-gray-900 flex items-center gap-2">
-                  <span>➕</span> Tambah Gejala Kerusakan
-                </h3>
-                <p className="text-[11px] text-gray-500 mt-0.5">
-                  {addSymptomTarget.daishaName} &middot; Komponen: <strong>{addSymptomTarget.componentName}</strong>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAddSymptomTarget(null)}
-                className="text-gray-400 hover:text-gray-600 text-lg cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleAddSymptomSubmit} className="space-y-3 text-xs">
-              <div>
-                <label className="font-bold text-gray-700 block mb-1">Rincian / Gejala Kerusakan</label>
-                <textarea
-                  rows={3}
-                  required
-                  placeholder="Contoh: Baut pengikat kendor/hilang, retak pada sambungan, roda macet..."
-                  value={newSymptomText}
-                  onChange={(e) => setNewSymptomText(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-hidden resize-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setAddSymptomTarget(null)}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl cursor-pointer shadow-xs"
-                >
-                  Simpan Gejala
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: Edit Item (Daisha / Komponen / Gejala) */}
-      {editItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-base font-black text-gray-900 flex items-center gap-2">
-                <span>✏️</span> Edit{' '}
-                {editItem.type === 'daisha' ? 'Jenis Daisha' : editItem.type === 'component' ? 'Komponen' : 'Gejala'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setEditItem(null)}
-                className="text-gray-400 hover:text-gray-600 text-lg cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleEditSubmit} className="space-y-3 text-xs">
-              <div>
-                <label className="font-bold text-gray-700 block mb-1">
-                  {editItem.type === 'symptom' ? 'Deskripsi Gejala' : 'Nama'}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editItem.name}
-                  onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-hidden font-bold"
-                />
-              </div>
-
-              {editItem.type === 'daisha' && (
-                <div>
-                  <label className="font-bold text-gray-700 block mb-1">Seksi Penempatan</label>
-                  <input
-                    type="text"
-                    required
-                    list="seksi-options-edit"
-                    value={editItem.seksi || ''}
-                    onChange={(e) => setEditItem({ ...editItem, seksi: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-hidden"
-                  />
-                  <datalist id="seksi-options-edit">
-                    {seksiList.map((s) => (
-                      <option key={s} value={s} />
-                    ))}
-                  </datalist>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setEditItem(null)}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white font-bold rounded-xl cursor-pointer shadow-xs"
-                >
-                  Simpan Perubahan
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: Konfirmasi Hapus */}
+      {/* 5. Modal Konfirmasi Hapus */}
       <ConfirmModal
-        isOpen={Boolean(deleteItem)}
-        title={deleteItem?.title || 'Konfirmasi Hapus'}
-        message={deleteItem?.description || 'Apakah Anda yakin ingin menghapus item ini?'}
-        confirmText="Ya, Hapus Permanen"
-        cancelText="Batal"
+        isOpen={!!deleteItem}
+        title={deleteItem?.title || ''}
+        message={deleteItem?.description || ''}
+        confirmText="Hapus Permanen"
         isDestructive={true}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteItem(null)}
       />
 
-      {/* MODAL: Feedback Popup */}
+      {/* 6. Feedback Modal */}
       <FeedbackModal
         isOpen={feedback.isOpen}
         type={feedback.type}
         title={feedback.title}
         message={feedback.message}
-        onClose={() => setFeedback({ ...feedback, isOpen: false })}
+        onClose={() => setFeedback((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

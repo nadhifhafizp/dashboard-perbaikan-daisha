@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { CheckCircle2, XCircle, Info } from 'lucide-react';
 
 export type FeedbackType = 'success' | 'error' | 'info';
 
@@ -37,47 +38,64 @@ export default function FeedbackModal({
     return () => clearTimeout(timer);
   }, [isOpen, autoCloseMs, onClose]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in no-print">
-      <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden transform transition-all animate-scale-up">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="feedback-modal-title"
+      aria-describedby="feedback-modal-desc"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in no-print"
+    >
+      <div className="w-full max-w-sm bg-white rounded-xl shadow-xl border border-slate-200/80 overflow-hidden transform transition-all animate-scale-up">
         
-        <div className="p-6 text-center">
+        <div className="p-5 text-center">
           
           {/* Status Icon */}
-          <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl ${
+          <div className={`mx-auto mb-3.5 flex h-11 w-11 items-center justify-center rounded-lg ${
             type === 'success' 
-              ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+              ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' 
               : type === 'error'
-              ? 'bg-red-50 text-red-600 border border-red-100'
-              : 'bg-blue-50 text-blue-600 border border-blue-100'
+              ? 'bg-red-50 text-red-600 border border-red-200/60' 
+              : 'bg-blue-50 text-blue-600 border border-blue-200/60'
           }`}>
             {type === 'success' ? (
-              <span className="text-2xl">✅</span>
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" aria-hidden="true" />
             ) : type === 'error' ? (
-              <span className="text-2xl">❌</span>
+              <XCircle className="w-5 h-5 text-red-600" aria-hidden="true" />
             ) : (
-              <span className="text-2xl">ℹ️</span>
+              <Info className="w-5 h-5 text-blue-600" aria-hidden="true" />
             )}
           </div>
 
-          <h3 className="text-lg font-black text-slate-900 tracking-tight">{title}</h3>
-          <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">{message}</p>
+          <h3 id="feedback-modal-title" className="text-base font-semibold text-slate-900 tracking-tight">{title}</h3>
+          <p id="feedback-modal-desc" className="text-xs text-slate-600 font-normal mt-1 leading-relaxed">{message}</p>
 
           {detail && (
-            <div className="mt-3 p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono font-bold text-slate-700 text-left truncate">
+            <div className="mt-3 p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-xs font-mono font-medium text-slate-700 text-left truncate">
               {detail}
             </div>
           )}
         </div>
 
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-col gap-2">
+        <div className="p-3.5 bg-slate-50 border-t border-slate-100 flex flex-col gap-2">
           {secondaryButtonText && onSecondaryClick && (
             <button
               type="button"
               onClick={onSecondaryClick}
-              className="w-full py-2.5 px-4 font-black text-xs rounded-xl shadow transition bg-slate-900 hover:bg-slate-800 text-white cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full h-9 px-3.5 font-medium text-xs rounded-lg shadow-2xs transition bg-slate-900 hover:bg-slate-800 text-white cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-slate-700"
             >
               {secondaryButtonText}
             </button>
@@ -85,12 +103,14 @@ export default function FeedbackModal({
           <button
             type="button"
             onClick={onClose}
-            className={`w-full py-2.5 px-4 font-black text-xs rounded-xl shadow transition cursor-pointer ${
-              type === 'success' 
-                ? secondaryButtonText ? 'bg-slate-200 hover:bg-slate-300 text-slate-700' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20' 
+            className={`w-full h-9 px-3.5 font-medium text-xs rounded-lg shadow-2xs transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+              type === 'success' && secondaryButtonText
+                ? 'bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 focus:ring-slate-300'
+                : type === 'success'
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500'
                 : type === 'error'
-                ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-900/20'
-                : 'bg-slate-900 hover:bg-slate-800 text-white'
+                ? 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500'
+                : 'bg-slate-900 hover:bg-slate-800 text-white focus:ring-slate-700'
             }`}
           >
             {buttonText}

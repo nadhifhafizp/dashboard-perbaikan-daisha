@@ -34,7 +34,7 @@ const SEKSI_COLORS = [
   '#0d9488', // Teal
   '#f59e0b', // Amber
   '#8b5cf6', // Violet
-  '#ef4444', // Red
+  '#E60012', // Bridgestone Red
   '#06b6d4', // Cyan
   '#10b981', // Emerald
   '#ec4899', // Pink
@@ -102,19 +102,36 @@ export default function SectionCharts({
     payload,
   }: {
     active?: boolean;
-    payload?: { name: string; value: number; payload: { seksi: string; total: number; persen: number; color: string } }[];
+    payload?: { name: string; value: number; payload: { seksi: string; total: number; persen: number; color: string; jenisList?: { jenis: string; count: number }[] } }[];
   }) => {
     if (active && payload && payload.length) {
       const item = payload[0];
       const data = item.payload;
       return (
-        <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs shadow-md">
-          <p className="font-extrabold" style={{ color: data.color }}>
-            Seksi: {data.seksi}
-          </p>
-          <p className="text-slate-800 font-semibold mt-0.5">
-            <strong>{data.total}</strong> Unit ({data.persen}%)
-          </p>
+        <div className="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs shadow-md space-y-1.5 max-w-xs">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-1">
+            <p className="font-extrabold text-sm" style={{ color: data.color }}>
+              Seksi: {data.seksi}
+            </p>
+            <span className="font-bold text-slate-800 tabular-nums">
+              {data.total} Unit ({data.persen}%)
+            </span>
+          </div>
+          {data.jenisList && data.jenisList.length > 0 && (
+            <div className="pt-0.5">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                Model Daisha Sering Masuk:
+              </span>
+              <div className="space-y-0.5">
+                {data.jenisList.slice(0, 3).map((j) => (
+                  <div key={j.jenis} className="flex justify-between items-center text-[11px] text-slate-700">
+                    <span className="truncate pr-2">• {j.jenis}</span>
+                    <span className="font-bold tabular-nums">{j.count}x</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -122,40 +139,46 @@ export default function SectionCharts({
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col h-full justify-between">
+    <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col h-full justify-between">
       {/* 1. Header Minimalis */}
       <div className="flex flex-wrap justify-between items-center gap-3 mb-2">
-        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-blue-600" />
-          <span>DISTRIBUSI DAISHA PER SEKSI</span>
-        </h3>
+        <div>
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-slate-700" />
+            <span>Distribusi Asal Daisha per Seksi Pabrik</span>
+          </h3>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            Komposisi unit masuk menurut departemen pemakai daisha di plant produksi
+          </p>
+        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {selectedSeksi && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 border border-red-200 rounded-xl text-xs font-extrabold text-red-700">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 rounded-lg text-xs font-medium text-red-700 border border-red-200">
               <Filter className="w-3 h-3" />
               <span>{selectedSeksi}</span>
               {onSelectSeksi && (
                 <button
                   type="button"
                   onClick={() => onSelectSeksi('')}
-                  className="hover:bg-red-200 p-0.5 rounded-full transition cursor-pointer"
+                  className="hover:bg-red-200/60 p-0.5 rounded transition cursor-pointer focus:outline-none"
+                  aria-label={`Hapus filter seksi ${selectedSeksi}`}
                   title="Hapus filter"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
           )}
 
           {/* Dropdown Filter Periode */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-semibold">
-            <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 rounded-lg border border-slate-200 text-xs font-medium">
+            <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" />
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
               aria-label="Pilih Periode Bulan Rekapitulasi"
-              className="bg-transparent text-slate-800 font-bold focus:outline-hidden cursor-pointer"
+              className="bg-transparent text-slate-700 font-medium focus:outline-hidden cursor-pointer"
             >
               <option value="all">Semua Periode</option>
               {availableMonths.map((m) => (
@@ -211,24 +234,33 @@ export default function SectionCharts({
                     })}
                   </Pie>
                   <Tooltip content={<SectionDonutTooltip />} />
+                  <text
+                    x="50%"
+                    y="47%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="fill-slate-900 font-extrabold text-3xl sm:text-4xl"
+                  >
+                    {totalSeksiAll}
+                  </text>
+                  <text
+                    x="50%"
+                    y="61%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="fill-slate-500 font-medium text-xs"
+                  >
+                    Total Unit
+                  </text>
                 </PieChart>
               </ResponsiveContainer>
-
-              {/* Total Unit di Tengah Donat (Besar & Mantap) */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-4xl font-black text-slate-900 leading-none tracking-tight">
-                  {totalSeksiAll}
-                </span>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1.5">
-                  Total Unit
-                </span>
-              </div>
             </div>
 
             {/* Legenda Simpel Bersih (Inline) */}
-            <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 mt-5 max-w-full">
-              {seksiDonutData.map((entry) => {
+            <div className="flex flex-wrap justify-center items-center gap-x-2.5 gap-y-1.5 mt-5 max-w-full">
+              {seksiDonutData.map((entry, idx) => {
                 const isSelected = selectedSeksi === entry.seksi;
+                const isTop1 = idx === 0 && entry.total > 0;
                 return (
                   <button
                     key={entry.seksi}
@@ -238,27 +270,32 @@ export default function SectionCharts({
                         onSelectSeksi(selectedSeksi === entry.seksi ? '' : entry.seksi);
                       }
                     }}
-                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs transition cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition cursor-pointer ${
                       isSelected
-                        ? 'bg-blue-100 text-blue-900 font-extrabold ring-1 ring-blue-400'
-                        : 'bg-slate-100/80 hover:bg-slate-200/70 text-slate-700 font-medium'
+                        ? 'bg-blue-50 text-blue-900 font-semibold ring-1 ring-blue-300'
+                        : 'hover:bg-slate-100 text-slate-600 font-normal'
                     }`}
                     title={`Klik untuk filter seksi ${entry.seksi}`}
                   >
                     <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      className="w-2.5 h-2.5 rounded-xs shrink-0"
                       style={{ backgroundColor: entry.color }}
                     />
-                    <span className="font-semibold text-slate-800">{entry.seksi}</span>
-                    <span className="font-extrabold text-slate-900">{entry.total} unit</span>
-                    <span className="text-[11px] text-slate-400">({entry.persen}%)</span>
+                    <span className="text-slate-800 font-medium">{entry.seksi}</span>
+                    {isTop1 && (
+                      <span className="text-[10px] font-extrabold px-1.5 py-0.2 bg-amber-100 text-amber-900 border border-amber-200 rounded">
+                        Top
+                      </span>
+                    )}
+                    <span className="text-slate-900 font-semibold tabular-nums">{entry.total} unit</span>
+                    <span className="text-slate-400 tabular-nums">({entry.persen}%)</span>
                   </button>
                 );
               })}
             </div>
           </div>
         ) : (
-          <div className="h-48 flex items-center justify-center text-xs text-slate-400">
+          <div className="h-48 flex items-center justify-center text-xs text-slate-500">
             Belum ada data daisha per seksi
           </div>
         )}

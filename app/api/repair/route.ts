@@ -4,7 +4,7 @@ import { parseAndVerifySession, SESSION_COOKIE_NAME } from '@/lib/auth';
 import sql from '@/lib/db';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
-import { parseToTimestamp } from '@/lib/date';
+import { parseToTimestamp, formatDisplayDate } from '@/lib/date';
 
 function sanitizeString(val: unknown, maxLength = 255): string {
   if (typeof val !== 'string') return '';
@@ -59,15 +59,6 @@ export async function GET() {
       ORDER BY t."waktuMasuk" DESC
     `;
 
-    // Helper format tanggal ke format standar tampilan Indonesia: DD/MM/YYYY HH:mm
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const formatIndoDate = (d: Date | string | null) => {
-      if (!d) return '-';
-      const date = typeof d === 'string' ? new Date(d) : d;
-      if (isNaN(date.getTime())) return '-';
-      return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-    };
-
     // Format output 100% kompatibel dengan frontend tanpa merubah UI/komponen apa pun
     const formattedData = tickets.map((t) => {
       let detailsList: Array<{ komponen: string; gejala: string; qty: number; tindakan: string }> = [];
@@ -95,8 +86,8 @@ export async function GET() {
         Kategori_Kerusakan: kategoriList.join(', ') || 'Umum',
         Detail_Kerusakan: detailStr,
         Catatan: t.catatan || '-',
-        Waktu_Masuk: formatIndoDate(t.waktuMasuk),
-        Waktu_Keluar: formatIndoDate(t.waktuSelesai),
+        Waktu_Masuk: formatDisplayDate(t.waktuMasuk),
+        Waktu_Keluar: formatDisplayDate(t.waktuSelesai),
       };
     });
 
@@ -267,6 +258,18 @@ export async function POST(request: Request) {
           "catatan" = ${catatan && catatan !== '-' ? catatan : null}
         WHERE "idTiket" = ${idTiket}
       `;
+
+      if (body.detail) {
+        const detailStr = sanitizeString(body.detail, 2000);
+        await sql`DELETE FROM "TicketDetail" WHERE "idTiket" = ${idTiket}`;
+        const parsedDetails = parseTicketDamageDetail(detailStr);
+        if (parsedDetails.items.length > 0) {
+          await sql`
+            INSERT INTO "TicketDetail" ("idTiket", "komponen", "gejala", "tindakan", "qty")
+            VALUES ${sql(parsedDetails.items.map(it => [idTiket, it.komponen, it.gejala, it.tindakan || 'Repair', it.qty || 1]))}
+          `;
+        }
+      }
 
       return NextResponse.json({
         success: true,

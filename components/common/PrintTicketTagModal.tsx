@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { Tag, X, MapPin, Lightbulb, Printer } from 'lucide-react';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 
@@ -28,6 +29,17 @@ export default function PrintTicketTagModal({
   ticket,
   onClose,
 }: PrintTicketTagModalProps) {
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !ticket) return null;
 
   const parsed = parseTicketDamageDetail(ticket.detail);
@@ -59,143 +71,157 @@ export default function PrintTicketTagModal({
           </tr>`).join('')
       : `<tr><td colspan="2" style="padding:10px; text-align:center; font-size:11px;">${ticket.detail}</td></tr>`;
 
-    const catatanHTML = parsed.catatan
-      ? `<div style="margin-top:8px; padding:6px 10px; border-left:4px solid #f59e0b; background:#fffbeb; font-size:9px; font-weight:600; color:#92400e;">
-           &#128204; ${parsed.catatan}
-         </div>` : '';
+    const catatanHTML = ticket.catatanTeknisi && ticket.catatanTeknisi !== '-'
+      ? `<div style="margin-top:8px; padding:6px 10px; background:#fef3c7; border:1.5px solid #d97706; border-radius:4px; font-size:10px; color:#78350f;">
+          <strong>Catatan:</strong> ${ticket.catatanTeknisi}
+        </div>` : '';
 
     const sizeHTML = sizeInfo
-      ? `<span style="font-size:10px; font-weight:900; padding:3px 8px; border:2px solid #000; border-radius:4px; background:#f3f4f6; text-transform:uppercase; vertical-align:middle; margin-left:8px;">${sizeInfo.label}</span>`
-      : '';
+      ? `<span class="size-badge">${sizeInfo.label}</span>` : '';
 
     const printHTML = `<!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Tag Daisha - ${ticket.noDaisha}</title>
-  <style>
-    @page { size: A5 portrait; margin: 8mm; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-      background: #fff;
-      color: #000;
-    }
-    .tag {
-      width: 100%;
-      border: 2px solid #000;
-      border-radius: 0;
-      overflow: hidden;
-    }
-    .header {
-      background: #dc2626;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .header-left { display: flex; align-items: center; gap: 10px; }
-    .logo-wrap {
-      width: 48px; height: 36px;
-      background: #fff;
-      border-radius: 6px;
-      display: flex; align-items: center; justify-content: center;
-      padding: 3px; flex-shrink: 0;
-    }
-    .logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
-    .company-name { color:#fff; font-weight:900; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; line-height:1.2; }
-    .company-sub  { color:#fca5a5; font-weight:700; font-size:8px; letter-spacing:0.08em; text-transform:uppercase; }
-    .ticket-id { text-align:right; }
-    .ticket-id .id  { color:#fff; font-family:monospace; font-weight:700; font-size:9px; opacity:0.9; }
-    .ticket-id .date { color:#fca5a5; font-weight:600; font-size:8px; }
-
-    .unit-section {
-      padding: 12px 14px 10px;
-      border-bottom: 2px solid #000;
-      text-align: center;
-    }
-    .unit-label { font-size:8px; font-weight:900; text-transform:uppercase; letter-spacing:0.2em; color:#6b7280; margin-bottom:3px; }
-    .unit-number { font-family:monospace; font-weight:900; font-size:42px; color:#111; line-height:1; }
-    .unit-meta { margin-top:6px; font-size:11px; font-weight:700; color:#374151; }
-    .unit-return { margin-top:3px; font-size:8px; color:#9ca3af; }
-
-    .meta-row {
-      padding: 6px 14px;
-      border-bottom: 1px solid #d1d5db;
-      display: flex;
-      justify-content: space-between;
-      background: #f9fafb;
-    }
-    .meta-row span { font-size:9px; }
-    .meta-row strong { font-size:9px; }
-
-    .checklist-section { padding: 10px 14px; }
-    .checklist-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 6px;
-    }
-    .checklist-title { font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.05em; }
-    .checklist-total { font-size:9px; font-weight:700; background:#e5e7eb; padding:2px 8px; border-radius:20px; border:1px solid #374151; }
-    .checklist-table {
-      width: 100%;
-      border-collapse: collapse;
-      border: 2px solid #000;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-
-    .sig-section {
-      padding: 10px 14px;
-      border-top: 2px solid #000;
-    }
-    .sig-title { font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; }
-    .sig-grid { display:flex; gap:6px; }
-    .sig-box {
-      flex:1; border:2px solid #000; border-radius:4px;
-      padding:6px 8px; min-height:56px;
-      display:flex; flex-direction:column;
-    }
-    .sig-label { font-size:8px; font-weight:900; text-transform:uppercase; letter-spacing:0.05em; }
-    .sig-spacer { flex:1; }
-    .sig-line { border-top:1px dashed #555; padding-top:4px; margin-top:4px; }
-    .sig-sub { font-size:8px; font-weight:600; color:#9ca3af; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-    .footer {
-      margin: 0 14px 10px;
-      padding-top: 8px;
-      border-top: 2px dashed #9ca3af;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .footer-left { display:flex; align-items:center; gap:6px; }
-    .hole { width:18px; height:18px; border-radius:50%; border:2px solid #9ca3af; background:#fff; flex-shrink:0; }
-    .footer-text { font-size:8px; font-weight:600; color:#9ca3af; }
-    .footer-brand { font-family:monospace; font-size:8px; font-weight:700; color:#9ca3af; }
-  </style>
+<meta charset="utf-8">
+<title>Tag Daisha - ${ticket.noDaisha}</title>
+<style>
+  @page {
+    size: A5 portrait;
+    margin: 6mm;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    color: #000;
+    background: #fff;
+    padding: 0;
+  }
+  .tag {
+    border: 2.5px solid #000;
+    border-radius: 6px;
+    overflow: hidden;
+    max-width: 130mm;
+    margin: 0 auto;
+  }
+  .header {
+    background: #000;
+    color: #fff;
+    padding: 7px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #000;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-wrap {
+    background: #fff;
+    border-radius: 4px;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 32px;
+  }
+  .logo-wrap img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+  .company-name { font-size: 10px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+  .system-name { font-size: 8px; font-weight: 700; color: #ccc; letter-spacing: 0.05em; text-transform: uppercase; }
+  .header-id { text-align: right; }
+  .ticket-id { font-family: monospace; font-size: 9px; font-weight: 900; color: #fff; }
+  .ticket-date { font-size: 8px; color: #aaa; }
+  .unit-hero {
+    border-bottom: 2px solid #000;
+    padding: 8px 10px;
+    text-align: center;
+    background: #fff;
+  }
+  .unit-label { font-size: 8px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: #555; margin-bottom: 2px; }
+  .unit-number { font-family: monospace; font-size: 38px; font-weight: 900; letter-spacing: -0.02em; line-height: 1; }
+  .size-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border: 2px solid #000;
+    border-radius: 4px;
+    background: #eee;
+    text-transform: uppercase;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+  .unit-meta { font-size: 11px; font-weight: 700; color: #222; margin-top: 3px; }
+  .unit-return { font-size: 8px; font-weight: 700; color: #444; margin-top: 2px; }
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 10px;
+    background: #f3f4f6;
+    border-bottom: 1.5px solid #000;
+    font-size: 9px;
+  }
+  .checklist-section { padding: 6px 10px; }
+  .checklist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .checklist-title { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; }
+  .checklist-total { font-size: 8px; font-weight: 700; background: #e5e7eb; border: 1px solid #9ca3af; padding: 1px 6px; border-radius: 3px; }
+  .checklist-table { width: 100%; border-collapse: collapse; border: 1.5px solid #000; border-radius: 4px; overflow: hidden; }
+  .sig-section { border-top: 1.5px solid #000; padding: 6px 10px; background: #fafafa; }
+  .sig-title { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #333; margin-bottom: 4px; }
+  .sig-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .sig-box { border: 1px solid #000; border-radius: 4px; padding: 4px; background: #fff; text-align: center; }
+  .sig-label { font-size: 7.5px; font-weight: 700; color: #555; text-transform: uppercase; }
+  .sig-spacer { height: 26px; }
+  .sig-line { border-top: 1px dashed #666; padding-top: 2px; }
+  .sig-sub { font-size: 7px; color: #555; font-weight: 600; }
+  .footer {
+    border-top: 1.5px dashed #000;
+    padding: 4px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+  }
+  .footer-left { display: flex; align-items: center; gap: 5px; }
+  .hole { width: 14px; height: 14px; border: 1.5px solid #000; border-radius: 50%; background: #fff; }
+  .footer-text { font-size: 7.5px; font-weight: 700; color: #555; }
+  .footer-brand { font-family: monospace; font-size: 7px; font-weight: 700; color: #666; }
+</style>
 </head>
 <body>
 <div class="tag">
 
   <!-- HEADER -->
   <div class="header">
-    <div class="header-left">
+    <div class="header-brand">
       <div class="logo-wrap">
-        <img src="${logoSrc}" alt="Bridgestone Logo" />
+        <img src="${logoSrc}" alt="BS" onerror="this.parentElement.style.display='none'">
       </div>
       <div>
         <div class="company-name">PT. Bridgestone Tire Indonesia</div>
-        <div class="company-sub">Daisha Repair &amp; Maintenance</div>
+        <div class="system-name">Daisha Repair &amp; Maintenance</div>
       </div>
     </div>
-    <div class="ticket-id">
-      <div class="id">${ticket.idTiket}</div>
-      <div class="date">${ticket.waktuMasuk}</div>
+    <div class="header-id">
+      <div class="ticket-id">${ticket.idTiket}</div>
+      <div class="ticket-date">${ticket.waktuMasuk}</div>
     </div>
   </div>
 
-  <!-- UNIT NUMBER -->
-  <div class="unit-section">
+  <!-- UNIT HERO -->
+  <div class="unit-hero">
     <div class="unit-label">Nomor Unit Daisha</div>
     <div>
       <span class="unit-number">${ticket.noDaisha}</span>${sizeHTML}
@@ -206,14 +232,14 @@ export default function PrintTicketTagModal({
 
   <!-- META ROW -->
   <div class="meta-row">
-    <span><strong>Pelapor:</strong> <strong>${ticket.namaPelapor}</strong></span>
-    <span><strong>Tgl Masuk:</strong> <strong>${ticket.waktuMasuk}</strong></span>
+    <span><strong>Pelapor:</strong> ${ticket.namaPelapor}</span>
+    <span><strong>Tgl Masuk:</strong> ${ticket.waktuMasuk}</span>
   </div>
 
   <!-- CHECKLIST -->
   <div class="checklist-section">
     <div class="checklist-header">
-      <span class="checklist-title">Rincian Kerusakan &amp; Tindakan:</span>
+      <span class="checklist-title">Rincian Kerusakan &amp; Tindakan</span>
       <span class="checklist-total">${parsed.totalQtyAll} pcs total</span>
     </div>
     <table class="checklist-table">
@@ -226,22 +252,28 @@ export default function PrintTicketTagModal({
 
   <!-- SIGNATURES -->
   <div class="sig-section">
-    <div class="sig-title">Verifikasi Serah Terima Unit:</div>
+    <div class="sig-title">Verifikasi Serah Terima Unit</div>
     <div class="sig-grid">
       <div class="sig-box">
         <div class="sig-label">1. Pelapor</div>
         <div class="sig-spacer"></div>
-        <div class="sig-line"><div class="sig-sub">${ticket.namaPelapor}</div></div>
+        <div class="sig-line">
+          <div class="sig-sub">${ticket.namaPelapor}</div>
+        </div>
       </div>
       <div class="sig-box">
         <div class="sig-label">2. Mekanik</div>
         <div class="sig-spacer"></div>
-        <div class="sig-line"><div class="sig-sub">Paraf &amp; Tgl</div></div>
+        <div class="sig-line">
+          <div class="sig-sub">Paraf &amp; Tgl</div>
+        </div>
       </div>
       <div class="sig-box">
         <div class="sig-label">3. QC Check</div>
         <div class="sig-spacer"></div>
-        <div class="sig-line"><div class="sig-sub">Status OK</div></div>
+        <div class="sig-line">
+          <div class="sig-sub">Status OK</div>
+        </div>
       </div>
     </div>
   </div>
@@ -258,14 +290,17 @@ export default function PrintTicketTagModal({
 </div>
 <script>
   var img = document.querySelector('.logo-wrap img');
-  if (img && img.complete) {
+  function doPrint() {
+    window.focus();
     window.print();
-  } else if (img) {
-    img.onload = function() { window.print(); };
-    img.onerror = function() { window.print(); };
-    setTimeout(function() { window.print(); }, 800);
+    setTimeout(function() { window.close(); }, 500);
+  }
+  if (img && !img.complete) {
+    img.onload = doPrint;
+    img.onerror = doPrint;
+    setTimeout(doPrint, 800);
   } else {
-    window.print();
+    setTimeout(doPrint, 250);
   }
 </script>
 </body>
@@ -282,24 +317,33 @@ export default function PrintTicketTagModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="no-print w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden transform transition-all animate-scale-up flex flex-col max-h-[94vh]">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="print-tag-dialog-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+    >
+      <div className="no-print w-full max-w-lg bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden transform transition-all animate-scale-up flex flex-col max-h-[94vh]">
 
         {/* Modal Header */}
         <div className="p-4 px-6 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
           <div className="flex items-center gap-2.5">
-            <span className="text-xl">🏷️</span>
+            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-100 flex items-center justify-center">
+              <Tag className="w-4 h-4" />
+            </div>
             <div>
-              <h3 className="text-sm font-black text-slate-900">Pratinjau Tag Fisik Unit Daisha</h3>
-              <p className="text-[11px] text-slate-500 font-medium">Cetak dan gantungkan pada unit daisha di bengkel</p>
+              <h3 id="print-tag-dialog-title" className="text-sm font-semibold text-slate-900">Pratinjau Tag Fisik Unit Daisha</h3>
+              <p className="text-xs text-slate-600 font-normal">Cetak dan gantungkan pada unit daisha di bengkel</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center font-black text-sm cursor-pointer shadow-2xs"
+            className="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-medium text-sm cursor-pointer shadow-2xs transition focus:outline-none focus:ring-2 focus:ring-slate-400"
+            aria-label="Tutup pratinjau tag fisik"
+            title="Tutup Pratinjau"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -307,7 +351,7 @@ export default function PrintTicketTagModal({
         <div className="p-6 overflow-y-auto flex-1 bg-slate-100 flex justify-center items-start">
 
           {/* THE PRINTABLE TAG */}
-          <div className="printable-tag-area w-full max-w-sm bg-white shadow-xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none print:max-w-none border-2 border-slate-300 print:border-2 print:border-black">
+          <div className="printable-tag-area w-full max-w-sm bg-white shadow-md rounded-lg overflow-hidden print:shadow-none print:rounded-none print:max-w-none border border-slate-300 print:border-2 print:border-black">
 
             {/* 1. RED HEADER BAND */}
             <div className="bg-red-600 print:bg-black px-4 py-3 flex items-center justify-between">
@@ -417,8 +461,9 @@ export default function PrintTicketTagModal({
               </div>
 
               {parsed.catatan && (
-                <div className="mt-2 px-2.5 py-2 border-l-4 border-amber-500 bg-amber-50 print:bg-transparent print:border-black rounded-r text-[9px] font-semibold text-amber-900 print:text-black">
-                  📌 {parsed.catatan}
+                <div className="mt-2 px-2.5 py-2 border border-amber-300 bg-amber-50 print:bg-transparent print:border-black rounded-lg text-xs font-medium text-amber-950 print:text-black flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-amber-800 shrink-0" />
+                  <span>{parsed.catatan}</span>
                 </div>
               )}
             </div>
@@ -457,23 +502,24 @@ export default function PrintTicketTagModal({
 
         {/* Modal Footer Controls */}
         <div className="p-4 px-6 border-t border-slate-200 bg-white flex justify-between items-center gap-3 shrink-0">
-          <p className="text-xs text-slate-500 font-medium hidden sm:block">
-            💡 Tips: Gunakan kertas A5/A6 atau printer thermal label.
+          <p className="text-xs text-slate-500 font-medium hidden sm:flex items-center gap-1.5">
+            <Lightbulb className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>Tips: Gunakan kertas A5/A6 atau printer thermal label.</span>
           </p>
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 sm:flex-initial px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
+              className="flex-1 sm:flex-initial min-h-[40px] px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-400"
             >
               Batal
             </button>
             <button
               type="button"
               onClick={handlePrint}
-              className="flex-1 sm:flex-initial px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-xl shadow-md shadow-red-900/20 transition cursor-pointer flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-initial min-h-[40px] px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg shadow-xs transition cursor-pointer flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
             >
-              <span>🖨️</span>
+              <Printer className="w-4 h-4" />
               <span>Cetak Tag Fisik (Print)</span>
             </button>
           </div>

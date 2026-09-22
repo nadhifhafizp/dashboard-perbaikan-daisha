@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, Monitor, CheckCircle, ExternalLink } from 'lucide-react';
+import { Download, Monitor, CheckCircle, ExternalLink, Lightbulb, X } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -93,8 +93,8 @@ export default function PwaInstaller({
   if (isStandalone) {
     if (buttonStyle === 'compact') return null;
     return (
-      <div className={`flex items-center gap-2 px-3 py-2 rounded-xl bg-red-950/40 border border-red-800/60 text-red-200 text-[11px] font-semibold ${className}`}>
-        <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+      <div className={`flex items-center gap-2 px-3.5 py-2 text-white/90 text-xs font-medium ${className}`}>
+        <CheckCircle className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
         <span className="truncate">Desktop App Aktif</span>
       </div>
     );
@@ -106,17 +106,17 @@ export default function PwaInstaller({
         <button
           type="button"
           onClick={handleInstallClick}
-          className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800 text-white shadow-xs border border-red-600/60 transition-all cursor-pointer group ${className}`}
+          className={`w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium text-white/90 hover:bg-red-800/80 hover:text-white transition cursor-pointer group ${className}`}
           title="Install aplikasi ini di desktop komputer Anda"
         >
           <div className="flex items-center gap-2.5">
-            <Monitor className="w-4 h-4 text-red-200 group-hover:text-white transition" />
+            <Monitor className="w-4 h-4 text-white/80 group-hover:text-white transition" />
             <span className="text-left leading-tight">
-              <span className="block font-black">Install Aplikasi</span>
-              <span className="block text-[10px] text-red-200 font-normal">Desktop Komputer</span>
+              <span className="block font-semibold text-white">Install Aplikasi</span>
+              <span className="block text-xs text-white/70 font-normal">Desktop Komputer</span>
             </span>
           </div>
-          <Download className="w-3.5 h-3.5 text-red-200 group-hover:translate-y-0.5 transition" />
+          <Download className="w-3.5 h-3.5 text-white/80 group-hover:translate-y-0.5 transition" />
         </button>
       )}
 
@@ -124,7 +124,7 @@ export default function PwaInstaller({
         <button
           type="button"
           onClick={handleInstallClick}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-800/80 hover:bg-red-800 text-white text-[11px] font-bold transition cursor-pointer ${className}`}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-800/80 hover:bg-red-800 text-white text-xs font-bold transition cursor-pointer ${className}`}
           title="Install Aplikasi Desktop"
         >
           <Monitor className="w-3.5 h-3.5" />
@@ -140,7 +140,7 @@ export default function PwaInstaller({
             </div>
             <div>
               <strong className="block text-slate-900 font-black">Gunakan sebagai Aplikasi Desktop</strong>
-              <span className="text-[11px] text-slate-600">Buka tanpa address bar browser, lebih cepat & praktis.</span>
+              <span className="text-xs text-slate-600">Buka tanpa address bar browser, lebih cepat & praktis.</span>
             </div>
           </div>
           <button
@@ -157,7 +157,7 @@ export default function PwaInstaller({
       {/* Modal Panduan Installasi Cepat (Jika browser tidak menampilkan pop-up otomatis) */}
       {showManualGuide && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-5 shadow-xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-red-100 text-red-700 rounded-xl">
@@ -165,15 +165,15 @@ export default function PwaInstaller({
                 </div>
                 <div>
                   <h3 className="font-black text-sm text-slate-900">Install Daisha ke Desktop</h3>
-                  <p className="text-[11px] text-slate-500">Aplikasi web-based dengan kenyamanan desktop</p>
+                  <p className="text-xs text-slate-600">Aplikasi web-based dengan kenyamanan desktop</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowManualGuide(false)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 text-sm font-bold cursor-pointer"
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -184,32 +184,33 @@ export default function PwaInstaller({
 
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                 <div className="flex items-start gap-2">
-                  <span className="w-5 h-5 rounded-full bg-red-600 text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="w-5 h-5 rounded-full bg-red-600 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
                     1
                   </span>
                   <div>
                     <strong className="text-slate-900 block font-bold">Lihat ke Address Bar (Bilah Alamat URL)</strong>
-                    <span className="text-[11px] text-slate-600">
+                    <span className="text-xs text-slate-600">
                       Di sebelah kanan kolom URL (dekat tombol bintang bookmark), cari ikon <strong>Komputer/Monitor dengan panah bawah (⤓)</strong> atau tombol <strong>(+) Aplikasi tersedia</strong>.
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2 pt-1 border-t border-slate-200/80">
-                  <span className="w-5 h-5 rounded-full bg-red-600 text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="w-5 h-5 rounded-full bg-red-600 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
                     2
                   </span>
                   <div>
                     <strong className="text-slate-900 block font-bold">Klik &quot;Install&quot; / &quot;Pasang&quot;</strong>
-                    <span className="text-[11px] text-slate-600">
+                    <span className="text-xs text-slate-600">
                       Aplikasi akan otomatis terpasang di Desktop, Start Menu, dan Taskbar Windows dengan jendela mandiri tanpa tab browser.
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="text-[11px] text-slate-500 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
-                💡 <strong>Tips:</strong> Aplikasi tetap tersambung secara live ke database SQLite server dan otomatis memperbarui data secara real-time.
+              <div className="text-xs text-amber-950 bg-amber-50 p-2.5 rounded-lg border border-amber-200 flex items-start gap-1.5">
+                <Lightbulb className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                <span><strong>Tips:</strong> Aplikasi tetap tersambung secara live ke database SQLite server dan otomatis memperbarui data secara real-time.</span>
               </div>
             </div>
 

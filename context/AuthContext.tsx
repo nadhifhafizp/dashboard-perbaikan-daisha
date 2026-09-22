@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { SessionPayload } from '@/lib/auth';
 
@@ -28,19 +28,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(() => !isLoginPage);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const lastAuthCheckRef = useRef<number>(0);
 
   /**
    * Verifikasi sesi ke server dan update state pengguna.
-   * Satu fungsi tunggal — dipakai oleh useEffect dan juga di-expose sebagai refreshAuth.
+   * Dilengkapi caching 60 detik agar tidak membebani server saat navigasi antar rute.
    */
-  const checkAuth = useCallback(async () => {
+  const checkAuth = useCallback(async (force = false) => {
     if (pathname === '/login') {
+      setIsLoading(false);
+      return;
+    }
+
+    // Jika user sudah login dan verifikasi terakhir kurang dari 60 detik, lewati network call
+    const now = Date.now();
+    if (!force && currentUser && now - lastAuthCheckRef.current < 60_000) {
       setIsLoading(false);
       return;
     }
 
     try {
       const res = await fetch('/api/auth/me');
+      lastAuthCheckRef.current = Date.now();
       if (res.ok) {
         const data = await res.json();
         if (data.authenticated && data.user) {
@@ -57,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [pathname]);
+  }, [pathname, currentUser]);
 
   useEffect(() => {
     if (pathname !== '/login') {

@@ -1,25 +1,39 @@
 import type { Metadata, Viewport } from 'next';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import AppShell from '@/components/layout/AppShell';
-import { getServerInfo } from '@/lib/serverInfo';
+
+const sansFont = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+});
+
+const monoFont = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+});
 
 export const viewport: Viewport = {
-  themeColor: '#dc2626',
+  themeColor: '#E60012',
   width: 'device-width',
   initialScale: 1,
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { formattedTitle, ip, port } = getServerInfo();
-  const shortTitle = ip !== 'localhost' ? `Daisha [${ip}:${port}]` : 'Daisha Mnt';
+  const title = 'Workshop & Daisha Maintenance | PT Bridgestone Tire Indonesia';
+  const shortTitle = 'Daisha Workshop';
 
   return {
-    title: formattedTitle,
+    title,
     description:
       'Sistem Pencatatan, Monitoring, dan Rekapitulasi Perbaikan Daisha Internal PT Bridgestone',
     manifest: '/manifest.json',
-    applicationName: formattedTitle,
+    applicationName: title,
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',
@@ -53,7 +67,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="bg-gray-100 font-sans antialiased text-gray-900 min-h-screen">
+      <body className={`${sansFont.variable} ${monoFont.variable} font-sans antialiased text-slate-900 bg-slate-50 min-h-screen`}>
         <AuthProvider>
           <AppShell>{children}</AppShell>
         </AuthProvider>

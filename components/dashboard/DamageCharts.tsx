@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   LabelList,
 } from 'recharts';
-import { Wrench, PieChart as PieIcon } from 'lucide-react';
+import { Wrench, PieChart as PieIcon, RefreshCw, Hammer } from 'lucide-react';
 
 interface DamageChartsProps {
   chartKategori: { kategori: string; total: number; totalPcs?: number }[];
@@ -50,20 +50,6 @@ export default function DamageCharts({
 }: DamageChartsProps) {
   const [metricMode, setMetricMode] = useState<'kasus' | 'pcs'>('kasus');
 
-  const blueShades = [
-    '#1d4ed8',
-    '#2563eb',
-    '#3b82f6',
-    '#60a5fa',
-    '#60a5fa',
-    '#93c5fd',
-    '#93c5fd',
-    '#bfdbfe',
-    '#bfdbfe',
-    '#cbd5e1',
-    '#cbd5e1',
-    '#e2e8f0',
-  ];
 
   const dataKategori = chartKategori.map((item) => ({
     ...item,
@@ -79,9 +65,10 @@ export default function DamageCharts({
   const gantiVal = metricMode === 'pcs' ? (tindakanStats?.gantiPcs || tindakanStats?.gantiCount || 0) : (tindakanStats?.gantiCount || 0);
   const totalTindakan = repairVal + gantiVal;
 
+  // Selaras dengan badge RiwayatTicketCard: Ganti Baru = Blue (#2563eb), Repair Fisik = Amber (#f59e0b)
   const tindakanDonutData = [
-    { name: 'Repair / Servis Fisik', value: repairVal, color: '#2563eb', sub: 'Perbaikan tanpa ganti part' },
-    { name: 'Ganti Sparepart Baru', value: gantiVal, color: '#f59e0b', sub: 'Penggantian suku cadang' },
+    { name: 'Ganti Sparepart Baru', value: gantiVal, color: '#2563eb', sub: 'Penggantian suku cadang baru' },
+    { name: 'Repair / Servis Fisik', value: repairVal, color: '#f59e0b', sub: 'Perbaikan tanpa ganti part' },
   ].filter((d) => d.value > 0);
 
   const TindakanTooltip = ({ active, payload }: { active?: boolean; payload?: { name: string; value: number; payload: { color: string; sub: string } }[] }) => {
@@ -91,7 +78,7 @@ export default function DamageCharts({
       return (
         <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs shadow-md">
           <p className="font-extrabold" style={{ color: item.payload.color }}>{item.name}</p>
-          <p className="text-slate-500 text-[11px]">{item.payload.sub}</p>
+          <p className="text-slate-500 text-xs">{item.payload.sub}</p>
           <p className="text-slate-800 font-bold mt-1">
             {item.value} {metricMode === 'pcs' ? 'pcs' : 'tindakan'} ({pct}%)
           </p>
@@ -104,6 +91,9 @@ export default function DamageCharts({
   // Hitung tinggi eksplisit agar setiap baris memiliki ruang vertikal yang cukup (38-42px per bar)
   const heightKategori = Math.max(380, dataKategori.length * 38 + 40);
   const heightGejala = Math.max(380, dataGejala.length * 40 + 40);
+
+  const maxKategori = dataKategori.length > 0 ? Math.max(...dataKategori.map((d) => d.displayVal)) : 1;
+  const maxGejala = dataGejala.length > 0 ? Math.max(...dataGejala.map((d) => d.displayVal)) : 1;
 
   // Formatter sumbu Y agar teks panjang tidak menabrak teks baris lain
   const formatGejala = (val: string) => {
@@ -121,9 +111,9 @@ export default function DamageCharts({
       {/* 1. Header Ringkas & Metric Switcher */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
-            <Wrench className="w-4 h-4 text-blue-600" />
-            <span>ANALISIS KERUSAKAN KOMPONEN & TINDAKAN BENGKEL</span>
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Wrench className="w-4 h-4 text-slate-700" />
+            <span>Analisis Kerusakan Komponen & Tindakan Bengkel</span>
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
             Komponen paling sering rusak, detail gejala dominan, serta proporsi tindakan perbaikan vs penggantian part
@@ -131,14 +121,14 @@ export default function DamageCharts({
         </div>
 
         {/* Toggle Kasus vs Pcs */}
-        <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold shrink-0">
+        <div className="flex items-center p-0.5 bg-slate-100/90 rounded-lg text-xs font-semibold shrink-0">
           <button
             type="button"
             onClick={() => setMetricMode('kasus')}
-            className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
               metricMode === 'kasus'
                 ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <span>Frekuensi Kejadian</span>
@@ -146,10 +136,10 @@ export default function DamageCharts({
           <button
             type="button"
             onClick={() => setMetricMode('pcs')}
-            className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
               metricMode === 'pcs'
                 ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <span>Kuantitas Part (Pcs)</span>
@@ -161,19 +151,31 @@ export default function DamageCharts({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
         {/* ================= A. BATANG HORIZONTAL: KOMPONEN PALING SERING RUSAK ================= */}
-        <div className="lg:col-span-6 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-6 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
           <div>
-            <div className="flex justify-between items-start mb-2">
-              <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <span>🔧</span> Komponen Paling Sering Rusak
+            <div className="flex justify-between items-start mb-1.5">
+              <h4 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <span>Komponen Paling Sering Rusak</span>
               </h4>
-              <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-700 rounded-lg">
-                {metricMode === 'pcs' ? 'Pcs' : 'Kasus'}
+              <span className="text-[11px] font-medium px-2 py-0.5 bg-slate-100 text-slate-700 rounded">
+                {metricMode === 'pcs' ? 'Kuantitas (Pcs)' : 'Frekuensi (Kasus)'}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mb-4">
+            <p className="text-[11px] text-slate-500 mb-2.5">
               Peringkat komponen troli yang paling banyak membutuhkan perbaikan
             </p>
+
+            {/* Legenda Makna Warna & Simbol */}
+            <div className="flex items-center gap-2 text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80 mb-2">
+              <span className="font-semibold text-slate-900">Makna Warna:</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-xs bg-[#0F172A] opacity-35 inline-block" />
+                <span className="text-slate-500">Jarang Aus</span>
+                <span className="text-slate-300 font-bold">──▶</span>
+                <span className="w-2.5 h-2.5 rounded-xs bg-[#0F172A] inline-block shadow-2xs" />
+                <span className="font-bold text-slate-900">Kritis Aus ({maxKategori} {metricMode === 'pcs' ? 'pcs' : 'x'})</span>
+              </div>
+            </div>
           </div>
 
           <div style={{ height: heightKategori }} className="w-full">
@@ -181,36 +183,68 @@ export default function DamageCharts({
               <ResponsiveContainer width="100%" height={heightKategori}>
                 <BarChart data={dataKategori} layout="vertical" margin={{ top: 10, right: 45, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis type="number" tick={{ fontSize: 10, fill: '#64748b' }} allowDecimals={false} axisLine={false} tickLine={false} />
+                  <XAxis type="number" tick={{ fontSize: 12, fill: '#64748b' }} allowDecimals={false} axisLine={false} tickLine={false} />
                   <YAxis
                     dataKey="kategori"
                     type="category"
                     interval={0}
                     width={150}
-                    tick={{ fontSize: 11, fill: '#1e293b', fontWeight: 600 }}
+                    tick={{ fontSize: 12, fill: '#1e293b', fontWeight: 600 }}
                     tickFormatter={formatKategori}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
                     cursor={{ fill: 'rgba(241, 245, 249, 0.6)' }}
-                    formatter={(val: unknown) => [
-                      `${val} ${metricMode === 'pcs' ? 'pcs' : 'kali'}`,
-                      'Volume',
-                    ]}
-                    labelFormatter={(label) => `Komponen: ${label}`}
-                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0]?.payload as { displayVal: number; totalPcs?: number; total?: number };
+                      const val = item?.displayVal || 0;
+                      const ratio = maxKategori > 0 ? val / maxKategori : 1;
+                      const statusTag =
+                        ratio >= 0.75
+                          ? { label: '🔴 Kritis (Prioritas Stok & Penggantian)', cls: 'text-slate-900 bg-slate-100 border-slate-300' }
+                          : ratio >= 0.4
+                          ? { label: '🟡 Keausan Menengah', cls: 'text-amber-800 bg-amber-50 border-amber-200' }
+                          : { label: '🟢 Keausan Rendah / Sporadis', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+
+                      return (
+                        <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs shadow-lg space-y-1.5 min-w-[200px]">
+                          <p className="font-bold text-slate-900 border-b border-slate-100 pb-1">
+                            Komponen: {label}
+                          </p>
+                          <div className="flex items-center justify-between font-semibold">
+                            <span className="text-slate-500">Total Volume:</span>
+                            <span className="text-slate-950 font-extrabold text-sm">
+                              {val} {metricMode === 'pcs' ? 'pcs part' : 'kali kejadian'}
+                            </span>
+                          </div>
+                          <div className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${statusTag.cls}`}>
+                            {statusTag.label}
+                          </div>
+                        </div>
+                      );
+                    }}
                   />
                   <Bar dataKey="displayVal" radius={[0, 4, 4, 0]} barSize={16}>
-                    {dataKategori.map((_, index) => (
-                      <Cell key={`cell-kat-${index}`} fill={blueShades[index % blueShades.length]} />
-                    ))}
-                    <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={11} fontWeight={800} />
+                    {dataKategori.map((entry, idx) => {
+                      const ratio = maxKategori > 0 ? entry.displayVal / maxKategori : 1;
+                      // Gradien intensitas data-driven charcoal
+                      const opacity = Math.max(0.32, 0.32 + 0.68 * ratio);
+                      return (
+                        <Cell
+                          key={`cell-kat-${idx}`}
+                          fill="#0F172A"
+                          fillOpacity={opacity}
+                        />
+                      );
+                    })}
+                    <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={12} fontWeight={800} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-slate-400">
+              <div className="h-full flex items-center justify-center text-xs text-slate-500">
                 Belum ada data komponen
               </div>
             )}
@@ -218,19 +252,31 @@ export default function DamageCharts({
         </div>
 
         {/* ================= B. BATANG HORIZONTAL: TOP GEJALA MASALAH ================= */}
-        <div className="lg:col-span-6 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-6 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
           <div>
-            <div className="flex justify-between items-start mb-2">
-              <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <span>⚠️</span> Top Gejala Kerusakan
+            <div className="flex justify-between items-start mb-1.5">
+              <h4 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <span>Top Gejala Kerusakan</span>
               </h4>
-              <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-50 text-amber-700 rounded-lg">
-                Top 10
+              <span className="text-[11px] font-medium px-2 py-0.5 bg-slate-100 text-slate-700 rounded">
+                Top 10 Gejala
               </span>
             </div>
-            <p className="text-xs text-slate-500 mb-4">
+            <p className="text-[11px] text-slate-500 mb-2.5">
               Gejala kerusakan fisik daisha yang paling sering ditemukan di lapangan
             </p>
+
+            {/* Legenda Makna Warna & Simbol */}
+            <div className="flex items-center gap-2 text-[11px] text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/80 mb-2">
+              <span className="font-semibold text-amber-950">Makna Warna:</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-xs bg-[#D97706] opacity-35 inline-block" />
+                <span className="text-amber-800">Sporadis</span>
+                <span className="text-amber-400 font-bold">──▶</span>
+                <span className="w-2.5 h-2.5 rounded-xs bg-[#D97706] inline-block shadow-2xs" />
+                <span className="font-bold text-amber-950">Gejala Dominan ({maxGejala} {metricMode === 'pcs' ? 'pcs' : 'x'})</span>
+              </div>
+            </div>
           </div>
 
           <div style={{ height: heightGejala }} className="w-full">
@@ -238,33 +284,68 @@ export default function DamageCharts({
               <ResponsiveContainer width="100%" height={heightGejala}>
                 <BarChart data={dataGejala} layout="vertical" margin={{ top: 10, right: 45, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis type="number" tick={{ fontSize: 10, fill: '#64748b' }} allowDecimals={false} axisLine={false} tickLine={false} />
+                  <XAxis type="number" tick={{ fontSize: 12, fill: '#64748b' }} allowDecimals={false} axisLine={false} tickLine={false} />
                   <YAxis
                     dataKey="gejala"
                     type="category"
                     interval={0}
                     width={180}
-                    tick={{ fontSize: 11, fill: '#1e293b', fontWeight: 600 }}
+                    tick={{ fontSize: 12, fill: '#1e293b', fontWeight: 600 }}
                     tickFormatter={formatGejala}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
                     cursor={{ fill: 'rgba(241, 245, 249, 0.6)' }}
-                    formatter={(val: unknown) => [
-                      `${val} ${metricMode === 'pcs' ? 'pcs' : 'kejadian'}`,
-                      'Frekuensi',
-                    ]}
-                    labelFormatter={(label) => `Gejala: ${label}`}
-                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0]?.payload as { displayVal: number; gejala?: string };
+                      const val = item?.displayVal || 0;
+                      const ratio = maxGejala > 0 ? val / maxGejala : 1;
+                      const statusTag =
+                        ratio >= 0.75
+                          ? { label: '⚠️ Gejala Dominan (Fokus Utama Bengkel)', cls: 'text-amber-950 bg-amber-100 border-amber-300' }
+                          : ratio >= 0.4
+                          ? { label: '🟡 Kejadian Menengah', cls: 'text-amber-800 bg-amber-50 border-amber-200' }
+                          : { label: '🟢 Kejadian Sporadis', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+
+                      return (
+                        <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs shadow-lg space-y-1.5 min-w-[200px]">
+                          <p className="font-bold text-slate-900 border-b border-slate-100 pb-1">
+                            Gejala: {label}
+                          </p>
+                          <div className="flex items-center justify-between font-semibold">
+                            <span className="text-slate-500">Frekuensi:</span>
+                            <span className="text-amber-700 font-extrabold text-sm">
+                              {val} {metricMode === 'pcs' ? 'pcs part' : 'kejadian'}
+                            </span>
+                          </div>
+                          <div className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${statusTag.cls}`}>
+                            {statusTag.label}
+                          </div>
+                        </div>
+                      );
+                    }}
                   />
-                  <Bar dataKey="displayVal" fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={16}>
-                    <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={11} fontWeight={800} />
+                  <Bar dataKey="displayVal" radius={[0, 4, 4, 0]} barSize={16}>
+                    {dataGejala.map((entry, idx) => {
+                      const ratio = maxGejala > 0 ? entry.displayVal / maxGejala : 1;
+                      // Gradien intensitas data-driven amber
+                      const opacity = Math.max(0.35, 0.35 + 0.65 * ratio);
+                      return (
+                        <Cell
+                          key={`cell-gejala-${idx}`}
+                          fill="#D97706"
+                          fillOpacity={opacity}
+                        />
+                      );
+                    })}
+                    <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={12} fontWeight={800} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-slate-400">
+              <div className="h-full flex items-center justify-center text-xs text-slate-500">
                 Belum ada data gejala
               </div>
             )}
@@ -272,19 +353,19 @@ export default function DamageCharts({
         </div>
       </div>
 
-      {/* ================= C. DIAGRAM DONAT: PROPORSI TINDAKAN BENGKEL (Bawah) ================= */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-        <div className="flex flex-wrap justify-between items-start gap-2 mb-4">
+      {/* ================= C. DIAGRAM DONAT: PROPORSI TINDAKAN BENGKEL ================= */}
+      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs">
+        <div className="flex flex-wrap justify-between items-start gap-2 mb-3">
           <div>
-            <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <PieIcon className="w-4 h-4 text-blue-600" />
-              <span>PROPORSI TINDAKAN BENGKEL: SERVIS FISIK VS GANTI SPAREPART</span>
+            <h4 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <PieIcon className="w-4 h-4 text-slate-600" />
+              <span>Proporsi Tindakan Bengkel: Servis Fisik vs Ganti Sparepart</span>
             </h4>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Perbandingan unit yang ditangani via perbaikan fisik tanpa ganti part vs unit yang membutuhkan penggantian suku cadang baru
             </p>
           </div>
-          <span className="text-xs font-bold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-xl border border-slate-200">
+          <span className="text-[11px] font-medium px-2 py-0.5 bg-slate-100 text-slate-700 rounded border border-slate-200">
             {metricMode === 'pcs' ? 'Kuantitas Part (Pcs)' : 'Frekuensi Kasus'}
           </span>
         </div>
@@ -311,33 +392,85 @@ export default function DamageCharts({
                     ))}
                   </Pie>
                   <Tooltip content={<TindakanTooltip />} />
+                  <text
+                    x="50%"
+                    y="47%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="fill-slate-900 font-extrabold text-2xl"
+                  >
+                    {totalTindakan}
+                  </text>
+                  <text
+                    x="50%"
+                    y="61%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="fill-slate-500 font-medium text-xs"
+                  >
+                    {metricMode === 'pcs' ? 'Total Pcs' : 'Tindakan'}
+                  </text>
                 </PieChart>
               </ResponsiveContainer>
-
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-2xl font-black text-slate-900 leading-none">{totalTindakan}</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">
-                  {metricMode === 'pcs' ? 'Total Pcs' : 'Tindakan'}
-                </span>
-              </div>
             </div>
 
             {/* Rincian Kartu Tindakan */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 w-full max-w-xl">
               {tindakanDonutData.map((item) => {
                 const pct = totalTindakan > 0 ? Math.round((item.value / totalTindakan) * 100) : 0;
+                const isGanti = item.name.includes('Ganti');
                 return (
-                  <div key={item.name} className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex flex-col justify-between">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                      <span className="font-extrabold text-slate-800 text-xs">{item.name}</span>
+                  <div
+                    key={item.name}
+                    className={`p-4 rounded-xl border flex flex-col justify-between transition ${
+                      isGanti
+                        ? 'bg-blue-50/40 border-blue-100 hover:bg-blue-50/60'
+                        : 'bg-amber-50/40 border-amber-100 hover:bg-amber-50/60'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`p-1.5 rounded-lg ${
+                              isGanti ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
+                            }`}
+                          >
+                            {isGanti ? (
+                              <RefreshCw className="w-4 h-4" />
+                            ) : (
+                              <Hammer className="w-4 h-4" />
+                            )}
+                          </div>
+                          <span className="font-bold text-slate-900 text-xs">{item.name}</span>
+                        </div>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                            isGanti
+                              ? 'bg-blue-100/80 text-blue-800 border-blue-200'
+                              : 'bg-amber-100/80 text-amber-800 border-amber-200'
+                          }`}
+                        >
+                          {isGanti ? 'Logistik Part' : 'Mekanik Servis'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mb-3">{item.sub}</p>
                     </div>
-                    <p className="text-[11px] text-slate-500 mb-3">{item.sub}</p>
+
                     <div className="flex items-baseline justify-between pt-2 border-t border-slate-200/60">
                       <span className="text-xl font-black text-slate-900">
-                        {item.value} <span className="text-xs font-semibold text-slate-500">{metricMode === 'pcs' ? 'pcs' : 'tindakan'}</span>
+                        {item.value}{' '}
+                        <span className="text-xs font-semibold text-slate-500">
+                          {metricMode === 'pcs' ? 'pcs part' : 'tindakan'}
+                        </span>
                       </span>
-                      <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-2xs">
+                      <span
+                        className={`text-xs font-bold px-2.5 py-0.5 rounded-md border shadow-2xs ${
+                          isGanti
+                            ? 'bg-white text-blue-700 border-blue-200'
+                            : 'bg-white text-amber-700 border-amber-200'
+                        }`}
+                      >
                         {pct}%
                       </span>
                     </div>
@@ -347,7 +480,7 @@ export default function DamageCharts({
             </div>
           </div>
         ) : (
-          <div className="h-40 flex items-center justify-center text-xs text-slate-400">
+          <div className="h-40 flex items-center justify-center text-xs text-slate-500">
             Belum ada data tindakan
           </div>
         )}

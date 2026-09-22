@@ -72,7 +72,7 @@ export default function DaishaTrackerCard({
   }, [unitTickets]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-5 animate-in fade-in duration-150">
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs p-4 sm:p-6 space-y-5 animate-in fade-in duration-150">
       {/* 1. Header Pelacakan & Status Kesiapan */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div className="flex items-center gap-3 flex-wrap">
@@ -106,7 +106,7 @@ export default function DaishaTrackerCard({
               <span>Siap Pakai</span>
             </div>
           ) : isInProgress ? (
-            <div className="px-3 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 font-bold text-xs flex items-center gap-1.5 animate-pulse">
+            <div className="px-3 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 font-bold text-xs flex items-center gap-1.5">
               <Wrench className="w-3.5 h-3.5 text-blue-600" />
               <span>Sedang Diservis</span>
             </div>

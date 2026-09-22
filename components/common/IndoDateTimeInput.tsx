@@ -2,12 +2,14 @@
 
 import React, { useState, useRef } from 'react';
 import { formatDisplayDate, toDateTimeLocalValue, getInitialDateTime } from '@/lib/date';
+import { Clock, Calendar } from 'lucide-react';
 
 interface IndoDateTimeInputProps {
   value: string; // Format ISO: YYYY-MM-DDTHH:mm
   onChange: (value: string) => void;
   name?: string;
   required?: boolean;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -26,6 +28,7 @@ export default function IndoDateTimeInput({
   onChange,
   name = 'waktuMasuk',
   required = false,
+  disabled = false,
   className = '',
 }: IndoDateTimeInputProps) {
   const getFallbackDisplay = () => formatDisplayDate(getInitialDateTime());
@@ -391,6 +394,7 @@ export default function IndoDateTimeInput({
         type="text"
         inputMode="numeric"
         value={displayVal}
+        disabled={disabled}
         onFocus={handleFocus}
         onClick={handleClickOrTouch}
         onTouchEnd={handleClickOrTouch}
@@ -400,58 +404,49 @@ export default function IndoDateTimeInput({
         placeholder="DD/MM/YYYY HH:mm"
         required={required}
         autoComplete="off"
-        className="w-full p-3 pr-28 border border-slate-300 rounded-xl text-xs text-slate-800 font-bold bg-white focus:ring-2 focus:ring-red-600 outline-none selection:bg-red-600 selection:text-white cursor-pointer focus:cursor-text"
+        className={`w-full h-10 px-3 pr-28 border border-slate-300 rounded-lg text-xs text-slate-900 font-medium bg-white focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none cursor-pointer focus:cursor-text transition ${
+          disabled ? 'opacity-60 cursor-not-allowed bg-slate-50' : ''
+        }`}
       />
 
       {/* Action Buttons di Kanan: Shortcut "Sekarang" & Tombol Kalender */}
-      <div className="absolute right-2 flex items-center gap-1">
-        {/* Tombol Sekarang (Quick set current time) */}
-        <button
-          type="button"
-          onClick={handleSetNow}
-          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center gap-1 shadow-2xs whitespace-nowrap"
-          title="Set ke tanggal dan jam saat ini"
-        >
-          <span>⏱️</span>
-          <span className="hidden sm:inline">Sekarang</span>
-        </button>
-
-        {/* Tombol Kalender dengan Picker Native */}
-        <div className="relative flex items-center">
+      {!disabled && (
+        <div className="absolute right-2 flex items-center gap-1">
+          {/* Tombol Sekarang (Quick set current time) */}
           <button
             type="button"
-            onClick={handleOpenPicker}
-            className="p-1.5 text-slate-500 hover:text-slate-800 active:text-red-600 hover:bg-slate-100 rounded-lg transition cursor-pointer flex items-center justify-center"
-            title="Buka Kalender & Jam"
+            onClick={handleSetNow}
+            className="px-2 py-1 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-semibold transition cursor-pointer flex items-center gap-1 shadow-2xs whitespace-nowrap"
+            title="Set ke tanggal dan jam saat ini"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
+            <Clock className="w-3 h-3 text-slate-600" />
+            <span className="hidden sm:inline">Sekarang</span>
           </button>
 
-          {/* Input datetime-local bawaan yang menutupi tombol kalender agar touch di HP langsung memicu native picker */}
-          <input
-            ref={pickerRef}
-            type="datetime-local"
-            value={isoForPicker}
-            onChange={handleNativePickerChange}
-            tabIndex={-1}
-            aria-hidden="true"
-            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
-          />
+          {/* Tombol Kalender dengan Picker Native */}
+          <div className="relative flex items-center">
+            <button
+              type="button"
+              onClick={handleOpenPicker}
+              className="p-1.5 text-slate-500 hover:text-slate-800 active:text-red-600 hover:bg-slate-100 rounded-lg transition cursor-pointer flex items-center justify-center"
+              title="Buka Kalender & Jam"
+            >
+              <Calendar className="w-4 h-4" />
+            </button>
+
+            {/* Input datetime-local bawaan yang menutupi tombol kalender agar touch di HP langsung memicu native picker */}
+            <input
+              ref={pickerRef}
+              type="datetime-local"
+              value={isoForPicker}
+              onChange={handleNativePickerChange}
+              tabIndex={-1}
+              aria-hidden="true"
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

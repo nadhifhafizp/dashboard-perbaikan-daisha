@@ -71,15 +71,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <main className="flex-1">
           {children}
         </main>
-        <footer className="py-5 text-center text-xs text-slate-400 border-t border-slate-200 bg-white">
+        <footer className="py-4 text-center text-xs text-slate-500 font-normal border-t border-slate-200 bg-white">
           © 2026 PT Bridgestone Tire Indonesia • Workshop & Special Project Management
         </footer>
         <ConfirmModal
           isOpen={isLogoutModalOpen}
           title="Konfirmasi Keluar (Logout)"
           message="Apakah Anda yakin ingin keluar dari akun sistem Workshop Management?"
-          confirmText="Ya, Keluar"
-          cancelText="Batal"
+          confirmText="Keluar dari Akun"
+          cancelText="Tetap di Sini"
           isLoading={isLoggingOut}
           loadingText="Keluar dari sesi..."
           onConfirm={executeLogout}
@@ -90,7 +90,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-100 font-sans overflow-hidden relative">
+    <div className="flex flex-col md:flex-row h-screen bg-slate-50 font-sans overflow-hidden relative">
       {/* Mobile Top Navbar */}
       <MobileNav
         isMobileMenuOpen={isMobileMenuOpen}
@@ -100,7 +100,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Backdrop saat Mobile Drawer terbuka */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/60 z-25 md:hidden backdrop-blur-xs"
+          className="fixed inset-0 bg-slate-900/50 z-25 md:hidden backdrop-blur-xs"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -113,23 +113,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         onToggleDesktopCollapse={handleToggleDesktopCollapse}
       />
 
-      {/* Tombol Hamburger Desktop Murni Ikon (Hanya muncul saat Sidebar tersembunyi) */}
+      {/* Tombol Hamburger Desktop (Hanya muncul saat Sidebar tersembunyi) */}
       {isDesktopCollapsed && (
         <button
           type="button"
           onClick={handleToggleDesktopCollapse}
-          className="hidden md:flex fixed top-3.5 left-3.5 z-40 p-2.5 bg-white hover:bg-slate-50 text-slate-700 hover:text-red-700 rounded-xl shadow-md border border-slate-200 transition-all hover:scale-105 cursor-pointer"
+          className="hidden md:flex fixed top-3.5 left-3.5 z-40 p-2 bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 rounded-lg shadow-xs border border-slate-200 transition cursor-pointer"
           title="Buka Sidebar (Ctrl+B)"
           aria-label="Buka Sidebar"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-4 h-4" />
         </button>
       )}
 
       {/* Main Content Area */}
       <main
-        className={`flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 pb-20 md:pb-0 transition-all duration-300 ${
-          isDesktopCollapsed ? 'md:pl-14' : ''
+        className={`flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 pb-20 md:pb-0 transition-all duration-300 ${
+          isDesktopCollapsed ? 'md:pl-12' : ''
         }`}
       >
         {children}
@@ -140,8 +140,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         isOpen={isLogoutModalOpen}
         title="Konfirmasi Keluar (Logout)"
         message="Apakah Anda yakin ingin keluar dari akun sistem Daisha Maintenance?"
-        confirmText="Ya, Keluar"
-        cancelText="Batal"
+        confirmText="Keluar dari Akun"
+        cancelText="Tetap di Sini"
         isLoading={isLoggingOut}
         loadingText="Keluar dari sesi..."
         onConfirm={executeLogout}

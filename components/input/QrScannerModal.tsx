@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeScannerState } from 'html5-qrcode';
+import { Camera, X, RotateCcw, AlertTriangle } from 'lucide-react';
 
 interface QrScannerModalProps {
   isOpen: boolean;
@@ -88,8 +89,7 @@ export default function QrScannerModal({
           setIsInitializing(false);
           setIsCameraActive(false);
           setStreamError(
-            'Browser HP mengunci streaming kamera langsung di koneksi HTTP IP lokal. ' +
-            'Aktifkan Chrome Flag (panduan di bawah) atau gunakan tombol jepret kamera.'
+            'Kamera tidak dapat diakses secara langsung. Anda dapat menggunakan opsi jepret foto barcode di bawah.'
           );
         }
         return;
@@ -190,15 +190,17 @@ export default function QrScannerModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-fade-in">
-      <div className="w-full max-w-md bg-slate-900 rounded-3xl shadow-2xl border border-slate-700 overflow-hidden transform transition-all animate-scale-up p-5 text-white flex flex-col max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+      <div className="w-full max-w-md bg-slate-900 rounded-xl shadow-xl border border-slate-700/80 overflow-hidden transform transition-all animate-scale-up p-5 text-white flex flex-col max-h-[92vh] overflow-y-auto">
         
         {/* Header Modal */}
         <div className="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📷</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center">
+              <Camera className="w-4 h-4" />
+            </div>
             <div>
-              <h3 className="text-sm font-black uppercase tracking-wider">
+              <h3 className="text-xs sm:text-sm font-semibold text-white">
                 Scan Barcode / QR Daisha
               </h3>
               <p className="text-[11px] text-slate-400">Deteksi otomatis nomor unit Daisha</p>
@@ -210,7 +212,7 @@ export default function QrScannerModal({
             className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer"
             aria-label="Tutup"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -226,7 +228,7 @@ export default function QrScannerModal({
 
         {/* Frame Scanner (Wrapper terpisah agar React tidak konflik dengan DOM Html5Qrcode) */}
         <div className="flex flex-col items-center w-full">
-          <div className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-lg border border-slate-700 bg-black min-h-[240px] flex items-center justify-center">
+          <div className="relative w-full max-w-sm rounded-xl overflow-hidden shadow-lg border border-slate-700 bg-black min-h-[240px] flex items-center justify-center">
             
             {/* DOM Container khusus Html5Qrcode - JANGAN masukkan anak elemen React di dalamnya */}
             <div id="reader-camera-modal" className="w-full h-full min-h-[240px]"></div>
@@ -257,7 +259,7 @@ export default function QrScannerModal({
           <div className="text-slate-300 text-xs mt-2.5 font-medium text-center flex flex-col items-center gap-2">
             {isCameraActive ? (
               <span className="flex items-center justify-center gap-2 text-emerald-400 font-bold">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                 Kamera Langsung Aktif: Arahkan ke barcode unit Daisha
               </span>
             ) : isInitializing ? null : streamError ? (
@@ -282,9 +284,10 @@ export default function QrScannerModal({
                       }
                     }, 500);
                   }}
-                  className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-[11px] font-bold border border-slate-700 transition"
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-medium border border-slate-700 transition flex items-center gap-1.5"
                 >
-                  🔄 Coba Sambungkan Kamera Lagi
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Coba Sambungkan Kamera Lagi</span>
                 </button>
               </>
             ) : null}
@@ -294,69 +297,25 @@ export default function QrScannerModal({
         {/* Notifikasi Error jika file gagal terbaca */}
         {fileError && (
           <div className="mt-3 p-3 bg-red-950/70 border border-red-800 text-red-200 rounded-xl text-xs flex items-start gap-2">
-            <span className="text-sm shrink-0">⚠️</span>
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
             <span>{fileError}</span>
-          </div>
-        )}
-
-        {/* Panduan 10 Detik Agar Kamera Langsung Menyala di Browser HP */}
-        {streamError && !isCameraActive && (
-          <div className="mt-4 p-4 bg-slate-800/90 border border-amber-500/50 rounded-2xl text-xs space-y-3">
-            <div className="flex items-center gap-2 text-amber-400 font-bold">
-              <span className="text-base">💡</span>
-              <span>Buka Kamera Langsung di Web HP (Cuma 1x Setting):</span>
-            </div>
-            
-            <p className="text-slate-300 leading-relaxed text-[11.5px]">
-              Browser HP (Chrome) mengunci kamera jika web memakai HTTP lokal. Agar <strong>kamera web langsung menyala otomatis</strong> seperti di laptop, lakukan langkah ini di Chrome HP:
-            </p>
-
-            <div className="bg-slate-950 p-3 rounded-xl border border-slate-700 space-y-2 text-[11px]">
-              <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-amber-500 text-black font-black flex items-center justify-center shrink-0 text-[10px]">1</span>
-                <div>
-                  Ketik ini di tab baru Chrome HP:
-                  <div className="mt-1 p-1.5 bg-slate-900 rounded font-mono text-amber-300 select-all border border-slate-800">
-                    chrome://flags/#unsafely-treat-insecure-origin-as-secure
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-amber-500 text-black font-black flex items-center justify-center shrink-0 text-[10px]">2</span>
-                <div>
-                  Ketik alamat IP ini di kotak yang tersedia:
-                  <div className="mt-1 p-1.5 bg-slate-900 rounded font-mono text-amber-300 select-all border border-slate-800">
-                    http://10.92.179.102:3000
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-amber-500 text-black font-black flex items-center justify-center shrink-0 text-[10px]">3</span>
-                <div>
-                  Ubah menu dropdown jadi <strong>Enabled</strong>, lalu klik tombol biru <strong>Relaunch</strong> di bawah.
-                </div>
-              </div>
-            </div>
-
-            <p className="text-[11px] text-emerald-400 font-medium">
-              ✓ Setelah klik Relaunch, kamera langsung terbuka di web secara otomatis setiap kali Anda klik tombol Scan Barcode!
-            </p>
           </div>
         )}
 
         {/* Tombol Opsi Jepret Foto Cepat (Sebagai alternatif) */}
         {streamError && !isCameraActive && (
-          <div className="mt-4">
+          <div className="mt-4 space-y-2">
+            <p className="text-[11px] text-slate-400 text-center">
+              Gagal membuka streaming kamera langsung. Silakan gunakan tombol foto di bawah:
+            </p>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessingFile}
-              className="w-full py-3 bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-extrabold text-xs rounded-xl shadow-lg transition duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-medium text-xs rounded-xl shadow-xs transition duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <span>📸</span>
-              <span>Atau Jepret Foto Barcode Sementara</span>
+              <Camera className="w-4 h-4" />
+              <span>Jepret / Ambil Foto Barcode</span>
             </button>
           </div>
         )}
