@@ -18,6 +18,9 @@ import {
   ArrowLeft,
   Menu,
   ScanLine,
+  Layers,
+  CalendarClock,
+  Activity,
 } from 'lucide-react';
 import PwaInstaller from '../common/PwaInstaller';
 
@@ -38,11 +41,15 @@ export default function Sidebar({
   const { currentUser, isOperator, isSeksi, isAdmin, openLogoutModal, isLoggingOut } = useAuth();
 
   // 1. Deteksi modul sistem aktif berdasarkan URL
-  let currentModule: 'DAISHA' | 'REQUEST' | 'SPAREPARTS' = 'DAISHA';
-  if (pathname.startsWith('/request')) {
+  let currentModule: 'DAISHA' | 'FLEET' | 'REQUEST' | 'SPAREPARTS' | 'USERS' = 'DAISHA';
+  if (pathname.startsWith('/fleet') || pathname.startsWith('/catalog')) {
+    currentModule = 'FLEET';
+  } else if (pathname.startsWith('/request')) {
     currentModule = 'REQUEST';
   } else if (pathname.startsWith('/spareparts')) {
     currentModule = 'SPAREPARTS';
+  } else if (pathname.startsWith('/users')) {
+    currentModule = 'USERS';
   } else {
     currentModule = 'DAISHA';
   }
@@ -63,6 +70,11 @@ export default function Sidebar({
     }
 
     switch (currentModule) {
+      case 'FLEET':
+        return [
+          { href: '/fleet', label: 'Kontrol Pemeliharaan Unit', icon: CalendarClock },
+          { href: '/catalog', label: 'Master & Registri Daisha', icon: Layers },
+        ];
       case 'REQUEST':
         return [
           { href: '/request', label: 'Dashboard & Tiket Request', icon: SendHorizonal },
@@ -70,6 +82,10 @@ export default function Sidebar({
       case 'SPAREPARTS':
         return [
           { href: '/spareparts', label: 'Monitoring & Inventaris', icon: Package },
+        ];
+      case 'USERS':
+        return [
+          { href: '/users', label: 'Akun & Hak Akses', icon: Users },
         ];
       case 'DAISHA':
       default:
@@ -87,8 +103,13 @@ export default function Sidebar({
   const MODULE_INFO = {
     DAISHA: {
       title: 'Perbaikan Daisha',
-      badge: 'Modul Daisha',
+      badge: 'Modul Perbaikan',
       icon: Wrench,
+    },
+    FLEET: {
+      title: 'Kontrol Armada Daisha',
+      badge: 'Modul Pemeliharaan',
+      icon: Activity,
     },
     REQUEST: {
       title: 'Request Seksi',
@@ -99,6 +120,11 @@ export default function Sidebar({
       title: 'Manajemen Spareparts',
       badge: 'Modul Spareparts',
       icon: Package,
+    },
+    USERS: {
+      title: 'Manajemen Pengguna',
+      badge: 'Modul Akses & Akun',
+      icon: Users,
     },
   };
 
@@ -241,6 +267,16 @@ export default function Sidebar({
                 <span>Perbaikan Daisha</span>
               </Link>
             )}
+            {currentModule !== 'FLEET' && (
+              <Link
+                href="/fleet"
+                onClick={onCloseMobileMenu}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-red-200/70 hover:bg-white/10 hover:text-white transition"
+              >
+                <Activity className="w-4 h-4 shrink-0 text-red-300/70" />
+                <span>Kontrol Armada Daisha</span>
+              </Link>
+            )}
             {currentModule !== 'REQUEST' && (
               <Link
                 href="/request"
@@ -259,6 +295,16 @@ export default function Sidebar({
               >
                 <Package className="w-4 h-4 shrink-0 text-red-300/70" />
                 <span>Stok Sparepart</span>
+              </Link>
+            )}
+            {currentModule !== 'USERS' && (
+              <Link
+                href="/users"
+                onClick={onCloseMobileMenu}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-red-200/70 hover:bg-white/10 hover:text-white transition"
+              >
+                <Users className="w-4 h-4 shrink-0 text-red-300/70" />
+                <span>Manajemen Pengguna</span>
               </Link>
             )}
           </div>

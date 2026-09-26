@@ -1,3 +1,22 @@
+/**
+ * lib/damageParser.ts — Parser Kerusakan & Tindakan Perbaikan Daisha
+ * 
+ * ============================================================================
+ * FUNGSI UTAMA:
+ * Mengurai string rincian kerusakan multi-item dari tiket menjadi objek terstruktur.
+ * 
+ * Contoh Masukan:
+ * "[Roda Putar] Roda aus (Qty: 2, Tindakan: Ganti) | [Body daisha] Tiang bengkok (Qty: 1, Tindakan: Repair)"
+ * 
+ * Hasil Parsing:
+ * - Daftar item terstruktur: Komponen, Gejala, Qty, Tindakan (Repair / Ganti)
+ * - Pemisahan kategori: item perbaikan (repair) vs penggantian suku cadang (ganti)
+ * - Agregasi kuantitas: totalQtyGanti, totalQtyRepair, totalQtyAll
+ * - Pengurangan stok gudang otomatis untuk komponen bertindakan 'Ganti'
+ * - Deteksi tiket pendaftaran fleksibel ("Pemeriksaan Bengkel" / "Menunggu Diagnosa")
+ * ============================================================================
+ */
+
 export interface ParsedDamageItem {
   komponen: string;
   gejala: string;
@@ -21,9 +40,10 @@ export interface ParsedTicketDetail {
 }
 
 /**
- * Parser untuk mengubah string gabungan kerusakan:
- * Contoh: "1. [Roda Putar] Roda aus (Qty: 2, Tindakan: Ganti) | 2. [Body daisha] Tiang miring (Qty: 1, Tindakan: Repair) (Catatan: di line 3)"
- * Menjadi objek terstruktur lengkap dengan jumlah (Qty) dan tindakan (Repair vs Ganti).
+ * Mengurai string detail kerusakan menjadi struktur data terpisah.
+ * 
+ * @param detailStr - String mentah kerusakan dari database atau form input
+ * @returns ParsedTicketDetail objek hasil ekstraksi kuantitas dan rincian kerusakan
  */
 export function parseTicketDamageDetail(detailStr?: string | null): ParsedTicketDetail {
   if (!detailStr || detailStr.trim() === '' || detailStr.trim() === '-') {

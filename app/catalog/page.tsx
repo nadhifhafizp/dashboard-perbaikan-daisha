@@ -42,38 +42,26 @@ export default function CatalogPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-24 md:pb-8">
-      {/* Header Halaman */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
-        <div className="space-y-1">
-          <nav className="flex items-center gap-1.5 text-xs text-slate-500">
-            <Link href="/" className="inline-flex items-center gap-1 font-medium hover:text-slate-900 transition">
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Portal</span>
-            </Link>
-            <span className="text-slate-300">/</span>
-            <span className="font-semibold text-slate-900">Katalog Master Daisha</span>
-          </nav>
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <Layers className="w-5 h-5 text-indigo-600" />
-              <span>Katalog Master Daisha</span>
-            </h1>
-            <p className="text-[11px] sm:text-xs text-slate-500 font-normal mt-0.5">
-              Kelola standarisasi hierarki data: Seksi Asal → Unit Daisha → Komponen → Gejala Kerusakan
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href="/"
-            className="h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 border border-slate-200 shadow-2xs"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
+    <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-7xl mx-auto pb-24 md:pb-8">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center justify-between gap-3">
+        <nav className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+          <Link href="/" className="inline-flex items-center gap-1 hover:text-slate-900 transition">
+            <ArrowLeft className="w-3.5 h-3.5" />
             <span>Portal Utama</span>
           </Link>
-        </div>
+          <span className="text-slate-300">/</span>
+          <span className="text-slate-700">Workshop Daisha</span>
+          <span className="text-slate-300">/</span>
+          <span className="font-semibold text-slate-900">Katalog Master</span>
+        </nav>
+
+        <Link
+          href="/fleet"
+          className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition inline-flex items-center gap-1"
+        >
+          <span>Ke Kontrol Armada →</span>
+        </Link>
       </div>
 
       {/* Konten Utama Catalog Manager */}

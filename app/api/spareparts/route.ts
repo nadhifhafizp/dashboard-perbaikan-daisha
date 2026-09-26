@@ -1,33 +1,31 @@
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
-import { parseAndVerifySession } from '@/lib/auth';
-import { cookies } from 'next/headers';
+import {
+  requireAuth,
+  checkRateLimit,
+  validatePayloadSize,
+  recordAuditLog,
+  sanitizeText,
+  validatePositiveInt,
+} from '@/lib/security';
 
-const SESSION_COOKIE_NAME = 'daisha_auth_session';
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-  return parseAndVerifySession(token);
-}
-
-// GET: Ambil daftar sparepart beserta log mutasi terakhir
+// GET: Ambil daftar sparepart beserta log mutasi terakhir (Khusus ADMIN)
 export async function GET(request: Request) {
+  // 1. AUTHENTICATION & AUTHORIZATION
+  const auth = await requireAuth(request, ['ADMIN']);
+  if (!auth.authorized) return auth.errorResponse!;
+
+  // 2. RATE LIMITING (60 req/menit)
+  const rateLimit = checkRateLimit(`spareparts_get:${auth.ip}`, 60, 60 * 1000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Terlalu banyak permintaan inventaris.' }, { status: 429 });
+  }
+
   try {
-    const session = await getSession();
-    if (!session.valid || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Hanya admin boleh melihat inventaris spareparts
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Akses ditolak.' }, { status: 403 });
-    }
-
     const { searchParams } = new URL(request.url);
     const withLogs = searchParams.get('logs') === 'true';
     const kategori = searchParams.get('kategori');
-    const filterKategori = kategori && kategori !== 'all' ? kategori : null;
+    const filterKategori = kategori && kategori !== 'all' ? sanitizeText(kategori, 50) : null;
 
     const spareparts = withLogs
       ? await sql`
@@ -64,20 +62,34 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: CRUD spareparts & mutasi stok
+// POST: CRUD spareparts & mutasi stok (Khusus ADMIN)
 export async function POST(request: Request) {
+  // 1. AUTHENTICATION & AUTHORIZATION
+  const auth = await requireAuth(request, ['ADMIN']);
+  if (!auth.authorized) return auth.errorResponse!;
+
+  // 2. FILE & PAYLOAD SIZE LIMIT (Maksimal 128KB)
+  const sizeCheck = validatePayloadSize(request, 128 * 1024);
+  if (!sizeCheck.ok) return sizeCheck.errorResponse!;
+
+  // 3. RATE LIMITING (40 req/menit)
+  const rateLimit = checkRateLimit(`spareparts_post:${auth.ip}`, 40, 60 * 1000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Terlalu banyak transaksi suku cadang.' }, { status: 429 });
+  }
+
   try {
-    const session = await getSession();
-    if (!session.valid || !session.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Hanya admin yang dapat mengelola spareparts.' }, { status: 403 });
-    }
-
     const body = await request.json();
-    const { action } = body;
+    const action = sanitizeText(body.action, 30);
 
-    // Tambah sparepart baru
+    // 1. Tambah sparepart baru
     if (action === 'CREATE') {
-      const { namaKomponen, kategori, stokGudang, satuan, minStok, lokasi } = body;
+      const namaKomponen = sanitizeText(body.namaKomponen, 100);
+      const kategori = sanitizeText(body.kategori, 50) || 'Umum';
+      const stokGudang = validatePositiveInt(body.stokGudang ?? 0, 'Stok Gudang', 0, 100000).value;
+      const satuan = sanitizeText(body.satuan, 20);
+      const minStok = validatePositiveInt(body.minStok ?? 0, 'Min Stok', 0, 100000).value;
+      const lokasi = sanitizeText(body.lokasi, 100);
 
       if (!namaKomponen || !satuan) {
         return NextResponse.json({ error: 'Nama komponen dan satuan wajib diisi.' }, { status: 400 });
@@ -90,24 +102,37 @@ export async function POST(request: Request) {
 
       const [created] = await sql`
         INSERT INTO "Sparepart" ("namaKomponen", kategori, "stokGudang", satuan, "minStok", lokasi)
-        VALUES (${namaKomponen}, ${kategori || 'Umum'}, ${Number(stokGudang) || 0}, ${satuan}, ${Number(minStok) || 0}, ${lokasi || null})
+        VALUES (${namaKomponen}, ${kategori}, ${stokGudang}, ${satuan}, ${minStok}, ${lokasi || null})
         RETURNING *
       `;
 
-      // Log stok awal jika ada
-      if (stokGudang && Number(stokGudang) > 0) {
+      if (stokGudang > 0) {
         await sql`
           INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, keterangan, tanggal)
-          VALUES (${namaKomponen}, 'IN', ${Number(stokGudang)}, 'Stok awal saat pendaftaran', NOW())
+          VALUES (${namaKomponen}, 'IN', ${stokGudang}, 'Stok awal saat pendaftaran', NOW())
         `;
       }
+
+      recordAuditLog({
+        action: 'SPAREPART_CREATE',
+        ip: auth.ip,
+        user: auth.user?.username,
+        role: auth.user?.role,
+        status: 'SUCCESS',
+        targetId: namaKomponen,
+        details: `Stok Awal: ${stokGudang} ${satuan}`,
+      });
 
       return NextResponse.json({ success: true, message: `Sparepart "${namaKomponen}" berhasil ditambahkan.`, sparepart: created });
     }
 
-    // Update info sparepart
+    // 2. Update info sparepart
     if (action === 'UPDATE') {
-      const { namaKomponen, kategori, satuan, minStok, lokasi } = body;
+      const namaKomponen = sanitizeText(body.namaKomponen, 100);
+      const kategori = body.kategori !== undefined ? sanitizeText(body.kategori, 50) : undefined;
+      const satuan = body.satuan !== undefined ? sanitizeText(body.satuan, 20) : undefined;
+      const minStok = body.minStok !== undefined ? validatePositiveInt(body.minStok, 'Min Stok', 0, 100000).value : undefined;
+      const lokasi = body.lokasi !== undefined ? sanitizeText(body.lokasi, 100) : undefined;
 
       if (!namaKomponen) {
         return NextResponse.json({ error: 'Nama komponen wajib diisi.' }, { status: 400 });
@@ -133,43 +158,67 @@ export async function POST(request: Request) {
         SET
           kategori = ${kategori !== undefined ? kategori : current.kategori},
           satuan = ${satuan !== undefined ? satuan : current.satuan},
-          "minStok" = ${minStok !== undefined ? Number(minStok) : current.minStok},
+          "minStok" = ${minStok !== undefined ? minStok : current.minStok},
           lokasi = ${lokasi !== undefined ? lokasi : current.lokasi}
         WHERE "namaKomponen" = ${namaKomponen}
         RETURNING *
       `;
 
+      recordAuditLog({
+        action: 'SPAREPART_UPDATE',
+        ip: auth.ip,
+        user: auth.user?.username,
+        role: auth.user?.role,
+        status: 'SUCCESS',
+        targetId: namaKomponen,
+      });
+
       return NextResponse.json({ success: true, message: 'Info sparepart diperbarui.', sparepart: updated });
     }
 
-    // Restock (tambah stok masuk)
+    // 3. Restock (tambah stok masuk)
     if (action === 'RESTOCK') {
-      const { namaKomponen, qty, keterangan } = body;
+      const namaKomponen = sanitizeText(body.namaKomponen, 100);
+      const qty = validatePositiveInt(body.qty, 'Jumlah restock', 1, 10000).value;
+      const keterangan = sanitizeText(body.keterangan, 255) || 'Restock manual';
 
-      if (!namaKomponen || !qty || Number(qty) <= 0) {
+      if (!namaKomponen || !body.qty) {
         return NextResponse.json({ error: 'Nama komponen dan jumlah restock wajib diisi.' }, { status: 400 });
       }
 
       await sql.begin(async (tx) => {
         await tx`
           UPDATE "Sparepart"
-          SET "stokGudang" = "stokGudang" + ${Number(qty)}
+          SET "stokGudang" = "stokGudang" + ${qty}
           WHERE "namaKomponen" = ${namaKomponen}
         `;
         await tx`
           INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, keterangan, tanggal)
-          VALUES (${namaKomponen}, 'IN', ${Number(qty)}, ${keterangan || 'Restock manual'}, NOW())
+          VALUES (${namaKomponen}, 'IN', ${qty}, ${keterangan}, NOW())
         `;
+      });
+
+      recordAuditLog({
+        action: 'SPAREPART_RESTOCK',
+        ip: auth.ip,
+        user: auth.user?.username,
+        role: auth.user?.role,
+        status: 'SUCCESS',
+        targetId: namaKomponen,
+        details: `+${qty} unit (${keterangan})`,
       });
 
       return NextResponse.json({ success: true, message: `Restock ${qty} unit berhasil.` });
     }
 
-    // Pemakaian manual (pengeluaran stok)
+    // 4. Pemakaian manual (pengeluaran stok)
     if (action === 'USE') {
-      const { namaKomponen, qty, referensi, keterangan } = body;
+      const namaKomponen = sanitizeText(body.namaKomponen, 100);
+      const qty = validatePositiveInt(body.qty, 'Jumlah pemakaian', 1, 10000).value;
+      const referensi = sanitizeText(body.referensi, 50);
+      const keterangan = sanitizeText(body.keterangan, 255) || 'Pemakaian manual';
 
-      if (!namaKomponen || !qty || Number(qty) <= 0) {
+      if (!namaKomponen || !body.qty) {
         return NextResponse.json({ error: 'Nama komponen dan jumlah pemakaian wajib diisi.' }, { status: 400 });
       }
 
@@ -179,28 +228,38 @@ export async function POST(request: Request) {
       if (!sparepart) {
         return NextResponse.json({ error: `Sparepart "${namaKomponen}" tidak ditemukan.` }, { status: 404 });
       }
-      if (sparepart.stokGudang < Number(qty)) {
+      if (sparepart.stokGudang < qty) {
         return NextResponse.json({ error: `Stok tidak mencukupi (sisa: ${sparepart.stokGudang}).` }, { status: 400 });
       }
 
       await sql.begin(async (tx) => {
         await tx`
           UPDATE "Sparepart"
-          SET "stokGudang" = "stokGudang" - ${Number(qty)}
+          SET "stokGudang" = "stokGudang" - ${qty}
           WHERE "namaKomponen" = ${namaKomponen}
         `;
         await tx`
           INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
-          VALUES (${namaKomponen}, 'OUT', ${Number(qty)}, ${referensi || null}, ${keterangan || 'Pemakaian manual'}, NOW())
+          VALUES (${namaKomponen}, 'OUT', ${qty}, ${referensi || null}, ${keterangan}, NOW())
         `;
+      });
+
+      recordAuditLog({
+        action: 'SPAREPART_USAGE',
+        ip: auth.ip,
+        user: auth.user?.username,
+        role: auth.user?.role,
+        status: 'SUCCESS',
+        targetId: namaKomponen,
+        details: `-${qty} unit (${keterangan})`,
       });
 
       return NextResponse.json({ success: true, message: `Pengeluaran ${qty} unit berhasil.` });
     }
 
-    // Hapus sparepart
+    // 5. Hapus sparepart
     if (action === 'DELETE') {
-      const { namaKomponen } = body;
+      const namaKomponen = sanitizeText(body.namaKomponen, 100);
       if (!namaKomponen) {
         return NextResponse.json({ error: 'Nama komponen wajib diisi.' }, { status: 400 });
       }
@@ -211,12 +270,21 @@ export async function POST(request: Request) {
         await tx`DELETE FROM "Sparepart" WHERE "namaKomponen" = ${namaKomponen}`;
       });
 
+      recordAuditLog({
+        action: 'SPAREPART_DELETE',
+        ip: auth.ip,
+        user: auth.user?.username,
+        role: auth.user?.role,
+        status: 'SUCCESS',
+        targetId: namaKomponen,
+      });
+
       return NextResponse.json({ success: true, message: `Sparepart "${namaKomponen}" berhasil dihapus.` });
     }
 
-    // GET logs untuk sparepart tertentu
+    // 6. GET logs untuk sparepart tertentu
     if (action === 'GET_LOGS') {
-      const { namaKomponen } = body;
+      const namaKomponen = sanitizeText(body.namaKomponen, 100);
       const logs = namaKomponen
         ? await sql`
             SELECT * FROM "SparepartLog"
@@ -235,6 +303,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Action tidak valid.' }, { status: 400 });
   } catch (error) {
     console.error('POST /api/spareparts error:', error);
+    recordAuditLog({
+      action: 'SPAREPART_ERROR',
+      ip: auth.ip,
+      user: auth.user?.username,
+      status: 'FAILED',
+      details: error instanceof Error ? error.message : 'Internal Server Error',
+    });
     return NextResponse.json({ error: 'Terjadi kesalahan pada server.' }, { status: 500 });
   }
 }

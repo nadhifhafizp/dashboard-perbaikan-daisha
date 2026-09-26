@@ -37,7 +37,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Jangan cache permintaan API, biarkan selalu network langsung untuk data SQLite real-time
+  // Jangan cache permintaan API, biarkan selalu network langsung untuk data PostgreSQL real-time
   if (url.pathname.startsWith('/api/') || event.request.method !== 'GET') {
     return;
   }

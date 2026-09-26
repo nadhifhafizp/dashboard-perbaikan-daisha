@@ -16,6 +16,9 @@ import {
   LogOut,
   Menu,
   X,
+  CalendarClock,
+  Layers,
+  Users,
 } from 'lucide-react';
 
 interface MobileNavProps {
@@ -33,19 +36,33 @@ export default function MobileNav({
   const navItems: { href: string; icon: React.ElementType; label: string }[] = [];
 
   if (isAdmin) {
-    if (pathname.startsWith('/request')) {
+    if (pathname.startsWith('/fleet') || pathname.startsWith('/catalog')) {
+      navItems.push(
+        { href: '/', icon: Home, label: 'Portal' },
+        { href: '/fleet', icon: CalendarClock, label: 'Kontrol' },
+        { href: '/catalog', icon: Layers, label: 'Master' },
+        { href: '/daisha', icon: BarChart2, label: 'Perbaikan' },
+      );
+    } else if (pathname.startsWith('/request')) {
       navItems.push(
         { href: '/', icon: Home, label: 'Portal' },
         { href: '/request', icon: SendHorizonal, label: 'Request' },
+        { href: '/fleet', icon: CalendarClock, label: 'Kontrol' },
         { href: '/daisha', icon: BarChart2, label: 'Daisha' },
-        { href: '/spareparts', icon: Package, label: 'Stok' },
       );
     } else if (pathname.startsWith('/spareparts')) {
       navItems.push(
         { href: '/', icon: Home, label: 'Portal' },
         { href: '/spareparts', icon: Package, label: 'Stok' },
+        { href: '/fleet', icon: CalendarClock, label: 'Kontrol' },
         { href: '/daisha', icon: BarChart2, label: 'Daisha' },
-        { href: '/request', icon: SendHorizonal, label: 'Request' },
+      );
+    } else if (pathname.startsWith('/users')) {
+      navItems.push(
+        { href: '/', icon: Home, label: 'Portal' },
+        { href: '/users', icon: Users, label: 'User' },
+        { href: '/daisha', icon: BarChart2, label: 'Perbaikan' },
+        { href: '/fleet', icon: CalendarClock, label: 'Kontrol' },
       );
     } else {
       navItems.push(

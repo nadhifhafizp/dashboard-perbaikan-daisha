@@ -28,13 +28,12 @@ Frontend berjalan di peramban pengguna (*browser*), bertanggung jawab atas tata 
 ---
 
 ### B. ⚙️ BACKEND (Server-Side, API Endpoints, Database & Auth)
-Backend dieksekusi di Node.js server, mengelola koneksi database SQLite via Prisma ORM, verifikasi sesi JWT cookie, enkripsi password, dan validasi data.
+Backend dieksekusi di Node.js server, mengelola koneksi database PostgreSQL (Supabase Cloud via PgBouncer Pooler) menggunakan library driver `postgres` (postgres.js) tanpa dependensi ORM berat, verifikasi sesi JWT cookie, enkripsi password PBKDF2 SHA-512, dan validasi data.
 
 | Lokasi Path | Kegunaan | File Terkait |
 | :--- | :--- | :--- |
 | **`app/api/`** | API Route Handlers (REST Endpoints) | `app/api/repair/route.ts` (CRUD tiket Daisha)<br>`app/api/section-requests/route.ts` (CRUD pesanan seksi)<br>`app/api/spareparts/route.ts` (Katalog & mutasi stok)<br>`app/api/users/route.ts` (Kelola akun & reset password)<br>`app/api/auth/login/route.ts` (Autentikasi login)<br>`app/api/auth/me/route.ts` (Verifikasi sesi token)<br>`app/api/auth/logout/route.ts` (Hapus cookie sesi)<br>`app/api/catalog/route.ts` (Katalog master Daisha)<br>`app/api/server-info/route.ts` (Deteksi IP lokal) |
-| **`prisma/`** | Database ORM & Penyimpanan SQLite | `prisma/schema.prisma` (Definisi skema tabel database)<br>`prisma/dev.db` (File database SQLite lokal) |
-| **`lib/`** | Layanan logika backend & utilitas inti | `lib/prisma.ts` (Prisma client singleton)<br>`lib/users.ts` (Lookup user & auto-seeder akun default)<br>`lib/passwords.ts` (Hashing PBKDF2 SHA-512 & verifikasi)<br>`lib/auth.ts` (Sign & verify JWT session token)<br>`lib/masterData.ts` (Daftar master awal jenis Daisha)<br>`lib/serverInfo.ts` (Pencarian IP lokal Wi-Fi/LAN) |
+| **`lib/`** | Layanan logika backend, koneksi DB & utilitas inti | `lib/db.ts` (Koneksi pooler PostgreSQL Supabase via postgres.js)<br>`lib/users.ts` (Lookup user & auto-seeder akun default)<br>`lib/passwords.ts` (Hashing PBKDF2 SHA-512 & verifikasi)<br>`lib/auth.ts` (Sign & verify JWT session token)<br>`lib/security.ts` (Autentikasi, otorisasi, rate limiting, validasi input)<br>`lib/masterData.ts` (Tipe data & konstanta seksi)<br>`lib/serverInfo.ts` (Pencarian IP lokal Wi-Fi/LAN) |
 
 ---
 
@@ -109,7 +108,7 @@ Sistem pencatatan unit troli daisha rusak, analisis pareto komponen, lead time s
 - **Backend:**
   - `app/api/repair/route.ts` ➔ Operasi CREATE, UPDATE status, DELETE tiket daisha.
   - `app/api/catalog/route.ts` ➔ Master data jenis daisha, komponen, dan gejala.
-  - Prisma Models: `RepairTicket`, `DaishaType`, `Component`, `Symptom`.
+  - Database Tables: `"Ticket"`, `"TicketDetail"`, `"DaishaType"`, `"DaishaComponent"`, `"DaishaSymptom"`.
 
 ---
 
@@ -123,7 +122,7 @@ Sistem alur kerja pengajuan pembuatan/modifikasi barang dari seksi pemohon hingg
     - `action: "UPDATE_STATUS"` ➔ Admin bengkel menyetujui, menolak, menetapkan teknisi PJ, atau menyelesaikan pekerjaan.
     - `action: "ADD_MATERIAL"` ➔ Mencatat suku cadang / material yang digunakan untuk pembuatan barang tersebut.
     - `action: "DELETE"` ➔ Hapus request.
-  - Prisma Models: `SectionRequest`, `SectionRequestMaterial`.
+  - Database Tables: `"SectionRequest"`, `"SectionRequestMaterial"`.
 
 ---
 
@@ -137,7 +136,7 @@ Sistem inventaris suku cadang bengkel dengan peringatan stok kritis (*safety sto
     - `action: "RESTOCK"` ➔ Tambah kuantitas stok masuk (menambah stok fisik + mencatat `SparepartLog` tipe MASUK).
     - `action: "USE"` ➔ Kurangi kuantitas untuk pemakaian (mengurangi stok fisik + mencatat `SparepartLog` tipe KELUAR).
     - `action: "DELETE"` ➔ Hapus item sparepart.
-  - Prisma Models: `Sparepart`, `SparepartLog`.
+  - Database Tables: `"Sparepart"`, `"SparepartLog"`.
 
 ---
 
@@ -165,7 +164,8 @@ Sistem inventaris suku cadang bengkel dengan peringatan stok kritis (*safety sto
 | `lib/users.ts` | Backend | Auth | Server-side | Pencarian user di DB, auto-seed admin/operator/seksi |
 | `lib/passwords.ts` | Backend | Keamanan | Server-side | Enkripsi PBKDF2 SHA-512 & verifikasi aman password |
 | `lib/auth.ts` | Backend | Keamanan | Server-side | Enkode & verifikasi JWT payload sesi login |
-| `prisma/schema.prisma` | Backend | Database | Server-side | Definisi model tabel SQLite untuk seluruh sistem |
+| `lib/db.ts` | Backend | Database | Server-side | Singleton connection pooler PostgreSQL Supabase via postgres.js |
+| `lib/security.ts` | Backend | Keamanan | Server-side | Auth, RBAC, Rate Limiting, File Limit, Input Sanitization |
 
 ---
 
@@ -189,8 +189,8 @@ Sistem inventaris suku cadang bengkel dengan peringatan stok kritis (*safety sto
    - Periksa apakah respon network di browser `F12` (Tab Network) pada `/api/section-requests` mengembalikan status 200 atau 401/403.
 2. **File Kode Terkait untuk Debug:**
    - Frontend: `app/request/page.tsx` (cek fungsi `handleSubmit` dan `fetchRequests`)
-   - Backend Endpoint: `app/api/section-requests/route.ts` (cek query `prisma.sectionRequest.create`)
-   - Database Model: `prisma/schema.prisma` (model `SectionRequest`)
+   - Backend Endpoint: `app/api/section-requests/route.ts`
+   - Database Table: `"SectionRequest"` di PostgreSQL Supabase
 
 ---
 
@@ -201,7 +201,7 @@ Sistem inventaris suku cadang bengkel dengan peringatan stok kritis (*safety sto
 2. **File Kode Terkait untuk Debug:**
    - Frontend: `app/spareparts/page.tsx` (cek fungsi `handleMutasiSubmit`)
    - Backend Endpoint: `app/api/spareparts/route.ts` (cek blok `action === 'USE'` atau `action === 'RESTOCK'`)
-   - Pastikan transaksi prisma memperbarui field `stokGudang` sekaligus menambahkan baris di tabel `SparepartLog`.
+   - Pastikan query update PostgreSQL memperbarui kolom `stokGudang` sekaligus menambahkan baris di tabel `"SparepartLog"`.
 
 ---
 
@@ -217,11 +217,9 @@ Sistem inventaris suku cadang bengkel dengan peringatan stok kritis (*safety sto
 
 ---
 
-### 🚨 Kasus 5: "Ingin mengubah skema database (menambah kolom baru)"
-1. Edit file `prisma/schema.prisma`.
-2. Buka terminal di folder proyek dan jalankan:
-   ```bash
-   npx prisma db push
-   npx prisma generate
+### 🚨 Kasus 5: "Ingin mengubah skema database di PostgreSQL Supabase"
+1. Buka SQL Editor di Dashboard Supabase atau jalankan query DDL langsung:
+   ```sql
+   ALTER TABLE "NamaTabel" ADD COLUMN "namaKolom" VARCHAR(100);
    ```
-3. Restart server pengembangan Next.js (`npm run dev`).
+2. Database langsung aktif seketika tanpa perlu kompilasi/generate skema lokal.

@@ -210,7 +210,7 @@ export default function PwaInstaller({
 
               <div className="text-xs text-amber-950 bg-amber-50 p-2.5 rounded-lg border border-amber-200 flex items-start gap-1.5">
                 <Lightbulb className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-                <span><strong>Tips:</strong> Aplikasi tetap tersambung secara live ke database SQLite server dan otomatis memperbarui data secara real-time.</span>
+                <span><strong>Tips:</strong> Aplikasi tetap tersambung secara live ke database PostgreSQL server dan otomatis memperbarui data secara real-time.</span>
               </div>
             </div>
 

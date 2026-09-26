@@ -250,3 +250,67 @@ export function exportTicketsToExcel(tickets: Ticket[], filePrefix = 'Rekap_Perb
     XLSX.writeFile(wb, fileName);
   }
 }
+
+/**
+ * Ekspor data armada Daisha & jadwal maintenance berkala ke file Excel
+ */
+export function exportFleetUnitsToExcel(units: any[], filePrefix = 'Jadwal_Maintenance_Armada_Daisha') {
+  if (!units || units.length === 0) {
+    alert('Tidak ada data armada untuk diekspor.');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  const rows = units.map((u, idx) => ({
+    'No': idx + 1,
+    'No Daisha': u.noDaisha,
+    'Prefix Kode': u.codePrefix || '-',
+    'Jenis / Tipe Daisha': u.namaDaisha,
+    'Seksi': u.seksi,
+    'Total Kunjungan Servis': u.totalRepairs,
+    'Tanggal Servis Terakhir': u.lastRepairDate ? u.lastRepairDate.slice(0, 10) : 'Belum Ada',
+    'Hari Berlalu': u.daysSinceLastService !== null ? u.daysSinceLastService : '-',
+    'Jadwal Servis Berikutnya': u.nextDueDate ? u.nextDueDate.slice(0, 10) : 'Perlu Dijadwalkan',
+    'Sisa Hari': u.daysUntilDue !== null ? u.daysUntilDue : '-',
+    'Status Pemeliharaan': u.statusLabel,
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [
+    { wch: 6 },  // No
+    { wch: 18 }, // No Daisha
+    { wch: 14 }, // Prefix
+    { wch: 28 }, // Tipe
+    { wch: 16 }, // Seksi
+    { wch: 22 }, // Total Kunjungan
+    { wch: 22 }, // Tgl Terakhir
+    { wch: 14 }, // Hari Berlalu
+    { wch: 22 }, // Tgl Berikutnya
+    { wch: 12 }, // Sisa Hari
+    { wch: 30 }, // Status
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Jadwal_Armada_Daisha');
+
+  const nowStr = new Date().toISOString().slice(0, 10);
+  const fileName = `${filePrefix}_${nowStr}.xlsx`;
+
+  try {
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    XLSX.writeFile(wb, fileName);
+  }
+}
+

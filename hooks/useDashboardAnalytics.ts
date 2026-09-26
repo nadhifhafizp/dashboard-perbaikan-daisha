@@ -1,11 +1,6 @@
 import { useMemo } from 'react';
 import { Ticket } from '@/types/ticket';
-import { 
-  masterDataDaisha, 
-  getDaishaBySeksi, 
-  getKomponenKerusakan, 
-  getDetailKerusakan 
-} from '@/lib/masterData';
+import { getDaishaBySeksi, getKomponenKerusakan, getDetailKerusakan } from '@/lib/masterData';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { parseToISODate, parseToTimestamp, formatDisplayDate } from '@/lib/date';
 
@@ -360,16 +355,12 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
 
     // 5.4 Distribusi Semua Jenis Daisha
     const daishaMap: Record<string, number> = {};
-    Object.keys(masterDataDaisha).forEach(daisha => {
-      daishaMap[daisha] = 0;
-    });
     filteredData.forEach(d => {
       if (d.namaDaisha && d.namaDaisha !== '-') {
         daishaMap[d.namaDaisha] = (daishaMap[d.namaDaisha] || 0) + 1;
       }
     });
     const semuaDaisha = Object.entries(daishaMap)
-      .filter(([, count]) => count > 0)
       .map(([jenis, total]) => ({ jenis, total }))
       .sort((a, b) => b.total - a.total);
 

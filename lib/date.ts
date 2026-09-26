@@ -1,4 +1,14 @@
-// Utility helper untuk parsing dan formatting tanggal & jam Daisha secara konsisten
+/**
+ * lib/date.ts — Utilitas Parsing & Format Tanggal / Waktu Workshop
+ * 
+ * ============================================================================
+ * FUNGSI UTAMA:
+ * 1. Menyeragamkan format tanggal Indonesia (DD/MM/YYYY HH:mm) untuk UI dan ekspor Excel.
+ * 2. Parsing toleran antara format ISO 8601 (YYYY-MM-DD), lokal (DD/MM/YYYY), dan objek Date.
+ * 3. Kalkulasi aging time (durasi antrean dalam jam) untuk SLA dan monitoring keterlambatan.
+ * 4. Filter kondisi aging: Today (< 24 jam), Overdue (>= 24 jam), Critical (>= 72 jam).
+ * ============================================================================
+ */
 
 function parseSegments(datePart: string): [string, string, string] | null {
   const segs = datePart.split(/[-/]/);
@@ -8,6 +18,9 @@ function parseSegments(datePart: string): [string, string, string] | null {
     : [segs[2], segs[1].padStart(2, '0'), segs[0].padStart(2, '0')];
 }
 
+/**
+ * Memformat nilai tanggal menjadi string tampilan standar: DD/MM/YYYY HH:mm
+ */
 export function formatDisplayDate(value: unknown, includeTime = true): string {
   if (value === null || value === undefined) return '-';
   if (value instanceof Date) {

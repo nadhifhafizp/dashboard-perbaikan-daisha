@@ -13,6 +13,8 @@ import {
   ChevronRight,
   ShieldCheck,
   Layers,
+  CalendarClock,
+  Activity,
 } from 'lucide-react';
 
 export default function WorkshopPortalPage() {
@@ -52,7 +54,7 @@ export default function WorkshopPortalPage() {
         </p>
       </div>
 
-      {/* 2. Five Operational Module Cards */}
+      {/* 2. Operational Module Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* Module 1: Perbaikan Daisha */}
         <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-sm hover:border-slate-300 transition flex flex-col justify-between overflow-hidden">
@@ -96,6 +98,53 @@ export default function WorkshopPortalPage() {
                 className="flex-1 h-8 px-2.5 text-center text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-lg transition border border-slate-200 flex items-center justify-center"
               >
                 Riwayat Tiket
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Module 2: Kontrol & Pemeliharaan Armada Daisha */}
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-sm hover:border-slate-300 transition flex flex-col justify-between overflow-hidden">
+          <div className="p-5 sm:p-6 space-y-4 flex-1">
+            <div className="flex items-center justify-between">
+              <div className="w-11 h-11 rounded-lg bg-slate-100 border border-slate-200 text-slate-800 flex items-center justify-center">
+                <CalendarClock className="w-5 h-5 text-red-600" />
+              </div>
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200/60">
+                Preventive Control
+              </span>
+            </div>
+
+            <div>
+              <h2 className="text-base font-semibold text-slate-900">
+                Kontrol Maintenance Daisha
+              </h2>
+              <p className="text-xs text-slate-500 font-normal mt-1 leading-relaxed">
+                Pemantauan siklus servis berkala (1 bulan 1x), countdown jatuh tempo, deteksi unit mengendap di seksi, dan audit per nomor daisha.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 bg-slate-50/60 border-t border-slate-100 space-y-2">
+            <Link
+              href="/fleet"
+              className="w-full h-9 px-3.5 bg-black hover:bg-neutral-800 text-white text-xs font-medium rounded-lg shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>Buka Kontrol Armada</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+            <div className="flex items-center gap-2 pt-0.5">
+              <Link
+                href="/fleet"
+                className="flex-1 h-8 px-2.5 text-center text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-lg transition border border-slate-200 flex items-center justify-center"
+              >
+                Jadwal Servis
+              </Link>
+              <Link
+                href="/catalog"
+                className="flex-1 h-8 px-2.5 text-center text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-lg transition border border-slate-200 flex items-center justify-center"
+              >
+                Master Registri
               </Link>
             </div>
           </div>
@@ -183,46 +232,6 @@ export default function WorkshopPortalPage() {
           </div>
         </div>
 
-        {/* Module 4: Katalog Master Daisha */}
-        <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-sm hover:border-slate-300 transition flex flex-col justify-between overflow-hidden">
-          <div className="p-5 sm:p-6 space-y-4 flex-1">
-            <div className="flex items-center justify-between">
-              <div className="w-11 h-11 rounded-lg bg-slate-100 border border-slate-200 text-slate-800 flex items-center justify-center">
-                <Layers className="w-5 h-5" />
-              </div>
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                Database Master
-              </span>
-            </div>
-
-            <div>
-              <h2 className="text-base font-semibold text-slate-900">
-                Katalog Master Daisha
-              </h2>
-              <p className="text-xs text-slate-500 font-normal mt-1 leading-relaxed">
-                Standarisasi hierarki master troli per seksi, daftar komponen, dan definisi gejala kerusakan untuk formulir laporan.
-              </p>
-            </div>
-          </div>
-
-          <div className="p-4 bg-slate-50/60 border-t border-slate-100 space-y-2">
-            <Link
-              href="/catalog"
-              className="w-full h-9 px-3.5 bg-black hover:bg-neutral-800 text-white text-xs font-medium rounded-lg shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>Buka Katalog Master</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-            <div className="pt-0.5">
-              <Link
-                href="/catalog"
-                className="w-full h-8 px-2.5 text-center text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-lg transition border border-slate-200 flex items-center justify-center"
-              >
-                Kelola Unit & Komponen
-              </Link>
-            </div>
-          </div>
-        </div>
 
         {/* Module 5: Manajemen Pengguna */}
         <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-sm hover:border-slate-300 transition flex flex-col justify-between overflow-hidden">

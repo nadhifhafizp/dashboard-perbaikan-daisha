@@ -11,6 +11,8 @@ import ReviewTicketModal from '@/components/input/ReviewTicketModal';
 import DamageCatalogSelector, { TindakanType } from '@/components/input/DamageCatalogSelector';
 import PrintTicketTagModal, { PrintableTicketData } from '@/components/common/PrintTicketTagModal';
 import IndoDateTimeInput from '@/components/common/IndoDateTimeInput';
+import DaishaVariantSelector from '@/components/input/DaishaVariantSelector';
+import { DaishaVariantInfo } from '@/lib/daishaVariants';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 import { useTickets, broadcastTicketChange } from '@/hooks/useTickets';
@@ -627,6 +629,27 @@ export default function InputKerusakanPage() {
                 Tampilkan seluruh jenis Daisha di dropdown tanpa terikat filter Seksi
               </label>
             </div>
+
+            {/* Filter & Pemilihan Varian / Susunan Daisha (misal: GT Ring Small/Medium/Large Susun 3/4) */}
+            {formData.jenisDaisha && (
+              <div className="mb-4">
+                <DaishaVariantSelector
+                  jenisDaisha={formData.jenisDaisha}
+                  currentNoDaisha={formData.noDaisha}
+                  onSelectVariant={(variant) => {
+                    setFormData((prev) => {
+                      const cleanExisting = prev.noDaisha.trim().toUpperCase().replace(/[\s\-_]/g, '');
+                      const numMatch = cleanExisting.match(/\d+$/);
+                      let newNo = variant.codePrefix;
+                      if (numMatch) {
+                        newNo = `${variant.codePrefix}${numMatch[0]}`;
+                      }
+                      return { ...prev, noDaisha: newNo };
+                    });
+                  }}
+                />
+              </div>
+            )}
 
             {/* Nomor Unit & Barcode Scanner Button */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end pt-3 border-t border-slate-100">

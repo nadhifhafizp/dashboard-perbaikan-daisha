@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { masterDataDaisha, DAFTAR_SEKSI } from '@/lib/masterData';
+import { DAFTAR_SEKSI } from '@/lib/masterData';
 
 export interface SymptomItem {
   id: number;
@@ -14,41 +14,63 @@ export interface ComponentItem {
   symptoms: SymptomItem[];
 }
 
+export interface DaishaVariantItem {
+  id: number;
+  name: string;
+  ukuran?: string;
+  susunan?: string;
+  tipe?: string;
+  codePrefix?: string;
+  padLength?: number;
+  minNumber?: number;
+  maxNumber?: number;
+  totalUnits?: number;
+  rangeFormat?: string;
+  badgeColor?: string;
+}
+
+export interface SectionItem {
+  id: number;
+  name: string;
+  colorName?: string | null;
+  badgeBg?: string | null;
+  textColor?: string | null;
+  borderColor?: string | null;
+  accentBorder?: string | null;
+}
+
 export interface DaishaTreeItem {
   id: number;
   name: string;
   seksi: string;
+  codePrefix?: string;
+  totalUnits?: number;
   components: ComponentItem[];
+  variants?: DaishaVariantItem[];
 }
 
-export type CatalogMap = Record<string, { seksi: string; jenisKerusakan: Record<string, string[]> }>;
-
-function getInitialTree(): DaishaTreeItem[] {
-  let idCounter = 1;
-  return Object.entries(masterDataDaisha).map(([name, info]) => ({
-    id: idCounter++,
-    name,
-    seksi: info.seksi || 'All seksi',
-    components: Object.entries(info.jenisKerusakan).map(([compName, symptoms]) => ({
-      id: idCounter++,
-      name: compName,
-      symptoms: (symptoms || []).map((desc) => ({
-        id: idCounter++,
-        description: desc,
-      })),
-    })),
-  }));
-}
+export type CatalogMap = Record<
+  string,
+  {
+    seksi: string;
+    codePrefix?: string;
+    totalUnits?: number;
+    jenisKerusakan: Record<string, string[]>;
+    variants?: DaishaVariantItem[];
+  }
+>;
 
 let globalCatalogCache: CatalogMap | null = null;
 let globalSeksiCache: string[] | null = null;
+let globalSectionsCache: SectionItem[] | null = null;
 let globalTreeCache: DaishaTreeItem[] | null = null;
 let lastCatalogFetchTimestamp = 0;
 
 export function useDaishaCatalog() {
-  const [catalog, setCatalog] = useState<CatalogMap>(globalCatalogCache || masterDataDaisha);
-  const [seksiList, setSeksiList] = useState<string[]>(globalSeksiCache || DAFTAR_SEKSI);
-  const [tree, setTree] = useState<DaishaTreeItem[]>(() => globalTreeCache || getInitialTree());
+  const [catalog, setCatalog] = useState<CatalogMap>(() => globalCatalogCache || {});
+  const [seksiList, setSeksiList] = useState<string[]>(() => globalSeksiCache || [...DAFTAR_SEKSI]);
+  const [sections, setSections] = useState<SectionItem[]>(() => globalSectionsCache || []);
+  const [tree, setTree] = useState<DaishaTreeItem[]>(() => globalTreeCache || []);
   const [loading, setLoading] = useState(false);
 
   const fetchCatalog = useCallback(async (force = false) => {
@@ -66,11 +88,13 @@ export function useDaishaCatalog() {
       if (data.success && data.catalog) {
         globalCatalogCache = data.catalog;
         globalSeksiCache = data.seksiList;
+        globalSectionsCache = data.sections || [];
         globalTreeCache = data.tree;
         lastCatalogFetchTimestamp = Date.now();
 
         setCatalog(data.catalog);
         setSeksiList(data.seksiList);
+        setSections(data.sections || []);
         setTree(data.tree);
       }
     } catch (err) {
@@ -123,9 +147,22 @@ export function useDaishaCatalog() {
     [catalog]
   );
 
+  const getVariantsForDaisha = useCallback(
+    (namaDaisha?: string): DaishaVariantItem[] => {
+      if (!namaDaisha) return [];
+      if (catalog[namaDaisha]?.variants && catalog[namaDaisha].variants!.length > 0) {
+        return catalog[namaDaisha].variants!;
+      }
+      const item = tree.find((d) => d.name.toLowerCase() === namaDaisha.toLowerCase());
+      return item?.variants || [];
+    },
+    [catalog, tree]
+  );
+
   return {
     catalog,
     seksiList,
+    sections,
     daishaList,
     tree,
     loading,
@@ -133,5 +170,6 @@ export function useDaishaCatalog() {
     getDaishaBySeksi,
     getKomponenKerusakan,
     getDetailKerusakan,
+    getVariantsForDaisha,
   };
 }

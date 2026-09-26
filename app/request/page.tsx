@@ -302,16 +302,14 @@ export default function RequestPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-          {!isAdmin && (
-            <button
-              type="button"
-              onClick={() => setShowForm(!showForm)}
-              className="h-8 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{showForm ? 'Tutup Formulir' : 'Ajukan Request'}</span>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowForm(!showForm)}
+            className="h-8 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{showForm ? 'Tutup Formulir' : 'Ajukan Request'}</span>
+          </button>
           <button
             type="button"
             onClick={() => fetchRequests()}
@@ -324,8 +322,8 @@ export default function RequestPage() {
         </div>
       </div>
 
-      {/* Form Pengajuan (USER_SEKSI only) */}
-      {showForm && !isAdmin && (
+      {/* Form Pengajuan Request */}
+      {showForm && (
         <form onSubmit={handleSubmit} className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-4">
           <h2 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
             <Send className="w-4 h-4 text-indigo-600" />

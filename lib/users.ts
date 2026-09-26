@@ -1,8 +1,29 @@
+/**
+ * lib/users.ts — Manajemen Akun Pengguna & Otorisasi RBAC
+ * 
+ * ============================================================================
+ * FUNGSI UTAMA:
+ * 1. Definisi model akun pengguna dan hak akses (ADMIN, OPERATOR, USER_SEKSI).
+ * 2. Auto-seeding akun bawaan pabrik jika tabel database baru diinisialisasi.
+ * 3. Otentikasi kredensial login dengan verifikasi hash PBKDF2 SHA-512.
+ * 4. Operasi CRUD pengguna lengkap dengan proteksi tidak boleh menghapus Admin terakhir.
+ * 5. Data Privacy: Query user untuk frontend secara ketat mengecualikan kolom password.
+ * ============================================================================
+ */
 import sql from './db';
 import { hashPassword, verifyPassword } from './passwords';
 
+/**
+ * Hak Akses Sistem (Role-Based Access Control)
+ * - ADMIN      : Staff Special Project / Bengkel Produksi (Full Access)
+ * - OPERATOR   : Teknisi lapangan (Input & Riwayat Daisha)
+ * - USER_SEKSI : Perwakilan departemen pabrik (Pengajuan Pesanan Seksi)
+ */
 export type UserRole = 'ADMIN' | 'OPERATOR' | 'USER_SEKSI';
 
+/**
+ * Representasi Objek Akun Pengguna (Data publik aman tanpa password)
+ */
 export interface UserAccount {
   id: number;
   username: string;
@@ -17,7 +38,11 @@ export interface UserAccount {
 let isSeeded = false;
 
 /**
- * Otomatis mengisi akun default (Admin, Operator, Seksi) jika tabel User di database masih kosong.
+ * Menginisialisasi akun bawaan jika database masih kosong.
+ * Akun default yang dibuat:
+ * 1. Admin      : username dari ENV / 'admin'
+ * 2. Operator   : username dari ENV / 'operator'
+ * 3. User Seksi : 'seksi_welding'
  */
 export async function seedInitialUsers(): Promise<void> {
   if (isSeeded) return;
@@ -55,7 +80,11 @@ export async function seedInitialUsers(): Promise<void> {
 }
 
 /**
- * Autentikasi pengguna berdasarkan username dan password.
+ * Autentikasi pengguna berdasarkan kombinasi username dan password.
+ * 
+ * @param usernameInput - Username pengguna
+ * @param passwordInput - Password plaintext yang dimasukkan pada form login
+ * @returns UserAccount jika lolos validasi, atau null jika gagal
  */
 export async function findUserByCredentials(
   usernameInput: string,
@@ -83,7 +112,7 @@ export async function findUserByCredentials(
 }
 
 /**
- * Mencari pengguna berdasarkan username saja.
+ * Mencari profil pengguna berdasarkan username (untuk verifikasi identitas internal).
  */
 export async function findUserByUsername(usernameInput: string): Promise<UserAccount | null> {
   await seedInitialUsers();
@@ -106,7 +135,10 @@ export async function findUserByUsername(usernameInput: string): Promise<UserAcc
 }
 
 /**
- * Mendapatkan seluruh daftar akun (tanpa password hash).
+ * Mengambil seluruh daftar pengguna dari database.
+ * Kolom sensitif seperti hash password sengaja tidak di-select demi menjaga kerahasiaan data.
+ * 
+ * @returns Array data akun pengguna terdaftar
  */
 export async function getAllUsers(): Promise<UserAccount[]> {
   await seedInitialUsers();
@@ -124,7 +156,11 @@ export async function getAllUsers(): Promise<UserAccount[]> {
 }
 
 /**
- * Membuat pengguna baru.
+ * Mendaftarkan akun pengguna baru ke sistem.
+ * Password otomatis dienkripsi dengan PBKDF2 SHA-512 sebelum disimpan ke PostgreSQL.
+ * 
+ * @param data - Informasi akun baru (username, password, nama, role, seksi, deskripsi)
+ * @returns UserAccount data akun yang baru dibuat
  */
 export async function createUser(data: {
   username: string;
@@ -163,7 +199,12 @@ export async function createUser(data: {
 }
 
 /**
- * Memperbarui info pengguna.
+ * Memperbarui data profil pengguna (nama, role, seksi, atau deskripsi).
+ * Mencegah duplikasi jika username diubah ke username yang sudah dimiliki user lain.
+ * 
+ * @param id - ID akun target
+ * @param data - Bidang data yang ingin diperbarui
+ * @returns UserAccount data akun setelah perubahan
  */
 export async function updateUser(
   id: number,
@@ -211,7 +252,11 @@ export async function updateUser(
 }
 
 /**
- * Reset / Ubah password pengguna.
+ * Mengubah atau me-reset password akun pengguna (hanya bisa diakses oleh Admin atau user bersangkutan).
+ * Minimal panjang password: 6 karakter.
+ * 
+ * @param id - ID akun pengguna
+ * @param newPasswordPlain - Password baru dalam bentuk plaintext
  */
 export async function changeUserPassword(id: number, newPasswordPlain: string): Promise<void> {
   if (!newPasswordPlain || newPasswordPlain.length < 6) {
@@ -226,7 +271,10 @@ export async function changeUserPassword(id: number, newPasswordPlain: string): 
 }
 
 /**
- * Menghapus pengguna (dengan proteksi agar tidak menghapus admin terakhir).
+ * Menghapus akun pengguna dari database.
+ * Dilengkapi proteksi keamanan: Menolak penghapusan jika akun tersebut adalah Admin terakhir di sistem.
+ * 
+ * @param id - ID akun yang akan dihapus
  */
 export async function deleteUser(id: number): Promise<void> {
   const [target] = await sql`SELECT "id", "role" FROM "User" WHERE "id" = ${id} LIMIT 1`;

@@ -1,3 +1,15 @@
+/**
+ * lib/sortTickets.ts — Utilitas Pengurutan Data Tiket Perbaikan Daisha
+ * 
+ * ============================================================================
+ * FUNGSI UTAMA:
+ * Mengurutkan array tiket perbaikan berdasarkan berbagai kriteria:
+ * - Waktu masuk (terbaru / terlama)
+ * - Waktu penyelesaian perbaikan (terbaru / terlama)
+ * - Nomor unit Daisha (pengurutan natural alphanumeric)
+ * - Nama tipe Daisha, departemen/seksi, atau nama teknisi pelapor
+ * ============================================================================
+ */
 import { Ticket } from '@/types/ticket';
 import { parseToTimestamp } from './date';
 
@@ -29,6 +41,13 @@ export const SORT_OPTIONS: SortOptionItem[] = [
   { value: 'unit_asc', label: 'No Unit: (0-9)', shortLabel: 'No Unit' },
 ];
 
+/**
+ * Mengurutkan array tiket secara non-mutatif.
+ * 
+ * @param tickets - Array tiket yang ingin diurutkan
+ * @param sortBy - Opsi pengurutan (misal: 'input_desc', 'done_desc', 'unit_asc')
+ * @returns Array baru berisi tiket yang telah terurut
+ */
 export function sortTickets(tickets: Ticket[], sortBy: SortOption): Ticket[] {
   return [...tickets].sort((a, b) => {
     switch (sortBy) {

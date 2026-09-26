@@ -1,6 +1,22 @@
+/**
+ * lib/ticketParser.ts — Normalisasi & Transformasi Data Tiket Perbaikan Daisha
+ * 
+ * ============================================================================
+ * FUNGSI UTAMA:
+ * 1. Mengubah status tiket heterogen menjadi enum baku ('Open', 'Progress', 'Done', 'Scrap').
+ * 2. Ekstraksi field tangguh (tolerant extractor) yang mendukung berbagai variasi penamaan kolom.
+ * 3. Sanitasi dan transformasi data mentah JSON dari backend/database menjadi array interface `Ticket`.
+ * ============================================================================
+ */
 import { Ticket, RawTicketData, TicketStatus } from '@/types/ticket';
 import { formatDisplayDate } from './date';
 
+/**
+ * Menormalkan status tiket dari berbagai format input menjadi status standar sistem.
+ * 
+ * @param val - Nilai status mentah (misal: "dalam proses", "complete", "afkir")
+ * @returns TicketStatus standar ('Open' | 'Progress' | 'Done' | 'Scrap')
+ */
 export function normalizeStatus(val: unknown): TicketStatus {
   if (!val) return 'Open';
   const s = String(val).trim().toLowerCase();

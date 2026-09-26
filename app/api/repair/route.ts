@@ -1,31 +1,49 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { parseAndVerifySession, SESSION_COOKIE_NAME } from '@/lib/auth';
 import sql from '@/lib/db';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { parseToTimestamp, formatDisplayDate } from '@/lib/date';
-
-function sanitizeString(val: unknown, maxLength = 255): string {
-  if (typeof val !== 'string') return '';
-  return val.trim().replace(/[\x00-\x1F\x7F<>]/g, '').slice(0, maxLength);
-}
+import {
+  requireAuth,
+  checkRateLimit,
+  validatePayloadSize,
+  recordAuditLog,
+  sanitizeText,
+  validateNoDaisha,
+} from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// 1. FUNGSI GET: Membaca data langsung dari PostgreSQL via postgres.js (< 5ms)
-export async function GET() {
-  // Proteksi: Wajib login (Admin atau Operator)
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-  const session = await parseAndVerifySession(sessionCookie);
+let repairCache: any[] | null = null;
+let repairCacheTimestamp = 0;
+const REPAIR_CACHE_TTL_MS = 10 * 1000; // 10 detik
 
-  if (!session.valid || !session.user) {
-    return NextResponse.json(
-      { error: "Akses ditolak. Sesi login diperlukan untuk melihat data perbaikan." },
-      { status: 401 }
-    );
+export function invalidateRepairCache(): void {
+  repairCache = null;
+  repairCacheTimestamp = 0;
+}
+
+// 1. FUNGSI GET: Membaca data langsung dari PostgreSQL (Khusus ADMIN & OPERATOR)
+export async function GET(request: Request) {
+  // 1. AUTHENTICATION & AUTHORIZATION (Admin dan Operator)
+  const auth = await requireAuth(request, ['ADMIN', 'OPERATOR']);
+  if (!auth.authorized) return auth.errorResponse!;
+
+  // 2. RATE LIMITING (120 req/menit)
+  const rateLimit = checkRateLimit(`repair_get:${auth.ip}`, 120, 60 * 1000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Terlalu banyak permintaan data perbaikan.' }, { status: 429 });
+  }
+
+  // 3. FAST CACHE HIT (< 2ms)
+  if (repairCache && Date.now() - repairCacheTimestamp < REPAIR_CACHE_TTL_MS) {
+    return NextResponse.json(repairCache, {
+      headers: {
+        'X-Database': 'PostgreSQL-Native',
+        'X-Cache': 'HIT',
+      },
+    });
   }
 
   try {
@@ -91,10 +109,13 @@ export async function GET() {
       };
     });
 
+    repairCache = formattedData;
+    repairCacheTimestamp = Date.now();
+
     return NextResponse.json(formattedData, {
       headers: {
         'X-Database': 'PostgreSQL-Native',
-        'Cache-Control': 'no-store',
+        'X-Cache': 'MISS',
       },
     });
   } catch (error: unknown) {
@@ -108,19 +129,22 @@ export async function GET() {
 
 // 2. FUNGSI POST: Create, Update, Delete tiket langsung via postgres.js
 export async function POST(request: Request) {
-  // Proteksi Autentikasi Umum
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-  const session = await parseAndVerifySession(sessionCookie);
+  // 1. AUTHENTICATION & AUTHORIZATION (Admin dan Operator)
+  const auth = await requireAuth(request, ['ADMIN', 'OPERATOR']);
+  if (!auth.authorized) return auth.errorResponse!;
 
-  if (!session.valid || !session.user) {
-    return NextResponse.json(
-      { error: "Akses ditolak. Silakan login terlebih dahulu sebelum melakukan aksi." },
-      { status: 401 }
-    );
+  // 2. FILE & PAYLOAD LIMIT (Maksimal 512KB)
+  const sizeCheck = validatePayloadSize(request, 512 * 1024);
+  if (!sizeCheck.ok) return sizeCheck.errorResponse!;
+
+  // 3. RATE LIMITING (60 mutasi/menit)
+  const rateLimit = checkRateLimit(`repair_post:${auth.ip}`, 60, 60 * 1000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Terlalu banyak permintaan mutasi tiket. Coba sesaat lagi.' }, { status: 429 });
   }
 
   try {
+    invalidateRepairCache();
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
       return NextResponse.json(
@@ -130,7 +154,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const action = sanitizeString(body.action).toUpperCase();
+    const action = sanitizeText(body.action, 50).toUpperCase();
 
     if (!action || !['CREATE', 'UPDATE', 'DELETE', 'EDIT_TICKET'].includes(action)) {
       return NextResponse.json(
@@ -141,13 +165,18 @@ export async function POST(request: Request) {
 
     // 2.1 CREATE (Bisa dilakukan oleh Operator maupun Admin)
     if (action === 'CREATE') {
-      const idTiket = sanitizeString(body.idTiket, 50) || `TCK-${Date.now()}`;
-      const waktuMasuk = sanitizeString(body.waktuMasuk, 30);
-      const namaPelapor = sanitizeString(body.namaPelapor, 100);
-      const seksi = sanitizeString(body.seksi, 50);
-      const namaDaisha = sanitizeString(body.namaDaisha, 100);
-      const noDaisha = sanitizeString(body.noDaisha, 50).toUpperCase();
-      const detail = sanitizeString(body.detail, 2000);
+      const idTiket = sanitizeText(body.idTiket, 50) || `TCK-${Date.now()}`;
+      const waktuMasuk = sanitizeText(body.waktuMasuk, 30);
+      const namaPelapor = sanitizeText(body.namaPelapor, 100);
+      const seksi = sanitizeText(body.seksi, 50);
+      const namaDaisha = sanitizeText(body.namaDaisha, 100);
+      const noDaishaValidation = validateNoDaisha(body.noDaisha);
+      const detail = sanitizeText(body.detail, 2000);
+
+      if (!noDaishaValidation.valid) {
+        return NextResponse.json({ error: noDaishaValidation.error }, { status: 400 });
+      }
+      const noDaisha = noDaishaValidation.value;
 
       // Validasi kelengkapan data form laporan
       if (!namaPelapor || !seksi || !namaDaisha || !noDaisha) {
@@ -167,7 +196,7 @@ export async function POST(request: Request) {
         SET "namaDaisha" = EXCLUDED."namaDaisha", "ukuran" = EXCLUDED."ukuran", "seksi" = EXCLUDED."seksi"
       `;
 
-      // Parse waktu masuk secara konsisten (aman format DD/MM/YYYY maupun ISO)
+      // Parse waktu masuk secara konsisten
       let parsedDateMasuk = new Date();
       if (waktuMasuk) {
         const ts = parseToTimestamp(waktuMasuk);
@@ -203,6 +232,16 @@ export async function POST(request: Request) {
         )
       );
 
+      recordAuditLog({
+        action: 'TICKET_CREATE',
+        ip: auth.ip,
+        user: auth.user?.username,
+        role: auth.user?.role,
+        status: 'SUCCESS',
+        targetId: idTiket,
+        details: `Unit: ${noDaisha} (${namaDaisha}), Seksi: ${seksi}, Pelapor: ${namaPelapor}`,
+      });
+
       return NextResponse.json({
         success: true,
         message: `Tiket ${idTiket} berhasil dibuat di database`,
@@ -212,17 +251,25 @@ export async function POST(request: Request) {
 
     // 2.2 UPDATE STATUS & CATATAN (KHUSUS ROLE ADMIN)
     else if (action === 'UPDATE') {
-      if (session.user.role !== 'ADMIN') {
+      if (auth.user?.role !== 'ADMIN') {
+        recordAuditLog({
+          action: 'TICKET_STATUS_UPDATE',
+          ip: auth.ip,
+          user: auth.user?.username,
+          role: auth.user?.role,
+          status: 'DENIED',
+          details: 'Upaya update status oleh non-admin',
+        });
         return NextResponse.json(
           { error: "Akses ditolak. Hanya akun ADMIN yang berhak memperbarui status perbaikan tiket." },
           { status: 403 }
         );
       }
 
-      const idTiket = sanitizeString(body.idTiket, 50);
-      const status = sanitizeString(body.status, 20);
-      const waktuKeluar = sanitizeString(body.waktuKeluar, 30);
-      const catatan = sanitizeString(body.catatan, 500);
+      const idTiket = sanitizeText(body.idTiket, 50);
+      const status = sanitizeText(body.status, 20);
+      const waktuKeluar = sanitizeText(body.waktuKeluar, 30);
+      const catatan = sanitizeText(body.catatan, 500);
 
       if (!idTiket) {
         return NextResponse.json(
@@ -260,7 +307,7 @@ export async function POST(request: Request) {
       `;
 
       if (body.detail) {
-        const detailStr = sanitizeString(body.detail, 2000);
+        const detailStr = sanitizeText(body.detail, 2000);
         await sql`DELETE FROM "TicketDetail" WHERE "idTiket" = ${idTiket}`;
         const parsedDetails = parseTicketDamageDetail(detailStr);
         if (parsedDetails.items.length > 0) {
@@ -271,6 +318,16 @@ export async function POST(request: Request) {
         }
       }
 
+      recordAuditLog({
+        action: 'TICKET_STATUS_UPDATE',
+        ip: auth.ip,
+        user: auth.user?.username,
+        role: auth.user?.role,
+        status: 'SUCCESS',
+        targetId: idTiket,
+        details: `Status: ${normalizedStatus}`,
+      });
+
       return NextResponse.json({
         success: true,
         message: `Status tiket ${idTiket} berhasil diubah menjadi ${normalizedStatus}`,
@@ -279,14 +336,22 @@ export async function POST(request: Request) {
 
     // 2.3 DELETE / BATALKAN TIKET (KHUSUS ROLE ADMIN — operasi destruktif)
     else if (action === 'DELETE') {
-      if (session.user.role !== 'ADMIN') {
+      if (auth.user?.role !== 'ADMIN') {
+        recordAuditLog({
+          action: 'TICKET_DELETE',
+          ip: auth.ip,
+          user: auth.user?.username,
+          role: auth.user?.role,
+          status: 'DENIED',
+          details: 'Upaya delete tiket oleh non-admin',
+        });
         return NextResponse.json(
           { error: "Akses ditolak. Hanya akun ADMIN yang berhak menghapus tiket." },
           { status: 403 }
         );
       }
 
-      const idTiket = sanitizeString(body.idTiket, 50);
+      const idTiket = sanitizeText(body.idTiket, 50);
       if (!idTiket) {
         return NextResponse.json(
           { error: "ID Tiket wajib diisi untuk membatalkan tiket." },
@@ -297,27 +362,37 @@ export async function POST(request: Request) {
       await sql`DELETE FROM "TicketDetail" WHERE "idTiket" = ${idTiket}`;
       await sql`DELETE FROM "Ticket" WHERE "idTiket" = ${idTiket}`;
 
+      recordAuditLog({
+        action: 'TICKET_DELETE',
+        ip: auth.ip,
+        user: auth.user?.username,
+        role: auth.user?.role,
+        status: 'SUCCESS',
+        targetId: idTiket,
+      });
+
       return NextResponse.json({
         success: true,
         message: `Tiket ${idTiket} berhasil dibatalkan / dihapus`,
       });
     }
 
-    // 2.4 EDIT_TICKET (Koreksi data tiket oleh Pelapor/Operator)
+    // 2.4 EDIT_TICKET (Koreksi data tiket oleh Pelapor/Operator/Admin)
     else if (action === 'EDIT_TICKET') {
-      const idTiket = sanitizeString(body.idTiket, 50);
-      const namaPelapor = sanitizeString(body.namaPelapor, 100);
-      const seksi = sanitizeString(body.seksi, 50);
-      const namaDaisha = sanitizeString(body.namaDaisha, 100);
-      const noDaisha = sanitizeString(body.noDaisha, 50).toUpperCase();
-      const detail = sanitizeString(body.detail, 2000);
+      const idTiket = sanitizeText(body.idTiket, 50);
+      const namaPelapor = sanitizeText(body.namaPelapor, 100);
+      const seksi = sanitizeText(body.seksi, 50);
+      const namaDaisha = sanitizeText(body.namaDaisha, 100);
+      const noDaishaValidation = validateNoDaisha(body.noDaisha);
+      const detail = sanitizeText(body.detail, 2000);
 
-      if (!idTiket || !noDaisha) {
+      if (!idTiket || !noDaishaValidation.valid) {
         return NextResponse.json(
-          { error: "ID Tiket dan Nomor Daisha wajib diisi untuk melakukan koreksi." },
+          { error: "ID Tiket dan Nomor Daisha yang valid wajib diisi untuk melakukan koreksi." },
           { status: 400 }
         );
       }
+      const noDaisha = noDaishaValidation.value;
 
       // Update Master Daisha
       const sizeInfo = detectDaishaSize(noDaisha);
@@ -330,7 +405,7 @@ export async function POST(request: Request) {
       `;
 
       // Update Ticket
-      const waktuMasukRaw = sanitizeString(body.waktuMasuk, 30);
+      const waktuMasukRaw = sanitizeText(body.waktuMasuk, 30);
       let parsedWaktuMasuk: Date | null = null;
       if (waktuMasukRaw && waktuMasukRaw !== '-') {
         const d = new Date(waktuMasukRaw);
@@ -341,7 +416,7 @@ export async function POST(request: Request) {
         UPDATE "Ticket"
         SET 
           "noDaisha" = ${noDaisha},
-          "namaPelapor" = ${namaPelapor || session.user.name || 'Operator'},
+          "namaPelapor" = ${namaPelapor || auth.user?.name || 'Operator'},
           "waktuMasuk" = COALESCE(${parsedWaktuMasuk}, "waktuMasuk")
         WHERE "idTiket" = ${idTiket}
       `;
@@ -356,6 +431,16 @@ export async function POST(request: Request) {
         `;
       }
 
+      recordAuditLog({
+        action: 'TICKET_EDIT',
+        ip: auth.ip,
+        user: auth.user?.username,
+        role: auth.user?.role,
+        status: 'SUCCESS',
+        targetId: idTiket,
+        details: `Unit: ${noDaisha}`,
+      });
+
       return NextResponse.json({
         success: true,
         message: `Tiket ${idTiket} berhasil dikoreksi`,
@@ -365,6 +450,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Aksi tidak dikenali" }, { status: 400 });
   } catch (error: unknown) {
     console.error("Database POST Error:", error);
+    recordAuditLog({
+      action: 'TICKET_POST_ERROR',
+      ip: auth.ip,
+      user: auth.user?.username,
+      status: 'FAILED',
+      details: error instanceof Error ? error.message : 'Internal Server Error',
+    });
     return NextResponse.json(
       { error: "Terjadi kesalahan internal pada server database" },
       { status: 500 }
