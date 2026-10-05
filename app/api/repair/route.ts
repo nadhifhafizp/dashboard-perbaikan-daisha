@@ -56,24 +56,11 @@ export async function GET(request: Request) {
         t."waktuMasuk",
         t."waktuSelesai",
         t."catatan",
+        COALESCE(t."items", '[]'::jsonb) AS details,
         m."namaDaisha",
-        m."seksi",
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'idDetail', d."idDetail",
-              'komponen', d."komponen",
-              'gejala', d."gejala",
-              'tindakan', d."tindakan",
-              'qty', d."qty"
-            )
-          ) FILTER (WHERE d."idDetail" IS NOT NULL),
-          '[]'::json
-        ) AS details
+        m."seksi"
       FROM "Ticket" t
       LEFT JOIN "MasterDaisha" m ON t."noDaisha" = m."noDaisha"
-      LEFT JOIN "TicketDetail" d ON t."idTiket" = d."idTiket"
-      GROUP BY t."idTiket", m."namaDaisha", m."seksi"
       ORDER BY t."waktuMasuk" DESC
     `;
 
@@ -186,14 +173,15 @@ export async function POST(request: Request) {
         );
       }
 
-      // Pastikan Master Daisha terdaftar
+      // Pastikan data unit di tabel Daisha terdaftar / terupdate
       const sizeInfo = detectDaishaSize(noDaisha);
       const ukuran = sizeInfo?.code || 'Standard';
+      const jenis = noDaisha.toUpperCase().includes('NF') || namaDaisha.toLowerCase().includes('nagara') ? 'NAGARA_FILTER' : 'VERTICAL';
       await sql`
-        INSERT INTO "MasterDaisha" ("noDaisha", "namaDaisha", "ukuran", "seksi")
-        VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi})
-        ON CONFLICT ("noDaisha") DO UPDATE 
-        SET "namaDaisha" = EXCLUDED."namaDaisha", "ukuran" = EXCLUDED."ukuran", "seksi" = EXCLUDED."seksi"
+        INSERT INTO "Daisha" ("nomor_daisha", "nama_daisha", "ukuran", "seksi", "jenis")
+        VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi}, ${jenis})
+        ON CONFLICT ("nomor_daisha") DO UPDATE 
+        SET "nama_daisha" = EXCLUDED."nama_daisha", "ukuran" = EXCLUDED."ukuran", "seksi" = EXCLUDED."seksi"
       `;
 
       // Parse waktu masuk secara konsisten
@@ -203,20 +191,21 @@ export async function POST(request: Request) {
         if (ts > 0) parsedDateMasuk = new Date(ts);
       }
 
-      // Buat Tiket
-      await sql`
-        INSERT INTO "Ticket" ("idTiket", "noDaisha", "namaPelapor", "status", "waktuMasuk", "catatan")
-        VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, 'Open', ${parsedDateMasuk}, '-')
-      `;
-
-      // Pecah rincian kerusakan ke TicketDetail
+      // Pecah rincian kerusakan ke items JSONB
       const parsedDetails = parseTicketDamageDetail(detail);
-      if (parsedDetails.items.length > 0) {
-        await sql`
-          INSERT INTO "TicketDetail" ("idTiket", "komponen", "gejala", "tindakan", "qty")
-          VALUES ${sql(parsedDetails.items.map(it => [idTiket, it.komponen, it.gejala, it.tindakan || 'Repair', it.qty || 1]))}
-        `;
-      }
+      const itemsJson = parsedDetails.items.map((it, idx) => ({
+        idDetail: idx + 1,
+        komponen: it.komponen,
+        gejala: it.gejala,
+        tindakan: it.tindakan || 'Repair',
+        qty: it.qty || 1,
+      }));
+
+      // Buat Tiket dalam 1 query saja
+      await sql`
+        INSERT INTO "Ticket" ("idTiket", "noDaisha", "namaPelapor", "status", "waktuMasuk", "catatan", "items")
+        VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, 'Open', ${parsedDateMasuk}, '-', ${JSON.stringify(itemsJson)}::jsonb)
+      `;
 
       // Pengurangan stok otomatis untuk komponen Ganti Baru (Projek 3)
       const gantiItems = parsedDetails.items.filter((it) => it.tindakan === 'Ganti');
@@ -306,16 +295,64 @@ export async function POST(request: Request) {
         WHERE "idTiket" = ${idTiket}
       `;
 
+      // PRD Modul Maintenance: Sinkronisasi perbaikan selesai -> terhitung sudah maintenance
+      if (normalizedStatus === 'Done') {
+        try {
+          const tRow = await sql`SELECT "noDaisha" FROM "Ticket" WHERE "idTiket" = ${idTiket} LIMIT 1`;
+          if (tRow.length > 0 && tRow[0].noDaisha) {
+            const noD = tRow[0].noDaisha.trim();
+            const completionDate = parsedWaktuSelesai || new Date();
+            
+            // Cari unit Daisha atau buat baru
+            const daishaMatch = await sql`
+              SELECT id FROM "Daisha" WHERE UPPER(nomor_daisha) = ${noD.toUpperCase()} LIMIT 1
+            `;
+
+            let dId: string;
+            if (daishaMatch.length > 0) {
+              dId = daishaMatch[0].id;
+              await sql`
+                UPDATE "Daisha"
+                SET "last_maintenance_date" = ${completionDate}, "updated_at" = now()
+                WHERE id = ${dId}
+              `;
+            } else {
+              const jenis = noD.toUpperCase().includes('NF') || noD.toUpperCase().includes('FIL') ? 'NAGARA_FILTER' : 'VERTICAL';
+              const ukuran = noD.toUpperCase().includes('S') ? 'SMALL' : noD.toUpperCase().includes('L') ? 'LARGE' : 'MEDIUM';
+              const inserted = await sql`
+                INSERT INTO "Daisha" ("nomor_daisha", "jenis", "ukuran", "last_maintenance_date")
+                VALUES (${noD}, ${jenis}, ${ukuran}, ${completionDate})
+                RETURNING id
+              `;
+              dId = inserted[0].id;
+            }
+
+            // Catat log pengerjaan repair
+            await sql`
+              INSERT INTO "MaintenanceLog" ("daisha_id", "nomor_daisha", "jenis_pekerjaan", "tanggal_pengerjaan", "admin_id", "catatan")
+              VALUES (${dId}, ${noD}, 'REPAIR', ${completionDate}, ${auth.user?.name || auth.user?.username || 'Admin'}, ${'Perbaikan selesai via tiket ' + idTiket})
+            `;
+          }
+        } catch (syncErr) {
+          console.warn('[Sync Maintenance] Gagal sinkronisasi tiket Done ke modul Maintenance:', syncErr);
+        }
+      }
+
       if (body.detail) {
         const detailStr = sanitizeText(body.detail, 2000);
-        await sql`DELETE FROM "TicketDetail" WHERE "idTiket" = ${idTiket}`;
         const parsedDetails = parseTicketDamageDetail(detailStr);
-        if (parsedDetails.items.length > 0) {
-          await sql`
-            INSERT INTO "TicketDetail" ("idTiket", "komponen", "gejala", "tindakan", "qty")
-            VALUES ${sql(parsedDetails.items.map(it => [idTiket, it.komponen, it.gejala, it.tindakan || 'Repair', it.qty || 1]))}
-          `;
-        }
+        const itemsJson = parsedDetails.items.map((it, idx) => ({
+          idDetail: idx + 1,
+          komponen: it.komponen,
+          gejala: it.gejala,
+          tindakan: it.tindakan || 'Repair',
+          qty: it.qty || 1,
+        }));
+        await sql`
+          UPDATE "Ticket"
+          SET "items" = ${JSON.stringify(itemsJson)}::jsonb
+          WHERE "idTiket" = ${idTiket}
+        `;
       }
 
       recordAuditLog({
@@ -394,14 +431,15 @@ export async function POST(request: Request) {
       }
       const noDaisha = noDaishaValidation.value;
 
-      // Update Master Daisha
+      // Update Daisha
       const sizeInfo = detectDaishaSize(noDaisha);
       const ukuran = sizeInfo?.code || 'Standard';
+      const jenis = noDaisha.toUpperCase().includes('NF') || namaDaisha.toLowerCase().includes('nagara') ? 'NAGARA_FILTER' : 'VERTICAL';
       await sql`
-        INSERT INTO "MasterDaisha" ("noDaisha", "namaDaisha", "ukuran", "seksi")
-        VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi})
-        ON CONFLICT ("noDaisha") DO UPDATE 
-        SET "namaDaisha" = EXCLUDED."namaDaisha", "ukuran" = EXCLUDED."ukuran", "seksi" = EXCLUDED."seksi"
+        INSERT INTO "Daisha" ("nomor_daisha", "nama_daisha", "ukuran", "seksi", "jenis")
+        VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi}, ${jenis})
+        ON CONFLICT ("nomor_daisha") DO UPDATE 
+        SET "nama_daisha" = EXCLUDED."nama_daisha", "ukuran" = EXCLUDED."ukuran", "seksi" = EXCLUDED."seksi"
       `;
 
       // Update Ticket

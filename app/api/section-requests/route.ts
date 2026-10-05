@@ -56,25 +56,31 @@ export async function GET(request: Request) {
 
     const requests = await sql`
       SELECT 
-        sr.*,
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', srm.id,
-              'sectionRequestId', srm."sectionRequestId",
-              'namaKomponen', srm."namaKomponen",
-              'qty', srm.qty,
-              'keterangan', srm.keterangan
-            )
-          ) FILTER (WHERE srm.id IS NOT NULL),
-          '[]'::json
-        ) as materials
+        sr.id,
+        sr."nomorRequest",
+        sr."seksiPemohon",
+        sr."picPemohon",
+        sr."kontakPemohon",
+        sr."namaBarang",
+        sr."spesifikasi",
+        sr.jumlah,
+        sr.satuan,
+        sr.urgensi,
+        sr.catatan,
+        sr.status,
+        sr."alasanTolak",
+        sr."picBengkel",
+        sr.estimasi,
+        sr."catatanAdmin",
+        sr."dibuatOleh",
+        sr."waktuDibuat",
+        sr."waktuUpdate",
+        sr."waktuSelesai",
+        COALESCE(sr."materials", '[]'::jsonb) as materials
       FROM "SectionRequest" sr
-      LEFT JOIN "SectionRequestMaterial" srm ON srm."sectionRequestId" = sr.id
       WHERE (${filterByUser}::text IS NULL OR sr."dibuatOleh" = ${filterByUser})
         AND (${filterStatus}::text IS NULL OR sr.status = ${filterStatus})
         AND (${filterSeksi}::text IS NULL OR sr."seksiPemohon" = ${filterSeksi})
-      GROUP BY sr.id
       ORDER BY sr."waktuDibuat" DESC
     `;
 
@@ -261,10 +267,19 @@ export async function POST(request: Request) {
         SELECT "nomorRequest", "namaBarang" FROM "SectionRequest" WHERE id = ${sectionRequestId} LIMIT 1
       `;
 
+      const newMat = {
+        id: Date.now(),
+        sectionRequestId,
+        namaKomponen,
+        qty,
+        keterangan: keterangan || null,
+      };
+
       await sql.begin(async (tx) => {
         await tx`
-          INSERT INTO "SectionRequestMaterial" ("sectionRequestId", "namaKomponen", qty, keterangan)
-          VALUES (${sectionRequestId}, ${namaKomponen}, ${qty}, ${keterangan || null})
+          UPDATE "SectionRequest"
+          SET "materials" = COALESCE("materials", '[]'::jsonb) || ${JSON.stringify([newMat])}::jsonb
+          WHERE id = ${sectionRequestId}
         `;
         await tx`
           UPDATE "Sparepart"
@@ -305,10 +320,7 @@ export async function POST(request: Request) {
 
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
 
-      await sql.begin(async (tx) => {
-        await tx`DELETE FROM "SectionRequestMaterial" WHERE "sectionRequestId" = ${id}`;
-        await tx`DELETE FROM "SectionRequest" WHERE id = ${id}`;
-      });
+      await sql`DELETE FROM "SectionRequest" WHERE id = ${id}`;
 
       recordAuditLog({
         action: 'SECTION_REQUEST_DELETE',

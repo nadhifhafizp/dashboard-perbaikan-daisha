@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { DAFTAR_SEKSI } from '@/lib/masterData';
+import { SECTION_METAS } from '@/lib/daishaVariants';
 import {
   requireAuth,
   checkRateLimit,
@@ -147,22 +148,16 @@ export async function GET(request: Request) {
       ORDER BY dt.name ASC
     `;
 
-    // Ambil daftar seksi lengkap dari tabel Section
-    const sectionRows = await sql<
-      Array<{
-        id: number;
-        name: string;
-        colorName: string | null;
-        badgeBg: string | null;
-        textColor: string | null;
-        borderColor: string | null;
-        accentBorder: string | null;
-      }>
-    >`
-      SELECT id, name, "colorName", "badgeBg", "textColor", "borderColor", "accentBorder"
-      FROM "Section"
-      ORDER BY id ASC
-    `;
+    // Daftar seksi langsung dari metadata statis (hemat 1 query DB)
+    const sectionRows = Object.values(SECTION_METAS).map((s, idx) => ({
+      id: idx + 1,
+      name: s.name,
+      colorName: s.colorName,
+      badgeBg: s.badgeBg,
+      textColor: s.textColor,
+      borderColor: s.borderColor,
+      accentBorder: s.accentBorder,
+    }));
 
     // Susun format pohon data lengkap untuk UI Admin
     const rawCatalog: Record<

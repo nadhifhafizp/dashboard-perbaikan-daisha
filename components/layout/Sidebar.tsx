@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -15,12 +15,13 @@ import {
   Package,
   SendHorizonal,
   Users,
-  ArrowLeft,
   Menu,
   ScanLine,
   Layers,
   CalendarClock,
-  Activity,
+  Target,
+  ChevronDown,
+  Home,
 } from 'lucide-react';
 import PwaInstaller from '../common/PwaInstaller';
 
@@ -29,6 +30,20 @@ interface SidebarProps {
   onCloseMobileMenu: () => void;
   isDesktopCollapsed?: boolean;
   onToggleDesktopCollapse?: () => void;
+}
+
+interface SubMenuItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+}
+
+interface ModuleDef {
+  id: 'DAISHA' | 'FLEET' | 'REQUEST' | 'SPAREPARTS' | 'USERS';
+  title: string;
+  badge: string;
+  icon: React.ElementType;
+  items: SubMenuItem[];
 }
 
 export default function Sidebar({
@@ -40,96 +55,127 @@ export default function Sidebar({
   const pathname = usePathname();
   const { currentUser, isOperator, isSeksi, isAdmin, openLogoutModal, isLoggingOut } = useAuth();
 
-  // 1. Deteksi modul sistem aktif berdasarkan URL
-  let currentModule: 'DAISHA' | 'FLEET' | 'REQUEST' | 'SPAREPARTS' | 'USERS' = 'DAISHA';
-  if (pathname.startsWith('/fleet') || pathname.startsWith('/catalog')) {
-    currentModule = 'FLEET';
-  } else if (pathname.startsWith('/request')) {
-    currentModule = 'REQUEST';
-  } else if (pathname.startsWith('/spareparts')) {
-    currentModule = 'SPAREPARTS';
-  } else if (pathname.startsWith('/users')) {
-    currentModule = 'USERS';
-  } else {
-    currentModule = 'DAISHA';
-  }
-
-  // 2. Daftar link khusus per modul
-  const getNavLinks = () => {
-    if (isSeksi) {
-      return [
-        { href: '/request', label: 'Dashboard Request', icon: SendHorizonal },
-      ];
+  // 1. Deteksi modul sistem aktif berdasarkan URL saat ini
+  const getActiveModule = (path: string): 'DAISHA' | 'FLEET' | 'REQUEST' | 'SPAREPARTS' | 'USERS' | '' => {
+    if (path.startsWith('/maintenance') || path.startsWith('/fleet') || path.startsWith('/catalog')) {
+      return 'FLEET';
     }
+    if (path.startsWith('/request')) {
+      return 'REQUEST';
+    }
+    if (path.startsWith('/spareparts')) {
+      return 'SPAREPARTS';
+    }
+    if (path.startsWith('/users')) {
+      return 'USERS';
+    }
+    if (
+      path.startsWith('/daisha') ||
+      path.startsWith('/input') ||
+      path.startsWith('/riwayat') ||
+      path.startsWith('/admin')
+    ) {
+      return 'DAISHA';
+    }
+    return '';
+  };
 
-    if (isOperator) {
-      return [
+  const currentModule = getActiveModule(pathname);
+
+  // 2. State Accordion per Modul (Derived state dengan override manual klik user)
+  const [userToggled, setUserToggled] = useState<Record<string, boolean>>({});
+
+  const toggleModule = (moduleId: string) => {
+    setUserToggled((prev) => {
+      const currentIsOpen =
+        prev[moduleId] !== undefined
+          ? prev[moduleId]
+          : currentModule === moduleId || (currentModule === '' && moduleId === 'DAISHA');
+      return {
+        ...prev,
+        [moduleId]: !currentIsOpen,
+      };
+    });
+  };
+
+  // 3. Definisi 5 Modul Terstruktur Sesuai Kartu Portal
+  const allModules: ModuleDef[] = [
+    {
+      id: 'DAISHA',
+      title: 'Perbaikan Daisha',
+      badge: 'Unit Maintenance',
+      icon: Wrench,
+      items: [
+        { href: '/daisha', label: 'Dashboard Analitik', icon: LayoutDashboard },
         { href: '/input', label: 'Lapor Kerusakan', icon: PenSquare },
         { href: '/riwayat', label: 'Pelacakan & Antrean', icon: ScanLine },
+        ...(isAdmin ? [{ href: '/admin', label: 'Panel Tindakan Bengkel', icon: Settings }] : []),
+      ],
+    },
+    {
+      id: 'FLEET',
+      title: 'Modul Maintenance',
+      badge: 'Annual KPI & Grid',
+      icon: Target,
+      items: [
+        { href: '/maintenance', label: 'Target & Mapping Grid', icon: Target },
+        { href: '/fleet', label: 'Kontrol Siklus Armada', icon: CalendarClock },
+        { href: '/catalog', label: 'Master & Registri Daisha', icon: Layers },
+      ],
+    },
+    {
+      id: 'REQUEST',
+      title: 'Request Seksi',
+      badge: 'Special Project',
+      icon: SendHorizonal,
+      items: [
+        { href: '/request', label: 'Dashboard & Tiket Request', icon: SendHorizonal },
+      ],
+    },
+    {
+      id: 'SPAREPARTS',
+      title: 'Stok Sparepart',
+      badge: 'Logistik Bengkel',
+      icon: Package,
+      items: [
+        { href: '/spareparts', label: 'Monitoring & Inventaris', icon: Package },
+      ],
+    },
+    {
+      id: 'USERS',
+      title: 'Manajemen Pengguna',
+      badge: 'Sistem & Akses',
+      icon: Users,
+      items: [
+        { href: '/users', label: 'Akun & Hak Akses', icon: Users },
+      ],
+    },
+  ];
+
+  // 4. Filter modul berdasarkan Hak Akses Role
+  const getVisibleModules = (): ModuleDef[] => {
+    if (isSeksi) {
+      return allModules.filter((m) => m.id === 'REQUEST');
+    }
+    if (isOperator) {
+      return [
+        {
+          id: 'DAISHA',
+          title: 'Perbaikan Daisha',
+          badge: 'Unit Maintenance',
+          icon: Wrench,
+          items: [
+            { href: '/input', label: 'Lapor Kerusakan', icon: PenSquare },
+            { href: '/riwayat', label: 'Pelacakan & Antrean', icon: ScanLine },
+          ],
+        },
       ];
     }
-
-    switch (currentModule) {
-      case 'FLEET':
-        return [
-          { href: '/fleet', label: 'Kontrol Pemeliharaan Unit', icon: CalendarClock },
-          { href: '/catalog', label: 'Master & Registri Daisha', icon: Layers },
-        ];
-      case 'REQUEST':
-        return [
-          { href: '/request', label: 'Dashboard & Tiket Request', icon: SendHorizonal },
-        ];
-      case 'SPAREPARTS':
-        return [
-          { href: '/spareparts', label: 'Monitoring & Inventaris', icon: Package },
-        ];
-      case 'USERS':
-        return [
-          { href: '/users', label: 'Akun & Hak Akses', icon: Users },
-        ];
-      case 'DAISHA':
-      default:
-        return [
-          { href: '/daisha', label: 'Dashboard Analitik', icon: LayoutDashboard },
-          { href: '/input', label: 'Lapor Kerusakan', icon: PenSquare },
-          { href: '/riwayat', label: 'Pelacakan & Antrean', icon: ScanLine },
-          { href: '/admin', label: 'Panel Tindakan Bengkel', icon: Settings },
-        ];
-    }
+    // Admin memiliki akses ke semua 5 modul
+    return allModules;
   };
 
-  const navLinks = getNavLinks();
-
-  const MODULE_INFO = {
-    DAISHA: {
-      title: 'Perbaikan Daisha',
-      badge: 'Modul Perbaikan',
-      icon: Wrench,
-    },
-    FLEET: {
-      title: 'Kontrol Armada Daisha',
-      badge: 'Modul Pemeliharaan',
-      icon: Activity,
-    },
-    REQUEST: {
-      title: 'Request Seksi',
-      badge: 'Modul Request',
-      icon: SendHorizonal,
-    },
-    SPAREPARTS: {
-      title: 'Manajemen Spareparts',
-      badge: 'Modul Spareparts',
-      icon: Package,
-    },
-    USERS: {
-      title: 'Manajemen Pengguna',
-      badge: 'Modul Akses & Akun',
-      icon: Users,
-    },
-  };
-
-  const activeInfo = MODULE_INFO[currentModule];
-  const ActiveIcon = activeInfo.icon;
+  const visibleModules = getVisibleModules();
 
   return (
     <aside
@@ -139,7 +185,7 @@ export default function Sidebar({
         ${isDesktopCollapsed ? 'md:w-0 md:opacity-0 md:-translate-x-full md:pointer-events-none md:overflow-hidden' : 'md:w-64 md:opacity-100'}
       `}
     >
-      {/* Brand Logo & Desktop Collapse Toggle */}
+      {/* 1. Brand Logo & Collapse Toggle */}
       <div className="hidden md:flex p-4 border-b border-[#3A0004] flex-col items-center justify-center bg-[#3D0004] relative">
         {onToggleDesktopCollapse && (
           <button
@@ -169,24 +215,9 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Module Context Banner */}
-      <div className="px-4 py-3 border-b border-[#3A0004] bg-[#3D0004]/70 flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-lg bg-red-500/20 border border-red-400/30 flex items-center justify-center text-red-300 shrink-0">
-          <ActiveIcon className="w-3.5 h-3.5" />
-        </div>
-        <div className="overflow-hidden">
-          <span className="block text-[11px] font-medium text-red-200/60">
-            {activeInfo.badge}
-          </span>
-          <p className="text-xs font-semibold text-white truncate">
-            {activeInfo.title}
-          </p>
-        </div>
-      </div>
-
-      {/* User Info */}
+      {/* 2. User Info */}
       {currentUser && (
-        <div className="px-4 py-2.5 border-b border-[#3A0004] flex items-center gap-2.5 bg-[#3D0004]/40">
+        <div className="px-4 py-2.5 border-b border-[#3A0004] flex items-center gap-2.5 bg-[#3D0004]/60">
           <div className="w-7 h-7 rounded-lg bg-[#300003] text-red-200 border border-[#500006] flex items-center justify-center font-medium text-xs shrink-0">
             {currentUser.role === 'ADMIN' ? (
               <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
@@ -197,120 +228,146 @@ export default function Sidebar({
             )}
           </div>
           <div className="overflow-hidden flex-1">
-            <p className="text-xs font-medium text-white truncate leading-tight">
+            <p className="text-xs font-semibold text-white truncate leading-tight">
               {currentUser.name || currentUser.username}
             </p>
-            <span className="text-[11px] text-red-200/60 font-normal">
+            <span className="text-[10px] text-red-200/70 font-normal">
               {currentUser.role === 'USER_SEKSI' ? 'User Seksi' : currentUser.role === 'ADMIN' ? 'Administrator' : 'Operator Workshop'}
             </span>
           </div>
         </div>
       )}
 
-      {/* Navigation Menu Links */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {/* Back to Portal (Admin) */}
+      {/* 3. Navigation Links (Accordion Per Modul) */}
+      <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
+        {/* Back to Portal Home Button (Admin) */}
         {isAdmin && (
-          <div className="pb-2 mb-2 border-b border-[#3A0004]">
+          <div className="pb-2 border-b border-[#3A0004]">
             <Link
               href="/"
               onClick={onCloseMobileMenu}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-red-100 bg-[#3D0004]/80 hover:bg-[#5E0007] hover:text-white border border-[#500006] transition group"
-              title="Kembali ke Pilihan Sistem di Beranda"
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition group ${
+                pathname === '/'
+                  ? 'bg-red-600 text-white font-semibold shadow-xs'
+                  : 'text-red-100 bg-[#3D0004]/80 hover:bg-[#5E0007] hover:text-white border border-[#500006]'
+              }`}
+              title="Kembali ke Beranda Pilihan Modul"
             >
-              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition text-red-300" />
-              <span>Ganti Modul (Portal)</span>
+              <Home className={`w-3.5 h-3.5 transition group-hover:scale-110 ${pathname === '/' ? 'text-white' : 'text-red-300'}`} />
+              <span>Portal Beranda (5 Modul)</span>
             </Link>
           </div>
         )}
 
-        {/* Current Module Nav Links */}
-        <div className="space-y-0.5">
-          <span className="text-[11px] font-semibold text-red-200/50 uppercase tracking-wider px-3 py-1 block">
-            Menu Utama
+        {/* Section Header */}
+        <div className="px-1 pt-1 flex items-center justify-between">
+          <span className="text-[10px] font-bold text-red-200/50 uppercase tracking-wider">
+            Modul Operasional
           </span>
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            const Icon = link.icon;
+          <span className="text-[10px] font-mono text-red-200/40">
+            {visibleModules.length} Modul
+          </span>
+        </div>
+
+        {/* Accordion List */}
+        <div className="space-y-1.5">
+          {visibleModules.map((module) => {
+            const isExpanded =
+              userToggled[module.id] !== undefined
+                ? userToggled[module.id]
+                : currentModule === module.id || (currentModule === '' && module.id === 'DAISHA');
+            const isModuleActive = currentModule === module.id;
+            const ModuleIcon = module.icon;
 
             return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={onCloseMobileMenu}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                  isActive
-                    ? 'bg-red-600 text-white shadow-xs font-semibold'
-                    : 'text-red-100/85 hover:bg-white/10 hover:text-white'
+              <div
+                key={module.id}
+                className={`rounded-xl transition-all duration-200 border ${
+                  isModuleActive
+                    ? 'bg-[#3A0004]/90 border-red-500/30 shadow-2xs'
+                    : 'bg-[#3A0004]/30 border-transparent hover:border-[#550007] hover:bg-[#3A0004]/60'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-red-200/70'}`} />
-                <span>{link.label}</span>
-              </Link>
+                {/* Accordion Header / Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => toggleModule(module.id)}
+                  className="w-full p-2.5 flex items-center justify-between gap-2 text-left transition cursor-pointer select-none group"
+                  aria-expanded={isExpanded}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border transition ${
+                        isModuleActive
+                          ? 'bg-red-600 text-white border-red-500 shadow-2xs'
+                          : 'bg-[#2E0003] text-red-200 border-[#4D0006] group-hover:text-white group-hover:border-red-400/40'
+                      }`}
+                    >
+                      <ModuleIcon className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`text-xs font-bold truncate transition ${
+                            isModuleActive ? 'text-white' : 'text-red-100 group-hover:text-white'
+                          }`}
+                        >
+                          {module.title}
+                        </span>
+                        {isModuleActive && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                        )}
+                      </div>
+                      <span className="block text-[10px] text-red-200/60 font-medium truncate">
+                        {module.badge}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-red-300/70 transition-transform duration-200 shrink-0 ${
+                      isExpanded ? 'rotate-180 text-white' : ''
+                    }`}
+                  />
+                </button>
+
+                {/* Accordion Submenu Items */}
+                {isExpanded && (
+                  <div className="px-2.5 pb-2.5 pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="border-l-2 border-red-800/40 ml-3.5 pl-2.5 space-y-1">
+                      {module.items.map((subItem) => {
+                        const isSubActive = pathname === subItem.href;
+                        const SubIcon = subItem.icon;
+
+                        return (
+                          <Link
+                            key={subItem.href}
+                            href={subItem.href}
+                            onClick={onCloseMobileMenu}
+                            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
+                              isSubActive
+                                ? 'bg-red-600 text-white font-semibold shadow-xs'
+                                : 'text-red-100/75 hover:bg-white/10 hover:text-white'
+                            }`}
+                          >
+                            <SubIcon
+                              className={`w-3.5 h-3.5 shrink-0 ${
+                                isSubActive ? 'text-white' : 'text-red-200/70'
+                              }`}
+                            />
+                            <span className="truncate">{subItem.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
 
-        {/* Module Switcher for Admin */}
-        {isAdmin && (
-          <div className="pt-3 mt-3 border-t border-[#3A0004] space-y-0.5">
-            <span className="text-[11px] font-semibold text-red-200/50 uppercase tracking-wider px-3 py-1 block">
-              Pindah Modul
-            </span>
-            {currentModule !== 'DAISHA' && (
-              <Link
-                href="/daisha"
-                onClick={onCloseMobileMenu}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-red-200/70 hover:bg-white/10 hover:text-white transition"
-              >
-                <Wrench className="w-4 h-4 shrink-0 text-red-300/70" />
-                <span>Perbaikan Daisha</span>
-              </Link>
-            )}
-            {currentModule !== 'FLEET' && (
-              <Link
-                href="/fleet"
-                onClick={onCloseMobileMenu}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-red-200/70 hover:bg-white/10 hover:text-white transition"
-              >
-                <Activity className="w-4 h-4 shrink-0 text-red-300/70" />
-                <span>Kontrol Armada Daisha</span>
-              </Link>
-            )}
-            {currentModule !== 'REQUEST' && (
-              <Link
-                href="/request"
-                onClick={onCloseMobileMenu}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-red-200/70 hover:bg-white/10 hover:text-white transition"
-              >
-                <SendHorizonal className="w-4 h-4 shrink-0 text-red-300/70" />
-                <span>Request Seksi</span>
-              </Link>
-            )}
-            {currentModule !== 'SPAREPARTS' && (
-              <Link
-                href="/spareparts"
-                onClick={onCloseMobileMenu}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-red-200/70 hover:bg-white/10 hover:text-white transition"
-              >
-                <Package className="w-4 h-4 shrink-0 text-red-300/70" />
-                <span>Stok Sparepart</span>
-              </Link>
-            )}
-            {currentModule !== 'USERS' && (
-              <Link
-                href="/users"
-                onClick={onCloseMobileMenu}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-red-200/70 hover:bg-white/10 hover:text-white transition"
-              >
-                <Users className="w-4 h-4 shrink-0 text-red-300/70" />
-                <span>Manajemen Pengguna</span>
-              </Link>
-            )}
-          </div>
-        )}
-
-        {/* PWA & Logout */}
+        {/* 4. Bottom Actions: PWA & Logout */}
         <div className="pt-3 mt-3 border-t border-[#3A0004] space-y-2">
           <PwaInstaller buttonStyle="sidebar" />
 
@@ -326,7 +383,8 @@ export default function Sidebar({
         </div>
       </nav>
 
-      <div className="p-3 border-t border-[#3A0004] text-[11px] text-center text-red-300/40">
+      {/* 5. Footer */}
+      <div className="p-3 border-t border-[#3A0004] text-[10px] text-center text-red-300/40">
         © 2026 PT Bridgestone
       </div>
     </aside>

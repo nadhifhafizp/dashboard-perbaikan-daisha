@@ -32,12 +32,13 @@ async function debugTicketCreate() {
   try {
     const sizeInfo = detectDaishaSize(noDaisha);
     const ukuran = sizeInfo?.code || 'Standard';
-    console.log('1. Upserting MasterDaisha...');
+    const jenis = noDaisha.toUpperCase().includes('NF') || namaDaisha.toLowerCase().includes('nagara') ? 'NAGARA_FILTER' : 'VERTICAL';
+    console.log('1. Upserting Daisha...');
     await sql`
-      INSERT INTO "MasterDaisha" ("noDaisha", "namaDaisha", "ukuran", "seksi")
-      VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi})
-      ON CONFLICT ("noDaisha") DO UPDATE 
-      SET "namaDaisha" = EXCLUDED."namaDaisha", "ukuran" = EXCLUDED."ukuran", "seksi" = EXCLUDED."seksi"
+      INSERT INTO "Daisha" ("nomor_daisha", "nama_daisha", "ukuran", "seksi", "jenis")
+      VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi}, ${jenis})
+      ON CONFLICT ("nomor_daisha") DO UPDATE 
+      SET "nama_daisha" = EXCLUDED."nama_daisha", "ukuran" = EXCLUDED."ukuran", "seksi" = EXCLUDED."seksi"
     `;
 
     console.log('2. Inserting Ticket...');
@@ -46,18 +47,26 @@ async function debugTicketCreate() {
       const ts = parseToTimestamp(waktuMasuk);
       if (ts > 0) parsedDateMasuk = new Date(ts);
     }
+    console.log('2. Inserting Ticket with items JSONB...');
+    const parsedDetails = parseTicketDamageDetail(detail);
+    const itemsJson = parsedDetails.items.map((it, idx) => ({
+      idDetail: idx + 1,
+      komponen: it.komponen,
+      gejala: it.gejala,
+      tindakan: it.tindakan || 'Repair',
+      qty: it.qty || 1,
+    }));
+
     await sql`
-      INSERT INTO "Ticket" ("idTiket", "noDaisha", "namaPelapor", "status", "waktuMasuk", "catatan")
-      VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, 'Open', ${parsedDateMasuk}, '-')
+      INSERT INTO "Ticket" ("idTiket", "noDaisha", "namaPelapor", "status", "waktuMasuk", "catatan", "items")
+      VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, 'Open', ${parsedDateMasuk}, '-', ${JSON.stringify(itemsJson)}::jsonb)
     `;
 
-    console.log('3. Inserting TicketDetail...');
-    const parsedDetails = parseTicketDamageDetail(detail);
-    console.log('Parsed details:', parsedDetails);
+    console.log('3. Inserting TicketDetail legacy table (if used)...');
     if (parsedDetails.items.length > 0) {
       await sql`
-        INSERT INTO "TicketDetail" ("idTiket", "komponen", "gejala", "tindakan", "qty")
-        VALUES ${sql(parsedDetails.items.map(it => [idTiket, it.komponen, it.gejala, it.tindakan || 'Repair', it.qty || 1]))}
+        INSERT INTO "TicketDetail" ("idTiket", "komponen", "gejala", "tindakan")
+        VALUES ${sql(parsedDetails.items.map(it => [idTiket, it.komponen, it.gejala, it.tindakan || 'Repair']))}
       `;
     }
 

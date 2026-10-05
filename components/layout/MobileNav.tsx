@@ -19,6 +19,7 @@ import {
   CalendarClock,
   Layers,
   Users,
+  Target,
 } from 'lucide-react';
 
 interface MobileNavProps {
@@ -36,12 +37,12 @@ export default function MobileNav({
   const navItems: { href: string; icon: React.ElementType; label: string }[] = [];
 
   if (isAdmin) {
-    if (pathname.startsWith('/fleet') || pathname.startsWith('/catalog')) {
+    if (pathname.startsWith('/maintenance') || pathname.startsWith('/fleet') || pathname.startsWith('/catalog')) {
       navItems.push(
         { href: '/', icon: Home, label: 'Portal' },
+        { href: '/maintenance', icon: Target, label: 'Target' },
         { href: '/fleet', icon: CalendarClock, label: 'Kontrol' },
         { href: '/catalog', icon: Layers, label: 'Master' },
-        { href: '/daisha', icon: BarChart2, label: 'Perbaikan' },
       );
     } else if (pathname.startsWith('/request')) {
       navItems.push(

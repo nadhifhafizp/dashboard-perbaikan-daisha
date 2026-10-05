@@ -15,6 +15,7 @@ import {
   Layers,
   CalendarClock,
   Activity,
+  Target,
 } from 'lucide-react';
 
 export default function WorkshopPortalPage() {
@@ -103,48 +104,54 @@ export default function WorkshopPortalPage() {
           </div>
         </div>
 
-        {/* Module 2: Kontrol & Pemeliharaan Armada Daisha */}
+        {/* Module 2: Modul Maintenance Daisha (Tahunan & Target) */}
         <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-sm hover:border-slate-300 transition flex flex-col justify-between overflow-hidden">
           <div className="p-5 sm:p-6 space-y-4 flex-1">
             <div className="flex items-center justify-between">
               <div className="w-11 h-11 rounded-lg bg-slate-100 border border-slate-200 text-slate-800 flex items-center justify-center">
-                <CalendarClock className="w-5 h-5 text-red-600" />
+                <Target className="w-5 h-5 text-red-600" />
               </div>
               <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200/60">
-                Preventive Control
+                Annual KPI & Grid
               </span>
             </div>
 
             <div>
               <h2 className="text-base font-semibold text-slate-900">
-                Kontrol Maintenance Daisha
+                Modul Maintenance Daisha
               </h2>
               <p className="text-xs text-slate-500 font-normal mt-1 leading-relaxed">
-                Pemantauan siklus servis berkala (1 bulan 1x), countdown jatuh tempo, deteksi unit mengendap di seksi, dan audit per nomor daisha.
+                Pemantauan pemeliharaan tahunan wajib, kalkulasi target harian teknisi vs aktual, visual mapping grid (1-200), dan konversi status perbaikan selesai.
               </p>
             </div>
           </div>
 
           <div className="p-4 bg-slate-50/60 border-t border-slate-100 space-y-2">
             <Link
-              href="/fleet"
+              href="/maintenance"
               className="w-full h-9 px-3.5 bg-black hover:bg-neutral-800 text-white text-xs font-medium rounded-lg shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <span>Buka Kontrol Armada</span>
+              <span>Buka Modul Maintenance</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
             <div className="flex items-center gap-2 pt-0.5">
               <Link
+                href="/maintenance"
+                className="flex-1 h-8 px-2.5 text-center text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-lg transition border border-slate-200 flex items-center justify-center"
+              >
+                Mapping Grid
+              </Link>
+              <Link
                 href="/fleet"
                 className="flex-1 h-8 px-2.5 text-center text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-lg transition border border-slate-200 flex items-center justify-center"
               >
-                Jadwal Servis
+                Kontrol Siklus
               </Link>
               <Link
                 href="/catalog"
                 className="flex-1 h-8 px-2.5 text-center text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-lg transition border border-slate-200 flex items-center justify-center"
               >
-                Master Registri
+                Registri
               </Link>
             </div>
           </div>
