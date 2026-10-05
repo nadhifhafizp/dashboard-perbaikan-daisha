@@ -14,7 +14,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === '/login';
   const isPortalPage = pathname === '/';
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
+  // Default sidebar selalu tertutup (collapsed) saat awal dibuka
+  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(true);
 
   const {
     isLogoutModalOpen,
@@ -23,28 +24,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     executeLogout,
   } = useAuth();
 
-  // Muat status preferensi sidebar desktop dari localStorage saat inisialisasi
+  // Bersihkan preferensi lama di localStorage agar tidak memaksa sidebar terbuka saat reload
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('sidebar_desktop_collapsed');
-      if (saved === 'true') {
-        setIsDesktopCollapsed(true);
-      }
+      localStorage.removeItem('sidebar_desktop_collapsed');
     } catch {
       // Abaikan jika localStorage dibatasi browser
     }
   }, []);
 
   const handleToggleDesktopCollapse = () => {
-    setIsDesktopCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem('sidebar_desktop_collapsed', String(next));
-      } catch {
-        // Abaikan jika localStorage dibatasi browser
-      }
-      return next;
-    });
+    setIsDesktopCollapsed((prev) => !prev);
   };
 
   // Keyboard shortcut Ctrl+B / Cmd+B untuk toggle sidebar di desktop
