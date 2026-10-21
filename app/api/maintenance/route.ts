@@ -13,7 +13,7 @@ import {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-let maintenanceCache: any = null;
+let maintenanceCache: Record<string, unknown> | null = null;
 let maintenanceCacheKey: string = '';
 let maintenanceCacheTime: number = 0;
 
@@ -58,14 +58,20 @@ export async function GET(request: Request) {
     const trendDays = 14;
     const trendStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (trendDays - 1), 0, 0, 0, 0);
 
-    const [allDaisha, todayLogs, recentLogs, trendLogRows] = await Promise.all([
+    const [allDaisha, todayLogs, recentLogs, trendLogRows, conditionRows] = await Promise.all([
       sql`
         SELECT 
           d.id,
           d.nomor_daisha,
           d.jenis,
           d.ukuran,
+          COALESCE(d.nama_daisha, d.jenis) AS nama_daisha,
+          COALESCE(d.seksi, 'All seksi') AS seksi,
           d.last_maintenance_date,
+          COALESCE(d.last_condition, 'OK') AS last_condition,
+          d.last_repair_date,
+          d.last_waktu_masuk,
+          d.last_waktu_keluar,
           d.updated_at
         FROM "Daisha" d
         ORDER BY 
@@ -79,6 +85,11 @@ export async function GET(request: Request) {
           l.daisha_id,
           l.nomor_daisha,
           l.jenis_pekerjaan,
+          COALESCE(l.kondisi, 'OK') AS kondisi,
+          l.detail_kerusakan,
+          l.tindakan,
+          l.waktu_masuk,
+          l.waktu_keluar,
           l.tanggal_pengerjaan,
           l.admin_id,
           l.catatan,
@@ -94,6 +105,11 @@ export async function GET(request: Request) {
           l.daisha_id,
           l.nomor_daisha,
           l.jenis_pekerjaan,
+          COALESCE(l.kondisi, 'OK') AS kondisi,
+          l.detail_kerusakan,
+          l.tindakan,
+          l.waktu_masuk,
+          l.waktu_keluar,
           l.tanggal_pengerjaan,
           l.admin_id,
           l.catatan,
@@ -102,14 +118,23 @@ export async function GET(request: Request) {
         FROM "MaintenanceLog" l
         LEFT JOIN "Daisha" d ON l.daisha_id = d.id
         ORDER BY l.tanggal_pengerjaan DESC
-        LIMIT 30
+        LIMIT 50
       `,
       sql`
         SELECT 
           tanggal_pengerjaan,
-          jenis_pekerjaan
+          jenis_pekerjaan,
+          COALESCE(kondisi, 'OK') AS kondisi
         FROM "MaintenanceLog"
         WHERE tanggal_pengerjaan >= ${trendStartDate}
+      `,
+      sql`
+        SELECT 
+          COALESCE(kondisi, 'OK') AS kondisi,
+          COUNT(*)::int AS count
+        FROM "MaintenanceLog"
+        WHERE tanggal_pengerjaan >= ${startOfYear} AND tanggal_pengerjaan <= ${endOfYear}
+        GROUP BY COALESCE(kondisi, 'OK')
       `,
     ]);
 
@@ -133,32 +158,32 @@ export async function GET(request: Request) {
       percentage: number;
       dailyTarget: number;
       todayActual: number;
-    }> = {
-      'VERTICAL_SMALL': { total: 0, maintained: 0, unmaintained: 0, percentage: 0, dailyTarget: 0, todayActual: 0 },
-      'VERTICAL_MEDIUM': { total: 0, maintained: 0, unmaintained: 0, percentage: 0, dailyTarget: 0, todayActual: 0 },
-      'VERTICAL_LARGE': { total: 0, maintained: 0, unmaintained: 0, percentage: 0, dailyTarget: 0, todayActual: 0 },
-      'NAGARA_FILTER': { total: 0, maintained: 0, unmaintained: 0, percentage: 0, dailyTarget: 0, todayActual: 0 },
-    };
+    }> = {};
+
+    const jenisSet = new Set<string>();
 
     // Mapping unit dengan status tahun berjalan
     const mappedUnits = allDaisha.map((u) => {
       const lastDate = u.last_maintenance_date ? new Date(u.last_maintenance_date) : null;
       const isMaintainedThisYear = lastDate !== null && lastDate >= startOfYear && lastDate <= endOfYear;
       
-      let key = '';
-      if (u.jenis === 'VERTICAL') {
-        key = `VERTICAL_${u.ukuran}`;
-      } else if (u.jenis === 'NAGARA_FILTER') {
-        key = 'NAGARA_FILTER';
+      const jenisClean = u.jenis || 'LAINNYA';
+      jenisSet.add(jenisClean);
+
+      let key = jenisClean;
+      if (u.ukuran && u.ukuran !== 'NONE') {
+        key = `${jenisClean}_${u.ukuran}`;
       }
 
-      if (key && breakdown[key]) {
-        breakdown[key].total++;
-        if (isMaintainedThisYear) {
-          breakdown[key].maintained++;
-        } else {
-          breakdown[key].unmaintained++;
-        }
+      if (!breakdown[key]) {
+        breakdown[key] = { total: 0, maintained: 0, unmaintained: 0, percentage: 0, dailyTarget: 0, todayActual: 0 };
+      }
+
+      breakdown[key].total++;
+      if (isMaintainedThisYear) {
+        breakdown[key].maintained++;
+      } else {
+        breakdown[key].unmaintained++;
       }
 
       if (isMaintainedThisYear) {
@@ -179,12 +204,37 @@ export async function GET(request: Request) {
         nomor_daisha: u.nomor_daisha,
         serial_number: serialNumber,
         jenis: u.jenis,
+        nama_daisha: u.nama_daisha || u.jenis,
+        seksi: u.seksi || 'All seksi',
         ukuran: u.ukuran,
         last_maintenance_date: u.last_maintenance_date,
+        last_condition: u.last_condition || 'OK',
+        last_repair_date: u.last_repair_date,
+        last_waktu_masuk: u.last_waktu_masuk,
+        last_waktu_keluar: u.last_waktu_keluar,
         is_maintained: isMaintainedThisYear,
         days_since_last: daysSinceLast,
       };
     });
+
+    // 2b. Hitung Sebaran Populasi per Seksi
+    const seksiMap = new Map<string, { total: number; maintained: number; unmaintained: number; rusak: number }>();
+    for (const u of mappedUnits) {
+      const s = u.seksi || 'Lainnya';
+      if (!seksiMap.has(s)) {
+        seksiMap.set(s, { total: 0, maintained: 0, unmaintained: 0, rusak: 0 });
+      }
+      const entry = seksiMap.get(s)!;
+      entry.total++;
+      if (u.is_maintained) entry.maintained++;
+      else entry.unmaintained++;
+      if (u.last_condition === 'RUSAK') entry.rusak++;
+    }
+
+    const seksiSummaries = Array.from(seksiMap.entries())
+      .map(([seksi, counts]) => ({ seksi, ...counts }))
+      .sort((a, b) => b.total - a.total);
+    const seksiList = seksiSummaries.map((s) => s.seksi);
 
     // Hitung persentase & target harian untuk summary
     summary.percentage = summary.totalUnits > 0 ? Math.round((summary.maintainedUnits / summary.totalUnits) * 100) : 0;
@@ -192,13 +242,12 @@ export async function GET(request: Request) {
 
     // Hitung breakdown aktual hari ini & target
     for (const log of todayLogs) {
-      let key = '';
-      if (log.jenis === 'VERTICAL') {
-        key = `VERTICAL_${log.ukuran}`;
-      } else if (log.jenis === 'NAGARA_FILTER') {
-        key = 'NAGARA_FILTER';
+      const logJenis = log.jenis || 'LAINNYA';
+      let key = logJenis;
+      if (log.ukuran && log.ukuran !== 'NONE') {
+        key = `${logJenis}_${log.ukuran}`;
       }
-      if (key && breakdown[key]) {
+      if (breakdown[key]) {
         breakdown[key].todayActual++;
       }
     }
@@ -254,12 +303,33 @@ export async function GET(request: Request) {
       filteredUnits = filteredUnits.filter((u) => u.ukuran === filterUkuran);
     }
 
+    // Condition Stats for Current Year
+    let okCount = 0;
+    let rusakCount = 0;
+    conditionRows.forEach((r) => {
+      if (r.kondisi === 'OK') okCount += r.count;
+      else if (r.kondisi === 'RUSAK') rusakCount += r.count;
+      else okCount += r.count;
+    });
+    const totalCondition = okCount + rusakCount;
+    const conditionStats = {
+      okCount,
+      rusakCount,
+      totalCondition,
+      okPercentage: totalCondition > 0 ? Math.round((okCount / totalCondition) * 100) : 100,
+      rusakPercentage: totalCondition > 0 ? Math.round((rusakCount / totalCondition) * 100) : 0,
+    };
+
     const responsePayload = {
       success: true,
       currentYear,
       summary,
+      conditionStats,
       breakdown,
       dailyTrend,
+      jenisList: Array.from(jenisSet).sort(),
+      seksiList,
+      seksiSummaries,
       units: filteredUnits,
       recentLogs,
     };
@@ -269,10 +339,11 @@ export async function GET(request: Request) {
     maintenanceCacheTime = Date.now();
 
     return NextResponse.json(responsePayload);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : String(error);
     console.error('Error fetching maintenance analytics:', error);
     return NextResponse.json(
-      { error: 'Gagal mengambil data maintenance: ' + (error?.message || error) },
+      { error: 'Gagal mengambil data maintenance: ' + errMessage },
       { status: 500 }
     );
   }
@@ -296,7 +367,12 @@ export async function POST(request: Request) {
     const jenis = sanitizeText(body.jenis, 30).toUpperCase();
     const ukuran = sanitizeText(body.ukuran, 20).toUpperCase();
     const kategori = sanitizeText(body.kategori, 20).toUpperCase(); // 'RUTIN' | 'REPAIR'
+    const kondisi = sanitizeText(body.kondisi, 20).toUpperCase() || 'OK'; // 'OK' | 'RUSAK'
+    const detailKerusakan = sanitizeText(body.detail_kerusakan, 1000);
+    const tindakan = sanitizeText(body.tindakan, 50);
     const tanggalPengerjaanStr = sanitizeText(body.tanggal_pengerjaan, 40);
+    const waktuMasukStr = sanitizeText(body.waktu_masuk, 40);
+    const waktuKeluarStr = sanitizeText(body.waktu_keluar, 40);
     const catatan = sanitizeText(body.catatan, 500);
     const adminId = sanitizeText(body.admin_id, 100) || auth.user?.name || auth.user?.username || 'Admin';
     const bypassWarning = Boolean(body.bypass_warning);
@@ -317,9 +393,11 @@ export async function POST(request: Request) {
     if (isNaN(tanggalPengerjaan.getTime())) {
       return NextResponse.json({ error: 'Format tanggal pengerjaan tidak valid' }, { status: 400 });
     }
+    const waktuMasuk = waktuMasukStr ? new Date(waktuMasukStr) : tanggalPengerjaan;
+    const waktuKeluar = waktuKeluarStr ? new Date(waktuKeluarStr) : tanggalPengerjaan;
 
     // 1. Cari Daisha di database (atau buat baru jika nomor belum ada di tabel master)
-    let daisha = await sql`
+    const daisha = await sql`
       SELECT id, nomor_daisha, jenis, ukuran, last_maintenance_date
       FROM "Daisha"
       WHERE UPPER(nomor_daisha) = ${nomorDaisha.toUpperCase()}
@@ -379,11 +457,15 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Update Master Daisha last_maintenance_date
+    // 3. Update Master Daisha last_maintenance_date, timestamps, and condition
     await sql`
       UPDATE "Daisha"
       SET 
         "last_maintenance_date" = ${tanggalPengerjaan},
+        "last_condition" = ${kondisi},
+        "last_waktu_masuk" = ${waktuMasuk},
+        "last_waktu_keluar" = ${waktuKeluar},
+        "last_repair_date" = ${kondisi === 'RUSAK' || kategori === 'REPAIR' ? tanggalPengerjaan : sql`"last_repair_date"`},
         "updated_at" = now()
       WHERE id = ${daishaId}
     `;
@@ -394,6 +476,11 @@ export async function POST(request: Request) {
         "daisha_id",
         "nomor_daisha",
         "jenis_pekerjaan",
+        "kondisi",
+        "detail_kerusakan",
+        "tindakan",
+        "waktu_masuk",
+        "waktu_keluar",
         "tanggal_pengerjaan",
         "admin_id",
         "catatan"
@@ -401,11 +488,16 @@ export async function POST(request: Request) {
         ${daishaId},
         ${nomorDaisha},
         ${kategori},
+        ${kondisi},
+        ${detailKerusakan || null},
+        ${tindakan || null},
+        ${waktuMasuk},
+        ${waktuKeluar},
         ${tanggalPengerjaan},
         ${adminId},
         ${catatan || null}
       )
-      RETURNING id, nomor_daisha, jenis_pekerjaan, tanggal_pengerjaan
+      RETURNING id, nomor_daisha, jenis_pekerjaan, kondisi, tanggal_pengerjaan
     `;
 
     // 5. Sinkronisasi dengan modul Repair:
@@ -441,10 +533,11 @@ export async function POST(request: Request) {
       log: logInsert[0],
       syncedTicketId,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : String(error);
     console.error('Error saving maintenance entry:', error);
     return NextResponse.json(
-      { error: 'Gagal menyimpan input maintenance: ' + (error?.message || error) },
+      { error: 'Gagal menyimpan input maintenance: ' + errMessage },
       { status: 500 }
     );
   }

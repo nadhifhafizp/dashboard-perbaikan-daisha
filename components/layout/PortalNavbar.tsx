@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { ShieldCheck, LogOut } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 import PwaInstaller from '../common/PwaInstaller';
 
 export default function PortalNavbar() {
@@ -48,6 +49,9 @@ export default function PortalNavbar() {
             <PwaInstaller buttonStyle="compact" />
           </div>
 
+          {/* Notification Bell */}
+          <NotificationBell />
+
           {/* User Badge Info */}
           {currentUser && (
             <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-100 rounded-lg border border-slate-200">
@@ -70,8 +74,9 @@ export default function PortalNavbar() {
             type="button"
             onClick={openLogoutModal}
             disabled={isLoggingOut}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 text-slate-600 hover:text-red-700 rounded-lg text-xs font-medium transition cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-0 px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-red-600 rounded-lg text-xs font-medium transition cursor-pointer disabled:opacity-50"
             title="Keluar dari akun"
+            aria-label="Keluar dari akun"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Keluar</span>

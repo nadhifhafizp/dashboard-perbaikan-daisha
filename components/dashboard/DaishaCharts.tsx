@@ -55,69 +55,49 @@ export default function DaishaCharts({
     <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col h-full">
       {/* 1. Header Card */}
       <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
-        <div>
-          <h3 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-1.5">
-            <span>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+            {activeMode === 'unit' ? <Truck className="w-3.5 h-3.5" /> : <Layers className="w-3.5 h-3.5" />}
+          </div>
+          <div>
+            <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
               {activeMode === 'unit'
-                ? 'Unit Daisha Paling Sering Masuk'
-                : 'Model Daisha Paling Sering Masuk'}
+                ? 'Unit Paling Sering Masuk'
+                : 'Model Paling Sering Masuk'}
+            </h3>
+            <span className="text-[10px] text-slate-400 font-normal">
+              {activeMode === 'unit' ? 'Top 10 Nomor Unit Fisik' : 'Top 10 Kategori Model'}
             </span>
-            <span title="Peringkat daisha berdasarkan frekuensi perbaikan">
-              <Info className="w-3.5 h-3.5 text-slate-400 cursor-help" />
-            </span>
-          </h3>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            {activeMode === 'unit'
-              ? 'Peringkat nomor unit fisik dengan intensitas perbaikan tertinggi di bengkel'
-              : 'Akumulasi frekuensi perbaikan berdasarkan kategori model daisha'}
-          </p>
+          </div>
         </div>
 
         {/* Toggle Mode */}
-        <div className="flex items-center p-0.5 bg-slate-100/90 rounded-lg text-xs font-semibold">
+        <div className="flex items-center p-0.5 bg-slate-100/90 rounded-lg text-xs font-medium">
           <button
             type="button"
             onClick={() => setActiveMode('unit')}
-            className={`px-3 py-1.5 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
               activeMode === 'unit'
-                ? 'bg-white text-slate-900 shadow-xs'
+                ? 'bg-white text-slate-900 font-semibold shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Truck className="w-3.5 h-3.5 text-red-600" />
-            <span>Per Unit Daisha</span>
+            <Truck className="w-3 h-3 text-red-600" />
+            <span>Per Unit</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveMode('jenis')}
-            className={`px-3 py-1.5 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
               activeMode === 'jenis'
-                ? 'bg-white text-slate-900 shadow-xs'
+                ? 'bg-white text-slate-900 font-semibold shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Layers className="w-3.5 h-3.5 text-red-600" />
-            <span>Per Model / Jenis</span>
+            <Layers className="w-3 h-3 text-red-600" />
+            <span>Per Model</span>
           </button>
         </div>
-      </div>
-
-      {/* Sub-Header: Indikator Makna Warna & Kolom */}
-      <div className="flex flex-wrap justify-between items-center gap-2 text-xs mb-2 px-1">
-        <div className="flex items-center gap-2 text-[11px] text-slate-600 bg-red-50/60 px-2.5 py-1 rounded-lg border border-red-100">
-          <span className="font-semibold text-red-950">Makna Warna:</span>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-xs bg-[#E60012] opacity-35 inline-block" />
-            <span className="text-slate-600">Jarang (1x)</span>
-            <span className="text-red-300 font-bold">──▶</span>
-            <span className="w-2.5 h-2.5 rounded-xs bg-[#E60012] inline-block shadow-2xs" />
-            <span className="font-bold text-red-700">Kritis / Sering ({maxVal}x)</span>
-          </div>
-        </div>
-
-        <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
-          {activeMode === 'unit' ? 'Nomor Unit Fisik • Model' : 'Model Daisha'}
-        </span>
       </div>
 
       {/* 2. Horizontal Ranked Bar Chart */}
@@ -154,10 +134,10 @@ export default function DaishaCharts({
                   const ratio = maxVal > 0 ? count / maxVal : 1;
                   const statusTag =
                     ratio >= 0.75
-                      ? { label: '🔴 Kritis (Prioritas Penanganan Bengkel)', cls: 'text-red-700 bg-red-50 border-red-200' }
+                      ? { label: 'Kritis (Prioritas Penanganan Bengkel)', cls: 'text-red-700 bg-red-50 border-red-200' }
                       : ratio >= 0.4
-                      ? { label: '🟡 Perlu Pemantauan Rutin', cls: 'text-amber-700 bg-amber-50 border-amber-200' }
-                      : { label: '🟢 Frekuensi Wajar / Normal', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+                      ? { label: 'Perlu Pemantauan Rutin', cls: 'text-amber-700 bg-amber-50 border-amber-200' }
+                      : { label: 'Frekuensi Wajar / Normal', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
 
                   return (
                     <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs shadow-lg space-y-1.5 min-w-[200px]">

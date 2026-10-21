@@ -62,24 +62,31 @@ export default function QrScannerModal({
     }
   };
 
+  // Escape key listener untuk menutup modal scanner
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   useEffect(() => {
     if (!isOpen) {
       stopLiveScanner();
-      setStreamError(null);
-      setFileError(null);
-      setIsProcessingFile(false);
-      setIsInitializing(false);
       return;
     }
 
     let isCancelled = false;
-    setIsInitializing(true);
-    setStreamError(null);
-    setFileError(null);
 
     const startCamera = async () => {
       // Pastikan scanner sebelumnya sudah bersih
       await stopLiveScanner();
+      if (isCancelled) return;
+      setIsInitializing(true);
+      setStreamError(null);
+      setFileError(null);
 
       // Cek apakah browser mendukung getUserMedia
       const hasMediaDevices = typeof navigator !== 'undefined' && !!navigator?.mediaDevices?.getUserMedia;
@@ -209,8 +216,8 @@ export default function QrScannerModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer"
-            aria-label="Tutup"
+            className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-8 sm:h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer flex items-center justify-center focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+            aria-label="Tutup pemindai barcode"
           >
             <X className="w-4 h-4" />
           </button>

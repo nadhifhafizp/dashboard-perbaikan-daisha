@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useSyncExternalStore, useMemo } from 'react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -52,11 +52,11 @@ export default function SectionFleetCharts({
   activeFilter,
   onSelectFilter,
 }: SectionFleetChartsProps) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   const barData = useMemo(() => {
     return sectionSummaries
@@ -110,9 +110,10 @@ export default function SectionFleetCharts({
   }, [healthyUnits, dueSoonUnits, overdueUnits, inWorkshopUnits, dormantUnits]);
 
   // Tooltip Bar
-  const CustomBarTooltip = ({ active, payload }: any) => {
+  const renderBarTooltip = ({ active, payload }: { active?: boolean; payload?: readonly { payload?: { seksi: string; totalUnits: number; persen: string } }[] }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      if (!data) return null;
       return (
         <div className="bg-slate-900 text-white text-xs rounded px-2.5 py-1.5 shadow-lg border border-slate-700">
           <p className="font-semibold">Seksi {data.seksi}</p>
@@ -126,9 +127,10 @@ export default function SectionFleetCharts({
   };
 
   // Tooltip Donut
-  const CustomPieTooltip = ({ active, payload }: any) => {
+  const renderPieTooltip = ({ active, payload }: { active?: boolean; payload?: readonly { payload?: { label: string; count: number } }[] }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      if (!data) return null;
       const pct = totalFleetUnits > 0 ? ((data.count / totalFleetUnits) * 100).toFixed(1) : '0';
       return (
         <div className="bg-slate-900 text-white text-xs rounded px-2.5 py-1.5 shadow-lg border border-slate-700">
@@ -224,13 +226,14 @@ export default function SectionFleetCharts({
                     tickLine={false}
                     width={70}
                   />
-                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }} />
+                  <Tooltip content={renderBarTooltip} cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }} />
                   <Bar
                     dataKey="totalUnits"
                     radius={[0, 3, 3, 0]}
                     cursor="pointer"
-                    onClick={(entry: any) => {
-                      const s = entry?.seksi || entry?.payload?.seksi;
+                    onClick={(entry: unknown) => {
+                      const item = entry as { seksi?: string; payload?: { seksi?: string } } | null;
+                      const s = item?.seksi || item?.payload?.seksi;
                       if (s) onSelectSeksi(selectedSeksi === s ? '' : s);
                     }}
                   >
@@ -276,8 +279,9 @@ export default function SectionFleetCharts({
                       outerRadius={60}
                       paddingAngle={2}
                       cursor="pointer"
-                      onClick={(entry: any) => {
-                        const targetId = entry?.id || entry?.payload?.id;
+                      onClick={(entry: unknown) => {
+                        const item = entry as { id?: string; payload?: { id?: string } } | null;
+                        const targetId = item?.id || item?.payload?.id;
                         if (targetId) {
                           const next = activeFilter === targetId ? 'ALL' : targetId;
                           onSelectFilter(next);
@@ -296,7 +300,7 @@ export default function SectionFleetCharts({
                         );
                       })}
                     </Pie>
-                    <Tooltip content={<CustomPieTooltip />} />
+                    <Tooltip content={renderPieTooltip} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : null}

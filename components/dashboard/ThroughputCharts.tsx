@@ -26,6 +26,29 @@ interface ThroughputChartsProps {
   chartSeksiStacked?: { seksi: string; Open: number; Progress: number; Done: number; Scrap: number; Total: number }[];
 }
 
+interface DonutTooltipProps {
+  active?: boolean;
+  payload?: readonly { name?: string | number; value?: string | number; payload?: { color: string } }[];
+  totalStatus?: number;
+}
+
+function DonutTooltip({ active, payload, totalStatus = 0 }: DonutTooltipProps) {
+  if (active && payload && payload.length) {
+    const item = payload[0];
+    const val = Number(item.value) || 0;
+    const pct = totalStatus > 0 ? Math.round((val / totalStatus) * 100) : 0;
+    return (
+      <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs shadow-md">
+        <p className="font-extrabold" style={{ color: item.payload?.color }}>{item.name}</p>
+        <p className="text-slate-800 font-semibold mt-0.5">
+          <strong>{val}</strong> Unit ({pct}%)
+        </p>
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function ThroughputCharts({
   chartTrenHarian,
   chartTrenBulanan = [],
@@ -95,47 +118,24 @@ export default function ThroughputCharts({
   const doneCount = statusData.find(d => d.name === 'Selesai' || d.name === 'Done')?.value || 0;
   const completionRate = totalStatus > 0 ? Math.round((doneCount / totalStatus) * 100) : 0;
 
-  // Custom tooltip untuk Donut Status
-  const DonutTooltip = ({ active, payload }: { active?: boolean; payload?: { name: string; value: number; payload: { color: string } }[] }) => {
-    if (active && payload && payload.length) {
-      const item = payload[0];
-      const pct = totalStatus > 0 ? Math.round((item.value / totalStatus) * 100) : 0;
-      return (
-        <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs shadow-md">
-          <p className="font-extrabold" style={{ color: item.payload.color }}>{item.name}</p>
-          <p className="text-slate-800 font-semibold mt-0.5">
-            <strong>{item.value}</strong> Unit ({pct}%)
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div className="space-y-6">
-      {/* ================= 1. GRAFIK UTAMA: KOMPARASI VOLUME MASUK VS SELESAI ================= */}
+      {/* 1. Grafik Utama: Komparasi volume masuk vs selesai */}
       <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs">
         <div>
           <div className="flex flex-wrap justify-between items-center gap-3 mb-2">
-            <div>
-              <h3 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4 text-slate-600" />
-                <span>Tren Komparasi Unit Masuk vs Selesai</span>
-                <span title="Grafik komparasi dua arah: Menampilkan volume unit masuk di sisi kiri dan unit selesai di sisi kanan berdasarkan tanggal">
-                  <Info className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+                <TrendingUp className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+                  Arus Unit Masuk vs Selesai
+                </h3>
+                <span className="text-[10px] text-slate-400 font-normal">
+                  {timelineScale === '7days' ? '7 Hari Terakhir' : timelineScale === '14days' ? '14 Hari Terakhir' : 'Akumulasi Bulanan'}
                 </span>
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Komparasi harian: Unit masuk (kiri) vs unit selesai diperbaiki (kanan) •{' '}
-                <span className="font-semibold text-slate-700">
-                  {timelineScale === '7days'
-                    ? 'Rentang: 7 hari kerja terakhir (1 minggu)'
-                    : timelineScale === '14days'
-                    ? 'Rentang: 14 hari kerja terakhir'
-                    : 'Rentang: Agregasi per bulan'}
-                </span>
-              </p>
+              </div>
             </div>
 
             {/* Toggle Rentang Waktu: 7 Hari (1 Minggu) vs 14 Hari vs Bulanan */}
@@ -183,14 +183,14 @@ export default function ThroughputCharts({
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-medium my-3">
             <div className="flex items-center gap-2 text-red-700 bg-red-50/70 px-3 py-1 rounded-lg border border-red-200/80">
               <span className="w-3 h-3 rounded-xs bg-red-600 inline-block shadow-2xs" />
-              <span>📥 Unit Masuk (Beban Antrean)</span>
+              <span>Unit Masuk (Beban Antrean)</span>
               <span className="text-xs text-red-900 bg-red-100 px-2 py-0.5 rounded-md font-bold ml-1">
                 {totalMasukTimeline}
               </span>
             </div>
             <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50/60 px-3 py-1 rounded-lg border border-emerald-100">
               <span className="w-3 h-3 rounded-xs bg-emerald-500 inline-block shadow-2xs" />
-              <span>✅ Unit Selesai (Output Bengkel)</span>
+              <span>Unit Selesai (Output Bengkel)</span>
               <span className="text-xs text-emerald-900 bg-emerald-100 px-2 py-0.5 rounded-md font-bold ml-1">
                 {totalSelesaiTimeline}
               </span>
@@ -202,7 +202,7 @@ export default function ThroughputCharts({
               if (netDiff > 0) {
                 return (
                   <div className="flex items-center gap-1.5 text-xs text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                     <span>Status Arus: <strong>+{netDiff} Antrean Bertambah</strong></span>
                   </div>
                 );
@@ -320,8 +320,8 @@ export default function ThroughputCharts({
                 >
                   <LabelList
                     dataKey="MasukNeg"
-                    content={(props: any) => {
-                      const { x, y, width, height, value } = props;
+                    content={(props: unknown) => {
+                      const { x = 0, y = 0, width = 0, height = 18, value } = (props || {}) as { x?: number; y?: number; width?: number; height?: number; value?: unknown };
                       if (!value || Number(value) === 0) return null;
                       const leftTip = Math.min(x, x + (width || 0));
                       return (
@@ -350,8 +350,8 @@ export default function ThroughputCharts({
                 >
                   <LabelList
                     dataKey="SelesaiPos"
-                    content={(props: any) => {
-                      const { x, y, width, height, value } = props;
+                    content={(props: unknown) => {
+                      const { x = 0, y = 0, width = 0, height = 18, value } = (props || {}) as { x?: number; y?: number; width?: number; height?: number; value?: unknown };
                       if (!value || Number(value) === 0) return null;
                       const rightTip = Math.max(x, x + (width || 0));
                       return (
@@ -379,30 +379,21 @@ export default function ThroughputCharts({
           )}
         </div>
 
-        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
-          <span>Komparasi Bilateral: Data unit masuk (kiri) dan selesai (kanan) terpetakan pada sumbu tanggal</span>
-          <span className="font-semibold text-slate-600">Arahkan kursor ke grafik untuk rincian harian</span>
-        </div>
+
       </div>
 
-      {/* ================= BARIS KEDUA: DONUT STATUS & LEAD TIME ================= */}
+      {/* Baris kedua: Donut status & lead time */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
-        {/* ================= 2. DIAGRAM DONAT: STATUS PIPELINE ================= */}
+        {/* 2. Diagram Donat: Status pipeline */}
         <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex justify-between items-start mb-1.5">
-              <h3 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-1.5">
-                <PieIcon className="w-4 h-4 text-slate-600" />
-                <span>Komposisi Status Tiket Daisha</span>
-                <span title="Proporsi status pengerjaan unit saat ini">
-                  <Info className="w-3.5 h-3.5 text-slate-400 cursor-help" />
-                </span>
-              </h3>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+              <PieIcon className="w-3.5 h-3.5" />
             </div>
-            <p className="text-[11px] text-slate-500 mb-3">
-              Diagram donat proporsi tiket Antre, Dikerjakan, Selesai, dan Scrap
-            </p>
+            <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+              Komposisi Status Tiket
+            </h3>
           </div>
 
           {totalStatus > 0 ? (
@@ -428,7 +419,7 @@ export default function ThroughputCharts({
                           <Cell key={`cell-status-${index}`} fill={entry.color} stroke="transparent" />
                         ))}
                     </Pie>
-                    <Tooltip content={<DonutTooltip />} />
+                    <Tooltip content={<DonutTooltip totalStatus={totalStatus} />} />
                     <text
                       x="50%"
                       y="47%"
@@ -501,21 +492,17 @@ export default function ThroughputCharts({
           </div>
         </div>
 
-        {/* ================= 3. BATANG HORIZONTAL: DURASI PERBAIKAN / LEAD TIME ================= */}
+        {/* 3. Batang Horizontal: Durasi perbaikan / lead time */}
         <div className="lg:col-span-7 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
           <div>
             <div className="flex flex-wrap justify-between items-start gap-3 mb-2">
-              <div>
-                <h3 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-slate-600" />
-                  <span>Durasi Perbaikan Unit (Lead Time Servis)</span>
-                  <span title="Distribusi durasi pengerjaan dari unit dilaporkan hingga berstatus selesai">
-                    <Info className="w-3.5 h-3.5 text-slate-400 cursor-help" />
-                  </span>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+                  <Clock className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+                  Durasi Perbaikan (Lead Time)
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Grafik durasi penyelesaian perbaikan berdasarkan target SLA bengkel
-                </p>
               </div>
 
               {avgLeadTimeHours > 0 ? (
@@ -618,7 +605,7 @@ export default function ThroughputCharts({
                         fill="#0f172a"
                         fontSize={12}
                         fontWeight={800}
-                        formatter={(val: any) => `${val} unit`}
+                        formatter={(val: unknown) => `${val ?? 0} unit`}
                       />
                     </Bar>
                   </BarChart>

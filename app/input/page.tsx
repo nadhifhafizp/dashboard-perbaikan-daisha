@@ -37,7 +37,7 @@ export function isInvalidOperatorName(name: string | null | undefined): boolean 
 const API_URL = '/api/repair';
 
 export default function InputKerusakanPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isOperator } = useAuth();
   const [formData, setFormData] = useState({
     waktuMasuk: getInitialDateTime(),
     namaPelapor: '',
@@ -215,6 +215,7 @@ export default function InputKerusakanPage() {
         ...prev,
         seksi: value,
         jenisDaisha: '',
+        noDaisha: '',
       }));
       setSelectedKerusakan([]);
       setCustomKerusakanList([]);
@@ -222,6 +223,7 @@ export default function InputKerusakanPage() {
       setCustomTindakanMap({});
       setQtyMap({});
       setCustomQtyMap({});
+      setDismissedDuplicateUnit(null);
     } else if (name === 'showAll') {
       const isChecked = (e.target as HTMLInputElement).checked;
       setShowAllDaisha(isChecked);
@@ -230,6 +232,7 @@ export default function InputKerusakanPage() {
       setFormData((prev) => ({
         ...prev,
         jenisDaisha: value,
+        noDaisha: '',
         // Jangan timpa seksi jika user sudah memilih seksi asal unit
         seksi: prev.seksi || (daishaSeksi !== 'All seksi' ? daishaSeksi : '') || prev.seksi,
       }));
@@ -239,6 +242,7 @@ export default function InputKerusakanPage() {
       setCustomTindakanMap({});
       setQtyMap({});
       setCustomQtyMap({});
+      setDismissedDuplicateUnit(null);
     } else if (name === 'noDaisha') {
       const upperVal = value.toUpperCase();
       setFormData((prev) => ({ ...prev, noDaisha: upperVal }));
@@ -457,22 +461,33 @@ export default function InputKerusakanPage() {
         {/* Header Form dengan Breadcrumb & Quick Nav */}
         <div className="border-b border-slate-100 pb-4 mb-5">
           <div className="flex items-center gap-2 mb-2.5 flex-wrap text-xs">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition border border-slate-200"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Portal</span>
-            </Link>
-            <span className="text-slate-300">/</span>
-            <Link
-              href="/daisha"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition border border-slate-200"
-            >
-              <LayoutDashboard className="w-3.5 h-3.5 text-red-600" />
-              <span>Dashboard Daisha</span>
-            </Link>
-            <span className="text-slate-300">/</span>
+            {!isOperator ? (
+              <>
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition border border-slate-200"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Portal</span>
+                </Link>
+                <span className="text-slate-300">/</span>
+                <Link
+                  href="/daisha"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition border border-slate-200"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-red-600" />
+                  <span>Dashboard Daisha</span>
+                </Link>
+                <span className="text-slate-300">/</span>
+              </>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold text-slate-600 bg-slate-100 border border-slate-200">
+                  <span>Workshop Daisha</span>
+                </span>
+                <span className="text-slate-300">/</span>
+              </>
+            )}
             <span className="font-semibold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
               Input Rusak
             </span>
@@ -489,20 +504,28 @@ export default function InputKerusakanPage() {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <Link
-                href="/daisha"
-                className="h-8 px-3 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5 text-slate-500" />
-                <span>Dashboard</span>
-              </Link>
-              <Link
-                href="/riwayat"
-                className="h-8 px-3 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs"
-              >
-                <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
-                <span>Status Antrean</span>
-              </Link>
+              {!isOperator && (
+                <Link
+                  href="/daisha"
+                  className="h-8 px-3 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Dashboard</span>
+                </Link>
+              )}
+              {!isAdmin && (
+                <Link
+                  href="/riwayat"
+                  className={`h-8 px-3 text-xs font-medium rounded-lg transition inline-flex items-center gap-1.5 border shadow-2xs ${
+                    isOperator
+                      ? 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                  }`}
+                >
+                  <ClipboardList className={`w-3.5 h-3.5 ${isOperator ? 'text-white' : 'text-slate-500'}`} />
+                  <span>Status Antrean</span>
+                </Link>
+              )}
               {isAdmin && (
                 <Link
                   href="/admin"
@@ -634,6 +657,7 @@ export default function InputKerusakanPage() {
             {formData.jenisDaisha && (
               <div className="mb-4">
                 <DaishaVariantSelector
+                  key={formData.jenisDaisha}
                   jenisDaisha={formData.jenisDaisha}
                   currentNoDaisha={formData.noDaisha}
                   onSelectVariant={(variant) => {
@@ -685,7 +709,7 @@ export default function InputKerusakanPage() {
                     Otomatis terdeteksi: <strong>{detectedSize.description}</strong> dari awalan &apos;{detectedSize.code}&apos;
                   </span>
                 ) : (
-                  <span className="text-[11px] text-slate-400 mt-1 block">
+                  <span className="text-[11px] text-slate-500 mt-1 block">
                     Awalan kode: <strong>S</strong> = Small, <strong>M</strong> = Medium, <strong>L</strong> = Large
                   </span>
                 )}
@@ -748,11 +772,11 @@ export default function InputKerusakanPage() {
 
                 <div className="mt-3 pt-2.5 border-t border-amber-200/70 flex flex-wrap items-center justify-between gap-2">
                   <Link
-                    href="/riwayat"
+                    href={isAdmin ? '/admin' : '/riwayat'}
                     className="h-8 px-3 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
                   >
                     <Search className="w-3.5 h-3.5" />
-                    <span>Buka Tiket di Riwayat Laporan</span>
+                    <span>{isAdmin ? 'Buka di Panel Tindakan' : 'Buka Tiket di Riwayat Laporan'}</span>
                   </Link>
 
                   <button

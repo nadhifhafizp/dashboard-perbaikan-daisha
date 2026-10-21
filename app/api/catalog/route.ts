@@ -190,20 +190,42 @@ export async function GET(request: Request) {
         jenisKerusakan[c.name] = (c.symptoms || []).map((s) => s.description);
       });
 
-      const formattedVariants = (d.variants || []).map((v) => ({
-        id: v.id,
-        name: v.name,
-        ukuran: v.ukuran || undefined,
-        susunan: v.susunan || undefined,
-        tipe: v.tipe || undefined,
-        codePrefix: v.codePrefix || '',
-        padLength: v.padLength ?? 0,
-        minNumber: v.minNumber ?? 1,
-        maxNumber: v.maxNumber ?? 1,
-        totalUnits: v.totalUnits ?? 0,
-        rangeFormat: v.rangeFormat || '',
-        badgeColor: v.badgeColor || undefined,
-      }));
+      const seenVariantKeys = new Set<string>();
+      const formattedVariants: Array<{
+        id: number;
+        name: string;
+        ukuran?: string;
+        susunan?: string;
+        tipe?: string;
+        codePrefix: string;
+        padLength: number;
+        minNumber: number;
+        maxNumber: number;
+        totalUnits: number;
+        rangeFormat: string;
+        badgeColor?: string;
+      }> = [];
+
+      for (const v of d.variants || []) {
+        const vKey = `${v.id}_${v.codePrefix || ''}_${v.name}_${v.ukuran || ''}_${v.susunan || ''}`;
+        if (seenVariantKeys.has(vKey)) continue;
+        seenVariantKeys.add(vKey);
+
+        formattedVariants.push({
+          id: v.id,
+          name: v.name,
+          ukuran: v.ukuran || undefined,
+          susunan: v.susunan || undefined,
+          tipe: v.tipe || undefined,
+          codePrefix: v.codePrefix || '',
+          padLength: v.padLength ?? 0,
+          minNumber: v.minNumber ?? 1,
+          maxNumber: v.maxNumber ?? 1,
+          totalUnits: v.totalUnits ?? 0,
+          rangeFormat: v.rangeFormat || '',
+          badgeColor: v.badgeColor || undefined,
+        });
+      }
 
       rawCatalog[d.name] = {
         seksi: d.seksi,

@@ -13,18 +13,46 @@ import {
   Target,
   Wrench,
   CheckCircle2,
-  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-import MaintenanceKPICards from '@/components/maintenance/MaintenanceKPICards';
+import MaintenanceKPICards, { BreakdownItem } from '@/components/maintenance/MaintenanceKPICards';
 import TargetVsActualChart from '@/components/maintenance/TargetVsActualChart';
-import StatusDonutChart from '@/components/maintenance/StatusDonutChart';
-import VerticalGridMapping, { GridDaishaUnit } from '@/components/maintenance/VerticalGridMapping';
-import NagaraFilterList from '@/components/maintenance/NagaraFilterList';
+import SectionPopulationChart, { SeksiSummaryItem } from '@/components/maintenance/SectionPopulationChart';
+import FleetExplorer, { FleetUnit } from '@/components/maintenance/FleetExplorer';
 import MaintenanceLogsTable, { MaintenanceLogRow } from '@/components/maintenance/MaintenanceLogsTable';
 import MaintenanceInputModal from '@/components/maintenance/MaintenanceInputModal';
 import UnitDetailModal from '@/components/maintenance/UnitDetailModal';
+
+interface MaintenanceSummaryState {
+  totalUnits: number;
+  maintainedUnits: number;
+  unmaintainedUnits: number;
+  percentage: number;
+  remainingWorkDays: number;
+  dailyTarget: number;
+  todayActual: number;
+  todayRutin: number;
+  todayRepair: number;
+}
+
+interface ConditionStatsState {
+  okCount: number;
+  rusakCount: number;
+  totalCondition: number;
+  okPercentage: number;
+  rusakPercentage: number;
+}
+
+interface DailyTrendItem {
+  date: string;
+  dateLabel: string;
+  isWeekend: boolean;
+  target: number;
+  actual: number;
+  rutin: number;
+  repair: number;
+}
 
 export default function MaintenanceModulePage() {
   const { currentUser } = useAuth();
@@ -34,8 +62,8 @@ export default function MaintenanceModulePage() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
-  const [summary, setSummary] = useState<any>({
+  const [currentYear] = useState<number>(new Date().getFullYear());
+  const [summary, setSummary] = useState<MaintenanceSummaryState>({
     totalUnits: 0,
     maintainedUnits: 0,
     unmaintainedUnits: 0,
@@ -46,26 +74,34 @@ export default function MaintenanceModulePage() {
     todayRutin: 0,
     todayRepair: 0,
   });
-  const [breakdown, setBreakdown] = useState<any>({});
-  const [dailyTrend, setDailyTrend] = useState<any[]>([]);
-  const [units, setUnits] = useState<GridDaishaUnit[]>([]);
+  const [conditionStats, setConditionStats] = useState<ConditionStatsState>({
+    okCount: 0,
+    rusakCount: 0,
+    totalCondition: 0,
+    okPercentage: 100,
+    rusakPercentage: 0,
+  });
+  const [breakdown, setBreakdown] = useState<Record<string, BreakdownItem>>({});
+  const [dailyTrend, setDailyTrend] = useState<DailyTrendItem[]>([]);
+  const [jenisList, setJenisList] = useState<string[]>([]);
+  const [seksiList, setSeksiList] = useState<string[]>([]);
+  const [seksiSummaries, setSeksiSummaries] = useState<SeksiSummaryItem[]>([]);
+  const [units, setUnits] = useState<FleetUnit[]>([]);
   const [recentLogs, setRecentLogs] = useState<MaintenanceLogRow[]>([]);
 
-  // Navigation Tab
-  const [activeTab, setActiveTab] = useState<'VERTICAL_GRID' | 'NAGARA_FILTER' | 'LOGS'>('VERTICAL_GRID');
+  // Navigation Tab: FLEET (Pemantauan visual armada) vs LOGS (Riwayat pengerjaan)
+  const [activeTab, setActiveTab] = useState<'FLEET' | 'LOGS'>('FLEET');
 
   // Modals
   const [isInputModalOpen, setIsInputModalOpen] = useState<boolean>(false);
-  const [selectedUnitForDetail, setSelectedUnitForDetail] = useState<GridDaishaUnit | null>(null);
-  const [unitForQuickInput, setUnitForQuickInput] = useState<GridDaishaUnit | null>(null);
+  const [selectedUnitForDetail, setSelectedUnitForDetail] = useState<FleetUnit | null>(null);
+  const [unitForQuickInput, setUnitForQuickInput] = useState<FleetUnit | null>(null);
 
   // Fetch Data Function
   const fetchData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    setError(null);
     try {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
-      setError(null);
-
       const res = await fetch(`/api/maintenance?year=${currentYear}`);
       if (!res.ok) {
         throw new Error('Gagal memuat data modul maintenance');
@@ -74,14 +110,26 @@ export default function MaintenanceModulePage() {
       const data = await res.json();
       if (data.success) {
         setSummary(data.summary);
+        if (data.conditionStats) {
+          setConditionStats(data.conditionStats);
+        }
         setBreakdown(data.breakdown);
         setDailyTrend(data.dailyTrend);
+        if (data.jenisList) {
+          setJenisList(data.jenisList);
+        }
+        if (data.seksiList) {
+          setSeksiList(data.seksiList);
+        }
+        if (data.seksiSummaries) {
+          setSeksiSummaries(data.seksiSummaries);
+        }
         setUnits(data.units);
         setRecentLogs(data.recentLogs || []);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Fetch maintenance error:', err);
-      setError(err?.message || 'Terjadi kesalahan jaringan.');
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan jaringan.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -92,12 +140,12 @@ export default function MaintenanceModulePage() {
     fetchData();
   }, [fetchData]);
 
-  const handleOpenInput = (unit?: GridDaishaUnit) => {
+  const handleOpenInput = (unit?: FleetUnit) => {
     setUnitForQuickInput(unit || null);
     setIsInputModalOpen(true);
   };
 
-  const handleSelectUnit = (unit: GridDaishaUnit) => {
+  const handleSelectUnit = (unit: FleetUnit) => {
     setSelectedUnitForDetail(unit);
   };
 
@@ -117,8 +165,8 @@ export default function MaintenanceModulePage() {
                   Tahun {currentYear}
                 </span>
               </h1>
-              <p className="text-xs text-slate-500 font-medium">
-                Digitalisasi pemeliharaan tahunan, estimasi target harian teknisi, dan pemantauan visual unit
+              <p className="text-xs text-slate-500 font-normal mt-0.5">
+                Monitoring pemeliharaan tahunan armada daisha dan target teknisi
               </p>
             </div>
           </div>
@@ -130,7 +178,7 @@ export default function MaintenanceModulePage() {
             type="button"
             onClick={() => fetchData(true)}
             disabled={loading || refreshing}
-            className="h-8.5 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="min-h-[44px] sm:min-h-0 sm:h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-medium shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             title="Muat Ulang Data"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${refreshing ? 'animate-spin' : ''}`} />
@@ -140,10 +188,10 @@ export default function MaintenanceModulePage() {
           <button
             type="button"
             onClick={() => handleOpenInput()}
-            className="h-8.5 px-4 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+            className="min-h-[44px] sm:min-h-0 sm:h-9 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500"
           >
-            <PlusCircle className="w-4 h-4 text-emerald-400" />
-            <span>+ Catat Maintenance / Repair</span>
+            <PlusCircle className="w-4 h-4 text-white" />
+            <span>Catat Maintenance / Repair</span>
           </button>
         </div>
       </div>
@@ -170,57 +218,40 @@ export default function MaintenanceModulePage() {
         </div>
       ) : (
         <>
-          {/* 2. Top KPI Cards & Target Formula */}
+          {/* 2. Top KPI Cards & Real Operational Stats */}
           <MaintenanceKPICards
             summary={summary}
             breakdown={breakdown}
+            conditionStats={conditionStats}
             currentYear={currentYear}
             onOpenInputModal={() => handleOpenInput()}
           />
 
-          {/* 3. Visual Charts (Target vs Actual Bar Chart + Annual Status Donut) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            <div className="lg:col-span-7">
-              <TargetVsActualChart
-                data={dailyTrend}
-                dailyTarget={summary.dailyTarget}
-              />
-            </div>
-            <div className="lg:col-span-5">
-              <StatusDonutChart
-                summary={summary}
-                breakdown={breakdown}
-                currentYear={currentYear}
-              />
-            </div>
+          {/* 3. Visual Charts (Tren Realisasi vs Target Harian & Populasi Daisha per Seksi) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <TargetVsActualChart
+              data={dailyTrend}
+              dailyTarget={summary.dailyTarget}
+            />
+            <SectionPopulationChart
+              data={seksiSummaries}
+              totalUnits={summary.totalUnits}
+            />
           </div>
 
           {/* 4. Tab Navigation Bar */}
           <div className="flex items-center gap-2 border-b border-slate-200 pt-2">
             <button
               type="button"
-              onClick={() => setActiveTab('VERTICAL_GRID')}
+              onClick={() => setActiveTab('FLEET')}
               className={`pb-2.5 px-3 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer ${
-                activeTab === 'VERTICAL_GRID'
+                activeTab === 'FLEET'
                   ? 'border-red-600 text-red-600'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
               <Grid className="w-3.5 h-3.5" />
-              <span>Mapping Grid Vertical (1 - 200)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('NAGARA_FILTER')}
-              className={`pb-2.5 px-3 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer ${
-                activeTab === 'NAGARA_FILTER'
-                  ? 'border-red-600 text-red-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Daisha Nagara Filter ({breakdown['NAGARA_FILTER']?.total || 50})</span>
+              <span>Visual Armada Seluruh Pabrik ({units.length} Unit)</span>
             </button>
 
             <button
@@ -233,30 +264,21 @@ export default function MaintenanceModulePage() {
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>Riwayat Transaksi Pengerjaan ({recentLogs.length})</span>
+              <span>Riwayat Log Pengerjaan ({recentLogs.length})</span>
             </button>
           </div>
 
           {/* 5. Main Content According to Active Tab */}
-          {activeTab === 'VERTICAL_GRID' && (
-            <VerticalGridMapping
+          {activeTab === 'FLEET' ? (
+            <FleetExplorer
               units={units}
+              jenisList={jenisList}
+              seksiList={seksiList}
               currentYear={currentYear}
               onSelectUnit={handleSelectUnit}
-              onQuickMaintenance={handleOpenInput}
+              onQuickInput={handleOpenInput}
             />
-          )}
-
-          {activeTab === 'NAGARA_FILTER' && (
-            <NagaraFilterList
-              units={units}
-              currentYear={currentYear}
-              onSelectUnit={handleSelectUnit}
-              onQuickMaintenance={handleOpenInput}
-            />
-          )}
-
-          {activeTab === 'LOGS' && (
+          ) : (
             <MaintenanceLogsTable logs={recentLogs} />
           )}
         </>

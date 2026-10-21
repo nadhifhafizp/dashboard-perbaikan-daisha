@@ -18,6 +18,15 @@ interface UnitHistoryModalProps {
 }
 
 export default function UnitHistoryModal({ unit, onClose }: UnitHistoryModalProps) {
+  // Escape key listener untuk menutup modal
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   if (!unit) return null;
 
   const formatDate = (dateStr: string | null) => {
@@ -97,7 +106,8 @@ export default function UnitHistoryModal({ unit, onClose }: UnitHistoryModalProp
             <button
               type="button"
               onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer"
+              className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+              aria-label="Tutup modal riwayat unit"
             >
               <X className="w-4 h-4" />
             </button>
@@ -109,21 +119,21 @@ export default function UnitHistoryModal({ unit, onClose }: UnitHistoryModalProp
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
             <div>
-              <span className="text-[11px] text-slate-400 block">Servis Terakhir</span>
+              <span className="text-[11px] text-slate-500 font-medium block">Servis Terakhir</span>
               <span className="font-semibold text-slate-800 font-mono">
                 {unit.lastRepairDate ? formatDate(unit.lastRepairDate) : '-'}
               </span>
             </div>
 
             <div>
-              <span className="text-[11px] text-slate-400 block">Jadwal Berikutnya</span>
+              <span className="text-[11px] text-slate-500 font-medium block">Jadwal Berikutnya</span>
               <span className="font-semibold text-slate-800 font-mono">
                 {unit.nextDueDate ? formatDate(unit.nextDueDate) : '-'}
               </span>
             </div>
 
             <div>
-              <span className="text-[11px] text-slate-400 block">Total Servis</span>
+              <span className="text-[11px] text-slate-500 font-medium block">Total Servis</span>
               <span className="font-semibold text-slate-800 font-mono">
                 {unit.totalRepairs}x Kunjungan
               </span>

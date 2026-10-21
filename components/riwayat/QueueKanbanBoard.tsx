@@ -63,7 +63,7 @@ export default function QueueKanbanBoard({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
-      {/* ================= KOLOM 1: MENUNGGU ANTREAN ================= */}
+      {/* Kolom 1: Menunggu antrean */}
       <div className="bg-slate-50/80 rounded-xl border border-amber-200/70 p-3.5 flex flex-col h-[580px] shadow-2xs">
         {/* Header Kolom */}
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-amber-200/50 shrink-0">
@@ -84,7 +84,7 @@ export default function QueueKanbanBoard({
         <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
           {waitingTickets.length === 0 ? (
             <div className="bg-white/60 rounded-lg border border-dashed border-slate-200 p-6 text-center mt-4">
-              <p className="text-xs font-medium text-slate-400">Tidak ada antrean</p>
+              <p className="text-xs font-medium text-slate-500">Tidak ada antrean</p>
             </div>
           ) : (
             waitingTickets.map((ticket, index) => {
@@ -141,7 +141,7 @@ export default function QueueKanbanBoard({
                   {/* Baris 2: Nama Daisha & Kerusakan */}
                   <div className="text-xs">
                     <span className="font-semibold text-slate-800">{ticket.namaDaisha || 'Daisha'}</span>
-                    <span className="text-slate-400 mx-1">•</span>
+                    <span className="text-slate-500 mx-1">•</span>
                     {isNeedsDiagnosis ? (
                       <span className="text-amber-900 font-medium bg-amber-100 px-1.5 py-0.5 rounded text-xs border border-amber-300 inline-flex items-center gap-1">
                         <Search className="w-3 h-3" />
@@ -154,7 +154,7 @@ export default function QueueKanbanBoard({
 
                   {/* Baris 3: Pelapor, Waktu & Aksi */}
                   <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
-                    <div className="flex items-center gap-1.5 text-slate-400 truncate">
+                    <div className="flex items-center gap-1.5 text-slate-500 truncate">
                       <span className="truncate text-slate-600 font-medium">{ticket.pelapor || 'Operator'}</span>
                       <span>•</span>
                       <span className="text-amber-700 font-medium shrink-0 tabular-nums">{formatElapsedTime(ticket.tglMasuk)}</span>
@@ -180,7 +180,7 @@ export default function QueueKanbanBoard({
         </div>
       </div>
 
-      {/* ================= KOLOM 2: SEDANG DIPERBAIKI ================= */}
+      {/* Kolom 2: Sedang diperbaiki */}
       <div className="bg-slate-50/80 rounded-xl border border-blue-200/70 p-3.5 flex flex-col h-[580px] shadow-2xs">
         {/* Header Kolom */}
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-blue-200/50 shrink-0">
@@ -201,7 +201,7 @@ export default function QueueKanbanBoard({
         <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
           {inProgressTickets.length === 0 ? (
             <div className="bg-white/60 rounded-lg border border-dashed border-slate-200 p-6 text-center mt-4">
-              <p className="text-xs font-medium text-slate-400">Tidak ada unit dikerjakan</p>
+              <p className="text-xs font-medium text-slate-500">Tidak ada unit dikerjakan</p>
             </div>
           ) : (
             inProgressTickets.map((ticket) => {
@@ -244,7 +244,7 @@ export default function QueueKanbanBoard({
                   {/* Baris 2 */}
                   <div className="text-xs">
                     <span className="font-semibold text-slate-800">{ticket.namaDaisha || 'Daisha'}</span>
-                    <span className="text-slate-400 mx-1">•</span>
+                    <span className="text-slate-500 mx-1">•</span>
                     {isNeedsDiagnosis ? (
                       <span className="text-amber-900 font-medium bg-amber-100 px-1.5 py-0.5 rounded text-xs border border-amber-300 inline-flex items-center gap-1">
                         <Search className="w-3 h-3" />
@@ -257,7 +257,7 @@ export default function QueueKanbanBoard({
 
                   {/* Baris 3 */}
                   <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
-                    <div className="flex items-center gap-1.5 text-slate-400 truncate">
+                    <div className="flex items-center gap-1.5 text-slate-500 truncate">
                       <span className="truncate text-slate-600 font-medium">{ticket.pelapor || 'Operator'}</span>
                       <span>•</span>
                       <span className="text-blue-700 font-medium shrink-0 tabular-nums">{formatElapsedTime(ticket.tglMasuk)}</span>
@@ -283,7 +283,7 @@ export default function QueueKanbanBoard({
         </div>
       </div>
 
-      {/* ================= KOLOM 3: SIAP DIAMBIL / SELESAI ================= */}
+      {/* Kolom 3: Siap diambil / selesai */}
       <div className="bg-slate-50/80 rounded-xl border border-emerald-200/70 p-3.5 flex flex-col h-[580px] shadow-2xs">
         {/* Header Kolom */}
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-emerald-200/50 shrink-0">
@@ -315,7 +315,7 @@ export default function QueueKanbanBoard({
         <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
           {displayedDoneTickets.length === 0 ? (
             <div className="bg-white/60 rounded-lg border border-dashed border-slate-200 p-6 text-center mt-4">
-              <p className="text-xs font-medium text-slate-400">Belum ada unit selesai</p>
+              <p className="text-xs font-medium text-slate-500">Belum ada unit selesai</p>
             </div>
           ) : (
             displayedDoneTickets.map((ticket) => {
@@ -353,7 +353,7 @@ export default function QueueKanbanBoard({
                   {/* Baris 2 */}
                   <div className="text-xs">
                     <span className="font-semibold text-slate-800">{ticket.namaDaisha || 'Daisha'}</span>
-                    <span className="text-slate-400 mx-1">•</span>
+                    <span className="text-slate-500 mx-1">•</span>
                     <span className="text-emerald-800 font-medium truncate">
                       {ticket.reason && ticket.reason !== '-' ? ticket.reason : 'Perbaikan selesai'}
                     </span>
@@ -361,7 +361,7 @@ export default function QueueKanbanBoard({
 
                   {/* Baris 3 */}
                   <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
-                    <div className="flex items-center gap-1.5 text-slate-400 truncate">
+                    <div className="flex items-center gap-1.5 text-slate-500 truncate">
                       <span className="truncate text-slate-600 font-medium">{ticket.pelapor || 'Operator'}</span>
                       <span>•</span>
                       <span className="text-emerald-700 font-medium shrink-0 tabular-nums">{ticket.tglKeluar || 'Selesai'}</span>

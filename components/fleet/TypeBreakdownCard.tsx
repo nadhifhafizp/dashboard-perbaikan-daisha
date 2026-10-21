@@ -157,8 +157,8 @@ export default function TypeBreakdownCard({
                     )}
                   </div>
 
-                  <span className={`text-[11px] font-semibold ${isSelected ? 'text-[#E60012]' : 'text-slate-400'}`}>
-                    {isSelected ? '✓ Terpilih' : 'Filter →'}
+                  <span className={`text-[11px] font-semibold ${isSelected ? 'text-[#E60012]' : 'text-slate-500'}`}>
+                    {isSelected ? 'Terpilih' : 'Filter'}
                   </span>
                 </div>
               </div>

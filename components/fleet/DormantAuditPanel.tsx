@@ -118,7 +118,7 @@ export default function DormantAuditPanel({
                       key={unit.noDaisha}
                       type="button"
                       onClick={() => onSelectUnit(unit)}
-                      className="px-2.5 py-1 rounded text-xs font-mono font-medium bg-slate-50 hover:bg-red-50 text-slate-800 hover:text-[#E60012] border border-slate-200 hover:border-red-200 transition flex items-center gap-1.5 cursor-pointer"
+                      className="px-2.5 py-1 rounded text-xs font-mono font-medium bg-slate-50 hover:bg-slate-100 text-slate-800 hover:text-red-600 border border-slate-200 hover:border-slate-300 transition flex items-center gap-1.5 cursor-pointer"
                       title={`Klik untuk detail riwayat unit ${unit.noDaisha}`}
                     >
                       <span className="font-bold">{unit.noDaisha}</span>

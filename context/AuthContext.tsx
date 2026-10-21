@@ -36,14 +36,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const checkAuth = useCallback(async (force = false) => {
     if (pathname === '/login') {
-      setIsLoading(false);
       return;
     }
 
     // Jika user sudah login dan verifikasi terakhir kurang dari 60 detik, lewati network call
     const now = Date.now();
     if (!force && currentUser && now - lastAuthCheckRef.current < 60_000) {
-      setIsLoading(false);
       return;
     }
 
@@ -76,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Durasi timeout idle: 30 menit tanpa aktivitas pengguna
   const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
-  const lastActivityRef = React.useRef<number>(Date.now());
+  const lastActivityRef = React.useRef<number>(0);
 
   // Handle auto logout saat idle
   const handleIdleLogout = useCallback(async () => {

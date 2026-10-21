@@ -1,8 +1,19 @@
 'use client';
 
-import React from 'react';
-import { Layers, Wrench, Plus, Pencil, X, Sparkles, Tag } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Layers, Wrench, Plus, Pencil, X, Tag } from 'lucide-react';
 import { DaishaTreeItem } from '@/hooks/useDaishaCatalog';
+
+function useEscapeKey(isOpen: boolean, onClose: () => void) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+}
 
 interface AddDaishaModalProps {
   isOpen: boolean;
@@ -21,6 +32,7 @@ export function AddDaishaModal({
   onSubmit,
   seksiList,
 }: AddDaishaModalProps) {
+  useEscapeKey(isOpen, onClose);
   if (!isOpen) return null;
 
   return (
@@ -155,6 +167,7 @@ export function AddVariantModal({
   setForm,
   onSubmit,
 }: AddVariantModalProps) {
+  useEscapeKey(isOpen, onClose);
   if (!isOpen || !daishaTarget) return null;
 
   return (
@@ -162,7 +175,7 @@ export function AddVariantModal({
       <div className="bg-white rounded-xl max-w-lg w-full p-5 shadow-xl border border-slate-200 space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-indigo-600" />
+            <Tag className="w-5 h-5 text-red-600" />
             <span>Tambah Varian Baru: {daishaTarget.name}</span>
           </h3>
           <button
@@ -183,7 +196,7 @@ export function AddVariantModal({
               placeholder="Contoh: Small Susun 3, Type A, dll."
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600 outline-hidden font-medium text-slate-900"
+              className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-medium text-slate-900"
             />
           </div>
 
@@ -193,7 +206,7 @@ export function AddVariantModal({
               <select
                 value={form.ukuran}
                 onChange={(e) => setForm({ ...form, ukuran: e.target.value })}
-                className="w-full h-9 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600 outline-hidden text-slate-900 bg-white"
+                className="w-full h-9 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900 bg-white"
               >
                 <option value="">- Tanpa Ukuran -</option>
                 <option value="Small">Small (S)</option>
@@ -206,7 +219,7 @@ export function AddVariantModal({
               <select
                 value={form.susunan}
                 onChange={(e) => setForm({ ...form, susunan: e.target.value })}
-                className="w-full h-9 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600 outline-hidden text-slate-900 bg-white"
+                className="w-full h-9 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900 bg-white"
               >
                 <option value="">- Tanpa Susunan -</option>
                 <option value="Susun 3">Susun 3</option>
@@ -220,7 +233,7 @@ export function AddVariantModal({
                 placeholder="Contoh: Type A"
                 value={form.tipe}
                 onChange={(e) => setForm({ ...form, tipe: e.target.value })}
-                className="w-full h-9 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600 outline-hidden text-slate-900"
+                className="w-full h-9 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900"
               >
               </input>
             </div>
@@ -234,7 +247,7 @@ export function AddVariantModal({
                 placeholder="Contoh: S30, BB-A"
                 value={form.codePrefix}
                 onChange={(e) => setForm({ ...form, codePrefix: e.target.value })}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600 outline-hidden font-mono uppercase text-slate-900"
+                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-mono uppercase text-slate-900"
               />
             </div>
             <div>
@@ -244,7 +257,7 @@ export function AddVariantModal({
                 min="1"
                 value={form.minNumber || ''}
                 onChange={(e) => setForm({ ...form, minNumber: Number(e.target.value) || 1 })}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600 outline-hidden text-slate-900"
+                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900"
               />
             </div>
             <div>
@@ -257,7 +270,7 @@ export function AddVariantModal({
                   const max = Number(e.target.value) || 1;
                   setForm({ ...form, maxNumber: max, totalUnits: Math.max(1, max - (form.minNumber || 1) + 1) });
                 }}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600 outline-hidden text-slate-900"
+                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900"
               />
             </div>
           </div>
@@ -270,7 +283,7 @@ export function AddVariantModal({
                 min="0"
                 value={form.totalUnits || ''}
                 onChange={(e) => setForm({ ...form, totalUnits: Number(e.target.value) || 0 })}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600 outline-hidden font-semibold text-slate-900"
+                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-semibold text-slate-900"
               />
             </div>
             <div>
@@ -280,7 +293,7 @@ export function AddVariantModal({
                 placeholder="Contoh: S30001 s/d S30035"
                 value={form.rangeFormat}
                 onChange={(e) => setForm({ ...form, rangeFormat: e.target.value })}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600 outline-hidden text-slate-900"
+                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900"
               />
             </div>
           </div>
@@ -295,7 +308,7 @@ export function AddVariantModal({
             </button>
             <button
               type="submit"
-              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
+              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
             >
               Simpan Varian
             </button>
@@ -326,6 +339,7 @@ export function AddComponentModal({
   onSubmit,
 }: AddComponentModalProps) {
   const currentDaisha = daisha || target;
+  useEscapeKey(Boolean(isOpen && currentDaisha), onClose);
   if ((isOpen !== undefined && !isOpen) || !currentDaisha) return null;
 
   return (
@@ -333,7 +347,7 @@ export function AddComponentModal({
       <div className="bg-white rounded-xl max-w-md w-full p-5 shadow-xl border border-slate-200 space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-indigo-600" />
+            <Wrench className="w-5 h-5 text-red-600" />
             <span>Tambah Komponen: {currentDaisha.name}</span>
           </h3>
           <button
@@ -354,7 +368,7 @@ export function AddComponentModal({
               placeholder="Contoh: Roda Putar, Body Frame, Gandengan"
               value={componentName}
               onChange={(e) => setComponentName(e.target.value)}
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600 outline-hidden font-medium text-slate-900"
+              className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-medium text-slate-900"
             />
           </div>
 
@@ -368,7 +382,7 @@ export function AddComponentModal({
             </button>
             <button
               type="submit"
-              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
+              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
             >
               Simpan Komponen
             </button>
@@ -396,6 +410,7 @@ export function AddSymptomModal({
   setSymptomText,
   onSubmit,
 }: AddSymptomModalProps) {
+  useEscapeKey(Boolean(isOpen !== false && target), onClose);
   if ((isOpen !== undefined && !isOpen) || !target) return null;
 
   return (
@@ -487,6 +502,7 @@ export function EditCatalogItemModal({
   onSubmit,
   seksiList,
 }: EditCatalogItemModalProps) {
+  useEscapeKey(Boolean(item), onClose);
   if (!item) return null;
 
   return (

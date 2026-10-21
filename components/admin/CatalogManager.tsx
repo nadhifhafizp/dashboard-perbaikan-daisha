@@ -18,7 +18,6 @@ import {
   Boxes,
   Tag,
   RefreshCw,
-  Sparkles,
 } from 'lucide-react';
 import {
   AddDaishaModal,
@@ -121,10 +120,10 @@ export default function CatalogManager() {
     );
   };
 
-  // Filtered tree
-  const filteredTree = useMemo(() => {
+  // Group data per Seksi
+  const groupedBySeksi = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return tree.filter((d) => {
+    const filtered = tree.filter((d) => {
       if (selectedSeksi !== 'all' && d.seksi.toLowerCase() !== selectedSeksi.toLowerCase()) {
         return false;
       }
@@ -138,13 +137,10 @@ export default function CatalogManager() {
       );
       return matchDaisha || matchComponent;
     });
-  }, [tree, selectedSeksi, search]);
 
-  // Group data per Seksi
-  const groupedBySeksi = useMemo(() => {
     const groups: Record<string, DaishaTreeItem[]> = {};
 
-    filteredTree.forEach((daisha) => {
+    filtered.forEach((daisha) => {
       const s = daisha.seksi || 'All seksi';
       if (!groups[s]) {
         groups[s] = [];
@@ -177,7 +173,7 @@ export default function CatalogManager() {
         totalGejala,
       };
     });
-  }, [filteredTree]);
+  }, [tree, selectedSeksi, search]);
 
   // Total daisha per Seksi
   const seksiCounts = useMemo(() => {
@@ -446,7 +442,7 @@ export default function CatalogManager() {
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Hierarki standarisasi: Seksi Asal → Unit Daisha (Kode Prefix & Populasi) → Komponen Kerusakan → Gejala.
+            Master registri unit daisha, komponen perbaikan, dan gejala kerusakan
           </p>
         </div>
 
@@ -454,11 +450,11 @@ export default function CatalogManager() {
           <button
             type="button"
             onClick={() => refreshCatalog()}
-            className="h-9 px-3 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded border border-slate-300 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            className="h-9 px-3 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-300 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
             title="Muat ulang data katalog"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-red-600' : 'text-slate-500'}`} />
-            <span>Refresh</span>
+            <span>Segarkan</span>
           </button>
           <button
             type="button"
@@ -466,10 +462,10 @@ export default function CatalogManager() {
               setNewDaishaForm({ name: '', seksi: 'Building', codePrefix: '', totalUnits: 0 });
               setIsAddDaishaModalOpen(true);
             }}
-            className="h-9 px-4 bg-[#E60012] hover:bg-[#CC0010] text-white font-bold text-xs rounded shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
+            className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Tambah Jenis Daisha</span>
+            <span>Tambah Jenis Daisha</span>
           </button>
         </div>
       </div>
@@ -479,9 +475,9 @@ export default function CatalogManager() {
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500">Seksi Pabrik Terdaftar</span>
-            <p className="text-2xl font-bold font-mono text-slate-900 mt-0.5">
+            <p className="text-2xl font-bold text-slate-900 mt-0.5 tabular-nums">
               {uniqueSeksiList.length}{' '}
-              <span className="text-xs font-normal text-slate-500 font-sans">Seksi</span>
+              <span className="text-xs font-normal text-slate-500">Seksi</span>
             </p>
           </div>
           <Building2 className="w-6 h-6 text-slate-400" />
@@ -490,9 +486,9 @@ export default function CatalogManager() {
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500">Model & Varian Daisha</span>
-            <p className="text-2xl font-bold font-mono text-slate-900 mt-0.5">
+            <p className="text-2xl font-bold text-slate-900 mt-0.5 tabular-nums">
               {tree.length}{' '}
-              <span className="text-xs font-normal text-slate-500 font-sans">Model</span>
+              <span className="text-xs font-normal text-slate-500">Model</span>
             </p>
           </div>
           <Layers className="w-6 h-6 text-slate-400" />
@@ -501,9 +497,9 @@ export default function CatalogManager() {
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500">Total Populasi Armada Fisik</span>
-            <p className="text-2xl font-bold font-mono text-slate-900 mt-0.5">
+            <p className="text-2xl font-bold text-slate-900 mt-0.5 tabular-nums">
               {totalAllUnits.toLocaleString('id-ID')}{' '}
-              <span className="text-xs font-normal text-slate-500 font-sans">Unit Troli</span>
+              <span className="text-xs font-normal text-slate-500">Unit Troli</span>
             </p>
           </div>
           <Boxes className="w-6 h-6 text-slate-400" />
@@ -527,7 +523,7 @@ export default function CatalogManager() {
             }`}
           >
             <span>Semua Seksi</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${selectedSeksi === 'all' ? 'bg-[#B3000E] text-white' : 'bg-slate-200 text-slate-700'}`}>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded tabular-nums ${selectedSeksi === 'all' ? 'bg-[#B3000E] text-white' : 'bg-slate-200 text-slate-700'}`}>
               {tree.length}
             </span>
           </button>
@@ -547,7 +543,7 @@ export default function CatalogManager() {
                 }`}
               >
                 <span>{s}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${isSelected ? 'bg-[#B3000E] text-white' : 'bg-slate-200 text-slate-700'}`}>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded tabular-nums ${isSelected ? 'bg-[#B3000E] text-white' : 'bg-slate-200 text-slate-700'}`}>
                   {count}
                 </span>
               </button>
@@ -676,13 +672,13 @@ export default function CatalogManager() {
                               <div>
                                 <div className="flex flex-wrap items-center gap-2">
                                   {daisha.codePrefix && (
-                                    <span className="font-mono text-xs bg-slate-100 text-slate-800 font-bold px-1.5 py-0.5 rounded border border-slate-300">
+                                    <span className="text-xs bg-slate-100 text-slate-800 font-bold px-1.5 py-0.5 rounded border border-slate-300 tabular-nums">
                                       {daisha.codePrefix}
                                     </span>
                                   )}
                                   <h4 className="font-bold text-sm text-slate-900">{daisha.name}</h4>
                                   {Boolean(daisha.totalUnits && daisha.totalUnits > 0) && (
-                                    <span className="text-xs font-mono font-bold bg-slate-100 text-slate-800 px-2 py-0.5 rounded border border-slate-200">
+                                    <span className="text-xs font-bold bg-slate-100 text-slate-800 px-2 py-0.5 rounded border border-slate-200 tabular-nums">
                                       {daisha.totalUnits?.toLocaleString('id-ID')} Unit
                                     </span>
                                   )}
@@ -755,10 +751,10 @@ export default function CatalogManager() {
                           {isExpanded && (
                             <div className="p-4 bg-slate-50 border-b border-slate-200 space-y-4">
                               {/* Sub-seksi Varian & Rentang Seri Unit */}
-                              <div className="bg-white rounded-lg border border-indigo-100 p-3.5 space-y-2.5 shadow-2xs">
-                                <div className="flex items-center justify-between border-b border-indigo-50 pb-2">
+                              <div className="bg-white rounded-lg border border-slate-200 p-3.5 space-y-2.5 shadow-2xs">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                                   <div className="flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-indigo-600" />
+                                    <Tag className="w-4 h-4 text-red-600" />
                                     <span className="font-bold text-slate-900 text-xs">Varian & Rentang Seri Armada</span>
                                     <span className="text-slate-400 font-normal text-xs">
                                       ({(daisha.variants || []).length} varian terdaftar)
@@ -781,7 +777,7 @@ export default function CatalogManager() {
                                       });
                                       setIsAddVariantModalOpen(true);
                                     }}
-                                    className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200 cursor-pointer transition flex items-center gap-1"
+                                    className="text-xs font-semibold text-red-700 hover:text-red-900 px-2 py-0.5 bg-red-50 hover:bg-red-100 rounded border border-red-200 cursor-pointer transition flex items-center gap-1"
                                     title="Tambah varian baru untuk jenis Daisha ini"
                                   >
                                     <Plus className="w-3 h-3" />

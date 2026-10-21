@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
 import ConfirmModal from '@/components/ConfirmModal';
+import SparepartsAnalyticsDashboard from '@/components/spareparts/SparepartsAnalyticsDashboard';
 import {
   Package,
   Plus,
@@ -20,6 +21,7 @@ import {
   Save,
   CheckCircle2,
   X,
+  BarChart3,
 } from 'lucide-react';
 
 // ===================== Types =====================
@@ -53,6 +55,7 @@ export default function SparepartsPage() {
 
   const [spareparts, setSpareparts] = useState<Sparepart[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeMainTab, setActiveMainTab] = useState<'ANALYTICS' | 'INVENTORY'>('ANALYTICS');
   const [search, setSearch] = useState('');
   const [filterKategori, setFilterKategori] = useState('all');
 
@@ -77,9 +80,9 @@ export default function SparepartsPage() {
   const showFeedback = (type: FeedbackType, title: string, message: string) => setFeedback({ isOpen: true, type, title, message });
 
   // Fetch
-  const fetchSpareparts = useCallback(async () => {
+  const fetchSpareparts = useCallback(async (showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const res = await fetch('/api/spareparts?logs=true');
       const data = await res.json();
       if (data.success) setSpareparts(data.spareparts);
@@ -254,7 +257,7 @@ export default function SparepartsPage() {
             <span>Manajemen Spareparts & Material</span>
           </h1>
           <p className="text-xs text-slate-500 font-normal mt-0.5 max-w-2xl">
-            Inventaris stok bengkel — terhubung ke perbaikan Daisha dan request antar seksi
+            Inventaris stok bengkel: terhubung ke perbaikan Daisha dan request antar seksi
           </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
@@ -278,8 +281,54 @@ export default function SparepartsPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* ================= VIEW NAVIGATION TABS ================= */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pt-1">
+        <button
+          type="button"
+          onClick={() => setActiveMainTab('ANALYTICS')}
+          className={`pb-2.5 px-3 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer ${
+            activeMainTab === 'ANALYTICS'
+              ? 'border-red-600 text-red-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <BarChart3 className="w-3.5 h-3.5" />
+          <span>Dashboard Analitik Inventaris</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveMainTab('INVENTORY')}
+          className={`pb-2.5 px-3 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer ${
+            activeMainTab === 'INVENTORY'
+              ? 'border-red-600 text-red-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Package className="w-3.5 h-3.5" />
+          <span>Katalog Stok & Log Mutasi ({spareparts.length})</span>
+        </button>
+      </div>
+
+      {/* ================= TAB CONTENT (ANALYTICS VS INVENTORY) ================= */}
+      {activeMainTab === 'ANALYTICS' ? (
+        <SparepartsAnalyticsDashboard
+          spareparts={spareparts}
+          onOpenRestock={(part) => {
+            const found = spareparts.find((s) => s.namaKomponen === part.namaKomponen);
+            if (found) setSelectedPart(found);
+            setMutasiForm({ qty: 0, referensi: '', keterangan: '' });
+            setShowRestockModal(true);
+          }}
+          onFilterByCategory={(kategori) => {
+            setFilterKategori(kategori);
+            setActiveMainTab('INVENTORY');
+          }}
+        />
+      ) : (
+        <>
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
           <div className="flex justify-between items-center mb-1">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Item</span>
@@ -584,6 +633,8 @@ export default function SparepartsPage() {
           </table>
         </div>
       </div>
+        </>
+      )}
 
       {/* Modal: Tambah Item */}
       {showAddModal && (

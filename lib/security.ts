@@ -69,6 +69,13 @@ export function checkRateLimit(
   return { allowed: true, remaining: maxRequests - record.count, resetAt: record.resetAt };
 }
 
+/**
+ * Mereset counter rate limit untuk key tertentu (misal: setelah login berhasil).
+ */
+export function resetRateLimit(key: string): void {
+  rateLimitStore.delete(key);
+}
+
 // ============================================================================
 // 2. FILE & PAYLOAD SIZE LIMIT (Mencegah DoS Memory Exhaustion)
 // ============================================================================

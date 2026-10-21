@@ -251,10 +251,12 @@ export function exportTicketsToExcel(tickets: Ticket[], filePrefix = 'Rekap_Perb
   }
 }
 
+import type { FleetUnitItem } from '@/hooks/useFleetAnalytics';
+
 /**
  * Ekspor data armada Daisha & jadwal maintenance berkala ke file Excel
  */
-export function exportFleetUnitsToExcel(units: any[], filePrefix = 'Jadwal_Maintenance_Armada_Daisha') {
+export function exportFleetUnitsToExcel(units: FleetUnitItem[], filePrefix = 'Jadwal_Maintenance_Armada_Daisha') {
   if (!units || units.length === 0) {
     alert('Tidak ada data armada untuk diekspor.');
     return;
@@ -309,7 +311,7 @@ export function exportFleetUnitsToExcel(units: any[], filePrefix = 'Jadwal_Maint
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  } catch (err) {
+  } catch {
     XLSX.writeFile(wb, fileName);
   }
 }

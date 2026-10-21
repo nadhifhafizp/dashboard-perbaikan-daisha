@@ -61,24 +61,19 @@ export default function FilterPanel({
   return (
     <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs space-y-3.5">
       {/* Top Bar: Title, Count, Quick Presets & Actions */}
-      <div className="flex flex-wrap justify-between items-center gap-3 border-b border-slate-100 pb-3">
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-wrap justify-between items-center gap-3 border-b border-slate-100 pb-2.5">
+        <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
             <SlidersHorizontal className="w-3.5 h-3.5" />
           </div>
-          <div>
-            <h2 className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-              <span>Filter & Pencarian Laporan</span>
-              {activeFilterCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-red-50 text-red-700 border border-red-200/60">
-                  {activeFilterCount} aktif
-                </span>
-              )}
-            </h2>
-            <p className="text-[11px] text-slate-500 font-normal">
-              Saring menurut seksi, jenis unit daisha, status servis, dan rentang tanggal
-            </p>
-          </div>
+          <h2 className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+            <span>Filter & Pencarian</span>
+            {activeFilterCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-50 text-red-700 border border-red-200/60">
+                {activeFilterCount} aktif
+              </span>
+            )}
+          </h2>
         </div>
 
         {/* Quick Date Presets & Reset */}
@@ -121,7 +116,7 @@ export default function FilterPanel({
             type="button"
             onClick={handleResetFilter}
             disabled={activeFilterCount === 0}
-            className="h-7.5 px-2.5 text-xs font-medium rounded-md bg-white hover:bg-red-50 text-slate-600 hover:text-red-700 border border-slate-300 hover:border-red-200 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+            className="h-7.5 px-2.5 text-xs font-medium rounded-md bg-white hover:bg-slate-100 text-slate-700 hover:text-red-600 border border-slate-300 hover:border-slate-400 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
           >
             <RotateCcw className="w-3 h-3" />
             <span>Reset</span>

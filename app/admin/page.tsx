@@ -14,7 +14,6 @@ import PrintTicketTagModal from '@/components/common/PrintTicketTagModal';
 import AdminTicketTable from '@/components/admin/AdminTicketTable';
 import AdminKpiStats from '@/components/admin/AdminKpiStats';
 import {
-  ClipboardList,
   ArrowLeft,
   LayoutDashboard,
   PlusCircle,
@@ -270,13 +269,6 @@ export default function AdminPage() {
             <span>Input Baru</span>
           </Link>
 
-          <Link
-            href="/riwayat"
-            className="h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 border border-slate-200 shadow-2xs"
-          >
-            <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
-            <span>Status Antrean</span>
-          </Link>
 
           <button
             type="button"

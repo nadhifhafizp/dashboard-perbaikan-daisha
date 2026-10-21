@@ -43,6 +43,55 @@ const SEKSI_COLORS = [
   '#64748b', // Slate
 ];
 
+interface SectionDonutTooltipProps {
+  active?: boolean;
+  payload?: readonly {
+    payload?: {
+      seksi: string;
+      total: number;
+      persen: number;
+      color: string;
+      jenisList?: { jenis: string; count: number }[];
+    };
+  }[];
+}
+
+function SectionDonutTooltip({ active, payload }: SectionDonutTooltipProps) {
+  if (active && payload && payload.length) {
+    const item = payload[0];
+    const data = item.payload;
+    if (!data) return null;
+    return (
+      <div className="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs shadow-md space-y-1.5 max-w-xs">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-1">
+          <p className="font-extrabold text-sm" style={{ color: data.color }}>
+            Seksi: {data.seksi}
+          </p>
+          <span className="font-bold text-slate-800 tabular-nums">
+            {data.total} Unit ({data.persen}%)
+          </span>
+        </div>
+        {data.jenisList && data.jenisList.length > 0 && (
+          <div className="pt-0.5">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+              Model Daisha Sering Masuk:
+            </span>
+            <div className="space-y-0.5">
+              {data.jenisList.slice(0, 3).map((j) => (
+                <div key={j.jenis} className="flex justify-between items-center text-[11px] text-slate-700">
+                  <span className="truncate pr-2">• {j.jenis}</span>
+                  <span className="font-bold tabular-nums">{j.count}x</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function SectionCharts({
   chartSeksiStacked,
   seksiJenisMonthly = {},
@@ -97,59 +146,17 @@ export default function SectionCharts({
     }));
   }, [activeSeksiList, totalSeksiAll]);
 
-  const SectionDonutTooltip = ({
-    active,
-    payload,
-  }: {
-    active?: boolean;
-    payload?: { name: string; value: number; payload: { seksi: string; total: number; persen: number; color: string; jenisList?: { jenis: string; count: number }[] } }[];
-  }) => {
-    if (active && payload && payload.length) {
-      const item = payload[0];
-      const data = item.payload;
-      return (
-        <div className="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs shadow-md space-y-1.5 max-w-xs">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-1">
-            <p className="font-extrabold text-sm" style={{ color: data.color }}>
-              Seksi: {data.seksi}
-            </p>
-            <span className="font-bold text-slate-800 tabular-nums">
-              {data.total} Unit ({data.persen}%)
-            </span>
-          </div>
-          {data.jenisList && data.jenisList.length > 0 && (
-            <div className="pt-0.5">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
-                Model Daisha Sering Masuk:
-              </span>
-              <div className="space-y-0.5">
-                {data.jenisList.slice(0, 3).map((j) => (
-                  <div key={j.jenis} className="flex justify-between items-center text-[11px] text-slate-700">
-                    <span className="truncate pr-2">• {j.jenis}</span>
-                    <span className="font-bold tabular-nums">{j.count}x</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col h-full justify-between">
       {/* 1. Header Minimalis */}
       <div className="flex flex-wrap justify-between items-center gap-3 mb-2">
-        <div>
-          <h3 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-slate-700" />
-            <span>Distribusi Asal Daisha per Seksi Pabrik</span>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+            <Building2 className="w-3.5 h-3.5" />
+          </div>
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+            Distribusi Masuk per Seksi
           </h3>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Komposisi unit masuk menurut departemen pemakai daisha di plant produksi
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -161,7 +168,7 @@ export default function SectionCharts({
                 <button
                   type="button"
                   onClick={() => onSelectSeksi('')}
-                  className="hover:bg-red-200/60 p-0.5 rounded transition cursor-pointer focus:outline-none"
+                  className="hover:bg-red-200/60 p-0.5 rounded transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600"
                   aria-label={`Hapus filter seksi ${selectedSeksi}`}
                   title="Hapus filter"
                 >
@@ -211,8 +218,9 @@ export default function SectionCharts({
                     startAngle={90}
                     endAngle={-270}
                     cursor="pointer"
-                    onClick={(entry: any) => {
-                      const seksiName = entry?.seksi || entry?.payload?.seksi;
+                    onClick={(entry: unknown) => {
+                      const item = entry as { seksi?: string; payload?: { seksi?: string } } | null;
+                      const seksiName = item?.seksi || item?.payload?.seksi;
                       if (onSelectSeksi && seksiName) {
                         onSelectSeksi(selectedSeksi === seksiName ? '' : seksiName);
                       }

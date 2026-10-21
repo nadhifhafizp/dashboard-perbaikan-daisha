@@ -67,9 +67,22 @@ export default function UserManager() {
     setFeedback({ isOpen: true, type, title, message });
   };
 
-  const fetchUsers = useCallback(async () => {
+  // Escape key listener untuk menutup modal akun
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isAddModalOpen) setIsAddModalOpen(false);
+        else if (isEditModalOpen) setIsEditModalOpen(false);
+        else if (isPasswordModalOpen) setIsPasswordModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAddModalOpen, isEditModalOpen, isPasswordModalOpen]);
+
+  const fetchUsers = useCallback(async (showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const res = await fetch('/api/users');
       const data = await res.json();
       if (data.success && data.users) {
@@ -226,7 +239,7 @@ export default function UserManager() {
             <span>Manajemen Akun Pengguna</span>
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Kelola username, nama, peran (Admin / Operator / Seksi), dan reset password langsung di database PostgreSQL terenkripsi.
+            Daftar akun pengguna, otoritas hak akses, dan pengelolaan password.
           </p>
         </div>
         <button
@@ -272,7 +285,7 @@ export default function UserManager() {
                       <div className="font-semibold text-slate-900">{u.name}</div>
                       <div className="text-[11px] text-slate-400">ID #{u.id}</div>
                     </td>
-                    <td className="py-3.5 px-4 font-mono font-medium text-slate-700">
+                    <td className="py-3.5 px-4 font-semibold text-slate-700">
                       @{u.username}
                     </td>
                     <td className="py-3.5 px-4">
@@ -370,7 +383,7 @@ export default function UserManager() {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="font-semibold text-sm text-slate-900">{u.name}</div>
-                  <div className="font-mono text-xs text-slate-500 font-medium">@{u.username}</div>
+                  <div className="text-xs text-slate-500 font-medium">@{u.username}</div>
                 </div>
                 <span
                   className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-medium uppercase ${
@@ -462,7 +475,8 @@ export default function UserManager() {
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+                className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-8 sm:h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center justify-center cursor-pointer transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+                aria-label="Tutup modal"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -490,7 +504,7 @@ export default function UserManager() {
                     placeholder="operator_bengkel"
                     value={addForm.username}
                     onChange={(e) => setAddForm({ ...addForm, username: e.target.value.toLowerCase().trim() })}
-                    className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none font-mono text-slate-900"
+                    className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none text-slate-900"
                   />
                 </div>
                 <div>
@@ -515,7 +529,7 @@ export default function UserManager() {
                   placeholder="••••••••"
                   value={addForm.password}
                   onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
-                  className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none font-mono text-slate-900"
+                  className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none text-slate-900"
                 />
               </div>
 
@@ -562,7 +576,8 @@ export default function UserManager() {
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+                className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-8 sm:h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center justify-center cursor-pointer transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+                aria-label="Tutup modal"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -588,7 +603,7 @@ export default function UserManager() {
                     required
                     value={editForm.username}
                     onChange={(e) => setEditForm({ ...editForm, username: e.target.value.toLowerCase().trim() })}
-                    className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none font-mono text-slate-900"
+                    className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none text-slate-900"
                   />
                 </div>
                 <div>
@@ -647,7 +662,8 @@ export default function UserManager() {
               <button
                 type="button"
                 onClick={() => setIsPasswordModalOpen(false)}
-                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+                className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-8 sm:h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center justify-center cursor-pointer transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+                aria-label="Tutup modal"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -666,7 +682,7 @@ export default function UserManager() {
                   placeholder="Ketik password baru..."
                   value={passwordForm.newPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                  className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none font-mono text-slate-900"
+                  className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none text-slate-900"
                 />
               </div>
 
@@ -678,7 +694,7 @@ export default function UserManager() {
                   placeholder="Ulangi password baru..."
                   value={passwordForm.confirmPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                  className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none font-mono text-slate-900"
+                  className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none text-slate-900"
                 />
               </div>
 

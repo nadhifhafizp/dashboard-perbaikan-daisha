@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Ticket } from '@/types/ticket';
 import { useTickets } from '@/hooks/useTickets';
 import DetailTicketModal from '@/components/riwayat/DetailTicketModal';
@@ -38,8 +39,15 @@ import {
 } from 'lucide-react';
 
 export default function RiwayatLaporanPage() {
-  const { isAdmin } = useAuth();
+  const router = useRouter();
+  const { isAdmin, isLoading: authLoading } = useAuth();
   const { tickets, loading, refresh, setTickets } = useTickets();
+
+  useEffect(() => {
+    if (!authLoading && isAdmin) {
+      router.replace('/admin');
+    }
+  }, [authLoading, isAdmin, router]);
 
   // View Mode: 'kanban' (default) atau 'list'
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
@@ -184,16 +192,25 @@ export default function RiwayatLaporanPage() {
     return sortTickets(list, sortBy);
   }, [tickets, statusFilter, selectedSeksi, selectedDaisha, selectedAging, search, sortBy]);
 
-  // Reset ke halaman 1 saat filter atau itemsPerPage berubah
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filteredTickets.length, sortBy, itemsPerPage]);
-
   // Data Pagination untuk tampilan List
+  const totalPages = Math.max(1, Math.ceil(filteredTickets.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
   const paginatedTickets = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
+    const startIndex = (safeCurrentPage - 1) * itemsPerPage;
     return filteredTickets.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredTickets, currentPage, itemsPerPage]);
+  }, [filteredTickets, safeCurrentPage, itemsPerPage]);
+
+  if (authLoading || isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-2.5">
+          <div className="w-8 h-8 border-3 border-red-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-medium text-slate-500">Mengarahkan ke Panel Tindakan Admin...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 max-w-7xl mx-auto pb-24 md:pb-8">
@@ -202,9 +219,9 @@ export default function RiwayatLaporanPage() {
         <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <Link
-              href="/daisha"
+              href="/input"
               className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition"
-              title="Kembali ke Dashboard"
+              title="Kembali ke Form Lapor Rusak"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
@@ -536,7 +553,7 @@ export default function RiwayatLaporanPage() {
 
             {filteredTickets.length > 0 && (
               <PaginationControl
-                currentPage={currentPage}
+                currentPage={safeCurrentPage}
                 totalItems={filteredTickets.length}
                 itemsPerPage={itemsPerPage}
                 onPageChange={setCurrentPage}

@@ -122,7 +122,12 @@ export async function proxy(request: NextRequest) {
   }
 
   // 5. ENFORCEMENT RBAC: ADMIN
-  // Memiliki otoritas penuh ke semua halaman (/portal, /daisha, /admin, /catalog, /users, /fleet, /spareparts, dll)
+  // Admin mengelola antrean dan perbaikan secara terpadu melalui Panel Tindakan (/admin)
+  if (role === 'ADMIN' && pathname.startsWith('/riwayat')) {
+    return NextResponse.redirect(new URL('/admin', request.url));
+  }
+
+  // Memiliki otoritas penuh ke semua halaman kerja workshop (/portal, /daisha, /admin, /catalog, /users, /fleet, /spareparts, dll)
   return NextResponse.next();
 }
 

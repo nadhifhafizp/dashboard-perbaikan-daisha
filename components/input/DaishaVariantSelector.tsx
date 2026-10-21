@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { DaishaVariantInfo } from '@/lib/daishaVariants';
 import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
-import { SlidersHorizontal, CheckCircle2, Info, Layers, Sparkles } from 'lucide-react';
+import { SlidersHorizontal, CheckCircle2, Info, Layers } from 'lucide-react';
 
 interface DaishaVariantSelectorProps {
   jenisDaisha: string;
@@ -20,24 +20,41 @@ export default function DaishaVariantSelector({
   const [filterSusunan, setFilterSusunan] = useState<string>('ALL');
   const { getVariantsForDaisha } = useDaishaCatalog();
 
+  // Reset filter ukuran & susunan saat jenis Daisha berganti (misal: dari GT Ring ke Vertical)
+  useEffect(() => {
+    setFilterUkuran('ALL');
+    setFilterSusunan('ALL');
+  }, [jenisDaisha]);
+
   const dynamicVariants = useMemo(() => getVariantsForDaisha(jenisDaisha), [getVariantsForDaisha, jenisDaisha]);
 
   const variants = useMemo<DaishaVariantInfo[]>(() => {
     if (dynamicVariants && dynamicVariants.length > 0) {
-      return dynamicVariants.map((v) => ({
-        id: String(v.id),
-        name: v.name,
-        ukuran: (v.ukuran as 'Small' | 'Medium' | 'Large') || undefined,
-        susunan: (v.susunan as 'Susun 3' | 'Susun 4') || undefined,
-        tipe: v.tipe || undefined,
-        codePrefix: v.codePrefix || '',
-        padLength: v.padLength ?? 0,
-        minNumber: v.minNumber ?? 1,
-        maxNumber: v.maxNumber ?? 1,
-        totalUnits: v.totalUnits ?? 0,
-        rangeFormat: v.rangeFormat || '',
-        badgeColor: v.badgeColor || undefined,
-      }));
+      const seen = new Set<string>();
+      const list: DaishaVariantInfo[] = [];
+
+      for (const v of dynamicVariants) {
+        // Kunci unik untuk cegah duplikasi kartu varian di UI
+        const key = `${v.id}_${v.codePrefix || ''}_${v.name}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        list.push({
+          id: String(v.id),
+          name: v.name,
+          ukuran: (v.ukuran as 'Small' | 'Medium' | 'Large') || undefined,
+          susunan: (v.susunan as 'Susun 3' | 'Susun 4') || undefined,
+          tipe: v.tipe || undefined,
+          codePrefix: v.codePrefix || '',
+          padLength: v.padLength ?? 0,
+          minNumber: v.minNumber ?? 1,
+          maxNumber: v.maxNumber ?? 1,
+          totalUnits: v.totalUnits ?? 0,
+          rangeFormat: v.rangeFormat || '',
+          badgeColor: v.badgeColor || undefined,
+        });
+      }
+      return list;
     }
     return [];
   }, [dynamicVariants]);
@@ -88,7 +105,9 @@ export default function DaishaVariantSelector({
   const isGTRing = jenisDaisha.toLowerCase().includes('gt ring');
 
   // Filter khusus GT Ring (Ukuran S/M/L dan Susun 3/4)
+  // Penting: Jika BUKAN GT Ring (misal Vertical), jangan terapkan filter ukuran/susunan agar varian tidak hilang tersaring
   const filteredVariants = variants.filter((v) => {
+    if (!isGTRing) return true;
     if (filterUkuran !== 'ALL' && v.ukuran !== filterUkuran) return false;
     if (filterSusunan !== 'ALL' && v.susunan !== filterSusunan) return false;
     return true;
@@ -201,7 +220,7 @@ export default function DaishaVariantSelector({
 
               <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
                 <span className={`font-semibold ${isSelected ? 'text-red-700' : 'text-slate-500'}`}>
-                  {isSelected ? '✓ Sedang Dipilih' : 'Klik untuk isi awalan'}
+                  {isSelected ? 'Sedang Dipilih' : 'Klik untuk isi awalan'}
                 </span>
                 {isSelected && (
                   <CheckCircle2 className="w-4 h-4 text-red-600 shrink-0" />

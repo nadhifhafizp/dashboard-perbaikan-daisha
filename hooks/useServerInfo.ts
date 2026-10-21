@@ -58,7 +58,7 @@ export function useServerInfo() {
     } catch {
       return false;
     }
-  }, [serverInfo?.url]);
+  }, [serverInfo]);
 
   return {
     serverInfo,

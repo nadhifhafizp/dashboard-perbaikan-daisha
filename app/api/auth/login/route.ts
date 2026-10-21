@@ -4,6 +4,7 @@ import { findUserByCredentials } from '@/lib/users';
 import {
   getClientIp,
   checkRateLimit,
+  resetRateLimit,
   validatePayloadSize,
   recordAuditLog,
   sanitizeText,
@@ -16,17 +17,18 @@ export async function POST(request: Request) {
   const sizeCheck = validatePayloadSize(request, 64 * 1024);
   if (!sizeCheck.ok) return sizeCheck.errorResponse!;
 
-  // 2. RATE LIMITING (5 kali percobaan dalam 5 menit per IP)
-  const rateLimit = checkRateLimit(`login:${ip}`, 5, 5 * 60 * 1000);
+  // 2. RATE LIMITING (5 kali percobaan di production, 50 di development)
+  const maxAttempts = process.env.NODE_ENV === 'production' ? 5 : 50;
+  const rateLimit = checkRateLimit(`login:${ip}`, maxAttempts, 5 * 60 * 1000);
   if (!rateLimit.allowed) {
     recordAuditLog({
       action: 'LOGIN_BLOCKED_RATE_LIMIT',
       ip,
       status: 'DENIED',
-      details: 'Melebihi batas 5 percobaan login',
+      details: `Melebihi batas ${maxAttempts} percobaan login`,
     });
     return NextResponse.json(
-      { error: 'Terlalu banyak percobaan login gagal. Coba lagi dalam 5 menit.' },
+      { error: 'Terlalu banyak percobaan login. Silakan coba lagi dalam beberapa menit.' },
       { status: 429 }
     );
   }
@@ -62,7 +64,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. AUDIT LOGGING (Login Berhasil)
+    // 5. AUDIT LOGGING (Login Berhasil) & RESET RATE LIMIT
+    resetRateLimit(`login:${ip}`);
     recordAuditLog({
       action: 'LOGIN_SUCCESS',
       ip,

@@ -371,8 +371,8 @@ export default function PrintTicketTagModal({
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-white font-mono font-bold text-[8px] leading-tight opacity-80">{ticket.idTiket}</p>
-                <p className="text-red-200 print:text-white font-semibold text-[8px] leading-tight">{ticket.waktuMasuk}</p>
+                <p className="text-white font-bold text-[8px] leading-tight opacity-80 tabular-nums">{ticket.idTiket}</p>
+                <p className="text-red-200 print:text-white font-semibold text-[8px] leading-tight tabular-nums">{ticket.waktuMasuk}</p>
               </div>
             </div>
 
@@ -380,7 +380,7 @@ export default function PrintTicketTagModal({
             <div className="px-4 pt-4 pb-3 border-b-2 border-black text-center">
               <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 print:text-slate-700 mb-0.5">NOMOR UNIT DAISHA</p>
               <div className="flex items-center justify-center gap-3">
-                <span className="font-mono font-black text-5xl tracking-tight text-slate-900 leading-none">
+                <span className="font-black text-5xl tracking-tight text-slate-900 leading-none tabular-nums">
                   {ticket.noDaisha}
                 </span>
                 {sizeInfo && (
@@ -494,7 +494,7 @@ export default function PrintTicketTagModal({
                 <div className="w-5 h-5 rounded-full border-2 border-slate-400 print:border-black bg-white" />
                 <span className="font-semibold">Lubang Gantungan</span>
               </div>
-              <span className="font-mono font-bold">PT. Bridgestone Tire Indonesia</span>
+              <span className="font-bold">PT. Bridgestone Tire Indonesia</span>
             </div>
 
           </div>

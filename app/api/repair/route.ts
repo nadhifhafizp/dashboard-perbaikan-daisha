@@ -11,11 +11,12 @@ import {
   sanitizeText,
   validateNoDaisha,
 } from '@/lib/security';
+import { invalidateMaintenanceCache } from '@/app/api/maintenance/route';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-let repairCache: any[] | null = null;
+let repairCache: Record<string, unknown>[] | null = null;
 let repairCacheTimestamp = 0;
 const REPAIR_CACHE_TTL_MS = 10 * 1000; // 10 detik
 
@@ -295,13 +296,15 @@ export async function POST(request: Request) {
         WHERE "idTiket" = ${idTiket}
       `;
 
-      // PRD Modul Maintenance: Sinkronisasi perbaikan selesai -> terhitung sudah maintenance
+      // PRD Modul Maintenance: Sinkronisasi perbaikan selesai -> terhitung riwayat servis & maintenance
       if (normalizedStatus === 'Done') {
         try {
-          const tRow = await sql`SELECT "noDaisha" FROM "Ticket" WHERE "idTiket" = ${idTiket} LIMIT 1`;
+          const tRow = await sql`SELECT "noDaisha", "waktuMasuk" FROM "Ticket" WHERE "idTiket" = ${idTiket} LIMIT 1`;
           if (tRow.length > 0 && tRow[0].noDaisha) {
             const noD = tRow[0].noDaisha.trim();
             const completionDate = parsedWaktuSelesai || new Date();
+            const ticketWaktuMasuk = tRow[0].waktuMasuk ? new Date(tRow[0].waktuMasuk) : completionDate;
+            const detailKerusakan = body.detail ? sanitizeText(body.detail, 1000) : 'Perbaikan kerusakan di bengkel';
             
             // Cari unit Daisha atau buat baru
             const daishaMatch = await sql`
@@ -313,25 +316,46 @@ export async function POST(request: Request) {
               dId = daishaMatch[0].id;
               await sql`
                 UPDATE "Daisha"
-                SET "last_maintenance_date" = ${completionDate}, "updated_at" = now()
+                SET 
+                  "last_maintenance_date" = ${completionDate},
+                  "last_repair_date" = ${completionDate},
+                  "last_waktu_masuk" = ${ticketWaktuMasuk},
+                  "last_waktu_keluar" = ${completionDate},
+                  "last_condition" = 'REPAIR_DONE',
+                  "updated_at" = now()
                 WHERE id = ${dId}
               `;
             } else {
               const jenis = noD.toUpperCase().includes('NF') || noD.toUpperCase().includes('FIL') ? 'NAGARA_FILTER' : 'VERTICAL';
               const ukuran = noD.toUpperCase().includes('S') ? 'SMALL' : noD.toUpperCase().includes('L') ? 'LARGE' : 'MEDIUM';
               const inserted = await sql`
-                INSERT INTO "Daisha" ("nomor_daisha", "jenis", "ukuran", "last_maintenance_date")
-                VALUES (${noD}, ${jenis}, ${ukuran}, ${completionDate})
+                INSERT INTO "Daisha" (
+                  "nomor_daisha", "jenis", "ukuran", "last_maintenance_date",
+                  "last_repair_date", "last_waktu_masuk", "last_waktu_keluar", "last_condition"
+                )
+                VALUES (
+                  ${noD}, ${jenis}, ${ukuran}, ${completionDate},
+                  ${completionDate}, ${ticketWaktuMasuk}, ${completionDate}, 'REPAIR_DONE'
+                )
                 RETURNING id
               `;
               dId = inserted[0].id;
             }
 
-            // Catat log pengerjaan repair
+            // Catat log pengerjaan repair terintegrasi
             await sql`
-              INSERT INTO "MaintenanceLog" ("daisha_id", "nomor_daisha", "jenis_pekerjaan", "tanggal_pengerjaan", "admin_id", "catatan")
-              VALUES (${dId}, ${noD}, 'REPAIR', ${completionDate}, ${auth.user?.name || auth.user?.username || 'Admin'}, ${'Perbaikan selesai via tiket ' + idTiket})
+              INSERT INTO "MaintenanceLog" (
+                "daisha_id", "nomor_daisha", "jenis_pekerjaan", "kondisi",
+                "tanggal_pengerjaan", "waktu_masuk", "waktu_keluar", "detail_kerusakan",
+                "admin_id", "catatan"
+              ) VALUES (
+                ${dId}, ${noD}, 'REPAIR', 'RUSAK',
+                ${completionDate}, ${ticketWaktuMasuk}, ${completionDate}, ${detailKerusakan},
+                ${auth.user?.name || auth.user?.username || 'Admin'}, ${'Perbaikan selesai via tiket ' + idTiket}
+              )
             `;
+
+            invalidateMaintenanceCache();
           }
         } catch (syncErr) {
           console.warn('[Sync Maintenance] Gagal sinkronisasi tiket Done ke modul Maintenance:', syncErr);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Edit3,
   Search,
@@ -130,6 +130,16 @@ function EditTicketModalDialog({
   const [customQtyMap, setCustomQtyMap] = useState<Record<string, number>>(initial.customQtyMap);
 
   const { catalog, seksiList, daishaList } = useDaishaCatalog();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isLoading) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLoading, onClose]);
 
   // Katalog kerusakan untuk tipe Daisha yang sedang diedit
   const katalogKerusakan = useMemo(() => {
@@ -457,17 +467,17 @@ function EditTicketModalDialog({
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition cursor-pointer text-xs text-center"
+              className="w-full sm:w-auto min-h-[44px] sm:min-h-0 sm:h-9 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition cursor-pointer text-xs text-center flex items-center justify-center focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full sm:w-auto px-5 py-2 text-white font-medium rounded-lg shadow-xs transition cursor-pointer flex items-center justify-center gap-2 text-xs disabled:opacity-50 ${
+              className={`w-full sm:w-auto min-h-[44px] sm:min-h-0 sm:h-9 px-5 py-2 text-white font-medium rounded-lg shadow-xs transition cursor-pointer flex items-center justify-center gap-2 text-xs disabled:opacity-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1 ${
                 initial.isNeedsDiagnosis
-                  ? 'bg-amber-600 hover:bg-amber-700'
-                  : 'bg-red-600 hover:bg-red-700'
+                  ? 'bg-amber-600 hover:bg-amber-700 focus-visible:ring-amber-500'
+                  : 'bg-red-600 hover:bg-red-700 focus-visible:ring-red-600'
               }`}
             >
               {isLoading ? (

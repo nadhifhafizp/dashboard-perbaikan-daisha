@@ -23,6 +23,7 @@ import {
   Trash2,
   ScanLine,
   Clock,
+  X,
 } from 'lucide-react';
 
 interface AdminTicketTableProps {
@@ -344,10 +345,11 @@ function AdminTicketTableComponent({
                     setSearch('');
                     setCurrentPage(1);
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 w-4 h-4 rounded-full flex items-center justify-center text-xs transition cursor-pointer"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 w-4 h-4 rounded-full flex items-center justify-center transition cursor-pointer"
                   title="Hapus pencarian"
+                  aria-label="Hapus pencarian"
                 >
-                  ✕
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>

@@ -104,10 +104,11 @@ export async function GET(request: Request) {
       lastJobType,
       warningMessage,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : String(error);
     console.error('Error checking Daisha status:', error);
     return NextResponse.json(
-      { error: 'Gagal mengecek data daisha: ' + (error?.message || error) },
+      { error: 'Gagal mengecek data daisha: ' + errMessage },
       { status: 500 }
     );
   }

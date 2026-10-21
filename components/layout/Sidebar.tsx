@@ -22,6 +22,7 @@ import {
   Target,
   ChevronDown,
   Home,
+  ClipboardList,
 } from 'lucide-react';
 import PwaInstaller from '../common/PwaInstaller';
 
@@ -108,18 +109,17 @@ export default function Sidebar({
       items: [
         { href: '/daisha', label: 'Dashboard Analitik', icon: LayoutDashboard },
         { href: '/input', label: 'Lapor Kerusakan', icon: PenSquare },
-        { href: '/riwayat', label: 'Pelacakan & Antrean', icon: ScanLine },
+        ...(!isAdmin ? [{ href: '/riwayat', label: 'Pelacakan & Antrean', icon: ScanLine }] : []),
         ...(isAdmin ? [{ href: '/admin', label: 'Panel Tindakan Bengkel', icon: Settings }] : []),
       ],
     },
     {
       id: 'FLEET',
       title: 'Modul Maintenance',
-      badge: 'Annual KPI & Grid',
+      badge: 'Annual PM & Fleet',
       icon: Target,
       items: [
-        { href: '/maintenance', label: 'Target & Mapping Grid', icon: Target },
-        { href: '/fleet', label: 'Kontrol Siklus Armada', icon: CalendarClock },
+        { href: '/maintenance', label: 'Dashboard & Pemeliharaan PM', icon: Target },
         { href: '/catalog', label: 'Master & Registri Daisha', icon: Layers },
       ],
     },
@@ -129,7 +129,8 @@ export default function Sidebar({
       badge: 'Special Project',
       icon: SendHorizonal,
       items: [
-        { href: '/request', label: 'Dashboard & Tiket Request', icon: SendHorizonal },
+        { href: '/request', label: 'Dashboard Analitik', icon: LayoutDashboard },
+        { href: '/request/tracking', label: 'Daftar Pelacakan', icon: ClipboardList },
       ],
     },
     {
@@ -180,7 +181,7 @@ export default function Sidebar({
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-30 bg-[#4A0005] text-neutral-200 border-r border-[#3A0004] flex flex-col transition-all duration-300 ease-in-out shrink-0
+        fixed inset-y-0 left-0 z-30 bg-slate-900 text-slate-200 border-r border-slate-800 flex flex-col transition-all duration-300 ease-in-out shrink-0
         ${isMobileMenuOpen ? 'translate-x-0 w-64' : '-translate-x-full'}
         ${
           isDesktopCollapsed
@@ -190,30 +191,30 @@ export default function Sidebar({
       `}
     >
       {/* 1. Brand Logo & Collapse Toggle */}
-      <div className="hidden md:flex p-4 border-b border-[#3A0004] flex-col items-center justify-center bg-[#3D0004] relative">
+      <div className="hidden md:flex p-4 border-b border-slate-800 flex-col items-center justify-center bg-slate-950 relative">
         {onToggleDesktopCollapse && (
           <button
             type="button"
             onClick={onToggleDesktopCollapse}
-            className="absolute right-2.5 top-2.5 p-1.5 text-red-200/70 hover:text-white hover:bg-white/10 rounded-md transition cursor-pointer"
+            className="absolute right-2.5 top-2.5 p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition cursor-pointer"
             title="Sembunyikan Sidebar"
             aria-label="Sembunyikan Sidebar"
           >
             <Menu className="w-4 h-4" />
           </button>
         )}
-        <div className="bg-white px-3.5 py-1.5 rounded-md shadow-xs flex items-center justify-center">
+        <div className="bg-white px-3 py-1.5 rounded-lg shadow-xs flex items-center justify-center">
           <Image
             src="/logo-bs.png"
             alt="Logo Bridgestone"
-            width={140}
-            height={36}
-            className="h-7 w-auto object-contain"
+            width={130}
+            height={32}
+            className="h-6 w-auto object-contain"
             priority
           />
         </div>
-        <div className="mt-2.5 flex flex-col items-center w-full">
-          <span className="text-xs font-semibold text-red-100/90 tracking-wide text-center">
+        <div className="mt-2 flex flex-col items-center w-full">
+          <span className="text-xs font-semibold text-slate-200 tracking-wide text-center">
             Workshop Management
           </span>
         </div>
@@ -221,21 +222,21 @@ export default function Sidebar({
 
       {/* 2. User Info */}
       {currentUser && (
-        <div className="px-4 py-2.5 border-b border-[#3A0004] flex items-center gap-2.5 bg-[#3D0004]/60">
-          <div className="w-7 h-7 rounded-lg bg-[#300003] text-red-200 border border-[#500006] flex items-center justify-center font-medium text-xs shrink-0">
+        <div className="px-4 py-3 border-b border-slate-800 flex items-center gap-2.5 bg-slate-950/60">
+          <div className="w-7 h-7 rounded-lg bg-slate-800 text-slate-200 border border-slate-700 flex items-center justify-center font-medium text-xs shrink-0">
             {currentUser.role === 'ADMIN' ? (
-              <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
+              <ShieldCheck className="w-3.5 h-3.5 text-red-500" />
             ) : currentUser.role === 'USER_SEKSI' ? (
-              <Users className="w-3.5 h-3.5 text-blue-300" />
+              <Users className="w-3.5 h-3.5 text-blue-400" />
             ) : (
-              <Wrench className="w-3.5 h-3.5 text-amber-300" />
+              <Wrench className="w-3.5 h-3.5 text-amber-400" />
             )}
           </div>
           <div className="overflow-hidden flex-1">
             <p className="text-xs font-semibold text-white truncate leading-tight">
               {currentUser.name || currentUser.username}
             </p>
-            <span className="text-[10px] text-red-200/70 font-normal">
+            <span className="text-[10px] text-slate-400 font-normal">
               {currentUser.role === 'USER_SEKSI' ? 'User Seksi' : currentUser.role === 'ADMIN' ? 'Administrator' : 'Operator Workshop'}
             </span>
           </div>
@@ -246,29 +247,29 @@ export default function Sidebar({
       <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
         {/* Back to Portal Home Button (Admin) */}
         {isAdmin && (
-          <div className="pb-2 border-b border-[#3A0004]">
+          <div className="pb-2 border-b border-slate-800">
             <Link
               href="/"
               onClick={onCloseMobileMenu}
               className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition group ${
                 pathname === '/'
                   ? 'bg-red-600 text-white font-semibold shadow-xs'
-                  : 'text-red-100 bg-[#3D0004]/80 hover:bg-[#5E0007] hover:text-white border border-[#500006]'
+                  : 'text-slate-300 bg-slate-800/60 hover:bg-slate-800 hover:text-white border border-slate-700/60'
               }`}
-              title="Kembali ke Beranda Pilihan Modul"
+              title="Kembali ke Portal Beranda"
             >
-              <Home className={`w-3.5 h-3.5 transition group-hover:scale-110 ${pathname === '/' ? 'text-white' : 'text-red-300'}`} />
-              <span>Portal Beranda (5 Modul)</span>
+              <Home className={`w-3.5 h-3.5 transition group-hover:scale-105 ${pathname === '/' ? 'text-white' : 'text-slate-400'}`} />
+              <span>Portal Beranda</span>
             </Link>
           </div>
         )}
 
         {/* Section Header */}
         <div className="px-1 pt-1 flex items-center justify-between">
-          <span className="text-[10px] font-bold text-red-200/50 uppercase tracking-wider">
-            Modul Operasional
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+            Menu Operasional
           </span>
-          <span className="text-[10px] font-mono text-red-200/40">
+          <span className="text-[10px] font-mono text-slate-500">
             {visibleModules.length} Modul
           </span>
         </div>
@@ -288,8 +289,8 @@ export default function Sidebar({
                 key={module.id}
                 className={`rounded-xl transition-all duration-200 border ${
                   isModuleActive
-                    ? 'bg-[#3A0004]/90 border-red-500/30 shadow-2xs'
-                    : 'bg-[#3A0004]/30 border-transparent hover:border-[#550007] hover:bg-[#3A0004]/60'
+                    ? 'bg-slate-800/80 border-slate-700 shadow-2xs'
+                    : 'bg-slate-900/60 border-transparent hover:border-slate-800 hover:bg-slate-850'
                 }`}
               >
                 {/* Accordion Header / Toggle Button */}
@@ -304,7 +305,7 @@ export default function Sidebar({
                       className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border transition ${
                         isModuleActive
                           ? 'bg-red-600 text-white border-red-500 shadow-2xs'
-                          : 'bg-[#2E0003] text-red-200 border-[#4D0006] group-hover:text-white group-hover:border-red-400/40'
+                          : 'bg-slate-800 text-slate-300 border-slate-700 group-hover:text-white group-hover:border-slate-600'
                       }`}
                     >
                       <ModuleIcon className="w-3.5 h-3.5" />
@@ -312,24 +313,24 @@ export default function Sidebar({
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`text-xs font-bold truncate transition ${
-                            isModuleActive ? 'text-white' : 'text-red-100 group-hover:text-white'
+                          className={`text-xs font-semibold truncate transition ${
+                            isModuleActive ? 'text-white' : 'text-slate-200 group-hover:text-white'
                           }`}
                         >
                           {module.title}
                         </span>
                         {isModuleActive && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                         )}
                       </div>
-                      <span className="block text-[10px] text-red-200/60 font-medium truncate">
+                      <span className="block text-[10px] text-slate-400 font-normal truncate">
                         {module.badge}
                       </span>
                     </div>
                   </div>
 
                   <ChevronDown
-                    className={`w-3.5 h-3.5 text-red-300/70 transition-transform duration-200 shrink-0 ${
+                    className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
                       isExpanded ? 'rotate-180 text-white' : ''
                     }`}
                   />
@@ -337,8 +338,8 @@ export default function Sidebar({
 
                 {/* Accordion Submenu Items */}
                 {isExpanded && (
-                  <div className="px-2.5 pb-2.5 pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                    <div className="border-l-2 border-red-800/40 ml-3.5 pl-2.5 space-y-1">
+                  <div className="px-2 pb-2 pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="border-l border-slate-750 ml-3.5 pl-2.5 space-y-1">
                       {module.items.map((subItem) => {
                         const isSubActive = pathname === subItem.href;
                         const SubIcon = subItem.icon;
@@ -351,12 +352,12 @@ export default function Sidebar({
                             className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
                               isSubActive
                                 ? 'bg-red-600 text-white font-semibold shadow-xs'
-                                : 'text-red-100/75 hover:bg-white/10 hover:text-white'
+                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                             }`}
                           >
                             <SubIcon
                               className={`w-3.5 h-3.5 shrink-0 ${
-                                isSubActive ? 'text-white' : 'text-red-200/70'
+                                isSubActive ? 'text-white' : 'text-slate-400'
                               }`}
                             />
                             <span className="truncate">{subItem.label}</span>
@@ -372,24 +373,24 @@ export default function Sidebar({
         </div>
 
         {/* 4. Bottom Actions: PWA & Logout */}
-        <div className="pt-3 mt-3 border-t border-[#3A0004] space-y-2">
+        <div className="pt-3 mt-3 border-t border-slate-800 space-y-2">
           <PwaInstaller buttonStyle="sidebar" />
 
           <button
             type="button"
             onClick={openLogoutModal}
             disabled={isLoggingOut}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-red-100/80 hover:bg-[#3D0004] hover:text-red-200 border border-transparent hover:border-[#600007] transition disabled:opacity-50 cursor-pointer"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-red-400 border border-transparent hover:border-slate-700 transition disabled:opacity-50 cursor-pointer"
           >
-            <LogOut className="w-4 h-4 text-red-300/70" />
-            <span>Keluar (Logout)</span>
+            <LogOut className="w-4 h-4 text-slate-400" />
+            <span>Keluar Akun</span>
           </button>
         </div>
       </nav>
 
       {/* 5. Footer */}
-      <div className="p-3 border-t border-[#3A0004] text-[10px] text-center text-red-300/40">
-        © 2026 PT Bridgestone
+      <div className="p-3 border-t border-slate-800 text-[10px] text-center text-slate-500">
+        PT Bridgestone Tire Indonesia
       </div>
     </aside>
   );

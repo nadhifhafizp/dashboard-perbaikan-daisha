@@ -8,7 +8,7 @@ const sansFont = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
 });
 
 const monoFont = JetBrains_Mono({
@@ -61,13 +61,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id">
+    <html lang="id" className={`${sansFont.variable} ${monoFont.variable} ${sansFont.className}`}>
       <head>
         <meta name="strix-verification" content="strix-verify-7317054cf78dcaca50761d210d1fa8e6" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${sansFont.variable} ${monoFont.variable} font-sans antialiased text-slate-900 bg-slate-50 min-h-screen`}>
+      <body className={`${sansFont.className} antialiased text-slate-900 bg-slate-50 min-h-screen`}>
         <AuthProvider>
           <AppShell>{children}</AppShell>
         </AuthProvider>

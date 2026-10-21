@@ -135,7 +135,7 @@ export default function SectionFleetSummaryCards({
               {/* Status Seleksi */}
               <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold">
                 <span className={isSelected ? 'text-[#E60012] font-bold' : 'text-slate-500'}>
-                  {isSelected ? '✓ Filter Aktif' : 'Klik untuk menyaring'}
+                  {isSelected ? 'Filter Aktif' : 'Klik untuk menyaring'}
                 </span>
                 <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isSelected ? 'text-[#E60012] translate-x-0.5' : 'text-slate-400'}`} />
               </div>

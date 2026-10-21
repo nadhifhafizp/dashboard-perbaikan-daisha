@@ -101,32 +101,34 @@ export default function DaishaDashboardPage() {
             </span>
           </div>
           <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-            Dashboard Analitik & Rekapitulasi Daisha
+            Dashboard Analitik Daisha
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5 font-normal max-w-2xl">
-            Monitoring reliabilitas unit, analisis seksi, tren kerusakan komponen, dan lead time perbaikan
+          <p className="text-xs text-slate-500 mt-0.5 font-normal">
+            Monitoring reliabilitas armada, analisis seksi, dan evaluasi bengkel
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <Link
             href="/input"
-            className="h-8 px-3 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            className="min-h-[44px] sm:min-h-0 h-8.5 px-3.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-2xs focus-visible:ring-2 focus-visible:ring-red-500"
           >
             <PlusCircle className="w-3.5 h-3.5" />
             <span>Input Daisha</span>
           </Link>
-          <Link
-            href="/riwayat"
-            className="h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-medium rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-          >
-            <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
-            <span>Status Antrean</span>
-          </Link>
+          {!isAdmin && (
+            <Link
+              href="/riwayat"
+              className="min-h-[44px] sm:min-h-0 h-8.5 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-medium rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-2xs focus-visible:ring-2 focus-visible:ring-slate-400"
+            >
+              <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
+              <span>Status Antrean</span>
+            </Link>
+          )}
           {isAdmin && (
             <Link
               href="/admin"
-              className="h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-medium rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              className="min-h-[44px] sm:min-h-0 h-8.5 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-medium rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-2xs focus-visible:ring-2 focus-visible:ring-slate-400"
               title="Buka Panel Tindakan Admin"
             >
               <Settings className="w-3.5 h-3.5 text-slate-500" />
@@ -137,7 +139,7 @@ export default function DaishaDashboardPage() {
             type="button"
             onClick={() => refresh()}
             disabled={isRefreshing}
-            className="h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-medium rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-50"
+            className="min-h-[44px] sm:min-h-0 h-8.5 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-medium rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-slate-400"
           >
             {isRefreshing ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />

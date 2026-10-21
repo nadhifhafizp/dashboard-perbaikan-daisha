@@ -132,7 +132,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-md cursor-pointer focus:outline-none"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center text-slate-500 hover:text-slate-800 rounded-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition"
                   aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
                   aria-pressed={showPassword}
                 >
@@ -158,7 +158,7 @@ function LoginForm() {
           </form>
         </div>
 
-        <div className="px-6 py-3 border-t border-slate-100 text-center text-[11px] text-slate-400 font-normal">
+        <div className="px-6 py-3 border-t border-slate-100 text-center text-[11px] text-slate-500 font-normal">
           © 2026 PT Bridgestone Tire Indonesia • Workshop Management
         </div>
       </div>

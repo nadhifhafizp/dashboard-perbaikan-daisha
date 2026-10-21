@@ -69,6 +69,16 @@ export default function PwaInstaller({
     };
   }, []);
 
+  // Escape key listener untuk menutup modal panduan PWA
+  useEffect(() => {
+    if (!showManualGuide) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowManualGuide(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showManualGuide]);
+
   const handleInstallClick = async () => {
     if (deferredPrompt) {
       try {
@@ -171,7 +181,8 @@ export default function PwaInstaller({
               <button
                 type="button"
                 onClick={() => setShowManualGuide(false)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+                className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-8 sm:h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+                aria-label="Tutup panduan installasi"
               >
                 <X className="w-4 h-4" />
               </button>

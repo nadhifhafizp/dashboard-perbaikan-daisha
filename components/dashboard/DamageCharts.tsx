@@ -43,6 +43,31 @@ interface DamageChartsProps {
   }[];
 }
 
+interface TindakanTooltipProps {
+  active?: boolean;
+  payload?: readonly { name?: string | number; value?: string | number; payload?: { color: string; sub: string } }[];
+  totalTindakan?: number;
+  metricMode?: 'kasus' | 'pcs';
+}
+
+function TindakanTooltip({ active, payload, totalTindakan = 0, metricMode = 'kasus' }: TindakanTooltipProps) {
+  if (active && payload && payload.length) {
+    const item = payload[0];
+    const val = Number(item.value) || 0;
+    const pct = totalTindakan > 0 ? Math.round((val / totalTindakan) * 100) : 0;
+    return (
+      <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs shadow-md">
+        <p className="font-extrabold" style={{ color: item.payload?.color }}>{item.name}</p>
+        <p className="text-slate-500 text-xs">{item.payload?.sub}</p>
+        <p className="text-slate-800 font-bold mt-1">
+          {val} {metricMode === 'pcs' ? 'pcs' : 'tindakan'} ({pct}%)
+        </p>
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function DamageCharts({
   chartKategori,
   chartDetailGejala,
@@ -71,23 +96,6 @@ export default function DamageCharts({
     { name: 'Repair / Servis Fisik', value: repairVal, color: '#f59e0b', sub: 'Perbaikan tanpa ganti part' },
   ].filter((d) => d.value > 0);
 
-  const TindakanTooltip = ({ active, payload }: { active?: boolean; payload?: { name: string; value: number; payload: { color: string; sub: string } }[] }) => {
-    if (active && payload && payload.length) {
-      const item = payload[0];
-      const pct = totalTindakan > 0 ? Math.round((item.value / totalTindakan) * 100) : 0;
-      return (
-        <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs shadow-md">
-          <p className="font-extrabold" style={{ color: item.payload.color }}>{item.name}</p>
-          <p className="text-slate-500 text-xs">{item.payload.sub}</p>
-          <p className="text-slate-800 font-bold mt-1">
-            {item.value} {metricMode === 'pcs' ? 'pcs' : 'tindakan'} ({pct}%)
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   // Hitung tinggi eksplisit agar setiap baris memiliki ruang vertikal yang cukup (38-42px per bar)
   const heightKategori = Math.max(380, dataKategori.length * 38 + 40);
   const heightGejala = Math.max(380, dataGejala.length * 40 + 40);
@@ -110,14 +118,13 @@ export default function DamageCharts({
     <div className="space-y-6">
       {/* 1. Header Ringkas & Metric Switcher */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Wrench className="w-4 h-4 text-slate-700" />
-            <span>Analisis Kerusakan Komponen & Tindakan Bengkel</span>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+            <Wrench className="w-3.5 h-3.5" />
+          </div>
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+            Analisis Kerusakan Komponen & Tindakan
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Komponen paling sering rusak, detail gejala dominan, serta proporsi tindakan perbaikan vs penggantian part
-          </p>
         </div>
 
         {/* Toggle Kasus vs Pcs */}
@@ -150,32 +157,15 @@ export default function DamageCharts({
       {/* 2. Grid Visual: 2 Batang Horizontal (Atas) Memberikan Ruang Lega bagi Label Teks */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
-        {/* ================= A. BATANG HORIZONTAL: KOMPONEN PALING SERING RUSAK ================= */}
+        {/* A. Batang Horizontal: Komponen paling sering rusak */}
         <div className="lg:col-span-6 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex justify-between items-start mb-1.5">
-              <h4 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <span>Komponen Paling Sering Rusak</span>
-              </h4>
-              <span className="text-[11px] font-medium px-2 py-0.5 bg-slate-100 text-slate-700 rounded">
-                {metricMode === 'pcs' ? 'Kuantitas (Pcs)' : 'Frekuensi (Kasus)'}
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 mb-2.5">
-              Peringkat komponen troli yang paling banyak membutuhkan perbaikan
-            </p>
-
-            {/* Legenda Makna Warna & Simbol */}
-            <div className="flex items-center gap-2 text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80 mb-2">
-              <span className="font-semibold text-slate-900">Makna Warna:</span>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-xs bg-[#0F172A] opacity-35 inline-block" />
-                <span className="text-slate-500">Jarang Aus</span>
-                <span className="text-slate-300 font-bold">──▶</span>
-                <span className="w-2.5 h-2.5 rounded-xs bg-[#0F172A] inline-block shadow-2xs" />
-                <span className="font-bold text-slate-900">Kritis Aus ({maxKategori} {metricMode === 'pcs' ? 'pcs' : 'x'})</span>
-              </div>
-            </div>
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
+              Komponen Paling Sering Rusak
+            </h4>
+            <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+              {metricMode === 'pcs' ? 'Kuantitas (Pcs)' : 'Frekuensi (Kasus)'}
+            </span>
           </div>
 
           <div style={{ height: heightKategori }} className="w-full">
@@ -203,10 +193,10 @@ export default function DamageCharts({
                       const ratio = maxKategori > 0 ? val / maxKategori : 1;
                       const statusTag =
                         ratio >= 0.75
-                          ? { label: '🔴 Kritis (Prioritas Stok & Penggantian)', cls: 'text-slate-900 bg-slate-100 border-slate-300' }
+                          ? { label: 'Kritis (Prioritas Stok & Penggantian)', cls: 'text-slate-900 bg-slate-100 border-slate-300' }
                           : ratio >= 0.4
-                          ? { label: '🟡 Keausan Menengah', cls: 'text-amber-800 bg-amber-50 border-amber-200' }
-                          : { label: '🟢 Keausan Rendah / Sporadis', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+                          ? { label: 'Keausan Menengah', cls: 'text-amber-800 bg-amber-50 border-amber-200' }
+                          : { label: 'Keausan Rendah / Sporadis', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
 
                       return (
                         <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs shadow-lg space-y-1.5 min-w-[200px]">
@@ -251,32 +241,15 @@ export default function DamageCharts({
           </div>
         </div>
 
-        {/* ================= B. BATANG HORIZONTAL: TOP GEJALA MASALAH ================= */}
+        {/* B. Batang Horizontal: Top gejala masalah */}
         <div className="lg:col-span-6 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex justify-between items-start mb-1.5">
-              <h4 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <span>Top Gejala Kerusakan</span>
-              </h4>
-              <span className="text-[11px] font-medium px-2 py-0.5 bg-slate-100 text-slate-700 rounded">
-                Top 10 Gejala
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 mb-2.5">
-              Gejala kerusakan fisik daisha yang paling sering ditemukan di lapangan
-            </p>
-
-            {/* Legenda Makna Warna & Simbol */}
-            <div className="flex items-center gap-2 text-[11px] text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/80 mb-2">
-              <span className="font-semibold text-amber-950">Makna Warna:</span>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-xs bg-[#D97706] opacity-35 inline-block" />
-                <span className="text-amber-800">Sporadis</span>
-                <span className="text-amber-400 font-bold">──▶</span>
-                <span className="w-2.5 h-2.5 rounded-xs bg-[#D97706] inline-block shadow-2xs" />
-                <span className="font-bold text-amber-950">Gejala Dominan ({maxGejala} {metricMode === 'pcs' ? 'pcs' : 'x'})</span>
-              </div>
-            </div>
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
+              Top 10 Gejala Kerusakan
+            </h4>
+            <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+              {metricMode === 'pcs' ? 'Pcs Part' : 'Kasus'}
+            </span>
           </div>
 
           <div style={{ height: heightGejala }} className="w-full">
@@ -304,10 +277,10 @@ export default function DamageCharts({
                       const ratio = maxGejala > 0 ? val / maxGejala : 1;
                       const statusTag =
                         ratio >= 0.75
-                          ? { label: '⚠️ Gejala Dominan (Fokus Utama Bengkel)', cls: 'text-amber-950 bg-amber-100 border-amber-300' }
+                          ? { label: 'Gejala Dominan (Fokus Utama Bengkel)', cls: 'text-amber-950 bg-amber-100 border-amber-300' }
                           : ratio >= 0.4
-                          ? { label: '🟡 Kejadian Menengah', cls: 'text-amber-800 bg-amber-50 border-amber-200' }
-                          : { label: '🟢 Kejadian Sporadis', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+                          ? { label: 'Kejadian Menengah', cls: 'text-amber-800 bg-amber-50 border-amber-200' }
+                          : { label: 'Kejadian Sporadis', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
 
                       return (
                         <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs shadow-lg space-y-1.5 min-w-[200px]">
@@ -353,20 +326,19 @@ export default function DamageCharts({
         </div>
       </div>
 
-      {/* ================= C. DIAGRAM DONAT: PROPORSI TINDAKAN BENGKEL ================= */}
+      {/* C. Diagram Donat: Proporsi tindakan bengkel */}
       <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs">
-        <div className="flex flex-wrap justify-between items-start gap-2 mb-3">
-          <div>
-            <h4 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <PieIcon className="w-4 h-4 text-slate-600" />
-              <span>Proporsi Tindakan Bengkel: Servis Fisik vs Ganti Sparepart</span>
+        <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+              <PieIcon className="w-3.5 h-3.5" />
+            </div>
+            <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
+              Proporsi Tindakan: Servis Fisik vs Ganti Sparepart
             </h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Perbandingan unit yang ditangani via perbaikan fisik tanpa ganti part vs unit yang membutuhkan penggantian suku cadang baru
-            </p>
           </div>
-          <span className="text-[11px] font-medium px-2 py-0.5 bg-slate-100 text-slate-700 rounded border border-slate-200">
-            {metricMode === 'pcs' ? 'Kuantitas Part (Pcs)' : 'Frekuensi Kasus'}
+          <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200">
+            {metricMode === 'pcs' ? 'Pcs Part' : 'Kasus'}
           </span>
         </div>
 
@@ -391,7 +363,7 @@ export default function DamageCharts({
                       <Cell key={`cell-tindakan-${index}`} fill={entry.color} stroke="transparent" />
                     ))}
                   </Pie>
-                  <Tooltip content={<TindakanTooltip />} />
+                  <Tooltip content={<TindakanTooltip totalTindakan={totalTindakan} metricMode={metricMode} />} />
                   <text
                     x="50%"
                     y="47%"

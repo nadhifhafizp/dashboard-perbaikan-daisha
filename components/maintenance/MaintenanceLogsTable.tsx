@@ -17,6 +17,11 @@ export interface MaintenanceLogRow {
   daisha_id: string;
   nomor_daisha: string;
   jenis_pekerjaan: 'RUTIN' | 'REPAIR';
+  kondisi?: 'OK' | 'RUSAK';
+  detail_kerusakan?: string | null;
+  tindakan?: string | null;
+  waktu_masuk?: string | null;
+  waktu_keluar?: string | null;
   tanggal_pengerjaan: string;
   admin_id: string;
   catatan?: string | null;
@@ -55,6 +60,9 @@ export default function MaintenanceLogsTable({ logs }: MaintenanceLogsTableProps
       'Jenis Daisha': log.jenis || '-',
       Ukuran: log.ukuran || '-',
       'Kategori Pengerjaan': log.jenis_pekerjaan === 'REPAIR' ? 'Repair (Perbaikan Selesai)' : 'Maintenance Rutin',
+      'Kondisi Saat Diperiksa': log.kondisi === 'RUSAK' ? 'Ada Kerusakan (NG)' : 'Baik-baik Saja (OK)',
+      'Detail Kerusakan': log.detail_kerusakan || '-',
+      Tindakan: log.tindakan || '-',
       'Tanggal Pengerjaan': new Date(log.tanggal_pengerjaan).toLocaleDateString('id-ID', {
         day: '2-digit',
         month: '2-digit',
@@ -78,12 +86,9 @@ export default function MaintenanceLogsTable({ logs }: MaintenanceLogsTableProps
             <FileText className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900">
-              Riwayat Transaksi Pemeliharaan & Perbaikan
-            </h3>
-            <p className="text-xs text-slate-500">
-              Rekapitulasi log pengerjaan aktual workshop terintegrasi
-            </p>
+            <h2 className="text-base font-bold text-slate-900">
+              Riwayat Pemeliharaan & Perbaikan
+            </h2>
           </div>
         </div>
 
@@ -139,13 +144,13 @@ export default function MaintenanceLogsTable({ logs }: MaintenanceLogsTableProps
         </div>
 
         <div className="relative min-w-[200px]">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari nomor daisha / teknisi / catatan..."
-            className="w-full pl-8 pr-3 py-1 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
+            className="w-full pl-8 pr-3 py-1 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-500 focus:outline-hidden focus:ring-1 focus:ring-red-600 focus:border-red-600"
           />
         </div>
       </div>
@@ -153,12 +158,13 @@ export default function MaintenanceLogsTable({ logs }: MaintenanceLogsTableProps
       {/* Table */}
       <div className="overflow-x-auto rounded-xl border border-slate-200">
         <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 text-slate-600 uppercase font-semibold border-b border-slate-200 text-[11px]">
+          <thead className="bg-slate-50 text-slate-600 uppercase font-semibold border-b border-slate-200 text-xs">
             <tr>
               <th className="py-2.5 px-3">Tanggal</th>
               <th className="py-2.5 px-3">Nomor Daisha</th>
               <th className="py-2.5 px-3">Armada</th>
               <th className="py-2.5 px-3">Kategori</th>
+              <th className="py-2.5 px-3">Kondisi</th>
               <th className="py-2.5 px-3">Admin / Teknisi</th>
               <th className="py-2.5 px-3">Catatan / Tindakan</th>
             </tr>
@@ -166,8 +172,20 @@ export default function MaintenanceLogsTable({ logs }: MaintenanceLogsTableProps
           <tbody className="divide-y divide-slate-100 font-normal">
             {filteredLogs.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-400 text-xs">
-                  Tidak ada riwayat pengerjaan yang cocok.
+                <td colSpan={7} className="py-8 text-center text-slate-500 font-medium text-xs">
+                  <p>Tidak ada riwayat pengerjaan yang cocok.</p>
+                  {(searchQuery || filterType !== 'ALL') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setFilterType('ALL');
+                      }}
+                      className="mt-2.5 px-3 py-1 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition cursor-pointer"
+                    >
+                      Reset Filter & Pencarian
+                    </button>
+                  )}
                 </td>
               </tr>
             ) : (
@@ -184,28 +202,49 @@ export default function MaintenanceLogsTable({ logs }: MaintenanceLogsTableProps
                     <td className="py-2 px-3 whitespace-nowrap text-slate-600">
                       {formattedDate}
                     </td>
-                    <td className="py-2 px-3 whitespace-nowrap font-mono font-bold text-slate-900">
-                      {log.nomor_daisha}
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <code className="font-mono font-bold text-xs text-slate-900 tracking-tight">
+                        {log.nomor_daisha.replace(/---+/g, '-').replace(/--+/g, '-')}
+                      </code>
                     </td>
-                    <td className="py-2 px-3 whitespace-nowrap text-slate-600">
+                    <td className="py-2.5 px-3 whitespace-nowrap text-slate-600">
                       {log.jenis || 'Vertical'} {log.ukuran && log.ukuran !== 'NONE' ? `(${log.ukuran})` : ''}
                     </td>
-                    <td className="py-2 px-3 whitespace-nowrap">
+                    <td className="py-2.5 px-3 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${
                           isRepair
                             ? 'bg-sky-100 text-sky-800 border border-sky-200'
                             : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                         }`}
                       >
-                        {isRepair ? 'Repair Rusak' : 'Maintenance Rutin'}
+                        {isRepair ? 'Repair Rusak' : 'Rutin Tahunan'}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+                          log.kondisi === 'RUSAK' || isRepair
+                            ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        }`}
+                      >
+                        <span>{log.kondisi === 'RUSAK' || isRepair ? 'Ada Kerusakan' : 'Kondisi Baik (OK)'}</span>
                       </span>
                     </td>
                     <td className="py-2 px-3 whitespace-nowrap text-slate-700 font-medium">
                       {log.admin_id || '-'}
                     </td>
                     <td className="py-2 px-3 text-slate-600 max-w-xs truncate">
-                      {log.catatan || '-'}
+                      {log.detail_kerusakan ? (
+                        <span>
+                          <strong className="text-slate-800">{log.detail_kerusakan}</strong>
+                          {log.tindakan && <span className="text-slate-500"> ({log.tindakan})</span>}
+                          {log.catatan && ` • ${log.catatan}`}
+                        </span>
+                      ) : (
+                        log.catatan || 'Inspeksi & pemeliharaan rutin normal'
+                      )}
                     </td>
                   </tr>
                 );

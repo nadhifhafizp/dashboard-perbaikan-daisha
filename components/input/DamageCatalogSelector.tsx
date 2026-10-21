@@ -11,6 +11,7 @@ import {
   RefreshCw,
   PenTool,
   X,
+  RotateCcw,
 } from 'lucide-react';
 
 export type TindakanType = 'Repair' | 'Ganti';
@@ -71,15 +72,10 @@ export default function DamageCatalogSelector({
     <div className="p-4 sm:p-5 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
       {/* Header Section */}
       <div className="flex flex-wrap justify-between items-center gap-2">
-        <div>
-          <h2 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
-            <span>Titik Kerusakan Unit Daisha</span>
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Pilih kerusakan di bawah (bisa pilih banyak sekaligus, atur jumlah unit & tindakan)
-          </p>
-        </div>
+        <h2 className="text-xs font-semibold text-slate-800 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-600" />
+          <span>Katalog Titik Kerusakan Unit</span>
+        </h2>
 
         {jenisDaisha && totalDipilih > 0 && (
           <span className="px-3 py-1 bg-red-600 text-white font-medium text-xs rounded-full shadow-xs tabular-nums">
@@ -192,23 +188,44 @@ export default function DamageCatalogSelector({
                 </div>
               );
             })}
+
+            {/* Empty state bila pencarian tidak cocok */}
+            {searchGejala.trim() &&
+              !Object.entries(katalogKerusakan).some(
+                ([komponen, listGejala]) =>
+                  komponen.toLowerCase().includes(searchGejala.toLowerCase()) ||
+                  listGejala.some((g) => g.toLowerCase().includes(searchGejala.toLowerCase()))
+              ) && (
+                <div className="py-8 px-4 text-center bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2">
+                  <Search className="w-6 h-6 text-slate-400 mx-auto" />
+                  <p className="text-xs font-semibold text-slate-800">
+                    Tidak Ditemukan Gejala Kerusakan
+                  </p>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                    Tidak ada komponen atau gejala yang cocok dengan kata kunci &quot;{searchGejala}&quot;.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSearchGejala('')}
+                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Reset Pencarian</span>
+                  </button>
+                </div>
+              )}
           </div>
 
           {/* Panel Tindakan & Jumlah (Qty) */}
           {totalDipilih > 0 && (
             <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-3 animate-fade-in">
               <div className="flex flex-wrap justify-between items-center gap-2 border-b border-slate-100 pb-2.5">
-                <div>
-                  <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                    <Wrench className="w-4 h-4 text-slate-600" />
-                    <span>Tentukan Jumlah & Tindakan (Repair / Ganti)</span>
-                  </span>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Tentukan jumlah unit/komponen yang rusak serta pilihan servis atau ganti baru
-                  </p>
-                </div>
+                <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                  <Wrench className="w-4 h-4 text-slate-600" />
+                  <span>Jumlah & Tindakan Komponen</span>
+                </span>
                 <span className="text-xs font-medium px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded-md tabular-nums">
-                  {totalDipilih} Titik Kerusakan
+                  {totalDipilih} Item Dipilih
                 </span>
               </div>
 
@@ -260,7 +277,7 @@ export default function DamageCatalogSelector({
                               onSetQty &&
                               onSetQty(key, Math.max(1, parseInt(e.target.value, 10) || 1))
                             }
-                            className="w-7 text-center font-semibold text-xs text-slate-900 focus:outline-none tabular-nums"
+                            className="w-7 text-center font-semibold text-xs text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-red-600 rounded tabular-nums"
                           />
                           <button
                             type="button"
@@ -269,7 +286,7 @@ export default function DamageCatalogSelector({
                           >
                             +
                           </button>
-                          <span className="text-xs text-slate-400">pcs</span>
+                          <span className="text-xs text-slate-600 font-medium">pcs</span>
                         </div>
 
                         {/* Tindakan Buttons */}
@@ -351,7 +368,7 @@ export default function DamageCatalogSelector({
                               onSetCustomQty &&
                               onSetCustomQty(text, Math.max(1, parseInt(e.target.value, 10) || 1))
                             }
-                            className="w-7 text-center font-semibold text-xs text-slate-900 focus:outline-none tabular-nums"
+                            className="w-7 text-center font-semibold text-xs text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-red-600 rounded tabular-nums"
                           />
                           <button
                             type="button"
@@ -362,7 +379,7 @@ export default function DamageCatalogSelector({
                           >
                             +
                           </button>
-                          <span className="text-xs text-slate-400">pcs</span>
+                          <span className="text-xs text-slate-600 font-medium">pcs</span>
                         </div>
 
                         {/* Custom Tindakan Buttons */}

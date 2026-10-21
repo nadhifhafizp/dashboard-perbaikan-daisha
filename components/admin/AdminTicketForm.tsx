@@ -88,6 +88,17 @@ function AdminTicketFormDialog({
     return ticket.reason && ticket.reason !== '-' ? ticket.reason : '';
   });
 
+  // Escape key listener untuk menutup modal eksekusi
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isProcessing) {
+        onCancel();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isProcessing, onCancel]);
+
   // 1. Ekstrak part/kerusakan yang fleksibel bisa diubah Repair vs Ganti
   const [items, setItems] = useState<
     Array<{ komponen: string; gejala: string; tindakan: 'Repair' | 'Ganti'; qty: number }>
@@ -223,7 +234,7 @@ function AdminTicketFormDialog({
             type="button"
             onClick={onCancel}
             disabled={isProcessing}
-            className="w-7 h-7 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition cursor-pointer"
+            className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-8 sm:h-8 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             aria-label="Tutup modal"
           >
             <X className="w-4 h-4" />

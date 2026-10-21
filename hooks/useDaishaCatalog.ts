@@ -71,7 +71,7 @@ export function useDaishaCatalog() {
   const [seksiList, setSeksiList] = useState<string[]>(() => globalSeksiCache || [...DAFTAR_SEKSI]);
   const [sections, setSections] = useState<SectionItem[]>(() => globalSectionsCache || []);
   const [tree, setTree] = useState<DaishaTreeItem[]>(() => globalTreeCache || []);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => !globalCatalogCache);
 
   const fetchCatalog = useCallback(async (force = false) => {
     // Lewati jika cache masih baru (< 5 menit) dan tidak dipaksa
@@ -80,7 +80,7 @@ export function useDaishaCatalog() {
     }
 
     try {
-      setLoading(true);
+      if (force) setLoading(true);
       const res = await fetch('/api/catalog');
       if (!res.ok) return;
 

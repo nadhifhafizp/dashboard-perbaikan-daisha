@@ -25,17 +25,13 @@ export default function TicketTable({
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [sortBy, setSortBy] = useState<SortOption>('input_desc');
 
-  // Reset ke halaman 1 jika jumlah data berubah karena filter
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [filteredData.length]);
-
   const sortedData = React.useMemo(() => {
     return sortTickets(filteredData, sortBy);
   }, [filteredData, sortBy]);
 
   const totalPages = itemsPerPage === -1 ? 1 : Math.ceil(sortedData.length / itemsPerPage) || 1;
-  const startIndex = itemsPerPage === -1 ? 0 : (currentPage - 1) * itemsPerPage;
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = itemsPerPage === -1 ? 0 : (safePage - 1) * itemsPerPage;
   const paginatedData = itemsPerPage === -1 ? sortedData : sortedData.slice(startIndex, startIndex + itemsPerPage);
 
   const toggleSort = (ascOption: SortOption, descOption: SortOption) => {
@@ -59,15 +55,16 @@ export default function TicketTable({
     <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden flex flex-col">
       {/* Header Tabel */}
       <div className="p-3.5 sm:p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-slate-50/50">
-        <div>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+            <ClipboardList className="w-3.5 h-3.5" />
+          </div>
           <h3 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
-            <ClipboardList className="w-4 h-4 text-slate-700" />
-            <span>Rincian Tiket Perbaikan (Raw Data)</span>
-            <span className="text-[11px] font-normal text-slate-500">({filteredData.length} Tiket)</span>
+            <span>Daftar Tiket Perbaikan</span>
+            <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+              {filteredData.length} Tiket
+            </span>
           </h3>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Data mentah seluruh riwayat dan antrean perbaikan Daisha workshop
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
@@ -224,15 +221,15 @@ export default function TicketTable({
 
                 return (
                   <tr key={item.id} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3 px-3 text-center text-slate-400 font-mono text-[11px] tabular-nums">
+                    <td className="py-3 px-3 text-center text-slate-400 text-[11px] tabular-nums">
                       {startIndex + idx + 1}
                     </td>
-                    <td className="py-3 px-3.5 font-mono font-medium text-slate-600 text-xs tabular-nums">
+                    <td className="py-3 px-3.5 font-medium text-slate-600 text-xs tabular-nums">
                       {item.idTiketAsli}
                     </td>
                     <td className="py-3 px-3.5 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono font-bold text-slate-900 text-xs">{item.noDaisha}</span>
+                        <span className="font-bold text-slate-900 text-xs tabular-nums">{item.noDaisha}</span>
                         {sizeInfo && (
                           <span
                             className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
@@ -351,11 +348,11 @@ export default function TicketTable({
                 {/* Baris 1: ID Tiket, No Daisha & Status */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-xs text-slate-500 tabular-nums">
+                    <span className="text-xs text-slate-500 tabular-nums">
                       #{item.idTiketAsli}
                     </span>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono font-bold text-sm text-slate-900">{item.noDaisha}</span>
+                      <span className="font-bold text-sm text-slate-900 tabular-nums">{item.noDaisha}</span>
                       {sizeInfo && (
                         <span
                           className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
@@ -464,7 +461,7 @@ export default function TicketTable({
       {/* Pagination Controls & Info Footer */}
       <div className="p-3.5 border-t border-slate-100 bg-slate-50/50">
         <PaginationControl
-          currentPage={currentPage}
+          currentPage={safePage}
           totalItems={filteredData.length}
           itemsPerPage={itemsPerPage}
           onPageChange={setCurrentPage}

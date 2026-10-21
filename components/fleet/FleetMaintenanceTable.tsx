@@ -212,7 +212,7 @@ export default function FleetMaintenanceTable({
               setSelectedSeksi(e.target.value);
               setCurrentPage(1);
             }}
-            className="h-8 px-2 text-xs bg-white border border-slate-300 rounded focus:outline-none text-slate-700 cursor-pointer font-medium"
+            className="h-8 px-2 text-xs bg-white border border-slate-300 rounded focus:outline-hidden focus:ring-1 focus:ring-red-600 focus:border-red-600 text-slate-700 cursor-pointer font-medium"
           >
             <option value="">Semua Seksi</option>
             {seksiList.map((s) => (
@@ -224,8 +224,8 @@ export default function FleetMaintenanceTable({
 
           <select
             value={sortKey}
-            onChange={(e) => setSortKey(e.target.value as any)}
-            className="h-8 px-2 text-xs bg-white border border-slate-300 rounded focus:outline-none text-slate-700 cursor-pointer font-medium"
+            onChange={(e) => setSortKey(e.target.value as 'due_asc' | 'due_desc' | 'unit_asc' | 'repairs_desc')}
+            className="h-8 px-2 text-xs bg-white border border-slate-300 rounded focus:outline-hidden focus:ring-1 focus:ring-red-600 focus:border-red-600 text-slate-700 cursor-pointer font-medium"
           >
             <option value="due_asc">Jatuh Tempo Terdekat</option>
             <option value="due_desc">Jatuh Tempo Terlama</option>
@@ -268,9 +268,25 @@ export default function FleetMaintenanceTable({
           <tbody className="divide-y divide-slate-100">
             {paginatedUnits.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-10 text-center text-slate-400">
-                  <p className="font-semibold text-slate-600">Tidak ada unit yang cocok</p>
-                  <p className="text-xs text-slate-400 mt-0.5">Ubah pencarian atau reset filter</p>
+                <td colSpan={7} className="p-10 text-center text-slate-500">
+                  <p className="font-semibold text-slate-700">Tidak ada unit yang cocok</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Ubah kata kunci pencarian atau reset filter aktif</p>
+                  {hasFilter && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearch('');
+                        setSelectedSeksi('');
+                        onFilterChange('ALL');
+                        onTypeChange('');
+                        setSortKey('due_asc');
+                        setCurrentPage(1);
+                      }}
+                      className="mt-3 px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition cursor-pointer"
+                    >
+                      Reset Semua Filter
+                    </button>
+                  )}
                 </td>
               </tr>
             ) : (
