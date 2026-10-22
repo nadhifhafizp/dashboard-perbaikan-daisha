@@ -349,11 +349,11 @@ export default function SparepartsAnalyticsDashboard({
             )}
           </div>
 
-          {/* Legend Items */}
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
+          {/* Legend Items (Tanpa Nested Box) */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-3 border-t border-slate-100 text-xs">
             {metrics.categoryChartData.slice(0, 4).map((item) => (
-              <div key={item.name} className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
-                <div className="flex items-center gap-1.5 truncate">
+              <div key={item.name} className="flex items-center justify-between py-1 border-b border-slate-100/70">
+                <div className="flex items-center gap-2 truncate">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                   <span className="text-slate-700 font-medium truncate text-[11px]">{item.name}</span>
                 </div>

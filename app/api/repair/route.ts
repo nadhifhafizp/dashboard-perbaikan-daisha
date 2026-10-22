@@ -25,10 +25,10 @@ export function invalidateRepairCache(): void {
   repairCacheTimestamp = 0;
 }
 
-// 1. FUNGSI GET: Membaca data langsung dari PostgreSQL (Khusus ADMIN & OPERATOR)
+// 1. FUNGSI GET: Membaca data langsung dari PostgreSQL (ADMIN, OPERATOR, & USER_SEKSI)
 export async function GET(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION (Admin dan Operator)
-  const auth = await requireAuth(request, ['ADMIN', 'OPERATOR']);
+  // 1. AUTHENTICATION & AUTHORIZATION (Admin, Operator, dan User Seksi)
+  const auth = await requireAuth(request, ['ADMIN', 'OPERATOR', 'USER_SEKSI']);
   if (!auth.authorized) return auth.errorResponse!;
 
   // 2. RATE LIMITING (120 req/menit)
@@ -58,10 +58,10 @@ export async function GET(request: Request) {
         t."waktuSelesai",
         t."catatan",
         COALESCE(t."items", '[]'::jsonb) AS details,
-        m."namaDaisha",
-        m."seksi"
+        d."nama_daisha" AS "namaDaisha",
+        d."seksi"
       FROM "Ticket" t
-      LEFT JOIN "MasterDaisha" m ON t."noDaisha" = m."noDaisha"
+      LEFT JOIN "Daisha" d ON UPPER(t."noDaisha") = UPPER(d."nomor_daisha")
       ORDER BY t."waktuMasuk" DESC
     `;
 
@@ -117,8 +117,8 @@ export async function GET(request: Request) {
 
 // 2. FUNGSI POST: Create, Update, Delete tiket langsung via postgres.js
 export async function POST(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION (Admin dan Operator)
-  const auth = await requireAuth(request, ['ADMIN', 'OPERATOR']);
+  // 1. AUTHENTICATION & AUTHORIZATION (Admin, Operator, dan User Seksi)
+  const auth = await requireAuth(request, ['ADMIN', 'OPERATOR', 'USER_SEKSI']);
   if (!auth.authorized) return auth.errorResponse!;
 
   // 2. FILE & PAYLOAD LIMIT (Maksimal 512KB)
@@ -151,38 +151,81 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2.1 CREATE (Bisa dilakukan oleh Operator maupun Admin)
+    // Pembatasan RBAC: User Seksi hanya diizinkan membuat laporan baru (CREATE)
+    if (auth.user?.role === 'USER_SEKSI' && action !== 'CREATE') {
+      return NextResponse.json(
+        { error: "Akses dibatasi. User Seksi hanya dapat membuat laporan perbaikan Daisha baru." },
+        { status: 403 }
+      );
+    }
+
+    // 2.1 CREATE (Bisa dilakukan oleh Operator, Admin, maupun User Seksi)
     if (action === 'CREATE') {
       const idTiket = sanitizeText(body.idTiket, 50) || `TCK-${Date.now()}`;
       const waktuMasuk = sanitizeText(body.waktuMasuk, 30);
       const namaPelapor = sanitizeText(body.namaPelapor, 100);
-      const seksi = sanitizeText(body.seksi, 50);
-      const namaDaisha = sanitizeText(body.namaDaisha, 100);
+      let seksi = sanitizeText(body.seksi, 50);
+      let namaDaisha = sanitizeText(body.namaDaisha, 100);
       const noDaishaValidation = validateNoDaisha(body.noDaisha);
       const detail = sanitizeText(body.detail, 2000);
+      const catatanInput = sanitizeText(body.catatan || body.catatanTambahan || body.lokasi, 500);
+      const isSeksiReport = Boolean(body.isSeksiReport || auth.user?.role === 'USER_SEKSI');
 
       if (!noDaishaValidation.valid) {
         return NextResponse.json({ error: noDaishaValidation.error }, { status: 400 });
       }
       const noDaisha = noDaishaValidation.value;
 
-      // Validasi kelengkapan data form laporan
-      if (!namaPelapor || !seksi || !namaDaisha || !noDaisha) {
+      // Auto-resolve seksi dan namaDaisha dari tabel Daisha
+      if (!seksi || !namaDaisha) {
+        const [existingDaisha] = await sql`
+          SELECT "nama_daisha", "seksi", "jenis", "ukuran" 
+          FROM "Daisha" 
+          WHERE UPPER("nomor_daisha") = UPPER(${noDaisha})
+          LIMIT 1
+        `;
+        if (existingDaisha) {
+          if (!namaDaisha && existingDaisha.nama_daisha) namaDaisha = existingDaisha.nama_daisha;
+          if (!seksi && existingDaisha.seksi) seksi = existingDaisha.seksi;
+        }
+      }
+
+      if (!seksi && auth.user?.seksi) {
+        seksi = auth.user.seksi;
+      }
+      if (!seksi) {
+        seksi = 'Plant';
+      }
+      if (!namaDaisha) {
+        namaDaisha = `Daisha ${seksi}`;
+      }
+
+      // Validasi kelengkapan data wajib
+      if (!namaPelapor || !noDaisha) {
         return NextResponse.json(
-          { error: "Field wajib (Nama Pelapor, Seksi, Nama Daisha, No Daisha) tidak boleh kosong." },
+          { error: "Field wajib (Nama Pelapor dan No Daisha) tidak boleh kosong." },
           { status: 400 }
         );
       }
 
       // Pastikan data unit di tabel Daisha terdaftar / terupdate
+      // Resolve jenis & ukuran dari DB dulu, baru fallback ke deteksi
+      const [existingUnit] = await sql`
+        SELECT "jenis", "ukuran" FROM "Daisha"
+        WHERE UPPER("nomor_daisha") = UPPER(${noDaisha}) LIMIT 1
+      `;
       const sizeInfo = detectDaishaSize(noDaisha);
-      const ukuran = sizeInfo?.code || 'Standard';
-      const jenis = noDaisha.toUpperCase().includes('NF') || namaDaisha.toLowerCase().includes('nagara') ? 'NAGARA_FILTER' : 'VERTICAL';
+      const ukuranNorm = (sizeInfo?.size === 'Small' ? 'SMALL' : sizeInfo?.size === 'Medium' ? 'MEDIUM' : sizeInfo?.size === 'Large' ? 'LARGE' : 'NONE');
+      const ukuran = existingUnit?.ukuran || ukuranNorm;
+      const jenisDefault = noDaisha.toUpperCase().includes('NF') || namaDaisha.toLowerCase().includes('nagara') ? 'NAGARA_FILTER' : 'VERTICAL';
+      const jenis = existingUnit?.jenis || jenisDefault;
       await sql`
-        INSERT INTO "Daisha" ("nomor_daisha", "nama_daisha", "ukuran", "seksi", "jenis")
-        VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi}, ${jenis})
+        INSERT INTO "Daisha" ("nomor_daisha", "nama_daisha", "ukuran", "seksi", "jenis", "last_condition")
+        VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi}, ${jenis}, 'RUSAK')
         ON CONFLICT ("nomor_daisha") DO UPDATE 
-        SET "nama_daisha" = EXCLUDED."nama_daisha", "ukuran" = EXCLUDED."ukuran", "seksi" = EXCLUDED."seksi"
+        SET "nama_daisha" = COALESCE(EXCLUDED."nama_daisha", "Daisha"."nama_daisha"), 
+            "seksi" = COALESCE(EXCLUDED."seksi", "Daisha"."seksi"),
+            "last_condition" = 'RUSAK'
       `;
 
       // Parse waktu masuk secara konsisten
@@ -192,24 +235,51 @@ export async function POST(request: Request) {
         if (ts > 0) parsedDateMasuk = new Date(ts);
       }
 
-      // Pecah rincian kerusakan ke items JSONB
-      const parsedDetails = parseTicketDamageDetail(detail);
-      const itemsJson = parsedDetails.items.map((it, idx) => ({
-        idDetail: idx + 1,
-        komponen: it.komponen,
-        gejala: it.gejala,
-        tindakan: it.tindakan || 'Repair',
-        qty: it.qty || 1,
-      }));
+      // Pecah rincian kerusakan ke items JSONB (atau gunakan template laporan seksi jika tanpa detail)
+      let itemsJson: Array<{ idDetail: number; komponen: string; gejala: string; tindakan: string; qty: number }> = [];
+
+      if (isSeksiReport && (!detail || detail.trim() === '')) {
+        itemsJson = [
+          {
+            idDetail: 1,
+            komponen: 'Menunggu Diagnosa Bengkel',
+            gejala: catatanInput ? `Laporan Seksi: ${catatanInput}` : 'Dilaporkan rusak oleh seksi di plant',
+            tindakan: 'Pemeriksaan',
+            qty: 1,
+          },
+        ];
+      } else {
+        const parsedDetails = parseTicketDamageDetail(detail || '');
+        itemsJson = parsedDetails.items.map((it, idx) => ({
+          idDetail: idx + 1,
+          komponen: it.komponen,
+          gejala: it.gejala,
+          tindakan: it.tindakan || 'Repair',
+          qty: it.qty || 1,
+        }));
+        if (itemsJson.length === 0) {
+          itemsJson = [
+            {
+              idDetail: 1,
+              komponen: 'Menunggu Diagnosa Bengkel',
+              gejala: catatanInput || 'Perlu diagnosa teknisi',
+              tindakan: 'Pemeriksaan',
+              qty: 1,
+            },
+          ];
+        }
+      }
+
+      const finalCatatan = catatanInput || '-';
 
       // Buat Tiket dalam 1 query saja
       await sql`
         INSERT INTO "Ticket" ("idTiket", "noDaisha", "namaPelapor", "status", "waktuMasuk", "catatan", "items")
-        VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, 'Open', ${parsedDateMasuk}, '-', ${JSON.stringify(itemsJson)}::jsonb)
+        VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, 'Open', ${parsedDateMasuk}, ${finalCatatan}, ${JSON.stringify(itemsJson)}::jsonb)
       `;
 
       // Pengurangan stok otomatis untuk komponen Ganti Baru (Projek 3)
-      const gantiItems = parsedDetails.items.filter((it) => it.tindakan === 'Ganti');
+      const gantiItems = itemsJson.filter((it) => it.tindakan === 'Ganti');
       await Promise.allSettled(
         gantiItems.map((it) =>
           sql`
@@ -326,15 +396,16 @@ export async function POST(request: Request) {
                 WHERE id = ${dId}
               `;
             } else {
-              const jenis = noD.toUpperCase().includes('NF') || noD.toUpperCase().includes('FIL') ? 'NAGARA_FILTER' : 'VERTICAL';
-              const ukuran = noD.toUpperCase().includes('S') ? 'SMALL' : noD.toUpperCase().includes('L') ? 'LARGE' : 'MEDIUM';
+              const sInfo = detectDaishaSize(noD);
+              const ukuranResolved = sInfo?.size === 'Small' ? 'SMALL' : sInfo?.size === 'Medium' ? 'MEDIUM' : sInfo?.size === 'Large' ? 'LARGE' : 'NONE';
+              const jenisResolved = noD.toUpperCase().includes('NF') || noD.toUpperCase().includes('FIL') ? 'NAGARA_FILTER' : 'VERTICAL';
               const inserted = await sql`
                 INSERT INTO "Daisha" (
                   "nomor_daisha", "jenis", "ukuran", "last_maintenance_date",
                   "last_repair_date", "last_waktu_masuk", "last_waktu_keluar", "last_condition"
                 )
                 VALUES (
-                  ${noD}, ${jenis}, ${ukuran}, ${completionDate},
+                  ${noD}, ${jenisResolved}, ${ukuranResolved}, ${completionDate},
                   ${completionDate}, ${ticketWaktuMasuk}, ${completionDate}, 'REPAIR_DONE'
                 )
                 RETURNING id
@@ -455,15 +526,19 @@ export async function POST(request: Request) {
       }
       const noDaisha = noDaishaValidation.value;
 
-      // Update Daisha
-      const sizeInfo = detectDaishaSize(noDaisha);
-      const ukuran = sizeInfo?.code || 'Standard';
-      const jenis = noDaisha.toUpperCase().includes('NF') || namaDaisha.toLowerCase().includes('nagara') ? 'NAGARA_FILTER' : 'VERTICAL';
+      // Update Daisha — pertahankan jenis & ukuran yang sudah ada di DB
+      const [editExisting] = await sql`
+        SELECT "jenis", "ukuran" FROM "Daisha"
+        WHERE UPPER("nomor_daisha") = UPPER(${noDaisha}) LIMIT 1
+      `;
+      const sizeInfoEdit = detectDaishaSize(noDaisha);
+      const ukuranEdit = editExisting?.ukuran || (sizeInfoEdit?.size === 'Small' ? 'SMALL' : sizeInfoEdit?.size === 'Medium' ? 'MEDIUM' : sizeInfoEdit?.size === 'Large' ? 'LARGE' : 'NONE');
+      const jenisEdit = editExisting?.jenis || (noDaisha.toUpperCase().includes('NF') || namaDaisha.toLowerCase().includes('nagara') ? 'NAGARA_FILTER' : 'VERTICAL');
       await sql`
         INSERT INTO "Daisha" ("nomor_daisha", "nama_daisha", "ukuran", "seksi", "jenis")
-        VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi}, ${jenis})
+        VALUES (${noDaisha}, ${namaDaisha}, ${ukuranEdit}, ${seksi}, ${jenisEdit})
         ON CONFLICT ("nomor_daisha") DO UPDATE 
-        SET "nama_daisha" = EXCLUDED."nama_daisha", "ukuran" = EXCLUDED."ukuran", "seksi" = EXCLUDED."seksi"
+        SET "nama_daisha" = EXCLUDED."nama_daisha", "seksi" = EXCLUDED."seksi"
       `;
 
       // Update Ticket

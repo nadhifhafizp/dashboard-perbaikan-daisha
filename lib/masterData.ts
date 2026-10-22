@@ -77,12 +77,74 @@ export const DAFTAR_SEMUA_KOMPONEN: string[] = [
   'Others',
 ];
 
+// Pemetaan Resmi Jenis Daisha per Seksi (Sesuai Katalog Master & Form Input Kerusakan)
+export const SECTION_DAISHA_MAP: Record<string, string[]> = {
+  'Building': [
+    'Battery car',
+    'GT Ring',
+    'KB drum / Jikogu',
+    'Transfer reel belt',
+    'Transfer reproses',
+    'Vertical',
+  ],
+  'Bead': [
+    'Bead Preset',
+    'Covering',
+    'Layer',
+    'Monowire',
+    'Ohaba Chaffer',
+    'Ohaba layer',
+    'RTB',
+    'Battery car',
+  ],
+  'Banbury': [
+    'Can Auto Pigmen',
+    'Can Chemical Omny',
+    'Daisha auto pigmen',
+    'Palet B/B',
+    'Battery car',
+  ],
+  'Cutt/Cal': [
+    'Inner Liner',
+    'Omakitan (A-truck)',
+    'Omakitan (B-truck)',
+    'Ply',
+    'Reel Belt',
+    'Battery car',
+  ],
+  'Extruding': [
+    'Box roll side',
+    'Box roll top',
+    "Daisha Comp' Kiriage",
+    'Nagara Filler',
+    'Reel Filler',
+    'Reel Side',
+    'Reel Top',
+    'Slide B-Truck',
+    'Transfer box roll',
+    'Battery car',
+  ],
+  'Poly Film': [
+    'Daisha chip polyfilm',
+    'Battery car',
+  ],
+};
+
+export function getSectionDaishaList(seksi?: string): string[] {
+  if (!seksi || seksi.toLowerCase() === 'all seksi') {
+    return DAFTAR_SEMUA_DAISHA;
+  }
+  const clean = Object.keys(SECTION_DAISHA_MAP).find(
+    (k) => k.toLowerCase() === seksi.toLowerCase()
+  );
+  return clean ? SECTION_DAISHA_MAP[clean] : DAFTAR_SEMUA_DAISHA;
+}
+
 // Objek masterDataDaisha kosong untuk kompatibilitas tipe tanpa membebani ukuran bundle
 export const masterDataDaisha: Record<string, DaishaMasterInfo> = {};
 
 export function getDaishaBySeksi(seksi?: string): string[] {
-  if (!seksi || seksi.toLowerCase() === 'all seksi') return DAFTAR_SEMUA_DAISHA;
-  return DAFTAR_SEMUA_DAISHA;
+  return getSectionDaishaList(seksi);
 }
 
 export function getKomponenKerusakan(namaDaisha?: string): string[] {

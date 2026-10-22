@@ -161,7 +161,7 @@ export default function BridgestoneRequestPrintModal({
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
     color: #000;
     background: #fff;
     font-size: 11px;
@@ -269,7 +269,7 @@ export default function BridgestoneRequestPrintModal({
             <strong>TANGGAL :</strong> ${formatDateIndo(requestData.waktuDibuat)}
           </div>
           <div style="font-size: 10.5px;">
-            <strong>REQ. NO. :</strong> <span style="font-family: monospace; font-weight: bold;">${requestData.nomorRequest}</span>
+            <strong>REQ. NO. :</strong> <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: bold; font-feature-settings: 'tnum';">${requestData.nomorRequest}</span>
           </div>
         </td>
 

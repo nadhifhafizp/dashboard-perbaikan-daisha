@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
   LayoutDashboard,
@@ -23,6 +23,8 @@ import {
   ChevronDown,
   Home,
   ClipboardList,
+  AlertTriangle,
+  Truck,
 } from 'lucide-react';
 import PwaInstaller from '../common/PwaInstaller';
 
@@ -47,13 +49,14 @@ interface ModuleDef {
   items: SubMenuItem[];
 }
 
-export default function Sidebar({
+function SidebarInner({
   isMobileMenuOpen,
   onCloseMobileMenu,
   isDesktopCollapsed = false,
   onToggleDesktopCollapse,
 }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { currentUser, isOperator, isSeksi, isAdmin, openLogoutModal, isLoggingOut } = useAuth();
 
   // 1. Deteksi modul sistem aktif berdasarkan URL saat ini
@@ -108,7 +111,8 @@ export default function Sidebar({
       icon: Wrench,
       items: [
         { href: '/daisha', label: 'Dashboard Analitik', icon: LayoutDashboard },
-        { href: '/input', label: 'Lapor Kerusakan', icon: PenSquare },
+        { href: '/input', label: 'Lapor Kerusakan (Detail)', icon: PenSquare },
+        { href: '/lapor-rusak', label: 'Lapor Cepat Seksi', icon: AlertTriangle },
         ...(!isAdmin ? [{ href: '/riwayat', label: 'Pelacakan & Antrean', icon: ScanLine }] : []),
         ...(isAdmin ? [{ href: '/admin', label: 'Panel Tindakan Bengkel', icon: Settings }] : []),
       ],
@@ -119,8 +123,11 @@ export default function Sidebar({
       badge: 'Annual PM & Fleet',
       icon: Target,
       items: [
-        { href: '/maintenance', label: 'Dashboard & Pemeliharaan PM', icon: Target },
-        { href: '/catalog', label: 'Master & Registri Daisha', icon: Layers },
+        { href: '/maintenance?tab=dashboard', label: 'Dashboard Kepatuhan PM', icon: LayoutDashboard },
+        { href: '/maintenance?tab=staging', label: 'Antrean Penjemputan Bengkel', icon: Truck },
+        { href: '/maintenance?tab=fleet', label: 'Katalog Armada Pabrik', icon: Target },
+        { href: '/maintenance?tab=logs', label: 'Riwayat Log PM & Repair', icon: ClipboardList },
+        { href: '/catalog', label: 'Master Registri Daisha', icon: Layers },
       ],
     },
     {
@@ -156,7 +163,30 @@ export default function Sidebar({
   // 4. Filter modul berdasarkan Hak Akses Role
   const getVisibleModules = (): ModuleDef[] => {
     if (isSeksi) {
-      return allModules.filter((m) => m.id === 'REQUEST');
+      return [
+        {
+          id: 'DAISHA',
+          title: 'Perbaikan Daisha',
+          badge: 'Seksi Plant',
+          icon: Wrench,
+          items: [
+            { href: '/lapor-rusak', label: 'Lapor Daisha Rusak', icon: AlertTriangle },
+            { href: '/riwayat', label: 'Status Perbaikan Seksi', icon: ScanLine },
+          ],
+        },
+        {
+          id: 'FLEET',
+          title: 'PM & Analitik Seksi',
+          badge: 'Pemeliharaan',
+          icon: Target,
+          items: [
+            { href: '/maintenance?tab=dashboard', label: 'Dashboard Analitik', icon: LayoutDashboard },
+            { href: '/maintenance?tab=staging', label: 'Penyiapan & Penjemputan PM', icon: Truck },
+            { href: '/maintenance?tab=fleet', label: 'Katalog Armada Seksi', icon: Layers },
+          ],
+        },
+        ...allModules.filter((m) => m.id === 'REQUEST'),
+      ];
     }
     if (isOperator) {
       return [
@@ -167,6 +197,7 @@ export default function Sidebar({
           icon: Wrench,
           items: [
             { href: '/input', label: 'Lapor Kerusakan', icon: PenSquare },
+            { href: '/lapor-rusak', label: 'Lapor Cepat Seksi', icon: AlertTriangle },
             { href: '/riwayat', label: 'Pelacakan & Antrean', icon: ScanLine },
           ],
         },
@@ -181,7 +212,7 @@ export default function Sidebar({
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-30 bg-slate-900 text-slate-200 border-r border-slate-800 flex flex-col transition-all duration-300 ease-in-out shrink-0
+        fixed inset-y-0 left-0 z-30 bg-slate-900 text-slate-200 border-r border-slate-800 flex flex-col transition-[transform,width,opacity] duration-300 ease-in-out shrink-0
         ${isMobileMenuOpen ? 'translate-x-0 w-64' : '-translate-x-full'}
         ${
           isDesktopCollapsed
@@ -196,11 +227,11 @@ export default function Sidebar({
           <button
             type="button"
             onClick={onToggleDesktopCollapse}
-            className="absolute right-2.5 top-2.5 p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition cursor-pointer"
+            className="absolute right-2.5 top-2.5 p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             title="Sembunyikan Sidebar"
-            aria-label="Sembunyikan Sidebar"
+            aria-label="Sembunyikan Sidebar navigasi"
           >
-            <Menu className="w-4 h-4" />
+            <Menu className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
         <div className="bg-white px-3 py-1.5 rounded-lg shadow-xs flex items-center justify-center">
@@ -341,7 +372,16 @@ export default function Sidebar({
                   <div className="px-2 pb-2 pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
                     <div className="border-l border-slate-750 ml-3.5 pl-2.5 space-y-1">
                       {module.items.map((subItem) => {
-                        const isSubActive = pathname === subItem.href;
+                        const isSubActive = (() => {
+                          if (subItem.href.includes('?')) {
+                            const [itemPath, itemQuery] = subItem.href.split('?');
+                            if (pathname !== itemPath) return false;
+                            const itemTab = new URLSearchParams(itemQuery).get('tab');
+                            const currentTab = searchParams.get('tab') || 'dashboard';
+                            return itemTab === currentTab;
+                          }
+                          return pathname === subItem.href && (!searchParams.get('tab') || searchParams.get('tab') === 'dashboard');
+                        })();
                         const SubIcon = subItem.icon;
 
                         return (
@@ -393,5 +433,24 @@ export default function Sidebar({
         PT Bridgestone Tire Indonesia
       </div>
     </aside>
+  );
+}
+
+export default function Sidebar(props: SidebarProps) {
+  return (
+    <Suspense
+      fallback={
+        <aside
+          className={`
+            fixed inset-y-0 left-0 z-30 bg-slate-900 text-slate-200 border-r border-slate-800 flex flex-col shrink-0
+            ${props.isMobileMenuOpen ? 'translate-x-0 w-64' : '-translate-x-full'}
+            ${props.isDesktopCollapsed ? 'md:hidden md:w-0' : 'md:static md:translate-x-0 md:w-64'}
+          `}
+          aria-hidden="true"
+        />
+      }
+    >
+      <SidebarInner {...props} />
+    </Suspense>
   );
 }

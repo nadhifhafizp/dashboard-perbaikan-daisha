@@ -79,10 +79,11 @@ export async function POST(request: Request) {
       username: user.username,
       role: user.role,
       name: user.name,
+      seksi: user.seksi,
     });
 
     // 6. AUTHORIZATION REDIRECT
-    const redirectUrl = user.role === 'OPERATOR' ? '/input' : user.role === 'USER_SEKSI' ? '/request' : '/';
+    const redirectUrl = user.role === 'OPERATOR' ? '/input' : '/';
 
     const response = NextResponse.json({
       success: true,
@@ -91,6 +92,7 @@ export async function POST(request: Request) {
         username: user.username,
         name: user.name,
         role: user.role,
+        seksi: user.seksi,
       },
       redirectUrl,
     });

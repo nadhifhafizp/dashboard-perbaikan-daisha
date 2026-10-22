@@ -59,13 +59,11 @@ export default function FilterPanel({
     (endDate ? 1 : 0);
 
   return (
-    <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs space-y-3.5">
+    <div className="bg-white p-4 rounded-xl border border-slate-200/60 shadow-2xs space-y-3.5">
       {/* Top Bar: Title, Count, Quick Presets & Actions */}
       <div className="flex flex-wrap justify-between items-center gap-3 border-b border-slate-100 pb-2.5">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-          </div>
+          <SlidersHorizontal className="w-4 h-4 text-slate-500" />
           <h2 className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
             <span>Filter & Pencarian</span>
             {activeFilterCount > 0 && (

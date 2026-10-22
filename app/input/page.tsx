@@ -549,10 +549,11 @@ export default function InputKerusakanPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                <label htmlFor="input-waktu-masuk" className="block text-xs font-medium text-slate-700 mb-1.5 cursor-pointer">
                   Waktu Temuan / Masuk *
                 </label>
                 <IndoDateTimeInput
+                  id="input-waktu-masuk"
                   value={formData.waktuMasuk}
                   onChange={(val) => setFormData((prev) => ({ ...prev, waktuMasuk: val }))}
                   required
@@ -567,14 +568,15 @@ export default function InputKerusakanPage() {
                   id="input-nama-pelapor"
                   type="text"
                   name="namaPelapor"
+                  autoComplete="name"
                   value={formData.namaPelapor}
                   onChange={handleChange}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') e.preventDefault();
                   }}
-                  placeholder="Ketik nama Anda..."
+                  placeholder="Ketik nama Anda…"
                   required
-                  className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none placeholder:font-normal placeholder-slate-400"
+                  className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:border-red-600 placeholder:font-normal placeholder-slate-400"
                 />
               </div>
             </div>

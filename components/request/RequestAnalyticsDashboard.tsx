@@ -343,11 +343,11 @@ export default function RequestAnalyticsDashboard({
             )}
           </div>
 
-          {/* Legend Items */}
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
+          {/* Legend Items (Tanpa Nested Box) */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-3 border-t border-slate-100 text-xs">
             {metrics.tujuanChartData.slice(0, 4).map((item) => (
-              <div key={item.name} className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
-                <div className="flex items-center gap-1.5 truncate">
+              <div key={item.name} className="flex items-center justify-between py-1 border-b border-slate-100/70">
+                <div className="flex items-center gap-2 truncate">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                   <span className="text-slate-700 font-medium truncate text-[11px]">{item.name}</span>
                 </div>
@@ -361,51 +361,51 @@ export default function RequestAnalyticsDashboard({
       {/* 3. Pipeline Flow Breakdown & Urgensi Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Pipeline Bottleneck / Alur Tahapan */}
-        <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 shadow-2xs space-y-4">
+        <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200/60 p-4.5 sm:p-5 shadow-2xs space-y-4">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-600" />
             <span>Tahapan Alur Pengerjaan (Pipeline)</span>
           </h3>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="p-3 rounded-lg border border-slate-200 bg-white shadow-2xs space-y-1">
-              <span className="text-[11px] font-semibold text-slate-600">1. Approval Atasan Seksi</span>
-              <div className="text-xl font-black text-slate-900 tracking-tight tabular-nums">
+            <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
+              <span className="text-[11px] font-medium text-slate-500">1. Approval Atasan Seksi</span>
+              <div className="text-xl font-bold text-slate-900 tracking-tight tabular-nums">
                 {requests.filter(r => r.flowStep === 'STEP_2_ATASAN_SEKSI' || r.statusApprovalAtasanSeksi === 'WAITING').length}
               </div>
             </div>
 
-            <div className="p-3 rounded-lg border border-slate-200 bg-white shadow-2xs space-y-1">
-              <span className="text-[11px] font-semibold text-slate-600">2. Evaluasi Workshop</span>
-              <div className="text-xl font-black text-slate-900 tracking-tight tabular-nums">
+            <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
+              <span className="text-[11px] font-medium text-slate-500">2. Evaluasi Workshop</span>
+              <div className="text-xl font-bold text-slate-900 tracking-tight tabular-nums">
                 {requests.filter(r => r.flowStep === 'STEP_3_WORKSHOP').length}
               </div>
             </div>
 
-            <div className="p-3 rounded-lg border border-slate-200 bg-white shadow-2xs space-y-1">
-              <span className="text-[11px] font-semibold text-slate-600">3. Approval S.Project</span>
-              <div className="text-xl font-black text-slate-900 tracking-tight tabular-nums">
+            <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
+              <span className="text-[11px] font-medium text-slate-500">3. Approval S.Project</span>
+              <div className="text-xl font-bold text-slate-900 tracking-tight tabular-nums">
                 {requests.filter(r => r.flowStep === 'STEP_4_ATASAN_SP').length}
               </div>
             </div>
 
-            <div className="p-3 rounded-lg border border-slate-200 bg-white shadow-2xs space-y-1">
-              <span className="text-[11px] font-semibold text-slate-600">4. Pengerjaan Fisik</span>
-              <div className="text-xl font-black text-blue-600 tracking-tight tabular-nums">
+            <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
+              <span className="text-[11px] font-medium text-slate-500">4. Pengerjaan Fisik</span>
+              <div className="text-xl font-bold text-blue-600 tracking-tight tabular-nums">
                 {requests.filter(r => r.flowStep === 'STEP_6_PENGERJAAN').length}
               </div>
             </div>
 
-            <div className="p-3 rounded-lg border border-slate-200 bg-white shadow-2xs space-y-1">
-              <span className="text-[11px] font-semibold text-slate-600">5. Tertahan Material</span>
-              <div className="text-xl font-black text-rose-600 tracking-tight tabular-nums">
+            <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
+              <span className="text-[11px] font-medium text-slate-500">5. Tertahan Material</span>
+              <div className="text-xl font-bold text-rose-600 tracking-tight tabular-nums">
                 {metrics.pendingMaterial}
               </div>
             </div>
 
-            <div className="p-3 rounded-lg border border-slate-200 bg-white shadow-2xs space-y-1">
-              <span className="text-[11px] font-semibold text-slate-600">6. Selesai Serah Terima</span>
-              <div className="text-xl font-black text-emerald-600 tracking-tight tabular-nums">
+            <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
+              <span className="text-[11px] font-medium text-slate-500">6. Selesai Serah Terima</span>
+              <div className="text-xl font-bold text-emerald-600 tracking-tight tabular-nums">
                 {metrics.completed}
               </div>
             </div>

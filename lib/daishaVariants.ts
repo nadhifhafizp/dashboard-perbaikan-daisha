@@ -9,7 +9,7 @@
 export interface DaishaVariantInfo {
   id: string;
   name: string;
-  ukuran?: 'Small' | 'Medium' | 'Large';
+  ukuran?: 'Small' | 'Medium' | 'Large' | 'SMALL' | 'MEDIUM' | 'LARGE' | string;
   susunan?: 'Susun 3' | 'Susun 4';
   tipe?: string;
   codePrefix: string;

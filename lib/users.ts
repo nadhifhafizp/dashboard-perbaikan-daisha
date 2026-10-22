@@ -104,11 +104,31 @@ export async function findUserByCredentials(
     username: user.username,
     name: user.name,
     role: user.role as UserRole,
-    seksi: user.seksi,
+    seksi: resolveUserSeksi(user),
     description: user.description,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
+}
+
+/**
+ * Helper internal untuk memastikan akun USER_SEKSI selalu terpetakan ke seksinya
+ */
+function resolveUserSeksi(user: Record<string, unknown>): string | null {
+  const seksi = typeof user.seksi === 'string' ? user.seksi.trim() : null;
+  if (seksi) return seksi;
+
+  const role = typeof user.role === 'string' ? user.role : '';
+  const username = typeof user.username === 'string' ? user.username : '';
+  const name = typeof user.name === 'string' ? user.name : '';
+
+  if (role === 'USER_SEKSI') {
+    const knownSections = ['Building', 'Bead', 'Banbury', 'Cutt/Cal', 'Extruding', 'Poly Film', 'Welding'];
+    const haystack = `${username} ${name}`.toLowerCase();
+    const matched = knownSections.find((s) => haystack.includes(s.toLowerCase()));
+    if (matched) return matched;
+  }
+  return null;
 }
 
 /**
@@ -127,7 +147,7 @@ export async function findUserByUsername(usernameInput: string): Promise<UserAcc
     username: user.username,
     name: user.name,
     role: user.role as UserRole,
-    seksi: user.seksi,
+    seksi: resolveUserSeksi(user),
     description: user.description,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,

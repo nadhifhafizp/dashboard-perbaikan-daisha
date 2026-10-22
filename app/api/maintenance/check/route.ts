@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
     // Cari di tabel Daisha (bisa match exact atau match nomor urut misal "45" atau "S-045")
     let daisha = await sql`
-      SELECT id, nomor_daisha, jenis, ukuran, last_maintenance_date
+      SELECT id, nomor_daisha, jenis, ukuran, seksi, nama_daisha, last_maintenance_date
       FROM "Daisha"
       WHERE UPPER(nomor_daisha) = ${nomor.toUpperCase()}
       LIMIT 1
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       if (numOnly) {
         const padded = String(parseInt(numOnly, 10)).padStart(3, '0');
         daisha = await sql`
-          SELECT id, nomor_daisha, jenis, ukuran, last_maintenance_date
+          SELECT id, nomor_daisha, jenis, ukuran, seksi, nama_daisha, last_maintenance_date
           FROM "Daisha"
           WHERE nomor_daisha ILIKE ${'%' + padded + '%'} OR nomor_daisha ILIKE ${'%' + nomor + '%'}
           LIMIT 1
@@ -95,7 +95,9 @@ export async function GET(request: Request) {
         id: unit.id,
         nomor_daisha: unit.nomor_daisha,
         jenis: unit.jenis,
+        nama_daisha: unit.nama_daisha,
         ukuran: unit.ukuran,
+        seksi: unit.seksi,
         last_maintenance_date: unit.last_maintenance_date,
       },
       isRecent,

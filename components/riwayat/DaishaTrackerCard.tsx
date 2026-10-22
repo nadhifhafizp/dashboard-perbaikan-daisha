@@ -129,7 +129,7 @@ export default function DaishaTrackerCard({
       </div>
 
       {/* 2. Visual Stepper Pelacakan Servis Terkini */}
-      <div className="bg-slate-50/70 p-3.5 sm:p-4 rounded-xl border border-slate-200/70 space-y-3">
+      <div className="bg-slate-50/60 p-3.5 sm:p-4 rounded-xl space-y-3">
         <div className="flex items-center justify-between text-xs">
           <span className="font-bold text-slate-700 flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5 text-red-600" />

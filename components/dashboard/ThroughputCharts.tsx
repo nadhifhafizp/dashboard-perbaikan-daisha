@@ -121,13 +121,11 @@ export default function ThroughputCharts({
   return (
     <div className="space-y-6">
       {/* 1. Grafik Utama: Komparasi volume masuk vs selesai */}
-      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs">
+      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 shadow-2xs">
         <div>
           <div className="flex flex-wrap justify-between items-center gap-3 mb-2">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
-                <TrendingUp className="w-3.5 h-3.5" />
-              </div>
+              <TrendingUp className="w-4 h-4 text-slate-500" />
               <div>
                 <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
                   Arus Unit Masuk vs Selesai
@@ -179,21 +177,17 @@ export default function ThroughputCharts({
             </div>
           </div>
 
-          {/* Legenda Indikator Makna Warna & Simbol */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-medium my-3">
-            <div className="flex items-center gap-2 text-red-700 bg-red-50/70 px-3 py-1 rounded-lg border border-red-200/80">
-              <span className="w-3 h-3 rounded-xs bg-red-600 inline-block shadow-2xs" />
-              <span>Unit Masuk (Beban Antrean)</span>
-              <span className="text-xs text-red-900 bg-red-100 px-2 py-0.5 rounded-md font-bold ml-1">
-                {totalMasukTimeline}
-              </span>
+          {/* Legenda Indikator Makna Warna & Simbol (Tanpa Kotak Berlebih) */}
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-slate-600 my-2 pt-1 pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block" />
+              <span>Unit Masuk:</span>
+              <span className="text-slate-900 font-semibold">{totalMasukTimeline}</span>
             </div>
-            <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50/60 px-3 py-1 rounded-lg border border-emerald-100">
-              <span className="w-3 h-3 rounded-xs bg-emerald-500 inline-block shadow-2xs" />
-              <span>Unit Selesai (Output Bengkel)</span>
-              <span className="text-xs text-emerald-900 bg-emerald-100 px-2 py-0.5 rounded-md font-bold ml-1">
-                {totalSelesaiTimeline}
-              </span>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+              <span>Unit Selesai:</span>
+              <span className="text-slate-900 font-semibold">{totalSelesaiTimeline}</span>
             </div>
 
             {/* Indikator Net Balance Arus */}
@@ -201,24 +195,24 @@ export default function ThroughputCharts({
               const netDiff = totalMasukTimeline - totalSelesaiTimeline;
               if (netDiff > 0) {
                 return (
-                  <div className="flex items-center gap-1.5 text-xs text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                    <span>Status Arus: <strong>+{netDiff} Antrean Bertambah</strong></span>
+                  <div className="flex items-center gap-1.5 text-xs text-amber-700">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span>Net: <strong className="font-semibold">+{netDiff} Antrean Bertambah</strong></span>
                   </div>
                 );
               }
               if (netDiff < 0) {
                 return (
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span>Status Arus: <strong>{Math.abs(netDiff)} Unit Surplus Selesai</strong></span>
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-700">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>Net: <strong className="font-semibold">{Math.abs(netDiff)} Surplus Selesai</strong></span>
                   </div>
                 );
               }
               return (
-                <div className="flex items-center gap-1.5 text-xs text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  <span>Status Arus: <strong>Seimbang (1:1)</strong></span>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <span className="w-2 h-2 rounded-full bg-slate-400" />
+                  <span>Net: <strong className="font-semibold">Seimbang (1:1)</strong></span>
                 </div>
               );
             })()}
@@ -386,11 +380,9 @@ export default function ThroughputCharts({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
         {/* 2. Diagram Donat: Status pipeline */}
-        <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
-              <PieIcon className="w-3.5 h-3.5" />
-            </div>
+        <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+            <PieIcon className="w-4 h-4 text-slate-500" />
             <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
               Komposisi Status Tiket
             </h3>
@@ -442,19 +434,19 @@ export default function ThroughputCharts({
                 </ResponsiveContainer>
               </div>
 
-              {/* Legenda & Rincian Kartu Status */}
-              <div className="flex flex-col gap-2 flex-1 w-full">
+              {/* Legenda & Rincian Kartu Status (Clean List Rows, No Nested Cards) */}
+              <div className="flex flex-col flex-1 w-full divide-y divide-slate-100">
                 {statusData.map((st) => {
                   const pct = totalStatus > 0 ? Math.round((st.value / totalStatus) * 100) : 0;
                   const getMeaning = (name: string) => {
                     if (name === 'Open' || name.toLowerCase().includes('antre'))
-                      return { title: 'Antre', sub: 'Menunggu penanganan teknisi' };
+                      return { title: 'Antre', sub: 'Menunggu teknisi' };
                     if (name === 'Progress' || name.toLowerCase().includes('kerja'))
-                      return { title: 'Dikerjakan', sub: 'Dalam proses perbaikan fisik' };
+                      return { title: 'Dikerjakan', sub: 'Proses fisik' };
                     if (name === 'Done' || name.toLowerCase().includes('selesai'))
-                      return { title: 'Selesai', sub: 'Siap kembali ke seksi' };
+                      return { title: 'Selesai', sub: 'Siap kembali' };
                     if (name === 'Scrap' || name.toLowerCase().includes('afkir'))
-                      return { title: 'Afkir (Scrap)', sub: 'Unit tidak layak pakai' };
+                      return { title: 'Afkir (Scrap)', sub: 'Tidak layak' };
                     return { title: name, sub: '' };
                   };
                   const meaning = getMeaning(st.name);
@@ -462,18 +454,18 @@ export default function ThroughputCharts({
                   return (
                     <div
                       key={st.name}
-                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-medium"
+                      className="flex items-center justify-between py-2 text-xs font-medium"
                     >
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: st.color }} />
                         <div>
-                          <span className="text-slate-800 font-bold block">{meaning.title}</span>
+                          <span className="text-slate-800 font-semibold block">{meaning.title}</span>
                           <span className="text-[10px] text-slate-400 font-normal">{meaning.sub}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 text-right">
-                        <span className="font-extrabold text-slate-900">{st.value} Unit</span>
-                        <span className="text-xs text-slate-500">({pct}%)</span>
+                        <span className="font-bold text-slate-900 tabular-nums">{st.value} Unit</span>
+                        <span className="text-xs text-slate-400">({pct}%)</span>
                       </div>
                     </div>
                   );
@@ -493,13 +485,11 @@ export default function ThroughputCharts({
         </div>
 
         {/* 3. Batang Horizontal: Durasi perbaikan / lead time */}
-        <div className="lg:col-span-7 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 shadow-2xs flex flex-col justify-between">
           <div>
-            <div className="flex flex-wrap justify-between items-start gap-3 mb-2">
+            <div className="flex flex-wrap justify-between items-start gap-3 mb-2 pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
-                  <Clock className="w-3.5 h-3.5" />
-                </div>
+                <Clock className="w-4 h-4 text-slate-500" />
                 <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
                   Durasi Perbaikan (Lead Time)
                 </h3>

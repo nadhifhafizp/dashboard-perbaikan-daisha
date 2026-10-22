@@ -38,18 +38,13 @@ export default function SectionPopulationChart({
     .sort((a, b) => b.total - a.total);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-4.5 flex flex-col justify-between h-full">
+    <div className="bg-white rounded-xl border border-slate-200/60 shadow-2xs p-4.5 flex flex-col justify-between h-full">
       <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
-            <Layers className="w-3.5 h-3.5" />
-          </div>
-          <div>
-            <h2 className="text-sm sm:text-base font-bold text-slate-900">Populasi Armada per Seksi</h2>
-            <p className="text-xs text-slate-500">
-              Distribusi total unit daisha yang tersebar di area operasional pabrik
-            </p>
-          </div>
+          <Layers className="w-4 h-4 text-red-600" />
+          <h2 className="text-sm sm:text-base font-bold text-slate-900">
+            Populasi Armada per Seksi
+          </h2>
         </div>
 
         {selectedSeksi !== 'ALL' && onSelectSeksi && (
@@ -86,17 +81,17 @@ export default function SectionPopulationChart({
                   const pct = totalUnits > 0 ? Math.round((d.total / totalUnits) * 100) : 0;
                   const pmPct = d.total > 0 ? Math.round((d.maintained / d.total) * 100) : 0;
                   return (
-                    <div className="bg-slate-900 text-white p-2.5 rounded-lg shadow-xl text-xs space-y-1">
-                      <div className="font-bold text-slate-100">{d.seksi}</div>
-                      <div className="text-slate-300 tabular-nums">
-                        Total Armada: {d.total.toLocaleString('id-ID')} unit ({pct}%)
+                    <div className="bg-white text-slate-800 p-2.5 rounded-xl shadow-lg border border-slate-200 text-xs space-y-1">
+                      <div className="font-bold text-slate-900">{d.seksi}</div>
+                      <div className="text-slate-600 tabular-nums">
+                        Total Armada: <span className="font-semibold text-slate-900">{d.total.toLocaleString('id-ID')} unit</span> ({pct}%)
                       </div>
-                      <div className="text-emerald-400 tabular-nums text-xs">
-                        Sudah PM: {d.maintained.toLocaleString('id-ID')} unit ({pmPct}%)
+                      <div className="text-emerald-700 tabular-nums text-xs">
+                        Sudah PM: <span className="font-semibold">{d.maintained.toLocaleString('id-ID')} unit</span> ({pmPct}%)
                       </div>
                       {d.rusak > 0 && (
-                        <div className="text-red-400 tabular-nums text-xs">
-                          Kondisi Rusak: {d.rusak} unit
+                        <div className="text-red-700 tabular-nums text-xs">
+                          Kondisi Rusak: <span className="font-semibold">{d.rusak} unit</span>
                         </div>
                       )}
                     </div>

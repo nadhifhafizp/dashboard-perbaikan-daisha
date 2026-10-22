@@ -9,21 +9,26 @@ import {
   Calendar,
   Clock,
   Layers,
+  Truck,
 } from 'lucide-react';
 import { FleetUnit } from './FleetExplorer';
 
 interface UnitDetailModalProps {
   unit: FleetUnit | null;
   currentYear: number;
+  isSeksiUser?: boolean;
   onClose: () => void;
   onOpenMaintenanceModal: (unit: FleetUnit) => void;
+  onStageUnit?: (unit: FleetUnit) => void;
 }
 
 export default function UnitDetailModal({
   unit,
   currentYear,
+  isSeksiUser = false,
   onClose,
   onOpenMaintenanceModal,
+  onStageUnit,
 }: UnitDetailModalProps) {
   // Escape key listener
   React.useEffect(() => {
@@ -129,14 +134,14 @@ export default function UnitDetailModal({
             <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
               <span className="text-slate-500 flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
-                Kondisi Pemeriksaan:
+                Status Pemeliharaan {currentYear}:
               </span>
               <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                unit.last_condition === 'RUSAK' || unit.last_condition === 'REPAIR_DONE'
-                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
-                  : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                isDone
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                  : 'bg-amber-100 text-amber-800 border border-amber-200'
               }`}>
-                {unit.last_condition === 'RUSAK' || unit.last_condition === 'REPAIR_DONE' ? 'Ada Riwayat Kerusakan' : 'Kondisi Baik (OK)'}
+                {isDone ? 'Sudah PM' : 'Belum PM'}
               </span>
             </div>
 
@@ -184,17 +189,20 @@ export default function UnitDetailModal({
             >
               Tutup
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onOpenMaintenanceModal(unit);
-              }}
-              className="flex-1 min-h-[44px] sm:min-h-0 sm:h-9 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-700"
-            >
-              <Wrench className="w-3.5 h-3.5" />
-              <span>Catat Pengerjaan</span>
-            </button>
+
+            {!isSeksiUser && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenMaintenanceModal(unit);
+                }}
+                className="flex-1 min-h-[44px] sm:min-h-0 sm:h-9 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-700"
+              >
+                <Wrench className="w-3.5 h-3.5" />
+                <span>Catat PM</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { Clock, Calendar } from 'lucide-react';
 interface IndoDateTimeInputProps {
   value: string; // Format ISO: YYYY-MM-DDTHH:mm
   onChange: (value: string) => void;
+  id?: string;
   name?: string;
   required?: boolean;
   disabled?: boolean;
@@ -26,6 +27,7 @@ const SEGMENT_RANGES: Record<Segment, [number, number]> = {
 export default function IndoDateTimeInput({
   value,
   onChange,
+  id,
   name = 'waktuMasuk',
   required = false,
   disabled = false,
@@ -391,6 +393,7 @@ export default function IndoDateTimeInput({
       {/* Input Teks Tunggal: Mendukung keyboard HP (inputMode="numeric", tanpa readOnly) */}
       <input
         ref={inputRef}
+        id={id || name}
         type="text"
         inputMode="numeric"
         value={displayVal}

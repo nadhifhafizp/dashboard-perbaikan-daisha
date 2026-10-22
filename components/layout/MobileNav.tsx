@@ -21,6 +21,7 @@ import {
   Users,
   Target,
   LayoutDashboard,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface MobileNavProps {
@@ -81,8 +82,10 @@ export default function MobileNav({
     );
   } else if (isSeksi) {
     navItems.push(
-      { href: '/request', icon: LayoutDashboard, label: 'Dashboard' },
-      { href: '/request/tracking', icon: ClipboardList, label: 'Pelacakan' },
+      { href: '/', icon: Home, label: 'Portal' },
+      { href: '/lapor-rusak', icon: AlertTriangle, label: 'Lapor' },
+      { href: '/maintenance', icon: Target, label: 'PM Seksi' },
+      { href: '/request', icon: LayoutDashboard, label: 'Request' },
     );
   }
 
@@ -105,7 +108,7 @@ export default function MobileNav({
         <button
           type="button"
           onClick={onToggleMobileMenu}
-          className="min-h-[36px] px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer flex items-center gap-1.5 text-xs font-medium border border-slate-700"
+          className="min-h-[44px] px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer flex items-center gap-1.5 text-xs font-semibold border border-slate-700 active:scale-95 transition"
           aria-label={isMobileMenuOpen ? 'Tutup navigasi samping' : 'Buka navigasi samping'}
         >
           {isMobileMenuOpen ? (

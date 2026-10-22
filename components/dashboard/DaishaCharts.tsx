@@ -52,13 +52,11 @@ export default function DaishaCharts({
   const xDomainMax = Math.ceil(maxVal * 1.25);
 
   return (
-    <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col h-full">
+    <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 shadow-2xs flex flex-col h-full">
       {/* 1. Header Card */}
-      <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
+      <div className="flex flex-wrap justify-between items-center gap-3 mb-3 pb-2 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
-            {activeMode === 'unit' ? <Truck className="w-3.5 h-3.5" /> : <Layers className="w-3.5 h-3.5" />}
-          </div>
+          {activeMode === 'unit' ? <Truck className="w-4 h-4 text-slate-500" /> : <Layers className="w-4 h-4 text-slate-500" />}
           <div>
             <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
               {activeMode === 'unit'

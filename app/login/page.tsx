@@ -57,8 +57,8 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col justify-center items-center p-4 sm:p-6">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-xl border border-neutral-200 overflow-hidden">
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 sm:p-6 relative overflow-hidden">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden relative z-10">
 
         {/* Card Header */}
         <div className="pt-8 pb-5 px-6 text-center border-b border-slate-100 flex flex-col items-center justify-center bg-slate-50/50">
@@ -104,12 +104,13 @@ function LoginForm() {
               </label>
               <input
                 id="login-username"
+                name="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 placeholder="Masukkan username akun"
-                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white placeholder:text-slate-400 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition font-medium"
+                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white placeholder:text-slate-400 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500/20 focus-visible:border-red-500 transition font-medium"
                 autoComplete="username"
               />
             </div>
@@ -121,12 +122,13 @@ function LoginForm() {
               <div className="relative">
                 <input
                   id="login-password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full h-10 px-3 pr-10 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white placeholder:text-slate-400 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition font-medium"
+                  className="w-full h-10 px-3 pr-10 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white placeholder:text-slate-400 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500/20 focus-visible:border-red-500 transition font-medium"
                   autoComplete="current-password"
                 />
                 <button
@@ -168,7 +170,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-neutral-400 text-xs">Memuat sesi...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 text-xs">Memuat sesi...</div>}>
       <LoginForm />
     </Suspense>
   );

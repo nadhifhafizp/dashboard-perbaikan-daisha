@@ -11,9 +11,7 @@ import {
   validatePositiveInt,
 } from '@/lib/security';
 
-// ============================================================================
-// IN-MEMORY RESPONSE CACHE (< 2ms response time)
-// ============================================================================
+// In-memory response cache (< 2ms response time)
 interface CatalogCacheData {
   success: boolean;
   seksiList: string[];

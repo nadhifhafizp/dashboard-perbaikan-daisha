@@ -107,9 +107,8 @@ export default function DaishaVariantSelector({
   // Filter khusus GT Ring (Ukuran S/M/L dan Susun 3/4)
   // Penting: Jika BUKAN GT Ring (misal Vertical), jangan terapkan filter ukuran/susunan agar varian tidak hilang tersaring
   const filteredVariants = variants.filter((v) => {
-    if (!isGTRing) return true;
-    if (filterUkuran !== 'ALL' && v.ukuran !== filterUkuran) return false;
-    if (filterSusunan !== 'ALL' && v.susunan !== filterSusunan) return false;
+    if (filterUkuran !== 'ALL' && (v.ukuran || '').toLowerCase() !== filterUkuran.toLowerCase()) return false;
+    if (filterSusunan !== 'ALL' && (v.susunan || '').toLowerCase() !== filterSusunan.toLowerCase()) return false;
     return true;
   });
 

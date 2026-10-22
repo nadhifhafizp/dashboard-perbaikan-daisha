@@ -118,23 +118,18 @@ export default function DamageCharts({
     <div className="space-y-6">
       {/* 1. Header Ringkas & Metric Switcher */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
-            <Wrench className="w-3.5 h-3.5" />
-          </div>
-          <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-            Analisis Kerusakan Komponen & Tindakan
-          </h3>
-        </div>
+        <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+          Analisis Kerusakan Komponen & Tindakan
+        </h3>
 
         {/* Toggle Kasus vs Pcs */}
-        <div className="flex items-center p-0.5 bg-slate-100/90 rounded-lg text-xs font-semibold shrink-0">
+        <div className="flex items-center p-0.5 bg-slate-100 rounded-lg text-xs font-semibold shrink-0">
           <button
             type="button"
             onClick={() => setMetricMode('kasus')}
             className={`px-3 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
               metricMode === 'kasus'
-                ? 'bg-white text-slate-900 shadow-xs'
+                ? 'bg-white text-slate-900 shadow-2xs font-bold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -145,7 +140,7 @@ export default function DamageCharts({
             onClick={() => setMetricMode('pcs')}
             className={`px-3 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
               metricMode === 'pcs'
-                ? 'bg-white text-slate-900 shadow-xs'
+                ? 'bg-white text-slate-900 shadow-2xs font-bold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -155,15 +150,15 @@ export default function DamageCharts({
       </div>
 
       {/* 2. Grid Visual: 2 Batang Horizontal (Atas) Memberikan Ruang Lega bagi Label Teks */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         
         {/* A. Batang Horizontal: Komponen paling sering rusak */}
-        <div className="lg:col-span-6 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-          <div className="flex justify-between items-center mb-3">
+        <div className="lg:col-span-6 bg-white p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
+          <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
             <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
               Komponen Paling Sering Rusak
             </h4>
-            <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+            <span className="text-xs font-medium text-slate-500">
               {metricMode === 'pcs' ? 'Kuantitas (Pcs)' : 'Frekuensi (Kasus)'}
             </span>
           </div>
@@ -219,17 +214,17 @@ export default function DamageCharts({
                   <Bar dataKey="displayVal" radius={[0, 4, 4, 0]} barSize={16}>
                     {dataKategori.map((entry, idx) => {
                       const ratio = maxKategori > 0 ? entry.displayVal / maxKategori : 1;
-                      // Gradien intensitas data-driven charcoal
-                      const opacity = Math.max(0.32, 0.32 + 0.68 * ratio);
+                      // Gradien intensitas data-driven royal blue
+                      const opacity = Math.max(0.45, 0.45 + 0.55 * ratio);
                       return (
                         <Cell
                           key={`cell-kat-${idx}`}
-                          fill="#0F172A"
+                          fill="#2563EB"
                           fillOpacity={opacity}
                         />
                       );
                     })}
-                    <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={12} fontWeight={800} />
+                    <LabelList dataKey="displayVal" position="right" fill="#1e3a8a" fontSize={12} fontWeight={800} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -242,12 +237,12 @@ export default function DamageCharts({
         </div>
 
         {/* B. Batang Horizontal: Top gejala masalah */}
-        <div className="lg:col-span-6 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-          <div className="flex justify-between items-center mb-3">
+        <div className="lg:col-span-6 bg-white p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
+          <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
             <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
               Top 10 Gejala Kerusakan
             </h4>
-            <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+            <span className="text-xs font-medium text-slate-500">
               {metricMode === 'pcs' ? 'Pcs Part' : 'Kasus'}
             </span>
           </div>
@@ -327,17 +322,12 @@ export default function DamageCharts({
       </div>
 
       {/* C. Diagram Donat: Proporsi tindakan bengkel */}
-      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs">
-        <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
-              <PieIcon className="w-3.5 h-3.5" />
-            </div>
-            <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
-              Proporsi Tindakan: Servis Fisik vs Ganti Sparepart
-            </h4>
-          </div>
-          <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200">
+      <div className="bg-white p-5 rounded-xl border border-slate-200/60">
+        <div className="flex flex-wrap justify-between items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+          <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
+            Proporsi Tindakan: Servis Fisik vs Ganti Sparepart
+          </h4>
+          <span className="text-xs font-medium text-slate-500">
             {metricMode === 'pcs' ? 'Pcs Part' : 'Kasus'}
           </span>
         </div>
@@ -386,64 +376,36 @@ export default function DamageCharts({
               </ResponsiveContainer>
             </div>
 
-            {/* Rincian Kartu Tindakan */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 w-full max-w-xl">
+            {/* Rincian Tindakan (Bersih & Tanpa Kotak Bertumpuk) */}
+            <div className="flex flex-col gap-2 flex-1 w-full max-w-xl">
               {tindakanDonutData.map((item) => {
                 const pct = totalTindakan > 0 ? Math.round((item.value / totalTindakan) * 100) : 0;
                 const isGanti = item.name.includes('Ganti');
                 return (
                   <div
                     key={item.name}
-                    className={`p-4 rounded-xl border flex flex-col justify-between transition ${
-                      isGanti
-                        ? 'bg-blue-50/40 border-blue-100 hover:bg-blue-50/60'
-                        : 'bg-amber-50/40 border-amber-100 hover:bg-amber-50/60'
-                    }`}
+                    className="py-3 px-3 rounded-lg border-b border-slate-100 last:border-0 hover:bg-slate-50/60 transition flex items-center justify-between"
                   >
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`p-1.5 rounded-lg ${
-                              isGanti ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
-                            }`}
-                          >
-                            {isGanti ? (
-                              <RefreshCw className="w-4 h-4" />
-                            ) : (
-                              <Hammer className="w-4 h-4" />
-                            )}
-                          </div>
-                          <span className="font-bold text-slate-900 text-xs">{item.name}</span>
-                        </div>
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                            isGanti
-                              ? 'bg-blue-100/80 text-blue-800 border-blue-200'
-                              : 'bg-amber-100/80 text-amber-800 border-amber-200'
-                          }`}
-                        >
-                          {isGanti ? 'Logistik Part' : 'Mekanik Servis'}
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="font-semibold text-slate-900 text-xs sm:text-sm">{item.name}</span>
+                        <span className="text-xs text-slate-400 font-normal">
+                          • {isGanti ? 'Logistik Part' : 'Mekanik Servis'}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 mb-3">{item.sub}</p>
+                      <p className="text-xs text-slate-500 pl-4.5">{item.sub}</p>
                     </div>
 
-                    <div className="flex items-baseline justify-between pt-2 border-t border-slate-200/60">
-                      <span className="text-xl font-black text-slate-900">
-                        {item.value}{' '}
-                        <span className="text-xs font-semibold text-slate-500">
-                          {metricMode === 'pcs' ? 'pcs part' : 'tindakan'}
-                        </span>
+                    <div className="text-right shrink-0 pl-3">
+                      <span className="text-base sm:text-lg font-bold text-slate-900 tabular-nums">
+                        {item.value} <span className="text-xs font-normal text-slate-500">{metricMode === 'pcs' ? 'pcs' : 'tindakan'}</span>
                       </span>
-                      <span
-                        className={`text-xs font-bold px-2.5 py-0.5 rounded-md border shadow-2xs ${
-                          isGanti
-                            ? 'bg-white text-blue-700 border-blue-200'
-                            : 'bg-white text-amber-700 border-amber-200'
-                        }`}
-                      >
-                        {pct}%
+                      <span className="text-xs font-semibold text-slate-500 block">
+                        ({pct}%)
                       </span>
                     </div>
                   </div>

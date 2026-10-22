@@ -91,7 +91,7 @@ export default function PrintTicketTagModal({
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
     color: #000;
     background: #fff;
     padding: 0;
@@ -136,7 +136,7 @@ export default function PrintTicketTagModal({
   .company-name { font-size: 10px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
   .system-name { font-size: 8px; font-weight: 700; color: #ccc; letter-spacing: 0.05em; text-transform: uppercase; }
   .header-id { text-align: right; }
-  .ticket-id { font-family: monospace; font-size: 9px; font-weight: 900; color: #fff; }
+  .ticket-id { font-family: 'Plus Jakarta Sans', monospace; font-size: 9px; font-weight: 900; color: #fff; }
   .ticket-date { font-size: 8px; color: #aaa; }
   .unit-hero {
     border-bottom: 2px solid #000;
@@ -145,7 +145,7 @@ export default function PrintTicketTagModal({
     background: #fff;
   }
   .unit-label { font-size: 8px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: #555; margin-bottom: 2px; }
-  .unit-number { font-family: monospace; font-size: 38px; font-weight: 900; letter-spacing: -0.02em; line-height: 1; }
+  .unit-number { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 38px; font-weight: 900; letter-spacing: -0.02em; line-height: 1; font-feature-settings: 'tnum'; }
   .size-badge {
     display: inline-block;
     font-size: 10px;
@@ -339,11 +339,11 @@ export default function PrintTicketTagModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-medium text-sm cursor-pointer shadow-2xs transition focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-medium text-sm cursor-pointer shadow-2xs transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             aria-label="Tutup pratinjau tag fisik"
             title="Tutup Pratinjau"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 

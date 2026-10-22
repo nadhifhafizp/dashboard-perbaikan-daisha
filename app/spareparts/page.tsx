@@ -24,7 +24,6 @@ import {
   BarChart3,
 } from 'lucide-react';
 
-// ===================== Types =====================
 
 interface SparepartLog {
   id: number;
@@ -48,7 +47,6 @@ interface Sparepart {
 
 const KATEGORI_OPTIONS = ['Umum', 'Daisha', 'Fabrikasi', 'Elektrik', 'Safety'];
 
-// ===================== Main Page =====================
 
 export default function SparepartsPage() {
   const { isAdmin } = useAuth();
@@ -79,15 +77,23 @@ export default function SparepartsPage() {
   });
   const showFeedback = (type: FeedbackType, title: string, message: string) => setFeedback({ isOpen: true, type, title, message });
 
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
   // Fetch
   const fetchSpareparts = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
+      setFetchError(null);
       const res = await fetch('/api/spareparts?logs=true');
       const data = await res.json();
-      if (data.success) setSpareparts(data.spareparts);
+      if (data.success) {
+        setSpareparts(data.spareparts);
+      } else {
+        setFetchError(data.error || 'Gagal memuat data suku cadang.');
+      }
     } catch (err) {
       console.error('Fetch spareparts error:', err);
+      setFetchError('Koneksi ke server terputus. Silakan periksa jaringan Anda.');
     } finally {
       setLoading(false);
     }
@@ -281,10 +287,31 @@ export default function SparepartsPage() {
         </div>
       </div>
 
+      {/* Error Recovery Banner */}
+      {fetchError && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between gap-3 text-sm text-red-800">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+            <span>{fetchError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void fetchSpareparts(true)}
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shrink-0 cursor-pointer transition shadow-xs"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      )}
+
       {/* ================= VIEW NAVIGATION TABS ================= */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pt-1">
+      <div role="tablist" aria-label="Navigasi Inventaris Spareparts" className="flex items-center gap-2 border-b border-slate-200 pt-1">
         <button
           type="button"
+          role="tab"
+          id="tab-analytics"
+          aria-selected={activeMainTab === 'ANALYTICS'}
+          aria-controls="panel-analytics"
           onClick={() => setActiveMainTab('ANALYTICS')}
           className={`pb-2.5 px-3 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer ${
             activeMainTab === 'ANALYTICS'
@@ -298,6 +325,10 @@ export default function SparepartsPage() {
 
         <button
           type="button"
+          role="tab"
+          id="tab-inventory"
+          aria-selected={activeMainTab === 'INVENTORY'}
+          aria-controls="panel-inventory"
           onClick={() => setActiveMainTab('INVENTORY')}
           className={`pb-2.5 px-3 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer ${
             activeMainTab === 'INVENTORY'
@@ -362,19 +393,26 @@ export default function SparepartsPage() {
         <div className="p-3 sm:p-3.5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-2.5 items-start sm:items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             <div className="relative flex-1 sm:flex-none">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
               <input
+                id="spareparts-search"
+                name="search"
                 type="text"
+                autoComplete="off"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Cari komponen..."
-                className="h-8 pl-8 pr-3 border border-slate-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none w-full sm:w-56 text-slate-800 shadow-2xs transition"
+                placeholder="Cari komponen…"
+                aria-label="Cari nama komponen suku cadang"
+                className="h-8 pl-8 pr-3 border border-slate-200 rounded-lg text-xs bg-white focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:border-red-600 w-full sm:w-56 text-slate-800 shadow-2xs transition"
               />
             </div>
             <select
+              id="spareparts-kategori"
+              name="kategori"
               value={filterKategori}
               onChange={e => setFilterKategori(e.target.value)}
-              className="h-8 px-2.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer shadow-2xs"
+              aria-label="Filter kategori suku cadang"
+              className="h-8 px-2.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 bg-white focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:border-red-600 cursor-pointer shadow-2xs"
             >
               <option value="all">Semua Kategori</option>
               {KATEGORI_OPTIONS.map(k => <option key={k} value={k}>{k}</option>)}
@@ -517,7 +555,7 @@ export default function SparepartsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading && !spareparts.length ? (
-                <tr><td colSpan={8} className="p-8 text-center text-slate-400 font-medium">Memuat data sparepart...</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-slate-500 font-medium">Memuat data sparepart...</td></tr>
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="p-12 text-center text-slate-500">
@@ -654,6 +692,7 @@ export default function SparepartsPage() {
                 type="button"
                 onClick={() => setShowAddModal(false)}
                 className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                aria-label="Tutup modal tambah sparepart"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -722,6 +761,7 @@ export default function SparepartsPage() {
                 type="button"
                 onClick={() => setShowRestockModal(false)}
                 className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                aria-label="Tutup modal restock"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -768,6 +808,7 @@ export default function SparepartsPage() {
                 type="button"
                 onClick={() => setShowUseModal(false)}
                 className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                aria-label="Tutup modal pengeluaran sparepart"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -815,6 +856,7 @@ export default function SparepartsPage() {
                 type="button"
                 onClick={() => setShowLogModal(false)}
                 className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                aria-label="Tutup modal riwayat mutasi"
               >
                 <X className="w-4 h-4" />
               </button>

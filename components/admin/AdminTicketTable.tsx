@@ -560,10 +560,12 @@ function AdminTicketTableComponent({
                     <span>Tag</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => onDeleteTicket(t)}
                     disabled={isProcessing}
                     className="h-8 w-8 bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 border border-slate-200 text-xs font-medium rounded-lg shadow-2xs transition disabled:opacity-50 cursor-pointer flex items-center justify-center"
                     title="Hapus Tiket"
+                    aria-label={`Hapus tiket ${t.idTiketAsli || t.noTiket}`}
                   >
                     <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                   </button>
@@ -786,6 +788,7 @@ function AdminTicketTableComponent({
                           disabled={isProcessing}
                           className="h-7 w-7 flex items-center justify-center bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 border border-slate-200 rounded-md text-[11px] transition cursor-pointer disabled:opacity-50 shadow-2xs"
                           title="Hapus Tiket"
+                          aria-label={`Hapus tiket ${t.idTiketAsli || t.noTiket}`}
                         >
                           <Trash2 className="w-3 h-3 text-rose-600" />
                         </button>

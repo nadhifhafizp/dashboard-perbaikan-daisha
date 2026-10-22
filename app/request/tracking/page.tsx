@@ -106,6 +106,18 @@ function RequestTrackingContent() {
     }
   }, [authLoading, currentUser, router]);
 
+  // Inisialisasi otomatis seksi dan nama drafter dari akun login
+  useEffect(() => {
+    if (currentUser?.seksi) {
+      setFormData((p) => ({
+        ...p,
+        seksiPemohon: p.seksiPemohon || currentUser.seksi || '',
+        drafter: p.drafter || currentUser.name || currentUser.username || '',
+        picPemohon: p.picPemohon || currentUser.name || currentUser.username || '',
+      }));
+    }
+  }, [currentUser]);
+
   // Form create state
   const [showForm, setShowForm] = useState(() => searchParams?.get('new') === 'true');
   const [submitting, setSubmitting] = useState(false);
@@ -417,6 +429,14 @@ function RequestTrackingContent() {
           </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          <Link
+            href="/lapor-rusak"
+            className="h-8 px-3.5 bg-white hover:bg-rose-50 text-red-600 border border-red-200 font-semibold text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>Lapor Daisha Rusak</span>
+          </Link>
+
           <button
             type="button"
             onClick={() => setShowForm(!showForm)}
@@ -488,17 +508,26 @@ function RequestTrackingContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">Seksi Pemohon *</label>
-                <select
-                  value={formData.seksiPemohon}
-                  onChange={(e) => setFormData((p) => ({ ...p, seksiPemohon: e.target.value }))}
-                  className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
-                  required
-                >
-                  <option value="">Pilih Seksi...</option>
-                  {DAFTAR_SEKSI_REQUEST.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
+                {currentUser?.role === 'USER_SEKSI' ? (
+                  <div className="h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 flex items-center justify-between">
+                    <span>{formData.seksiPemohon || currentUser.seksi}</span>
+                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-semibold border border-emerald-200">
+                      Terkunci Otomatis
+                    </span>
+                  </div>
+                ) : (
+                  <select
+                    value={formData.seksiPemohon}
+                    onChange={(e) => setFormData((p) => ({ ...p, seksiPemohon: e.target.value }))}
+                    className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
+                    required
+                  >
+                    <option value="">Pilih Seksi...</option>
+                    {DAFTAR_SEKSI_REQUEST.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div>
@@ -776,7 +805,7 @@ function RequestTrackingContent() {
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div className="p-3.5 rounded-xl bg-slate-50/80 space-y-2">
               <p className="text-xs text-slate-800 leading-relaxed font-medium">
                 Tautan persetujuan tanda tangan (assign) telah dibuat untuk Atasan Seksi ({submittedData.namaAtasan || submittedData.emailAtasan}):
               </p>
@@ -843,7 +872,7 @@ function RequestTrackingContent() {
                   key={tab.id}
                   type="button"
                   onClick={() => setFilterFlow(tab.id as FlowchartFilter)}
-                  className={`h-7 px-2.5 rounded-md text-xs font-medium transition cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`min-h-[36px] sm:min-h-0 sm:h-7 px-3 rounded-md text-xs font-medium transition cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                     isActive
                       ? 'bg-slate-900 text-white shadow-2xs font-semibold'
                       : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-2xs'
@@ -889,7 +918,7 @@ function RequestTrackingContent() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <span className="font-mono font-bold text-slate-900 text-xs tabular-nums">{r.nomorRequest}</span>
-                    <span className="text-[11px] text-slate-400 ml-1.5 tabular-nums">• {formatDate(r.waktuDibuat)}</span>
+                    <span className="text-[11px] text-slate-500 font-medium ml-1.5 tabular-nums">• {formatDate(r.waktuDibuat)}</span>
                   </div>
                   <FlowchartTracker currentStep={r.flowStep} isCompact />
                 </div>
@@ -907,12 +936,12 @@ function RequestTrackingContent() {
 
                 <div className="flex items-center gap-2 flex-wrap text-xs text-slate-600">
                   <span className="inline-flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                    <Building2 className="w-3.5 h-3.5 text-slate-500" />
                     <span>{r.seksiPemohon}</span>
                   </span>
                   <span className="text-slate-300">•</span>
                   <span className="inline-flex items-center gap-1">
-                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <User className="w-3.5 h-3.5 text-slate-500" />
                     <span>{r.picPemohon}</span>
                   </span>
                   <span className="text-slate-300">•</span>

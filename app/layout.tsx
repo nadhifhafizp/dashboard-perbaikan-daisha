@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import AppShell from '@/components/layout/AppShell';
@@ -9,13 +9,6 @@ const sansFont = Plus_Jakarta_Sans({
   variable: '--font-sans',
   display: 'swap',
   weight: ['400', '500', '600', '700', '800'],
-});
-
-const monoFont = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
-  display: 'swap',
-  weight: ['400', '500', '600', '700'],
 });
 
 export const viewport: Viewport = {
@@ -61,13 +54,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`${sansFont.variable} ${monoFont.variable} ${sansFont.className}`}>
+    <html lang="id" className={`light ${sansFont.variable} ${sansFont.className}`}>
       <head>
         <meta name="strix-verification" content="strix-verify-7317054cf78dcaca50761d210d1fa8e6" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${sansFont.className} antialiased text-slate-900 bg-slate-50 min-h-screen`}>
+      <body className={`${sansFont.className} antialiased text-[var(--foreground)] bg-[var(--background)] min-h-screen`}>
         <AuthProvider>
           <AppShell>{children}</AppShell>
         </AuthProvider>

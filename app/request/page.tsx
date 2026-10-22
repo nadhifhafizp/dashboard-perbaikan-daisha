@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   ArrowRight,
   SendHorizonal,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function RequestAnalyticsPage() {
@@ -88,6 +89,14 @@ export default function RequestAnalyticsPage() {
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
           <Link
+            href="/lapor-rusak"
+            className="min-h-[44px] sm:min-h-0 h-8.5 px-3.5 bg-white hover:bg-rose-50 text-red-600 border border-red-200 font-semibold text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>Lapor Daisha Rusak</span>
+          </Link>
+
+          <Link
             href="/request/tracking?new=true"
             className="min-h-[44px] sm:min-h-0 h-8.5 px-3.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
           >
@@ -117,11 +126,15 @@ export default function RequestAnalyticsPage() {
       </div>
 
       {/* 2. Top Navigation Tabs (Pills: Dashboard vs Tracking) */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pt-1">
-        <div className="pb-2.5 px-3 text-xs font-bold text-red-600 border-b-2 border-red-600 flex items-center gap-1.5">
+      <nav aria-label="Navigasi Modul Request Seksi" className="flex items-center gap-2 border-b border-slate-200 pt-1">
+        <Link
+          href="/request"
+          aria-current="page"
+          className="pb-2.5 px-3 text-xs font-bold text-red-600 border-b-2 border-red-600 flex items-center gap-1.5"
+        >
           <LayoutDashboard className="w-3.5 h-3.5" />
           <span>Dashboard Analitik Request</span>
-        </div>
+        </Link>
         <Link
           href="/request/tracking"
           className="pb-2.5 px-3 text-xs font-semibold text-slate-500 hover:text-slate-800 transition flex items-center gap-1.5 border-b-2 border-transparent"
@@ -129,7 +142,7 @@ export default function RequestAnalyticsPage() {
           <ClipboardList className="w-3.5 h-3.5" />
           <span>Daftar Pelacakan & Antrean ({requests.length})</span>
         </Link>
-      </div>
+      </nav>
 
       {/* 3. Analytics Dashboard Body */}
       {loading && !requests.length ? (

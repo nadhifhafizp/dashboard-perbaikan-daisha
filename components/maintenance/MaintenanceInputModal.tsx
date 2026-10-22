@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   X,
   Wrench,
@@ -10,15 +10,104 @@ import {
   Layers,
   Loader2,
   AlertCircle,
+  Check,
+  RotateCcw,
+  Sparkles,
+  ClipboardCheck,
+  Settings,
+  HelpCircle,
+  Truck,
+  ArrowRight,
 } from 'lucide-react';
 import { FleetUnit } from './FleetExplorer';
+import { DAFTAR_SEKSI, getSectionDaishaList } from '@/lib/masterData';
+
+export type PartCondition = 'OK' | 'SERVIS' | 'GANTI';
+
+export interface PartCheckItem {
+  id: string;
+  name: string;
+  alias: string;
+  standardCheck: string;
+  condition: PartCondition;
+  action: string;
+  actionOptions: string[];
+  note: string;
+}
+
+const DEFAULT_PARTS: Omit<PartCheckItem, 'condition' | 'action' | 'note'>[] = [
+  {
+    id: 'roda_putar',
+    name: 'Roda Putar / Caster Swivel (Depan)',
+    alias: 'Kemampuan belok 360°, tapak roda PU/Karet, as roda',
+    standardCheck: 'Putaran lancar tanpa macet, tapak tidak sobek/pecah, bracket kuat',
+    actionOptions: ['Pelumasan Gemuk / Greasing', 'Kencangkan Baut As', 'Ganti Roda Caster Baru'],
+  },
+  {
+    id: 'roda_mati',
+    name: 'Roda Mati / Fixed Wheel (Belakang)',
+    alias: 'Kelurusan arah roda, bracket dudukan, tapak ban',
+    standardCheck: 'Tapak tidak terkelupas, bracket tidak bengkok, baut kencang',
+    actionOptions: ['Kencangkan Bracket', 'Luruskan As Roda', 'Ganti Roda Mati Baru'],
+  },
+  {
+    id: 'bearing_poros',
+    name: 'Bearing & Poros As Roda',
+    alias: 'Bantalan pelor, poros as, kelancaran putaran',
+    standardCheck: 'Putaran mulus tanpa bunyi kasar/kering, tidak oblak goyang',
+    actionOptions: ['Greasing / Pelumasan Gemuk', 'Setel Kerapatan As', 'Ganti Bearing Baru'],
+  },
+  {
+    id: 'stopper_rem',
+    name: 'Stopper / Rem Kaki (Foot Brake)',
+    alias: 'Pedal rem, per spring, tapak karet penahan lantai',
+    standardCheck: 'Rem mengunci kuat ke lantai saat ditekan, per kembali normal',
+    actionOptions: ['Setel Ketinggian Pedal Rem', 'Ganti Per / Spring', 'Ganti Karet Stopper Baru'],
+  },
+  {
+    id: 'body_frame',
+    name: 'Rangka Sasis & Pengelasan (Frame)',
+    alias: 'Besi sasis utama, sambungan las, kelurusan frame',
+    standardCheck: 'Tidak ada las retak/patah, frame tidak melengkung, cat utuh',
+    actionOptions: ['Las Ulang Titik Retak', 'Luruskan Sasis / Press', 'Cat Ulang Anti Karat'],
+  },
+  {
+    id: 'towing_hook',
+    name: 'Towing Hook / Gandengan (Depan & Belakang)',
+    alias: 'Pin penarik, mata kaitan (eyelet), engsel towing',
+    standardCheck: 'Pin kaitan pas, pengunci kaitan tidak aus/patah, engsel aman',
+    actionOptions: ['Las Penguat Kaitan', 'Luruskan Pin Gandengan', 'Ganti Towing Bar Baru'],
+  },
+  {
+    id: 'partisi_rak',
+    name: 'Partisi / Rak Susun / Stopper Produk',
+    alias: 'Sekat ambalan, pipa penyangga, karet pelindung',
+    standardCheck: 'Partisi kokoh tidak goyang, ambalan tidak kendor, karet utuh',
+    actionOptions: ['Kencangkan Baut Rak', 'Las Ulang Sambungan Pipa', 'Ganti Karet Proteksi'],
+  },
+  {
+    id: 'handlebar',
+    name: 'Handlebar / Gagang Dorong',
+    alias: 'Pipa pegangan tangan operator, baut dudukan',
+    standardCheck: 'Pipa kokoh, tidak bengkok, ergonomis, baut kencang',
+    actionOptions: ['Kencangkan Baut Handle', 'Luruskan Pipa Gagang', 'Las Dudukan Handle'],
+  },
+  {
+    id: 'base_plate',
+    name: 'Pelat Dasar & Bumper Karet (Bawah)',
+    alias: 'Alas lantai daisha, karet sudut pelindung benturan',
+    standardCheck: 'Pelat alas rata, tidak melengkung, karet bumper sudut lengkap',
+    actionOptions: ['Ketok Rata Pelat Alas', 'Kencangkan Baut Lantai', 'Pasang Bumper Karet Baru'],
+  },
+];
 
 interface MaintenanceInputModalProps {
   isOpen: boolean;
   onClose: () => void;
   preselectedUnit?: FleetUnit | null;
   onSuccess: () => void;
-  currentUser?: { name?: string; username?: string; role?: string } | null;
+  currentUser?: { name?: string; username?: string; role?: string; seksi?: string | null } | null;
+  seksi?: string;
 }
 
 export default function MaintenanceInputModal({
@@ -27,23 +116,33 @@ export default function MaintenanceInputModal({
   preselectedUnit,
   onSuccess,
   currentUser,
+  seksi,
 }: MaintenanceInputModalProps) {
+  // Form State
   const [nomorDaisha, setNomorDaisha] = useState<string>('');
-  const [jenis, setJenis] = useState<string>('VERTICAL');
+  const [seksiAsal, setSeksiAsal] = useState<string>('Building');
+  const [jenis, setJenis] = useState<string>('Vertical');
   const [ukuran, setUkuran] = useState<string>('SMALL');
-  const [kategori, setKategori] = useState<'RUTIN' | 'REPAIR'>('RUTIN');
-  const [kondisi, setKondisi] = useState<'OK' | 'RUSAK'>('OK');
-  const [komponenRusak, setKomponenRusak] = useState<string>('Roda Putar');
-  const [gejalaKerusakan, setGejalaKerusakan] = useState<string>('Roda Macet / Bearing Kering');
-  const [tindakanPerbaikan, setTindakanPerbaikan] = useState<string>('Servis Fisik');
-  const [waktuMasuk, setWaktuMasuk] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0];
-  });
-  const [tanggalPengerjaan, setTanggalPengerjaan] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0];
-  });
+  const [waktuMasuk, setWaktuMasuk] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [tanggalPengerjaan, setTanggalPengerjaan] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [adminPic, setAdminPic] = useState<string>('');
   const [catatan, setCatatan] = useState<string>('');
+
+  const availableJenisList = useMemo(() => {
+    return getSectionDaishaList(seksiAsal);
+  }, [seksiAsal]);
+
+  // 9-Part Checklist State
+  const [parts, setParts] = useState<PartCheckItem[]>(() =>
+    DEFAULT_PARTS.map((p) => ({
+      ...p,
+      condition: 'OK',
+      action: 'Normal / Pelumasan Rutin',
+      note: '',
+    }))
+  );
+
+  const [filterPartView, setFilterPartView] = useState<'ALL' | 'ISSUES'>('ALL');
 
   // Smart Validation States
   const [isChecking, setIsChecking] = useState<boolean>(false);
@@ -57,26 +156,41 @@ export default function MaintenanceInputModal({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Prefill when unit is passed
+  // Initialize form when opened
   useEffect(() => {
     if (!isOpen) return;
 
     const t = setTimeout(() => {
+      const initialSeksi = preselectedUnit?.seksi || seksi || currentUser?.seksi || 'Building';
+      setSeksiAsal(initialSeksi);
+
       if (preselectedUnit) {
         setNomorDaisha(preselectedUnit.nomor_daisha);
-        setJenis(preselectedUnit.jenis || 'VERTICAL');
-        setUkuran(preselectedUnit.ukuran || (preselectedUnit.jenis === 'VERTICAL' ? 'SMALL' : 'NONE'));
+        setJenis(preselectedUnit.nama_daisha || preselectedUnit.jenis || 'Vertical');
+        setUkuran(preselectedUnit.ukuran || 'NONE');
       } else {
         setNomorDaisha('');
+        const types = getSectionDaishaList(initialSeksi);
+        setJenis(types[0] || 'Vertical');
+        setUkuran('NONE');
       }
       setAdminPic(currentUser?.name || currentUser?.username || 'Admin Workshop');
       setSubmitError(null);
       setSmartWarning(null);
-      setKondisi('OK');
+      setFilterPartView('ALL');
+      // Reset checklist to all OK
+      setParts(
+        DEFAULT_PARTS.map((p) => ({
+          ...p,
+          condition: 'OK',
+          action: 'Normal / Pelumasan Rutin',
+          note: '',
+        }))
+      );
     }, 0);
 
     return () => clearTimeout(t);
-  }, [preselectedUnit, currentUser, isOpen]);
+  }, [preselectedUnit, currentUser, isOpen, seksi]);
 
   // Escape key listener
   useEffect(() => {
@@ -88,13 +202,23 @@ export default function MaintenanceInputModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, isSubmitting, onClose]);
 
+  // Handle Seksi Change
+  const handleSeksiChange = (newSeksi: string) => {
+    setSeksiAsal(newSeksi);
+    const list = getSectionDaishaList(newSeksi);
+    if (!list.includes(jenis)) {
+      setJenis(list[0] || 'Vertical');
+    }
+  };
+
   // Adjust ukuran when jenis changes
   const handleJenisChange = (newJenis: string) => {
     setJenis(newJenis);
-    if (newJenis !== 'VERTICAL') {
+    const lower = newJenis.toLowerCase();
+    if (lower.includes('vertical')) {
+      if (ukuran === 'NONE') setUkuran('SMALL');
+    } else if (!lower.includes('ring')) {
       setUkuran('NONE');
-    } else if (ukuran === 'NONE') {
-      setUkuran('SMALL');
     }
   };
 
@@ -114,8 +238,12 @@ export default function MaintenanceInputModal({
         const data = await res.json();
 
         if (data.exists) {
-          // Auto-fill jenis & ukuran from master if found
-          if (data.daisha?.jenis) {
+          if (data.daisha?.seksi) {
+            setSeksiAsal(data.daisha.seksi);
+          }
+          if (data.daisha?.nama_daisha) {
+            setJenis(data.daisha.nama_daisha);
+          } else if (data.daisha?.jenis) {
             setJenis(data.daisha.jenis);
           }
           if (data.daisha?.ukuran) {
@@ -146,6 +274,68 @@ export default function MaintenanceInputModal({
     return () => clearTimeout(timer);
   }, [nomorDaisha, isOpen]);
 
+  // Checklist Actions
+  const handlePartConditionChange = (id: string, newCondition: PartCondition) => {
+    setParts((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        let defaultAction = 'Normal / Pelumasan Rutin';
+        if (newCondition === 'SERVIS') {
+          defaultAction = item.actionOptions[0] || 'Servis / Setel';
+        } else if (newCondition === 'GANTI') {
+          defaultAction = item.actionOptions[item.actionOptions.length - 1] || 'Ganti Sparepart Baru';
+        }
+        return {
+          ...item,
+          condition: newCondition,
+          action: defaultAction,
+        };
+      })
+    );
+  };
+
+  const handlePartActionChange = (id: string, newAction: string) => {
+    setParts((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, action: newAction } : item))
+    );
+  };
+
+  const handlePartNoteChange = (id: string, newNote: string) => {
+    setParts((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, note: newNote } : item))
+    );
+  };
+
+  const handleSetAllOk = () => {
+    setParts((prev) =>
+      prev.map((item) => ({
+        ...item,
+        condition: 'OK',
+        action: 'Normal / Pelumasan Rutin',
+        note: '',
+      }))
+    );
+  };
+
+  // Metrics
+  const damagedParts = useMemo(() => {
+    return parts.filter((p) => p.condition !== 'OK');
+  }, [parts]);
+
+  const okParts = useMemo(() => {
+    return parts.filter((p) => p.condition === 'OK');
+  }, [parts]);
+
+  const isUnitDamaged = damagedParts.length > 0;
+
+  // Filtered Parts for display
+  const displayedParts = useMemo(() => {
+    if (filterPartView === 'ISSUES') {
+      return damagedParts;
+    }
+    return parts;
+  }, [parts, filterPartView, damagedParts]);
+
   // Submit Handler
   const handleSubmit = async (e?: React.FormEvent, bypass = false) => {
     if (e) e.preventDefault();
@@ -159,20 +349,36 @@ export default function MaintenanceInputModal({
     try {
       setIsSubmitting(true);
 
-      const isRusak = kondisi === 'RUSAK' || kategori === 'REPAIR';
+      // Compile detailed report from the 9-part checklist
+      let detailKerusakanStr: string | null = null;
+      let tindakanStr: string = 'Inspeksi 9 Komponen & Pelumasan Rutin';
+
+      if (isUnitDamaged) {
+        detailKerusakanStr = damagedParts
+          .map((p) => {
+            const statusLabel = p.condition === 'GANTI' ? 'Rusak / Perlu Ganti' : 'Perlu Servis / Setel';
+            const noteText = p.note.trim() ? ` - "${p.note.trim()}"` : '';
+            return `[${p.name}]: ${statusLabel} → Tindakan: ${p.action}${noteText}`;
+          })
+          .join(' | ');
+
+        tindakanStr = damagedParts.map((p) => p.action).join(', ');
+      }
+
       const payload = {
         nomor_daisha: nomorDaisha.trim(),
         jenis,
         ukuran,
-        kategori,
-        kondisi: isRusak ? 'RUSAK' : 'OK',
-        detail_kerusakan: isRusak ? `${komponenRusak}: ${gejalaKerusakan}` : null,
-        tindakan: isRusak ? tindakanPerbaikan : 'Perawatan Rutin Normal',
+        seksi: seksiAsal,
+        kategori: 'RUTIN', // Locked to Maintenance Berkala (PM)
+        kondisi: isUnitDamaged ? 'RUSAK' : 'OK',
+        detail_kerusakan: detailKerusakanStr,
+        tindakan: tindakanStr,
         waktu_masuk: waktuMasuk,
         waktu_keluar: tanggalPengerjaan,
         tanggal_pengerjaan: tanggalPengerjaan,
         admin_id: adminPic.trim() || 'Admin Workshop',
-        catatan: catatan.trim(),
+        catatan: catatan.trim() || (isUnitDamaged ? `Terdapat ${damagedParts.length} temuan part pada PM rutin` : 'Seluruh 9 komponen standar dinyatakan normal'),
         bypass_warning: bypass,
       };
 
@@ -185,7 +391,6 @@ export default function MaintenanceInputModal({
       const data = await res.json();
 
       if (!res.ok) {
-        // Jika server mengembalikan status 409 (Smart Warning Confirmation Required)
         if (res.status === 409 && data.warning) {
           setSmartWarning({
             show: true,
@@ -197,14 +402,13 @@ export default function MaintenanceInputModal({
           return;
         }
 
-        throw new Error(data.error || 'Gagal menyimpan input pengerjaan');
+        throw new Error(data.error || 'Gagal menyimpan input pengerjaan maintenance.');
       }
 
-      // Berhasil
       onSuccess();
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan sistem saat menyimpan';
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan sistem saat menyimpan.';
       setSubmitError(msg);
     } finally {
       setIsSubmitting(false);
@@ -214,20 +418,30 @@ export default function MaintenanceInputModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pm-input-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs font-sans"
+    >
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
         {/* Modal Header */}
-        <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center text-white">
-              <Wrench className="w-4 h-4" />
+        <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-2xs">
+              <ClipboardCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">
-                Catat Pemeliharaan / Perbaikan Daisha
-              </h3>
-              <p className="text-[11px] text-slate-300">
-                Form input teknisi & admin workshop
+              <div className="flex items-center gap-2">
+                <h3 id="pm-input-modal-title" className="text-sm font-bold text-white tracking-tight">
+                  Input Preventive Maintenance (PM) Daisha
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  PM Berkala
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 mt-0.5">
+                Lembar ceklis inspeksi 9 komponen standar & pelumasan tahunan Daisha
               </p>
             </div>
           </div>
@@ -236,15 +450,16 @@ export default function MaintenanceInputModal({
             type="button"
             onClick={onClose}
             className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition cursor-pointer"
+            aria-label="Tutup modal inspeksi PM"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Modal Body */}
-        <form onSubmit={(e) => handleSubmit(e, false)} className="p-5 space-y-4">
+        {/* Modal Body - Scrollable */}
+        <form onSubmit={(e) => handleSubmit(e, false)} className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
           {submitError && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center gap-2">
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
               <span>{submitError}</span>
             </div>
@@ -286,7 +501,27 @@ export default function MaintenanceInputModal({
             </div>
           )}
 
-          {/* 1. Nomor Daisha Input with Checking Indicator */}
+          {/* 1. Kategori Pengerjaan: Terkunci pada Maintenance Berkala (PM) */}
+          <div className="p-3 bg-emerald-50/80 border border-emerald-200/90 rounded-xl flex items-center justify-between shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0">
+                <Wrench className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-emerald-950 block">
+                  Kategori Pengerjaan: Preventive Maintenance (PM Rutin)
+                </span>
+                <span className="text-[11px] text-emerald-800">
+                  Inspeksi fisik 9 komponen, pengujian fungsi rem/roda, dan pelumasan berkala
+                </span>
+              </div>
+            </div>
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 shrink-0">
+              Siklus PM
+            </span>
+          </div>
+
+          {/* 2. Nomor Daisha Input with Checking Indicator */}
           <div>
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-800">
@@ -295,7 +530,7 @@ export default function MaintenanceInputModal({
               {isChecking && (
                 <span className="text-[10px] text-slate-500 flex items-center gap-1">
                   <Loader2 className="w-3 h-3 animate-spin text-red-500" />
-                  Mengecek riwayat...
+                  Mengecek database...
                 </span>
               )}
             </div>
@@ -304,16 +539,30 @@ export default function MaintenanceInputModal({
               required
               value={nomorDaisha}
               onChange={(e) => setNomorDaisha(e.target.value)}
-              placeholder="Contoh: S-045, M-110, L-012, NF-05"
-              className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-red-600 focus:border-red-600 tabular-nums"
+              placeholder="Contoh: S-045, M-110, L-012, NF-05, BD-01..."
+              className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 tabular-nums uppercase"
             />
-            <span className="text-[10px] text-slate-500 mt-0.5 block">
-              Format Vertical: S-xxx (Small), M-xxx (Medium), L-xxx (Large) | Nagara Filter: NF-xx
-            </span>
           </div>
 
-          {/* 2. Jenis Daisha & Ukuran (Conditional) */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* 3. Seksi Asal, Jenis Daisha & Ukuran */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs font-bold text-slate-800">
+                Seksi Asal Unit <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={seksiAsal}
+                onChange={(e) => handleSeksiChange(e.target.value)}
+                className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 cursor-pointer"
+              >
+                {DAFTAR_SEKSI.filter((s) => s.toLowerCase() !== 'all seksi').map((s) => (
+                  <option key={s} value={s}>
+                    Seksi {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="text-xs font-bold text-slate-800">
                 Jenis Daisha <span className="text-red-500">*</span>
@@ -321,326 +570,334 @@ export default function MaintenanceInputModal({
               <select
                 value={jenis}
                 onChange={(e) => handleJenisChange(e.target.value)}
-                className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-red-600 cursor-pointer"
+                className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 cursor-pointer"
               >
-                <option value="VERTICAL">Daisha Vertical</option>
-                <option value="NAGARA_FILTER">Daisha Nagara Filter</option>
-                <option value="GT Ring">Daisha GT Ring</option>
-                <option value="Box roll">Daisha Box Roll</option>
-                <option value="Reel Belt">Daisha Reel Belt</option>
-                <option value="Covering">Daisha Covering</option>
-                <option value="Layer">Daisha Layer</option>
-                <option value="Omakitan (A-truck)">Daisha Omakitan (A-truck)</option>
-                <option value="Omakitan (B-truck)">Daisha Omakitan (B-truck)</option>
-                <option value="Ply">Daisha Ply</option>
-                <option value="KB drum / Jikogu">KB Drum / Jikogu</option>
-                <option value="Transfer reel belt">Transfer Reel Belt</option>
-                <option value="Lainnya">Lainnya / Tipe Khusus</option>
+                {availableJenisList.map((j) => (
+                  <option key={j} value={j}>
+                    {j}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
               <label className="text-xs font-bold text-slate-800">
-                Ukuran {jenis === 'VERTICAL' ? <span className="text-red-500">*</span> : '(Opsional)'}
+                Ukuran
               </label>
               <select
-                disabled={jenis !== 'VERTICAL'}
                 value={ukuran}
                 onChange={(e) => setUkuran(e.target.value)}
-                className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-red-600 disabled:opacity-50 disabled:bg-slate-100 cursor-pointer"
+                className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 cursor-pointer"
               >
-                {jenis !== 'VERTICAL' ? (
-                  <option value="NONE">Standar / Tanpa Ukuran</option>
-                ) : (
-                  <>
-                    <option value="SMALL">Small (1 - 200)</option>
-                    <option value="MEDIUM">Medium (1 - 200)</option>
-                    <option value="LARGE">Large (1 - 200)</option>
-                  </>
-                )}
+                <option value="NONE">NONE (Standar / Tanpa Ukuran)</option>
+                <option value="SMALL">SMALL (Small)</option>
+                <option value="MEDIUM">MEDIUM (Medium)</option>
+                <option value="LARGE">LARGE (Large)</option>
               </select>
             </div>
           </div>
 
-          {/* 3. Kategori & Kondisi Pengerjaan */}
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs font-bold text-slate-800 block mb-1.5">
-                Kategori Pengerjaan <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2.5">
-                <label
-                  className={`p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer transition ${
-                    kategori === 'RUTIN'
-                      ? 'bg-emerald-50/70 border-emerald-500 text-emerald-950 font-bold'
-                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="kategori"
-                    value="RUTIN"
-                    checked={kategori === 'RUTIN'}
-                    onChange={() => {
-                      setKategori('RUTIN');
-                    }}
-                    className="sr-only"
-                  />
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                    kategori === 'RUTIN' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300'
-                  }`}>
-                    {kategori === 'RUTIN' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <span className="text-xs block">Maintenance Rutin</span>
-                    <span className="text-[10px] font-normal text-slate-500">Siklus tahunan 1x/daisha</span>
-                  </div>
-                </label>
+          {/* 4. LEMBAR CEKLIS INSPEKSI 9 KOMPONEN DAISHA */}
+          <div className="border border-slate-200/90 rounded-2xl overflow-hidden bg-slate-50/50 shadow-2xs space-y-3 p-4">
+            {/* Header Checklist & Action Bar */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 pb-3 border-b border-slate-200">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <ClipboardCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Lembar Ceklis Pemeriksaan Komponen</span>
+                  </h4>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                    9 Komponen
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Periksa kondisi fisik dan fungsi masing-masing komponen Daisha saat servis PM
+                </p>
+              </div>
 
-                <label
-                  className={`p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer transition ${
-                    kategori === 'REPAIR'
-                      ? 'bg-sky-50/70 border-sky-500 text-sky-950 font-bold'
-                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+              {/* Tombol One-Click Setel Semua OK */}
+              <button
+                type="button"
+                onClick={handleSetAllOk}
+                className="h-7 px-3 bg-white hover:bg-emerald-50 text-emerald-700 text-[11px] font-bold rounded-lg border border-emerald-300 shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
+                title="Tandai semua komponen dalam kondisi baik"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Setel Semua Normal (9 OK)</span>
+              </button>
+            </div>
+
+            {/* Status Keseluruhan Unit Berdasarkan Ceklis */}
+            <div className={`p-3 rounded-xl border flex items-center justify-between text-xs transition ${
+              isUnitDamaged
+                ? 'bg-rose-50 border-rose-300 text-rose-950 font-bold'
+                : 'bg-emerald-50 border-emerald-300 text-emerald-950 font-bold'
+            }`}>
+              <div className="flex items-center gap-2">
+                {isUnitDamaged ? (
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                )}
+                <span>
+                  {isUnitDamaged
+                    ? `Ada Temuan Kerusakan (${damagedParts.length} Part Perlu Tindakan Bengkel)`
+                    : 'Kondisi Unit: Prima / Normal (9 dari 9 Part Lulus Pemeriksaan)'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1 text-[11px] font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setFilterPartView('ALL')}
+                  className={`px-2 py-0.5 rounded cursor-pointer ${
+                    filterPartView === 'ALL'
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-white text-slate-700 border border-slate-200'
                   }`}
                 >
-                  <input
-                    type="radio"
-                    name="kategori"
-                    value="REPAIR"
-                    checked={kategori === 'REPAIR'}
-                    onChange={() => {
-                      setKategori('REPAIR');
-                      setKondisi('RUSAK');
-                    }}
-                    className="sr-only"
-                  />
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                    kategori === 'REPAIR' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300'
-                  }`}>
-                    {kategori === 'REPAIR' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <span className="text-xs block">Repair Rusak</span>
-                    <span className="text-[10px] font-normal text-slate-500">Unit masuk bengkel perbaikan</span>
-                  </div>
-                </label>
+                  Semua (9)
+                </button>
+                {damagedParts.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterPartView('ISSUES')}
+                    className={`px-2 py-0.5 rounded cursor-pointer ${
+                      filterPartView === 'ISSUES'
+                        ? 'bg-rose-600 text-white'
+                        : 'bg-white text-rose-700 border border-rose-200'
+                    }`}
+                  >
+                    Bermasalah ({damagedParts.length})
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Pilihan Kondisi Unit Saat Maintenance */}
-            {kategori === 'RUTIN' && (
-              <div>
-                <label className="text-xs font-bold text-slate-800 block mb-1.5">
-                  Kondisi Unit Saat Diperiksa <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <label
-                    className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition ${
-                      kondisi === 'OK'
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-semibold'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+            {/* Daftar Komponen Checklist */}
+            <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+              {displayedParts.map((part, idx) => {
+                const isOk = part.condition === 'OK';
+                const isServis = part.condition === 'SERVIS';
+                const isGanti = part.condition === 'GANTI';
+
+                return (
+                  <div
+                    key={part.id}
+                    className={`p-3 rounded-xl border transition space-y-2 ${
+                      isGanti
+                        ? 'bg-rose-50/70 border-rose-300'
+                        : isServis
+                        ? 'bg-amber-50/70 border-amber-300'
+                        : 'bg-white border-slate-200/90'
                     }`}
                   >
-                    <input
-                      type="radio"
-                      name="kondisi"
-                      value="OK"
-                      checked={kondisi === 'OK'}
-                      onChange={() => setKondisi('OK')}
-                      className="sr-only"
-                    />
-                    <CheckCircle2 className={`w-4 h-4 ${kondisi === 'OK' ? 'text-emerald-600' : 'text-slate-400'}`} />
-                    <div>
-                      <span className="text-xs block">Baik-baik Saja (OK)</span>
-                      <span className="text-[10px] font-normal text-slate-500">Inspeksi & pelumasan normal</span>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold">
+                            {idx + 1}
+                          </span>
+                          <span className="text-xs font-bold text-slate-900">
+                            {part.name}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-0.5 ml-7">
+                          {part.standardCheck}
+                        </p>
+                      </div>
+
+                      {/* 3 Toggle Status Buttons: OK vs SERVIS vs GANTI */}
+                      <div className="flex items-center gap-1 self-end sm:self-auto shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handlePartConditionChange(part.id, 'OK')}
+                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                            isOk
+                              ? 'bg-emerald-600 border-emerald-600 text-white shadow-2xs'
+                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>OK</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handlePartConditionChange(part.id, 'SERVIS')}
+                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                            isServis
+                              ? 'bg-amber-500 border-amber-500 text-white shadow-2xs'
+                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Wrench className="w-3 h-3" />
+                          <span>Perlu Servis</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handlePartConditionChange(part.id, 'GANTI')}
+                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                            isGanti
+                              ? 'bg-rose-600 border-rose-600 text-white shadow-2xs'
+                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          <AlertTriangle className="w-3 h-3" />
+                          <span>Ganti Part</span>
+                        </button>
+                      </div>
                     </div>
-                  </label>
 
-                  <label
-                    className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition ${
-                      kondisi === 'RUSAK'
-                        ? 'bg-rose-50 border-rose-400 text-rose-900 font-semibold'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="kondisi"
-                      value="RUSAK"
-                      checked={kondisi === 'RUSAK'}
-                      onChange={() => setKondisi('RUSAK')}
-                      className="sr-only"
-                    />
-                    <AlertTriangle className={`w-4 h-4 ${kondisi === 'RUSAK' ? 'text-rose-600' : 'text-slate-400'}`} />
-                    <div>
-                      <span className="text-xs block">Ada Kerusakan (NG)</span>
-                      <span className="text-[10px] font-normal text-slate-500">Perlu tindakan perbaikan</span>
-                    </div>
-                  </label>
-                </div>
-              </div>
-            )}
+                    {/* Sub-form Tindakan & Catatan (Muncul jika ada masalah) */}
+                    {!isOk && (
+                      <div className="pt-2 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-700 block mb-1">
+                            Tindakan Teknisi:
+                          </label>
+                          <div className="flex flex-wrap gap-1">
+                            {part.actionOptions.map((opt) => (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => handlePartActionChange(part.id, opt)}
+                                className={`text-[10px] px-2 py-0.5 rounded-md border font-medium transition cursor-pointer ${
+                                  part.action === opt
+                                    ? isGanti
+                                      ? 'bg-rose-600 text-white border-rose-600 font-bold'
+                                      : 'bg-amber-600 text-white border-amber-600 font-bold'
+                                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
 
-            {/* Sub-form Detail Kerusakan & Tindakan Perbaikan (Jika Rusak atau Repair) */}
-            {(kondisi === 'RUSAK' || kategori === 'REPAIR') && (
-              <div className="p-3 bg-rose-50/50 border border-rose-200 rounded-xl space-y-2.5 animate-scale-up">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-rose-900">
-                  <Wrench className="w-3.5 h-3.5 text-rose-600" />
-                  <span>Keterangan Kerusakan & Tindakan Bengkel</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <label className="text-[11px] font-medium text-slate-700 block mb-1">
-                      Komponen Bermasalah
-                    </label>
-                    <select
-                      value={komponenRusak}
-                      onChange={(e) => setKomponenRusak(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-rose-500"
-                    >
-                      <option value="Roda Putar">Roda Putar / Caster Wheel</option>
-                      <option value="Roda Mati">Roda Mati / Fixed Wheel</option>
-                      <option value="Body Frame">Body Frame / Rangka Daisha</option>
-                      <option value="Gandengan Hook">Gandengan / Towing Hook</option>
-                      <option value="Stopper Pengunci">Stopper / Kuncian Daisha</option>
-                      <option value="Handlebar">Handlebar / Gagang Dorong</option>
-                      <option value="Base Plate">Base Plate / Alas Daisha</option>
-                      <option value="Rak Susun">Rak Susun / Partisi</option>
-                    </select>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-700 block mb-1">
+                            Keterangan Masalah / Part:
+                          </label>
+                          <input
+                            type="text"
+                            value={part.note}
+                            onChange={(e) => handlePartNoteChange(part.id, e.target.value)}
+                            placeholder="Misal: Roda aus tapak sobek, bearing kering..."
+                            className="w-full h-7 px-2 text-[11px] bg-white border border-slate-300 rounded-md text-slate-900 outline-none focus:ring-1 focus:ring-slate-800"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  <div>
-                    <label className="text-[11px] font-medium text-slate-700 block mb-1">
-                      Gejala Masalah
-                    </label>
-                    <select
-                      value={gejalaKerusakan}
-                      onChange={(e) => setGejalaKerusakan(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-rose-500"
-                    >
-                      <option value="Roda Macet / Bearing Kering">Roda Macet / Bearing Kering</option>
-                      <option value="Roda Aus / Karet Sobek">Roda Aus / Karet Sobek / Pecah</option>
-                      <option value="Frame Bengkok / Deformasi">Frame Bengkok / Deformasi</option>
-                      <option value="Baut Lepas / Hilang">Baut / Mur Lepas / Hilang</option>
-                      <option value="Pengelasan Retak">Pengelasan Retak / Patah</option>
-                      <option value="Towing Hook Aus">Towing Hook Aus / Longgar</option>
-                      <option value="Oblak / Goyang">Oblak / Goyang Parah</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-medium text-slate-700 block mb-1">
-                    Tindakan Pengerjaan
-                  </label>
-                  <div className="flex gap-2">
-                    <label className={`flex-1 py-1 px-2.5 rounded-lg border text-xs text-center cursor-pointer transition ${
-                      tindakanPerbaikan === 'Servis Fisik' ? 'bg-indigo-50 border-indigo-500 text-indigo-900 font-semibold' : 'bg-white border-slate-200 text-slate-600'
-                    }`}>
-                      <input
-                        type="radio"
-                        name="tindakanPerbaikan"
-                        value="Servis Fisik"
-                        checked={tindakanPerbaikan === 'Servis Fisik'}
-                        onChange={() => setTindakanPerbaikan('Servis Fisik')}
-                        className="sr-only"
-                      />
-                      <span>Servis Fisik (Las / Setel)</span>
-                    </label>
-                    <label className={`flex-1 py-1 px-2.5 rounded-lg border text-xs text-center cursor-pointer transition ${
-                      tindakanPerbaikan === 'Ganti Sparepart Baru' ? 'bg-indigo-50 border-indigo-500 text-indigo-900 font-semibold' : 'bg-white border-slate-200 text-slate-600'
-                    }`}>
-                      <input
-                        type="radio"
-                        name="tindakanPerbaikan"
-                        value="Ganti Sparepart Baru"
-                        checked={tindakanPerbaikan === 'Ganti Sparepart Baru'}
-                        onChange={() => setTindakanPerbaikan('Ganti Sparepart Baru')}
-                        className="sr-only"
-                      />
-                      <span>Ganti Sparepart Baru</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
 
-          {/* 4. Jadwal Masuk & Selesai Keluar Bengkel */}
+          {/* 5. Jadwal Masuk & Selesai Keluar Bengkel */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-bold text-slate-800">
-                Tanggal Masuk Bengkel <span className="text-red-500">*</span>
+                Tanggal Masuk Servis <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
                 required
                 value={waktuMasuk}
                 onChange={(e) => setWaktuMasuk(e.target.value)}
-                className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-red-600"
+                className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
               />
             </div>
 
             <div>
               <label className="text-xs font-bold text-slate-800">
-                Tanggal Selesai / Keluar <span className="text-red-500">*</span>
+                Tanggal Selesai PM <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
                 required
                 value={tanggalPengerjaan}
                 onChange={(e) => setTanggalPengerjaan(e.target.value)}
-                className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-red-600"
+                className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
               />
             </div>
           </div>
 
-          <div>
-            <label className="text-xs font-bold text-slate-800">
-              Teknisi / Admin PIC
-            </label>
-            <input
-              type="text"
-              value={adminPic}
-              onChange={(e) => setAdminPic(e.target.value)}
-              placeholder="Nama teknisi / admin"
-              className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-red-600"
-            />
-          </div>
+          {/* 6. Teknisi / Admin PIC & Catatan Tambahan */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-slate-800">
+                Teknisi / Admin PIC
+              </label>
+              <input
+                type="text"
+                value={adminPic}
+                onChange={(e) => setAdminPic(e.target.value)}
+                placeholder="Nama teknisi bengkel"
+                className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+              />
+            </div>
 
-          {/* 5. Catatan Tambahan */}
-          <div>
-            <label className="text-xs font-bold text-slate-800">
-              Catatan / Tindakan
-            </label>
-            <textarea
-              rows={2}
-              value={catatan}
-              onChange={(e) => setCatatan(e.target.value)}
-              placeholder="Contoh: Penggantian roda caster, pelumasan bearing, pengetokan stopper..."
-              className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-red-600"
-            />
+            <div>
+              <label className="text-xs font-bold text-slate-800">
+                Catatan Umum Tambahan
+              </label>
+              <input
+                type="text"
+                value={catatan}
+                onChange={(e) => setCatatan(e.target.value)}
+                placeholder="Catatan tambahan hasil pemeliharaan..."
+                className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+              />
+            </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg transition cursor-pointer"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>Simpan & Perbarui Status</span>
-            </button>
+          <div className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-2.5">
+            <div className="text-[11px] text-slate-500 text-center sm:text-left">
+              {isUnitDamaged ? (
+                <span className="text-amber-700 font-semibold flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                  <span>{damagedParts.length} komponen akan dicatat dalam histori perbaikan unit</span>
+                </span>
+              ) : (
+                <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Unit siap beroperasi kembali dengan status PM Normal</span>
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 sm:flex-initial px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 sm:flex-initial px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-xl transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Menyimpan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Simpan Hasil PM & Perbarui Unit</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>

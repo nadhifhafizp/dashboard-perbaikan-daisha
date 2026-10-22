@@ -35,13 +35,14 @@ import {
   ArrowUpDown,
   Inbox,
   FileText,
-  Clock
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function RiwayatLaporanPage() {
   const router = useRouter();
-  const { isAdmin, isLoading: authLoading } = useAuth();
-  const { tickets, loading, refresh, setTickets } = useTickets();
+  const { isAdmin, isSeksi, currentUser, isLoading: authLoading } = useAuth();
+  const { tickets, loading, error, refresh, setTickets } = useTickets();
 
   useEffect(() => {
     if (!authLoading && isAdmin) {
@@ -219,9 +220,9 @@ export default function RiwayatLaporanPage() {
         <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <Link
-              href="/input"
+              href={isSeksi ? '/lapor-rusak' : '/input'}
               className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition"
-              title="Kembali ke Form Lapor Rusak"
+              title={isSeksi ? 'Kembali ke Form Lapor Daisha Rusak' : 'Kembali ke Form Input Teknisi'}
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
@@ -230,7 +231,7 @@ export default function RiwayatLaporanPage() {
                 Pelacakan & Antrean Daisha
               </h1>
               <p className="text-xs text-slate-500 font-normal">
-                Pelacakan unit & live antrean status pengerjaan bengkel
+                {isSeksi ? 'Pantau antrean status pengerjaan perbaikan Daisha di bengkel' : 'Pelacakan unit & live antrean status pengerjaan bengkel'}
               </p>
             </div>
           </div>
@@ -267,11 +268,11 @@ export default function RiwayatLaporanPage() {
             </div>
 
             <Link
-              href="/input"
+              href={isSeksi ? '/lapor-rusak' : '/input'}
               className="h-8 px-3 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
               <PlusCircle className="w-3.5 h-3.5" />
-              <span>Lapor Rusak</span>
+              <span>{isSeksi ? 'Lapor Daisha Rusak' : 'Lapor Kerusakan'}</span>
             </Link>
 
             {isAdmin && (
@@ -289,19 +290,37 @@ export default function RiwayatLaporanPage() {
               onClick={() => refresh()}
               disabled={loading}
               title="Refresh antrean"
-              className="h-8 w-8 bg-white hover:bg-slate-50 text-slate-600 rounded-lg transition disabled:opacity-50 cursor-pointer border border-slate-300 shadow-2xs flex items-center justify-center"
+              aria-label="Segarkan status antrean tiket"
+              className="h-8 w-8 bg-white hover:bg-slate-50 text-slate-600 rounded-lg transition disabled:opacity-50 cursor-pointer border border-slate-300 shadow-2xs flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
 
+        {/* Error Recovery Banner */}
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between gap-3 text-sm text-red-800">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => refresh(false, true)}
+              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shrink-0 cursor-pointer transition shadow-xs"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        )}
+
         {/* Indikator Antrean (KPI Cards) */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
               <p className="text-[11px] font-medium text-amber-700">Menunggu</p>
-              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.waiting} <span className="text-xs font-normal text-slate-400">unit</span></h3>
+              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.waiting} <span className="text-xs font-medium text-slate-500">unit</span></h3>
             </div>
             <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/60">
               <Clock className="w-4 h-4" />
@@ -311,7 +330,7 @@ export default function RiwayatLaporanPage() {
           <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
               <p className="text-[11px] font-medium text-blue-700">Dikerjakan</p>
-              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.inProgress} <span className="text-xs font-normal text-slate-400">unit</span></h3>
+              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.inProgress} <span className="text-xs font-medium text-slate-500">unit</span></h3>
             </div>
             <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200/60">
               <Wrench className="w-4 h-4" />
@@ -321,7 +340,7 @@ export default function RiwayatLaporanPage() {
           <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
               <p className="text-[11px] font-medium text-emerald-700">Siap Ambil</p>
-              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.done} <span className="text-xs font-normal text-slate-400">unit</span></h3>
+              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.done} <span className="text-xs font-medium text-slate-500">unit</span></h3>
             </div>
             <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200/60">
               <CheckCircle2 className="w-4 h-4" />
@@ -331,7 +350,7 @@ export default function RiwayatLaporanPage() {
           <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
               <p className="text-[11px] font-medium text-slate-500">Total Antrean</p>
-              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.activeInWorkshop} <span className="text-xs font-normal text-slate-400">unit</span></h3>
+              <h3 className="text-base font-semibold text-slate-900 mt-0.5 tabular-nums">{counts.activeInWorkshop} <span className="text-xs font-medium text-slate-500">unit</span></h3>
             </div>
             <span className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200">
               <ClipboardList className="w-4 h-4" />
@@ -426,7 +445,7 @@ export default function RiwayatLaporanPage() {
                   <span>Reset Filter</span>
                 </button>
               ) : (
-                <div className="w-full h-8 px-3 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-400 font-normal flex items-center justify-center select-none">
+                <div className="w-full h-8 px-3 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-500 font-medium flex items-center justify-center select-none">
                   Default
                 </div>
               )}
@@ -435,23 +454,29 @@ export default function RiwayatLaporanPage() {
 
           {/* Search Box & Sort (Sort hanya muncul di List mode) */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 pt-2 border-t border-slate-100">
-            <div className="relative flex-1">
+            <div className="relative flex-1 min-w-0">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
-                <Search className="w-3.5 h-3.5" />
+                <Search className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
               <input
+                id="riwayat-search"
+                name="search"
                 type="text"
+                autoComplete="off"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Cari tiket, seksi, atau pelapor..."
-                className="w-full pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 font-normal placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-red-600 outline-none transition"
+                placeholder="Cari tiket, seksi, atau pelapor…"
+                aria-label="Cari tiket, seksi, atau pelapor"
+                className="w-full pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 font-normal placeholder-slate-400 focus:bg-white focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 transition"
               />
               {search && (
                 <button
+                  type="button"
                   onClick={() => setSearch('')}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                  aria-label="Bersihkan pencarian"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 text-xs cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 rounded"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -497,7 +522,7 @@ export default function RiwayatLaporanPage() {
 
         {/* 4. Konten Utama: Papan Antrean Kanban ATAU Daftar Tabel */}
         {loading && tickets.length === 0 ? (
-          <div className="py-16 text-center text-slate-400 text-xs flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+          <div className="py-16 text-center text-slate-500 text-xs flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
             <span className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
             <span>Memuat status antrean...</span>
           </div>

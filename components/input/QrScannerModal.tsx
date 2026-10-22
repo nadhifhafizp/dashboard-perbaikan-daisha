@@ -197,7 +197,12 @@ export default function QrScannerModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="qr-scanner-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in"
+    >
       <div className="w-full max-w-md bg-slate-900 rounded-xl shadow-xl border border-slate-700/80 overflow-hidden transform transition-all animate-scale-up p-5 text-white flex flex-col max-h-[92vh] overflow-y-auto">
         
         {/* Header Modal */}
@@ -207,7 +212,7 @@ export default function QrScannerModal({
               <Camera className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs sm:text-sm font-semibold text-white">
+              <h3 id="qr-scanner-title" className="text-xs sm:text-sm font-semibold text-white">
                 Scan Barcode / QR Daisha
               </h3>
               <p className="text-[11px] text-slate-400">Deteksi otomatis nomor unit Daisha</p>

@@ -213,9 +213,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const action = sanitizeText(body.action, 40);
 
-    // =========================================================================
-    // 1. CREATE: PIC Seksi Mengisi Form & Mengirim ke Atasan untuk Assign
-    // =========================================================================
+    // 1. CREATE: PIC Seksi membuat request baru ke workshop
     if (action === 'CREATE') {
       const seksiPemohon = sanitizeText(body.seksiPemohon || body.seksi, 50);
       const picPemohon = sanitizeText(body.picPemohon || body.drafter || body.namaPemohon || auth.user?.name || auth.user?.username, 100);
@@ -348,9 +346,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // =========================================================================
-    // 2. EVALUASI_WORKSHOP: PIC Workshop Mengevaluasi Waktu, Men Power, Sparepart, Material
-    // =========================================================================
+    // 2. EVALUASI_WORKSHOP: Evaluasi kebutuhan durasi, personil, dan material
     if (
       action === 'EVALUASI_WORKSHOP' ||
       action === 'UPDATE_EVALUATION' ||
@@ -546,9 +542,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // =========================================================================
-    // 3. SELESAI & INFORMASIKAN KE SEKSI
-    // =========================================================================
+    // 3. FINISH_REQUEST: Selesaikan pengerjaan dan kirim notifikasi serah terima
     if (action === 'FINISH_REQUEST') {
       if (auth.user!.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Hanya PIC Workshop yang dapat menyelesaikan request.' }, { status: 403 });
@@ -590,9 +584,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // =========================================================================
-    // 4. Tambah alokasi material dari gudang
-    // =========================================================================
+    // 4. ADD_MATERIAL: Tambah alokasi material dari gudang
     if (action === 'ADD_MATERIAL') {
       if (auth.user!.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Hanya admin yang dapat menambah material.' }, { status: 403 });
@@ -667,9 +659,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // =========================================================================
-    // 5. REMOVE_MATERIAL: Batalkan Pemakaian Sparepart & Kembalikan Stok ke Gudang
-    // =========================================================================
+    // 5. REMOVE_MATERIAL: Batalkan alokasi material dan kembalikan stok
     if (action === 'REMOVE_MATERIAL') {
       if (auth.user!.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Hanya admin yang dapat membatalkan material.' }, { status: 403 });
@@ -735,9 +725,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // =========================================================================
-    // 6. SET_PENDING_MATERIAL: Tunda Pengerjaan Karena Material/Sparepart Habis
-    // =========================================================================
+    // 6. SET_PENDING_MATERIAL: Tunda pengerjaan karena sparepart habis
     if (action === 'SET_PENDING_MATERIAL') {
       if (auth.user!.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Hanya admin yang dapat mengubah status pending.' }, { status: 403 });
@@ -773,9 +761,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // =========================================================================
-    // 7. RESUME_PROGRESS: Lanjutkan Pengerjaan Setelah Material Tersedia
-    // =========================================================================
+    // 7. RESUME_PROGRESS: Lanjutkan pengerjaan setelah material tersedia
     if (action === 'RESUME_PROGRESS') {
       if (auth.user!.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Hanya admin yang dapat melanjutkan proses.' }, { status: 403 });
@@ -810,9 +796,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // =========================================================================
-    // 8. Hapus request
-    // =========================================================================
+    // 8. DELETE: Hapus request
     if (action === 'DELETE') {
       if (auth.user!.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Hanya admin yang dapat menghapus request.' }, { status: 403 });

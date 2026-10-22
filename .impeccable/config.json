@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "plus jakarta sans",
+        "createdAt": "2026-10-21T20:57:30.242Z",
+        "reason": "Official brand font for Bridgestone Workshop"
+      }
+    ]
+  }
+}
