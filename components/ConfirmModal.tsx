@@ -93,7 +93,7 @@ export default function ConfirmModal({
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="flex-1 h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium text-xs rounded-lg shadow-2xs transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-slate-300 cursor-pointer"
+            className="flex-1 h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium text-xs rounded-lg transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-slate-300 cursor-pointer"
           >
             {cancelText}
           </button>
@@ -101,7 +101,7 @@ export default function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`flex-1 h-9 px-3.5 text-white font-medium text-xs rounded-lg shadow-2xs transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-1 cursor-pointer ${
+            className={`flex-1 h-9 px-3.5 text-white font-medium text-xs rounded-lg transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-1 cursor-pointer ${
               isDestructive
                 ? 'bg-red-600 hover:bg-red-700 focus:ring-red-600'
                 : 'bg-slate-900 hover:bg-slate-800 focus:ring-slate-900'

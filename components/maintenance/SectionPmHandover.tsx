@@ -481,10 +481,10 @@ export default function SectionPmHandover({
   return (
     <div className="space-y-5 font-sans">
       {/* 1. Header Banner Ringkas */}
-      <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-3">
+      <div className="p-4 rounded-xl bg-white border border-slate-200/90 space-y-3">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
+            <div className="p-2 bg-emerald-600 text-white rounded-xl">
               <Truck className="w-5 h-5" />
             </div>
             <div>
@@ -514,7 +514,7 @@ export default function SectionPmHandover({
       {/* 2. FORMULIR PENYIAPAN & PENGINGAT WORKSHOP (BATCH DISPATCH FLEKSIBEL - POSISI DI ATAS) */}
       <div
         id="section-batch-form"
-        className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-4"
+        className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 space-y-4"
       >
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
           <div>
@@ -552,7 +552,7 @@ export default function SectionPmHandover({
               <Search className="w-3.5 h-3.5 text-slate-500" />
               <span>Input Nomor Daisha yang Disiapkan</span>
             </span>
-            <span className="text-[11px] font-normal text-slate-500">
+            <span className="text-xs font-normal text-slate-500">
               Bisa ketik banyak sekaligus (pisahkan koma atau spasi)
             </span>
           </label>
@@ -588,7 +588,7 @@ export default function SectionPmHandover({
               type="button"
               onClick={() => handleAddManualUnits()}
               disabled={!manualInputText.trim()}
-              className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" />
               <span>Tambah ke Daftar</span>
@@ -598,13 +598,13 @@ export default function SectionPmHandover({
           {/* Autocomplete Suggestions Pills saat mengetik */}
           {filteredSuggestions.length > 0 && (
             <div className="flex items-center gap-1.5 flex-wrap pt-1 text-xs">
-              <span className="text-[11px] text-slate-500 font-medium">Saran unit belum PM:</span>
+              <span className="text-xs text-slate-500 font-medium">Saran unit belum PM:</span>
               {filteredSuggestions.map((u) => (
                 <button
                   key={u.nomor_daisha}
                   type="button"
                   onClick={() => handleAddManualUnits(u.nomor_daisha)}
-                  className="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-800 border border-slate-200 transition cursor-pointer flex items-center gap-1"
+                  className="px-2 py-0.5 rounded-md text-xs font-mono font-bold bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-800 border border-slate-200 transition cursor-pointer flex items-center gap-1"
                 >
                   <Plus className="w-3 h-3 text-slate-400" />
                   <span>{u.nomor_daisha}</span>
@@ -636,13 +636,13 @@ export default function SectionPmHandover({
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-slate-800 flex items-center gap-1.5">
               <span>Daisha yang Siap Dijemput</span>
-              <span className="px-2 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold text-[11px]">
+              <span className="px-2 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold text-xs">
                 {selectedUnits.length} Unit
               </span>
             </span>
 
             {selectedUnits.length > 0 && (
-              <span className="text-[11px] text-slate-500">
+              <span className="text-xs text-slate-500">
                 Klik ikon silang pada unit jika ingin membatalkan
               </span>
             )}
@@ -657,7 +657,7 @@ export default function SectionPmHandover({
               {selectedUnits.map((no) => (
                 <span
                   key={no}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-mono font-bold text-xs shadow-2xs"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-mono font-bold text-xs"
                 >
                   <span>{no}</span>
                   <button
@@ -689,9 +689,9 @@ export default function SectionPmHandover({
                   key={loc}
                   type="button"
                   onClick={() => setLokasiPenjemputan(loc)}
-                  className={`text-[11px] px-2.5 py-1 rounded-md border transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+                  className={`text-xs px-2.5 py-1 rounded-md border transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                     lokasiPenjemputan === loc
-                      ? 'bg-emerald-600 text-white border-emerald-600 font-bold shadow-2xs'
+                      ? 'bg-emerald-600 text-white border-emerald-600 font-bold'
                       : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                   }`}
                 >
@@ -739,7 +739,7 @@ export default function SectionPmHandover({
             <button
               type="submit"
               disabled={submitting || selectedUnits.length === 0}
-              className="w-full sm:w-auto h-10 px-5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
+              className="w-full sm:w-auto h-10 px-5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
             >
               {submitting ? (
                 <>
@@ -758,10 +758,10 @@ export default function SectionPmHandover({
       </div>
 
       {/* 2. TABEL ALOKASI TARGET HARIAN PM PER VARIAN ARMADA */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-4">
+      <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl shadow-xs">
+            <div className="p-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl">
               <Target className="w-5 h-5" />
             </div>
             <div>
@@ -769,11 +769,11 @@ export default function SectionPmHandover({
                 <h3 className="text-sm font-bold text-slate-900">
                   Target Penyiapan PM Harian per Varian: Seksi {seksi}
                 </h3>
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-200 font-mono">
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-200 font-mono">
                   <Target className="w-3 h-3 text-red-700" />
                   <span>Target: 1 Thn 1x PM (100%)</span>
                 </span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 font-mono">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 font-mono">
                   Kuota Hari Ini: {totalSectionDailyTarget} Unit / Hari
                 </span>
               </div>
@@ -827,7 +827,7 @@ export default function SectionPmHandover({
                         <span className="w-2 h-2 rounded-full bg-slate-400" />
                         <div>
                           <p className="text-slate-900 font-bold">{g.name}</p>
-                          <p className="text-[11px] text-slate-500 font-normal">
+                          <p className="text-xs text-slate-500 font-normal">
                             {g.ukuran !== 'Standar' ? `Ukuran: ${g.ukuran}` : 'Standar'}
                             {g.prefix && ` • Prefix: ${g.prefix}`}
                           </p>
@@ -842,7 +842,7 @@ export default function SectionPmHandover({
 
                     {/* 3. Belum PM */}
                     <td className="py-3 px-3 text-center">
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-rose-50 text-rose-700 border border-rose-200">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-bold font-mono bg-rose-50 text-rose-700 border border-rose-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                         <span>{g.dueUnits.length} unit</span>
                       </span>
@@ -850,7 +850,7 @@ export default function SectionPmHandover({
 
                     {/* 4. Target Harian */}
                     <td className="py-3 px-3.5 text-center bg-amber-50/40 border-x border-amber-200/50">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono bg-amber-100 text-amber-900 border border-amber-300">
                         <Target className="w-3 h-3 text-amber-700" />
                         <span>{g.dailyTarget} Unit / Hari</span>
                       </span>
@@ -858,7 +858,7 @@ export default function SectionPmHandover({
 
                     {/* 5. Di Staging */}
                     <td className="py-3 px-3 text-center">
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono ${
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-bold font-mono ${
                         g.stagedUnits.length > 0
                           ? 'bg-amber-50 text-amber-800 border border-amber-300'
                           : 'text-slate-400 bg-slate-50 border border-slate-200'
@@ -871,17 +871,17 @@ export default function SectionPmHandover({
                     {/* 6. Status Kuota Hari Ini */}
                     <td className="py-3 px-3.5 text-center">
                       {g.dueUnits.length === 0 && g.stagedUnits.length === 0 ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <CheckCircle2 className="w-3 h-3" />
                           <span>100% Selesai PM</span>
                         </span>
                       ) : g.isTargetFulfilled ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
                           <Check className="w-3 h-3 text-emerald-600" />
                           <span>Kuota Terpenuhi ({g.stagedTodayCount}/{g.dailyTarget})</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
                           <Clock className="w-3 h-3 text-rose-500" />
                           <span>Kurang {g.remainingTarget} Unit</span>
                         </span>
@@ -891,15 +891,15 @@ export default function SectionPmHandover({
                     {/* 7. Tombol Aksi Cepat */}
                     <td className="py-3 px-3.5 text-center">
                       {g.dueUnits.length === 0 ? (
-                        <span className="text-[11px] text-slate-400 italic">Tidak ada antrean</span>
+                        <span className="text-xs text-slate-400 italic">Tidak ada antrean</span>
                       ) : (
                         <button
                           type="button"
                           onClick={() => handleSelectVariant(g, g.dailyTarget)}
                           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 mx-auto cursor-pointer border ${
                             isSelectedInBatch
-                              ? 'bg-emerald-700 text-white border-emerald-800 shadow-2xs'
-                              : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700 shadow-2xs'
+                              ? 'bg-emerald-700 text-white border-emerald-800'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700'
                           }`}
                           title={`Pilih ${g.dailyTarget} unit belum PM untuk disiapkan`}
                         >
@@ -922,13 +922,13 @@ export default function SectionPmHandover({
 
       {/* 3. Peta Titik Penjemputan Staging yang Sedang Aktif */}
       {stagedByLocation.length > 0 && (
-        <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200/80 shadow-2xs space-y-2.5">
+        <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200/80 space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
               <MapPin className="w-4 h-4 text-red-600" />
               <span>Titik Penjemputan Aktif ({stagedByLocation.length} Lokasi Staging):</span>
             </span>
-            <span className="text-[11px] font-semibold text-amber-800">
+            <span className="text-xs font-semibold text-amber-800">
               {unitStagingMap.size} Unit Menunggu Diambil Workshop
             </span>
           </div>
@@ -937,14 +937,14 @@ export default function SectionPmHandover({
             {stagedByLocation.map((st, i) => (
               <div
                 key={i}
-                className="p-3 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1.5 text-xs"
+                className="p-3 bg-white rounded-xl border border-amber-200 space-y-1.5 text-xs"
               >
                 <div className="flex items-start justify-between gap-1">
-                  <p className="font-bold text-slate-900 flex items-center gap-1 text-[11px]">
+                  <p className="font-bold text-slate-900 flex items-center gap-1 text-xs">
                     <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0" />
                     <span className="truncate">{st.lokasi}</span>
                   </p>
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 shrink-0">
+                  <span className="text-xs font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 shrink-0">
                     {st.units.length} Unit
                   </span>
                 </div>
@@ -952,14 +952,14 @@ export default function SectionPmHandover({
                   {st.units.map((u) => (
                     <span
                       key={u}
-                      className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-50 text-amber-900 border border-amber-300"
+                      className="px-1.5 py-0.5 rounded text-xs font-mono font-bold bg-amber-50 text-amber-900 border border-amber-300"
                     >
                       {u}
                     </span>
                   ))}
                 </div>
                 {st.catatan && (
-                  <p className="text-[10px] text-slate-500 italic truncate">
+                  <p className="text-xs text-slate-500 italic truncate">
                     &quot;{st.catatan}&quot;
                   </p>
                 )}
@@ -977,24 +977,24 @@ export default function SectionPmHandover({
               <Boxes className="w-4 h-4 text-emerald-600" aria-hidden="true" />
               <span>Pemetaan Visual Armada per Varian (Opsional / Drill-down)</span>
             </h3>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-xs text-slate-500">
               Warna chip: <span className="text-rose-600 font-bold">Merah</span> = Belum PM • <span className="text-amber-600 font-bold">Kuning</span> = Di Staging • <span className="text-emerald-600 font-bold">Hijau</span> = Selesai PM.
             </p>
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
             {selectedUnits.length > 0 && (
-              <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-600 text-white shadow-2xs">
+              <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-600 text-white">
                 {selectedUnits.length} Daisha Dipilih
               </span>
             )}
             <button
               type="button"
               onClick={() => setShowVisualGrid(!showVisualGrid)}
-              className="h-8 px-3 rounded-lg text-xs font-semibold border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              className="h-10 px-3.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 cursor-pointer"
             >
               <Boxes className="w-3.5 h-3.5 text-slate-500" />
-              <span>{showVisualGrid ? 'Sembunyikan Grid Kotak' : 'Tampilkan Grid Kotak Unit'}</span>
+              <span>{showVisualGrid ? 'Tutup Grid' : 'Buka Grid'}</span>
             </button>
           </div>
         </div>
@@ -1013,7 +1013,7 @@ export default function SectionPmHandover({
             return (
               <div
                 key={g.key}
-                className="p-4 rounded-xl border border-slate-200/60 bg-white hover:border-slate-300/80 transition shadow-2xs flex flex-col justify-between gap-3"
+                className="p-4 rounded-xl border border-slate-200/60 bg-white hover:border-slate-300/80 transition flex flex-col justify-between gap-3"
               >
                 {/* Header Varian & Counter */}
                 <div>
@@ -1022,7 +1022,7 @@ export default function SectionPmHandover({
                       <h4 className="font-bold text-xs sm:text-sm text-slate-900">
                         {g.name}
                       </h4>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-xs text-slate-500">
                         {g.ukuran !== 'Standar' ? `Ukuran: ${g.ukuran}` : 'Standar'}
                         {g.prefix && ` • Prefix: ${g.prefix}`}
                       </p>
@@ -1032,7 +1032,7 @@ export default function SectionPmHandover({
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                         {g.totalUnits} Unit
                       </span>
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 font-mono">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 font-mono">
                         <Target className="w-2.5 h-2.5 text-amber-600" />
                         <span>{g.dailyTarget} / Hari</span>
                       </span>
@@ -1060,7 +1060,7 @@ export default function SectionPmHandover({
                     </div>
 
                     {/* Ringkasan Angka 3 Warna */}
-                    <div className="flex items-center justify-between text-[10px] pt-0.5">
+                    <div className="flex items-center justify-between text-xs pt-0.5">
                       <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
                         <Check className="w-3 h-3 text-emerald-600" aria-hidden="true" />
                         <span>{g.doneUnits.length} Selesai</span>
@@ -1079,7 +1079,7 @@ export default function SectionPmHandover({
 
                 {/* Grid Nomor Unit Berwarna (Tampilan Bersih & Tenang) */}
                 <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
                     <span>Daftar Armada:</span>
                     <div className="flex items-center gap-2">
                       {g.dueUnits.length > 0 && g.dailyTarget > 0 && (
@@ -1111,7 +1111,7 @@ export default function SectionPmHandover({
                     {g.stagedUnits.map(({ unit, lokasi }) => (
                       <span
                         key={unit.nomor_daisha}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-amber-50 text-amber-900"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-medium bg-amber-50 text-amber-900"
                         title={`Di Staging: ${lokasi}`}
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
@@ -1127,9 +1127,9 @@ export default function SectionPmHandover({
                           key={u.nomor_daisha}
                           type="button"
                           onClick={() => handleToggleUnit(u.nomor_daisha)}
-                          className={`px-2 py-0.5 rounded-md text-[11px] font-mono transition cursor-pointer flex items-center gap-1.5 ${
+                          className={`px-2 py-0.5 rounded-md text-xs font-mono transition cursor-pointer flex items-center gap-1.5 ${
                             isSelected
-                              ? 'bg-emerald-600 text-white font-bold shadow-2xs'
+                              ? 'bg-emerald-600 text-white font-bold'
                               : 'bg-rose-50 hover:bg-rose-100 text-rose-800 font-medium'
                           }`}
                           title={isSelected ? 'Klik untuk batal pilih' : 'Belum PM (Klik untuk siapkan)'}
@@ -1149,7 +1149,7 @@ export default function SectionPmHandover({
                       g.doneUnits.map((u) => (
                         <span
                           key={u.nomor_daisha}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-emerald-50 text-emerald-800"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-medium bg-emerald-50 text-emerald-800"
                           title="Sudah Selesai PM 2026"
                         >
                           <Check className="w-2.5 h-2.5 text-emerald-600" />
@@ -1168,7 +1168,7 @@ export default function SectionPmHandover({
                           [g.key]: !prev[g.key],
                         }))
                       }
-                      className="w-full text-center py-1 text-[11px] font-medium text-slate-500 hover:text-emerald-700 hover:bg-slate-50 rounded-md transition cursor-pointer"
+                      className="w-full text-center py-1 text-xs font-medium text-slate-500 hover:text-emerald-700 hover:bg-slate-50 rounded-md transition cursor-pointer"
                     >
                       {isExpanded ? 'Tampilkan Lebih Sedikit' : `+ Tampilkan ${remainingCount} armada lainnya`}
                     </button>

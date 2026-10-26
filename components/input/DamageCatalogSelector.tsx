@@ -78,7 +78,7 @@ export default function DamageCatalogSelector({
         </h2>
 
         {jenisDaisha && totalDipilih > 0 && (
-          <span className="px-3 py-1 bg-red-600 text-white font-medium text-xs rounded-full shadow-xs tabular-nums">
+          <span className="px-3 py-1 bg-red-600 text-white font-medium text-xs rounded-full tabular-nums">
             {totalDipilih} Titik Kerusakan Dipilih
           </span>
         )}
@@ -138,7 +138,7 @@ export default function DamageCatalogSelector({
               return (
                 <div
                   key={komponen}
-                  className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2"
+                  className="p-3 bg-white rounded-lg border border-slate-200 space-y-2"
                 >
                   <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-slate-500" />
@@ -159,8 +159,8 @@ export default function DamageCatalogSelector({
                           className={`px-3 py-1.5 text-xs rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer text-left ${
                             isSelected
                               ? tindakan === 'Ganti'
-                                ? 'bg-blue-600 text-white shadow-xs'
-                                : 'bg-amber-600 text-white shadow-xs'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-amber-600 text-white'
                               : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 hover:border-slate-300'
                           }`}
                         >
@@ -196,7 +196,7 @@ export default function DamageCatalogSelector({
                   komponen.toLowerCase().includes(searchGejala.toLowerCase()) ||
                   listGejala.some((g) => g.toLowerCase().includes(searchGejala.toLowerCase()))
               ) && (
-                <div className="py-8 px-4 text-center bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2">
+                <div className="py-8 px-4 text-center bg-white rounded-lg border border-slate-200 space-y-2">
                   <Search className="w-6 h-6 text-slate-400 mx-auto" />
                   <p className="text-xs font-semibold text-slate-800">
                     Tidak Ditemukan Gejala Kerusakan
@@ -218,7 +218,7 @@ export default function DamageCatalogSelector({
 
           {/* Panel Tindakan & Jumlah (Qty) */}
           {totalDipilih > 0 && (
-            <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-3 animate-fade-in">
+            <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3 animate-fade-in">
               <div className="flex flex-wrap justify-between items-center gap-2 border-b border-slate-100 pb-2.5">
                 <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                   <Wrench className="w-4 h-4 text-slate-600" />
@@ -257,7 +257,7 @@ export default function DamageCatalogSelector({
 
                       <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 flex-wrap sm:flex-nowrap pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 shrink-0">
                         {/* Qty Stepper */}
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200">
                           <span className="text-xs text-slate-500 mr-0.5">Jumlah:</span>
                           <button
                             type="button"
@@ -290,13 +290,13 @@ export default function DamageCatalogSelector({
                         </div>
 
                         {/* Tindakan Buttons */}
-                        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-2xs">
+                        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200">
                           <button
                             type="button"
                             onClick={() => onSetTindakan(key, 'Repair')}
                             className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
                               currentTindakan === 'Repair'
-                                ? 'bg-amber-600 text-white shadow-xs'
+                                ? 'bg-amber-600 text-white'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -308,7 +308,7 @@ export default function DamageCatalogSelector({
                             onClick={() => onSetTindakan(key, 'Ganti')}
                             className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
                               currentTindakan === 'Ganti'
-                                ? 'bg-blue-600 text-white shadow-xs'
+                                ? 'bg-blue-600 text-white'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -347,7 +347,7 @@ export default function DamageCatalogSelector({
 
                       <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 flex-wrap sm:flex-nowrap pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 shrink-0">
                         {/* Custom Qty Stepper */}
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200">
                           <span className="text-xs text-slate-500 mr-0.5">Jumlah:</span>
                           <button
                             type="button"
@@ -383,13 +383,13 @@ export default function DamageCatalogSelector({
                         </div>
 
                         {/* Custom Tindakan Buttons */}
-                        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-2xs">
+                        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200">
                           <button
                             type="button"
                             onClick={() => onSetCustomTindakan(text, 'Repair')}
                             className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
                               currentTindakan === 'Repair'
-                                ? 'bg-amber-600 text-white shadow-xs'
+                                ? 'bg-amber-600 text-white'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -401,7 +401,7 @@ export default function DamageCatalogSelector({
                             onClick={() => onSetCustomTindakan(text, 'Ganti')}
                             className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
                               currentTindakan === 'Ganti'
-                                ? 'bg-blue-600 text-white shadow-xs'
+                                ? 'bg-blue-600 text-white'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >

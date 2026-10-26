@@ -132,7 +132,7 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       if (filterPelapor && item.pelapor !== filterPelapor) return false;
       if (filterStatus) {
         if (filterStatus === 'Open') {
-          if (item.status !== 'Open' && item.status !== 'Progress') return false;
+          if (item.status !== 'Open' && item.status !== 'Progress' && item.status !== 'Pending') return false;
         } else if (item.status !== filterStatus) {
           return false;
         }
@@ -380,7 +380,7 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
 
     filteredData.forEach(d => {
       const parsed = parseTicketDamageDetail(d.detail);
-      const isActive = d.status === 'Open' || d.status === 'Progress';
+      const isActive = d.status === 'Open' || d.status === 'Progress' || d.status === 'Pending';
 
       gantiCount += parsed.gantiItems.length;
       repairCount += parsed.repairItems.length;

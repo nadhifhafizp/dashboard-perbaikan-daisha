@@ -59,15 +59,15 @@ export default function FilterPanel({
     (endDate ? 1 : 0);
 
   return (
-    <div className="bg-white p-4 rounded-xl border border-slate-200/60 shadow-2xs space-y-3.5">
+    <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3.5">
       {/* Top Bar: Title, Count, Quick Presets & Actions */}
       <div className="flex flex-wrap justify-between items-center gap-3 border-b border-slate-100 pb-2.5">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="w-4 h-4 text-slate-500" />
-          <h2 className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-            <span>Filter & Pencarian</span>
+          <h2 className="t-card text-slate-900 flex items-center gap-1.5">
+            <span>Filter Data</span>
             {activeFilterCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-50 text-red-700 border border-red-200/60">
+              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200/60">
                 {activeFilterCount} aktif
               </span>
             )}
@@ -80,30 +80,30 @@ export default function FilterPanel({
           <button
             type="button"
             onClick={() => handleQuickPreset(0)}
-            className="h-7.5 px-2.5 text-xs font-medium rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer flex items-center"
+            className="h-9 px-3 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer flex items-center"
           >
             Hari Ini
           </button>
           <button
             type="button"
             onClick={() => handleQuickPreset(7)}
-            className="h-7.5 px-2.5 text-xs font-medium rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer flex items-center"
+            className="h-9 px-3 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer flex items-center"
           >
             7 Hari
           </button>
           <button
             type="button"
             onClick={() => handleQuickPreset(30)}
-            className="h-7.5 px-2.5 text-xs font-medium rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer flex items-center"
+            className="h-9 px-3 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer flex items-center"
           >
             30 Hari
           </button>
           <button
             type="button"
             onClick={() => setFilterHanyaBerulang(!filterHanyaBerulang)}
-            className={`h-7.5 px-2.5 text-xs font-medium rounded-md transition cursor-pointer flex items-center gap-1.5 ${
+            className={`h-9 px-3 text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
               filterHanyaBerulang 
-                ? 'bg-red-600 text-white shadow-2xs' 
+                ? 'bg-red-600 text-white' 
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
@@ -114,9 +114,9 @@ export default function FilterPanel({
             type="button"
             onClick={handleResetFilter}
             disabled={activeFilterCount === 0}
-            className="h-7.5 px-2.5 text-xs font-medium rounded-md bg-white hover:bg-slate-100 text-slate-700 hover:text-red-600 border border-slate-300 hover:border-slate-400 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+            className="h-9 px-3 text-xs font-medium rounded-lg bg-white hover:bg-slate-100 text-slate-700 hover:text-red-600 border border-slate-300 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
           >
-            <RotateCcw className="w-3 h-3" />
+            <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset</span>
           </button>
 
@@ -125,7 +125,7 @@ export default function FilterPanel({
             type="button"
             onClick={() => setIsMobileExpanded(!isMobileExpanded)}
             aria-expanded={isMobileExpanded}
-            className={`md:hidden h-7.5 px-2.5 text-xs font-medium rounded-md transition cursor-pointer flex items-center gap-1.5 ml-auto ${
+            className={`md:hidden h-9 px-3 text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1.5 ml-auto ${
               activeFilterCount > 0
                 ? 'bg-red-600 text-white'
                 : 'bg-slate-800 text-white'
@@ -147,10 +147,10 @@ export default function FilterPanel({
       </div>
 
       {/* Grid 6 Filter Controls */}
-      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 ${isMobileExpanded ? 'grid' : 'hidden md:grid'}`}>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 ${isMobileExpanded ? 'grid' : 'hidden md:grid'}`}>
         {/* 1. Global Search */}
         <div>
-          <label htmlFor="filter-search" className="block text-[11px] font-medium text-slate-700 mb-1">
+          <label htmlFor="filter-search" className="block text-xs font-medium text-slate-700 mb-1">
             Pencarian Bebas
           </label>
           <input
@@ -159,13 +159,13 @@ export default function FilterPanel({
             placeholder="Cari ID tiket, unit..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-8 px-2.5 border border-slate-300 rounded-md text-xs text-slate-900 bg-white placeholder:text-slate-400 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition"
+            className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white placeholder:text-slate-400 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition"
           />
         </div>
 
         {/* 2. Seksi Filter */}
         <div>
-          <label htmlFor="filter-seksi" className="block text-[11px] font-medium text-slate-700 mb-1">
+          <label htmlFor="filter-seksi" className="block text-xs font-medium text-slate-700 mb-1">
             Seksi Asal
           </label>
           <select
@@ -175,7 +175,7 @@ export default function FilterPanel({
               setFilterSeksi(e.target.value);
               setFilterDaisha('');
             }}
-            className="w-full h-8 px-2 border border-slate-300 rounded-md text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
+            className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
           >
             <option value="">Semua Seksi</option>
             {DAFTAR_SEKSI.map(s => <option key={s} value={s}>{s}</option>)}
@@ -184,14 +184,14 @@ export default function FilterPanel({
 
         {/* 3. Jenis Daisha Filter */}
         <div>
-          <label htmlFor="filter-daisha" className="block text-[11px] font-medium text-slate-700 mb-1">
+          <label htmlFor="filter-daisha" className="block text-xs font-medium text-slate-700 mb-1">
             Jenis Daisha
           </label>
           <select
             id="filter-daisha"
             value={filterDaisha}
             onChange={(e) => setFilterDaisha(e.target.value)}
-            className="w-full h-8 px-2 border border-slate-300 rounded-md text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
+            className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
           >
             <option value="">Semua Jenis ({pilihanDaishaFiltered.length})</option>
             {pilihanDaishaFiltered.map(d => <option key={d} value={d}>{d}</option>)}
@@ -200,14 +200,14 @@ export default function FilterPanel({
 
         {/* 4. Status Filter */}
         <div>
-          <label htmlFor="filter-status" className="block text-[11px] font-medium text-slate-700 mb-1">
+          <label htmlFor="filter-status" className="block text-xs font-medium text-slate-700 mb-1">
             Status Servis
           </label>
           <select
             id="filter-status"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full h-8 px-2 border border-slate-300 rounded-md text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
+            className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
           >
             <option value="">Semua Status</option>
             <option value="Open">Open / Antre</option>
@@ -218,7 +218,7 @@ export default function FilterPanel({
 
         {/* 5. Date Start */}
         <div>
-          <label htmlFor="filter-start-date" className="block text-[11px] font-medium text-slate-700 mb-1">
+          <label htmlFor="filter-start-date" className="block text-xs font-medium text-slate-700 mb-1">
             Dari Tanggal
           </label>
           <input
@@ -226,13 +226,13 @@ export default function FilterPanel({
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full h-8 px-2 border border-slate-300 rounded-md text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
+            className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
           />
         </div>
 
         {/* 6. Date End */}
         <div>
-          <label htmlFor="filter-end-date" className="block text-[11px] font-medium text-slate-700 mb-1">
+          <label htmlFor="filter-end-date" className="block text-xs font-medium text-slate-700 mb-1">
             Sampai Tanggal
           </label>
           <input
@@ -240,16 +240,16 @@ export default function FilterPanel({
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full h-8 px-2 border border-slate-300 rounded-md text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
+            className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
           />
         </div>
       </div>
 
       {/* Summary Footer */}
-      <div className="flex justify-between items-center pt-1.5 border-t border-slate-100 text-xs text-slate-500 font-normal">
-        <span>Menampilkan <strong className="font-medium text-slate-800">{filteredCount}</strong> dari total <strong className="font-medium text-slate-800">{totalCount}</strong> laporan</span>
+      <div className="flex justify-between items-center pt-2 border-t border-slate-100 text-xs text-slate-500 font-normal">
+        <span>Menampilkan <strong className="font-semibold text-slate-800">{filteredCount}</strong> dari total <strong className="font-semibold text-slate-800">{totalCount}</strong> laporan</span>
         {filteredCount < totalCount && (
-          <span className="text-red-700 font-medium bg-red-50 px-2 py-0.5 rounded text-[11px] border border-red-100">
+          <span className="text-red-700 font-semibold bg-red-50 px-2 py-0.5 rounded-full text-xs border border-red-100">
             {totalCount - filteredCount} data difilter
           </span>
         )}

@@ -25,6 +25,8 @@ import {
   ClipboardList,
   AlertTriangle,
   Truck,
+  BarChart3,
+  PlusCircle,
 } from 'lucide-react';
 import PwaInstaller from '../common/PwaInstaller';
 
@@ -42,7 +44,7 @@ interface SubMenuItem {
 }
 
 interface ModuleDef {
-  id: 'DAISHA' | 'FLEET' | 'REQUEST' | 'SPAREPARTS' | 'USERS';
+  id: 'KPI' | 'DAISHA' | 'FLEET' | 'REQUEST' | 'SPAREPARTS' | 'USERS';
   title: string;
   badge: string;
   icon: React.ElementType;
@@ -60,8 +62,11 @@ function SidebarInner({
   const { currentUser, isOperator, isSeksi, isAdmin, openLogoutModal, isLoggingOut } = useAuth();
 
   // 1. Deteksi modul sistem aktif berdasarkan URL saat ini
-  const getActiveModule = (path: string): 'DAISHA' | 'FLEET' | 'REQUEST' | 'SPAREPARTS' | 'USERS' | '' => {
-    if (path.startsWith('/maintenance') || path.startsWith('/fleet') || path.startsWith('/catalog')) {
+  const getActiveModule = (path: string): 'KPI' | 'DAISHA' | 'FLEET' | 'REQUEST' | 'SPAREPARTS' | 'USERS' | '' => {
+    if (path.startsWith('/kpi')) {
+      return 'KPI';
+    }
+    if (path.startsWith('/maintenance') || path.startsWith('/catalog')) {
       return 'FLEET';
     }
     if (path.startsWith('/request')) {
@@ -102,60 +107,69 @@ function SidebarInner({
     });
   };
 
-  // 3. Definisi 5 Modul Terstruktur Sesuai Kartu Portal
+  // 3. Definisi Modul Terstruktur Sesuai Kartu Portal
   const allModules: ModuleDef[] = [
+    {
+      id: 'KPI',
+      title: 'KPI Daisha',
+      badge: 'Analitik',
+      icon: BarChart3,
+      items: [
+        { href: '/kpi?tab=daisha', label: 'Armada & PM', icon: Layers },
+        { href: '/kpi?tab=request', label: 'Request Seksi', icon: SendHorizonal },
+        { href: '/kpi?tab=spareparts', label: 'Stok Sparepart', icon: Package },
+      ],
+    },
     {
       id: 'DAISHA',
       title: 'Perbaikan Daisha',
-      badge: 'Unit Maintenance',
+      badge: 'Servis Unit',
       icon: Wrench,
       items: [
-        { href: '/daisha', label: 'Dashboard Analitik', icon: LayoutDashboard },
-        { href: '/input', label: 'Lapor Kerusakan (Detail)', icon: PenSquare },
-        { href: '/lapor-rusak', label: 'Lapor Cepat Seksi', icon: AlertTriangle },
-        ...(!isAdmin ? [{ href: '/riwayat', label: 'Pelacakan & Antrean', icon: ScanLine }] : []),
-        ...(isAdmin ? [{ href: '/admin', label: 'Panel Tindakan Bengkel', icon: Settings }] : []),
+        ...(isAdmin ? [{ href: '/admin', label: 'Panel Tindakan', icon: Settings }] : []),
+        { href: '/input', label: 'Input Kerusakan', icon: PenSquare },
+        ...(!isAdmin ? [{ href: '/lapor-rusak', label: 'Lapor Rusak Seksi', icon: AlertTriangle }] : []),
+        ...(!isAdmin ? [{ href: '/riwayat', label: 'Antrean Unit', icon: ScanLine }] : []),
       ],
     },
     {
       id: 'FLEET',
-      title: 'Modul Maintenance',
-      badge: 'Annual PM & Fleet',
+      title: 'PM Daisha',
+      badge: 'PM & Armada',
       icon: Target,
       items: [
-        { href: '/maintenance?tab=dashboard', label: 'Dashboard Kepatuhan PM', icon: LayoutDashboard },
-        { href: '/maintenance?tab=staging', label: 'Antrean Penjemputan Bengkel', icon: Truck },
-        { href: '/maintenance?tab=fleet', label: 'Katalog Armada Pabrik', icon: Target },
-        { href: '/maintenance?tab=logs', label: 'Riwayat Log PM & Repair', icon: ClipboardList },
-        { href: '/catalog', label: 'Master Registri Daisha', icon: Layers },
+        { href: '/maintenance?tab=staging', label: 'Penjemputan PM', icon: Truck },
+        { href: '/maintenance?tab=fleet', label: 'Katalog Armada', icon: Target },
+        { href: '/maintenance?tab=logs', label: 'Riwayat PM', icon: ClipboardList },
+        { href: '/catalog', label: 'Registri Daisha', icon: Layers },
       ],
     },
     {
       id: 'REQUEST',
       title: 'Request Seksi',
-      badge: 'Special Project',
+      badge: 'Proyek Unit',
       icon: SendHorizonal,
       items: [
-        { href: '/request', label: 'Dashboard Analitik', icon: LayoutDashboard },
-        { href: '/request/tracking', label: 'Daftar Pelacakan', icon: ClipboardList },
+        { href: '/request/tracking', label: 'Daftar Request', icon: ClipboardList },
+        { href: '/request', label: 'Buat Request', icon: PlusCircle },
       ],
     },
     {
       id: 'SPAREPARTS',
       title: 'Stok Sparepart',
-      badge: 'Logistik Bengkel',
+      badge: 'Gudang',
       icon: Package,
       items: [
-        { href: '/spareparts', label: 'Monitoring & Inventaris', icon: Package },
+        { href: '/spareparts', label: 'Inventaris Stok', icon: Package },
       ],
     },
     {
       id: 'USERS',
-      title: 'Manajemen Pengguna',
-      badge: 'Sistem & Akses',
+      title: 'Kelola Akun',
+      badge: 'Akses',
       icon: Users,
       items: [
-        { href: '/users', label: 'Akun & Hak Akses', icon: Users },
+        { href: '/users', label: 'Daftar Akun', icon: Users },
       ],
     },
   ];
@@ -163,26 +177,35 @@ function SidebarInner({
   // 4. Filter modul berdasarkan Hak Akses Role
   const getVisibleModules = (): ModuleDef[] => {
     if (isSeksi) {
+      const seksiName = currentUser?.seksi || 'Plant';
       return [
+        {
+          id: 'KPI',
+          title: 'KPI Seksi',
+          badge: 'Analitik',
+          icon: BarChart3,
+          items: [
+            { href: `/kpi?seksi=${encodeURIComponent(seksiName)}`, label: `KPI Seksi ${seksiName}`, icon: BarChart3 },
+          ],
+        },
         {
           id: 'DAISHA',
           title: 'Perbaikan Daisha',
           badge: 'Seksi Plant',
           icon: Wrench,
           items: [
-            { href: '/lapor-rusak', label: 'Lapor Daisha Rusak', icon: AlertTriangle },
-            { href: '/riwayat', label: 'Status Perbaikan Seksi', icon: ScanLine },
+            { href: '/lapor-rusak', label: 'Lapor Rusak', icon: AlertTriangle },
+            { href: '/riwayat', label: 'Antrean Unit', icon: ScanLine },
           ],
         },
         {
           id: 'FLEET',
-          title: 'PM & Analitik Seksi',
+          title: 'PM Armada',
           badge: 'Pemeliharaan',
           icon: Target,
           items: [
-            { href: '/maintenance?tab=dashboard', label: 'Dashboard Analitik', icon: LayoutDashboard },
-            { href: '/maintenance?tab=staging', label: 'Penyiapan & Penjemputan PM', icon: Truck },
-            { href: '/maintenance?tab=fleet', label: 'Katalog Armada Seksi', icon: Layers },
+            { href: '/maintenance?tab=staging', label: 'Penjemputan PM', icon: Truck },
+            { href: '/maintenance?tab=fleet', label: 'Katalog Armada', icon: Layers },
           ],
         },
         ...allModules.filter((m) => m.id === 'REQUEST'),
@@ -193,17 +216,17 @@ function SidebarInner({
         {
           id: 'DAISHA',
           title: 'Perbaikan Daisha',
-          badge: 'Unit Maintenance',
+          badge: 'Servis Unit',
           icon: Wrench,
           items: [
-            { href: '/input', label: 'Lapor Kerusakan', icon: PenSquare },
-            { href: '/lapor-rusak', label: 'Lapor Cepat Seksi', icon: AlertTriangle },
-            { href: '/riwayat', label: 'Pelacakan & Antrean', icon: ScanLine },
+            { href: '/input', label: 'Input Kerusakan', icon: PenSquare },
+            { href: '/riwayat', label: 'Antrean Unit', icon: ScanLine },
           ],
         },
+        ...allModules.filter((m) => m.id === 'FLEET'),
       ];
     }
-    // Admin memiliki akses ke semua 5 modul
+    // Admin memiliki akses ke seluruh modul
     return allModules;
   };
 
@@ -234,7 +257,7 @@ function SidebarInner({
             <Menu className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
-        <div className="bg-white px-3 py-1.5 rounded-lg shadow-xs flex items-center justify-center">
+        <div className="bg-white px-3 py-1.5 rounded-lg flex items-center justify-center">
           <Image
             src="/logo-bs.png"
             alt="Logo Bridgestone"
@@ -267,7 +290,7 @@ function SidebarInner({
             <p className="text-xs font-semibold text-white truncate leading-tight">
               {currentUser.name || currentUser.username}
             </p>
-            <span className="text-[10px] text-slate-400 font-normal">
+            <span className="text-xs text-slate-400 font-normal">
               {currentUser.role === 'USER_SEKSI' ? 'User Seksi' : currentUser.role === 'ADMIN' ? 'Administrator' : 'Operator Workshop'}
             </span>
           </div>
@@ -284,7 +307,7 @@ function SidebarInner({
               onClick={onCloseMobileMenu}
               className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition group ${
                 pathname === '/'
-                  ? 'bg-red-600 text-white font-semibold shadow-xs'
+                  ? 'bg-red-600 text-white font-semibold'
                   : 'text-slate-300 bg-slate-800/60 hover:bg-slate-800 hover:text-white border border-slate-700/60'
               }`}
               title="Kembali ke Portal Beranda"
@@ -297,10 +320,10 @@ function SidebarInner({
 
         {/* Section Header */}
         <div className="px-1 pt-1 flex items-center justify-between">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
             Menu Operasional
           </span>
-          <span className="text-[10px] font-mono text-slate-500">
+          <span className="text-xs font-mono text-slate-500">
             {visibleModules.length} Modul
           </span>
         </div>
@@ -320,7 +343,7 @@ function SidebarInner({
                 key={module.id}
                 className={`rounded-xl transition-all duration-200 border ${
                   isModuleActive
-                    ? 'bg-slate-800/80 border-slate-700 shadow-2xs'
+                    ? 'bg-slate-800/80 border-slate-700'
                     : 'bg-slate-900/60 border-transparent hover:border-slate-800 hover:bg-slate-850'
                 }`}
               >
@@ -335,7 +358,7 @@ function SidebarInner({
                     <div
                       className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border transition ${
                         isModuleActive
-                          ? 'bg-red-600 text-white border-red-500 shadow-2xs'
+                          ? 'bg-red-600 text-white border-red-500'
                           : 'bg-slate-800 text-slate-300 border-slate-700 group-hover:text-white group-hover:border-slate-600'
                       }`}
                     >
@@ -354,7 +377,7 @@ function SidebarInner({
                           <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                         )}
                       </div>
-                      <span className="block text-[10px] text-slate-400 font-normal truncate">
+                      <span className="block text-xs text-slate-400 font-normal truncate">
                         {module.badge}
                       </span>
                     </div>
@@ -391,7 +414,7 @@ function SidebarInner({
                             onClick={onCloseMobileMenu}
                             className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
                               isSubActive
-                                ? 'bg-red-600 text-white font-semibold shadow-xs'
+                                ? 'bg-red-600 text-white font-semibold'
                                 : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                             }`}
                           >
@@ -429,7 +452,7 @@ function SidebarInner({
       </nav>
 
       {/* 5. Footer */}
-      <div className="p-3 border-t border-slate-800 text-[10px] text-center text-slate-500">
+      <div className="p-3 border-t border-slate-800 text-xs text-center text-slate-500">
         PT Bridgestone Tire Indonesia
       </div>
     </aside>

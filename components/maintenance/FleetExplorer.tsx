@@ -258,17 +258,17 @@ export default function FleetExplorer({
   return (
     <section aria-labelledby="fleet-explorer-heading" className="space-y-4">
       {/* 1. Header Toolbar & Controls Card */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-4 sm:p-5 space-y-4">
+      <div className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 space-y-4">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 pb-3 border-b border-slate-100">
           <div>
             <h2 id="fleet-explorer-heading" className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <span>Pemantauan Visual Seluruh Armada Daisha</span>
+              <span>Armada Daisha</span>
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 tabular-nums">
                 {filteredUnits.length} Unit
               </span>
             </h2>
             <p className="text-xs text-slate-600 mt-0.5">
-              Daftar lengkap armada Daisha di pabrik beserta status pemeliharaan berkala tahun {currentYear}
+              Status pemeliharaan berkala tahun {currentYear}
             </p>
           </div>
 
@@ -277,11 +277,11 @@ export default function FleetExplorer({
             <button
               type="button"
               onClick={handleExportCsv}
-              className="h-8 px-3 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-300 shadow-2xs"
+              className="h-10 px-4 rounded-lg text-xs font-medium transition flex items-center gap-1.5 cursor-pointer bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-300"
               title="Unduh seluruh data armada yang sedang terfilter ke file CSV / Excel"
             >
               <Download className="w-3.5 h-3.5 text-slate-700" />
-              <span>Export Raw Data ({filteredUnits.length})</span>
+              <span>Ekspor Data</span>
             </button>
 
             {/* View Mode Switcher */}
@@ -291,7 +291,7 @@ export default function FleetExplorer({
                 onClick={() => setViewMode('TABLE')}
                 className={`h-7 px-3 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
                   viewMode === 'TABLE'
-                    ? 'bg-white text-slate-900 shadow-2xs'
+                    ? 'bg-white text-slate-900'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -303,7 +303,7 @@ export default function FleetExplorer({
                 onClick={() => setViewMode('GRID')}
                 className={`h-7 px-3 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
                   viewMode === 'GRID'
-                    ? 'bg-white text-slate-900 shadow-2xs'
+                    ? 'bg-white text-slate-900'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -324,14 +324,14 @@ export default function FleetExplorer({
               value={search}
               onChange={(e) => handleFilterChange(setSearch, e.target.value)}
               placeholder="Cari nomor daisha (mis: S-001, NF-05, M-10)..."
-              className="w-full h-9 pl-8 pr-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
+              className="w-full h-10 pl-8 pr-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
             />
           </div>
 
           {/* Filter Seksi: Terkunci Khusus untuk User Seksi agar tidak bercampur */}
           {(isSeksiUser || Boolean(seksi)) ? (
             <div className="lg:col-span-3">
-              <div className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 flex items-center gap-1.5 truncate">
+              <div className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 flex items-center gap-1.5 truncate">
                 <Building2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                 <span className="truncate">Armada Seksi {seksi || units[0]?.seksi || 'Khusus'}</span>
               </div>
@@ -341,7 +341,7 @@ export default function FleetExplorer({
               <select
                 value={filterSeksi}
                 onChange={(e) => handleFilterChange(setFilterSeksi, e.target.value)}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
+                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
               >
                 <option value="ALL">Semua Seksi</option>
                 {availableSeksi.map((s) => (
@@ -358,7 +358,7 @@ export default function FleetExplorer({
             <select
               value={filterJenis}
               onChange={(e) => handleFilterChange(setFilterJenis, e.target.value)}
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
+              className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
             >
               <option value="ALL">Semua Jenis Daisha</option>
               {availableJenis.map((j) => (
@@ -374,7 +374,7 @@ export default function FleetExplorer({
             <select
               value={filterStatus}
               onChange={(e) => handleFilterChange(setFilterStatus, e.target.value as any)}
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
+              className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
             >
               <option value="ALL">Semua Status PM</option>
               <option value="MAINTAINED">Sudah Maintenance</option>
@@ -399,7 +399,7 @@ export default function FleetExplorer({
 
       {/* 3. Empty State or Content View */}
       {filteredUnits.length === 0 ? (
-        <div className="py-12 px-4 text-center space-y-2 bg-white rounded-xl border border-slate-200/90 shadow-2xs">
+        <div className="py-12 px-4 text-center space-y-2 bg-white rounded-xl border border-slate-200/90">
           <Filter className="w-8 h-8 text-slate-400 mx-auto mb-1" />
           <h3 className="text-sm font-bold text-slate-800">Tidak Ada Daisha yang Cocok</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -408,7 +408,7 @@ export default function FleetExplorer({
           <button
             type="button"
             onClick={handleResetFilters}
-            className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer shadow-2xs"
+            className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset Seluruh Filter</span>
@@ -429,7 +429,7 @@ export default function FleetExplorer({
                   key={u.id}
                   onClick={() => onSelectUnit(u)}
                   aria-label={`Pilih unit Daisha ${cleanNomor}, jenis ${u.jenis}, ${isMaintained ? 'sudah PM' : 'belum PM'}`}
-                  className={`p-3 rounded-lg border transition cursor-pointer flex flex-col justify-between gap-2.5 text-left w-full hover:shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600 ${
+                  className={`p-3 rounded-lg border transition cursor-pointer flex flex-col justify-between gap-2.5 text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600 ${
                     isMaintained
                       ? 'bg-emerald-50/40 border-emerald-300 hover:border-emerald-500'
                       : 'bg-white border-slate-200 hover:border-slate-400'
@@ -478,7 +478,7 @@ export default function FleetExplorer({
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-3 text-xs bg-white rounded-xl border border-slate-200/90 p-3 shadow-2xs">
+            <div className="flex items-center justify-between pt-3 text-xs bg-white rounded-xl border border-slate-200/90 p-3">
               <span className="text-slate-600 tabular-nums font-medium">
                 Menampilkan {(currentPage - 1) * pageSize + 1} s/d{' '}
                 {Math.min(currentPage * pageSize, filteredUnits.length)} dari {filteredUnits.length} unit
@@ -488,7 +488,7 @@ export default function FleetExplorer({
                   type="button"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="h-8 px-3 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 text-slate-700 font-medium cursor-pointer"
+                  className="h-10 px-3.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 text-slate-700 font-medium cursor-pointer"
                 >
                   Sebelumnya
                 </button>
@@ -499,7 +499,7 @@ export default function FleetExplorer({
                   type="button"
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="h-8 px-3 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 text-slate-700 font-medium cursor-pointer"
+                  className="h-10 px-3.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 text-slate-700 font-medium cursor-pointer"
                 >
                   Selanjutnya
                 </button>
@@ -510,7 +510,7 @@ export default function FleetExplorer({
       ) : (
         /* 4B. Table View */
         <div className="space-y-4">
-          <div className="overflow-x-auto rounded-xl border border-slate-200/90 bg-white shadow-2xs">
+          <div className="overflow-x-auto rounded-xl border border-slate-200/90 bg-white">
             <table className="w-full text-left text-xs whitespace-nowrap">
               <thead className="bg-slate-50/80 text-slate-600 font-semibold border-b border-slate-200">
                 <tr>
@@ -557,11 +557,11 @@ export default function FleetExplorer({
                           </span>
                         ) : stagingInfo ? (
                           <div className="space-y-0.5">
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-800 bg-blue-50 border border-blue-300 px-2 py-0.5 rounded">
+                            <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-800 bg-blue-50 border border-blue-300 px-2 py-0.5 rounded">
                               <Clock className="w-3 h-3 text-blue-600" />
                               <span>Di Staging</span>
                             </span>
-                            <p className="text-[10px] text-red-600 font-medium flex items-center gap-1 truncate max-w-[170px]" title={stagingInfo.lokasi}>
+                            <p className="text-xs text-red-600 font-medium flex items-center gap-1 truncate max-w-[170px]" title={stagingInfo.lokasi}>
                               <MapPin className="w-3 h-3 shrink-0" />
                               <span>{stagingInfo.lokasi}</span>
                             </p>
@@ -602,7 +602,7 @@ export default function FleetExplorer({
                             <button
                               type="button"
                               onClick={() => onQuickInput(u)}
-                              className="min-h-[36px] sm:min-h-0 h-7 px-2.5 bg-slate-900 hover:bg-black text-white rounded-md font-semibold text-xs transition inline-flex items-center gap-1 cursor-pointer shadow-2xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-700"
+                              className="min-h-[36px] sm:min-h-0 h-7 px-2.5 bg-slate-900 hover:bg-black text-white rounded-md font-semibold text-xs transition inline-flex items-center gap-1 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-700"
                             >
                               <PlusCircle className="w-3.5 h-3.5 text-emerald-400" />
                               <span>Catat PM</span>
@@ -619,7 +619,7 @@ export default function FleetExplorer({
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-3 text-xs bg-white rounded-xl border border-slate-200/90 p-3 shadow-2xs">
+            <div className="flex items-center justify-between pt-3 text-xs bg-white rounded-xl border border-slate-200/90 p-3">
               <span className="text-slate-600 tabular-nums font-medium">
                 Menampilkan {(currentPage - 1) * pageSize + 1} s/d{' '}
                 {Math.min(currentPage * pageSize, filteredUnits.length)} dari {filteredUnits.length} unit
@@ -629,7 +629,7 @@ export default function FleetExplorer({
                   type="button"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="h-8 px-3 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 text-slate-700 font-medium cursor-pointer"
+                  className="h-10 px-3.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 text-slate-700 font-medium cursor-pointer"
                 >
                   Sebelumnya
                 </button>
@@ -640,7 +640,7 @@ export default function FleetExplorer({
                   type="button"
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="h-8 px-3 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 text-slate-700 font-medium cursor-pointer"
+                  className="h-10 px-3.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 text-slate-700 font-medium cursor-pointer"
                 >
                   Selanjutnya
                 </button>

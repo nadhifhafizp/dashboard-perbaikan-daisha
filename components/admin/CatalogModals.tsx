@@ -117,7 +117,7 @@ export function AddDaishaModal({
             </button>
             <button
               type="submit"
-              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
+              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer transition"
             >
               Simpan Daisha
             </button>
@@ -308,7 +308,7 @@ export function AddVariantModal({
             </button>
             <button
               type="submit"
-              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
+              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer transition"
             >
               Simpan Varian
             </button>
@@ -382,7 +382,7 @@ export function AddComponentModal({
             </button>
             <button
               type="submit"
-              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
+              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer transition"
             >
               Simpan Komponen
             </button>
@@ -461,7 +461,7 @@ export function AddSymptomModal({
             </button>
             <button
               type="submit"
-              className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
+              className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg cursor-pointer transition"
             >
               Simpan Gejala
             </button>
@@ -695,7 +695,7 @@ export function EditCatalogItemModal({
             </button>
             <button
               type="submit"
-              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
+              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer transition"
             >
               Simpan Perubahan
             </button>

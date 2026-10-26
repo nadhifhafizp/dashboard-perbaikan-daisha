@@ -251,3 +251,142 @@ export function exportTicketsToExcel(tickets: Ticket[], filePrefix = 'Rekap_Perb
   }
 }
 
+/**
+ * Ekspor data armada dan kepatuhan PM Daisha ke file Excel (.xlsx):
+ * 1. Sheet "Master_Armada_Daisha": Seluruh unit lengkap nomor, jenis, ukuran, seksi, kondisi OK/Rusak, status PM
+ * 2. Sheet "Rekap_Jenis_Daisha": Rekap populasi, kondisi sehat/rusak, dan progres PM per jenis
+ * 3. Sheet "Rekap_Seksi_Operasional": Rekap populasi, kondisi sehat/rusak, dan progres PM per seksi
+ */
+export function exportFleetToExcel(
+  units: Array<{
+    nomor_daisha: string;
+    jenis: string;
+    nama_daisha?: string;
+    seksi?: string;
+    ukuran?: string;
+    last_maintenance_date: string | null;
+    last_condition?: string;
+    is_maintained: boolean;
+    days_since_last?: number | null;
+  }>,
+  currentYear: number,
+  filePrefix = 'Master_Armada_PM_Daisha'
+) {
+  if (!units || units.length === 0) {
+    alert('Tidak ada data armada untuk diekspor.');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Detail Seluruh Unit
+  const unitRows = units.map((u, idx) => ({
+    'No': idx + 1,
+    'Nomor Daisha': u.nomor_daisha,
+    'Jenis Daisha': u.jenis || '-',
+    'Nama Daisha': u.nama_daisha || u.jenis || '-',
+    'Ukuran': u.ukuran || 'NONE',
+    'Seksi Penempatan': u.seksi || 'Pabrik',
+    'Kondisi Fisik': u.last_condition === 'RUSAK' ? 'RUSAK' : 'OK / SIAP',
+    [`Status PM (${currentYear})`]: u.is_maintained ? 'Sudah di-PM' : 'Belum di-PM',
+    'Tanggal PM Terakhir': u.last_maintenance_date ? u.last_maintenance_date.slice(0, 10) : 'Belum Pernah',
+    'Hari Sejak PM Terakhir': u.days_since_last ?? '-',
+  }));
+
+  const wsUnits = XLSX.utils.json_to_sheet(unitRows);
+  wsUnits['!cols'] = [
+    { wch: 6 },
+    { wch: 18 },
+    { wch: 22 },
+    { wch: 24 },
+    { wch: 12 },
+    { wch: 18 },
+    { wch: 16 },
+    { wch: 18 },
+    { wch: 20 },
+    { wch: 22 },
+  ];
+  XLSX.utils.book_append_sheet(wb, wsUnits, 'Master_Armada_Daisha');
+
+  // Sheet 2: Rekap Per Jenis
+  const jenisMap: Record<string, { total: number; ok: number; rusak: number; maintained: number; unmaintained: number }> = {};
+  units.forEach((u) => {
+    const k = u.jenis || 'LAINNYA';
+    if (!jenisMap[k]) {
+      jenisMap[k] = { total: 0, ok: 0, rusak: 0, maintained: 0, unmaintained: 0 };
+    }
+    jenisMap[k].total++;
+    if (u.last_condition === 'RUSAK') jenisMap[k].rusak++;
+    else jenisMap[k].ok++;
+    if (u.is_maintained) jenisMap[k].maintained++;
+    else jenisMap[k].unmaintained++;
+  });
+
+  const jenisRows = Object.entries(jenisMap)
+    .sort((a, b) => b[1].total - a[1].total)
+    .map(([jenis, counts], idx) => ({
+      'No': idx + 1,
+      'Jenis Daisha': jenis,
+      'Total Populasi': counts.total,
+      'Siap Pakai (OK)': counts.ok,
+      'Perlu Perbaikan (RUSAK)': counts.rusak,
+      [`Sudah PM (${currentYear})`]: counts.maintained,
+      [`Belum PM (${currentYear})`]: counts.unmaintained,
+      'Persentase PM': `${counts.total > 0 ? Math.round((counts.maintained / counts.total) * 100) : 0}%`,
+    }));
+
+  const wsJenis = XLSX.utils.json_to_sheet(jenisRows);
+  XLSX.utils.book_append_sheet(wb, wsJenis, 'Rekap_Per_Jenis');
+
+  // Sheet 3: Rekap Per Seksi
+  const seksiMap: Record<string, { total: number; ok: number; rusak: number; maintained: number; unmaintained: number }> = {};
+  units.forEach((u) => {
+    const s = u.seksi || 'Pabrik';
+    if (!seksiMap[s]) {
+      seksiMap[s] = { total: 0, ok: 0, rusak: 0, maintained: 0, unmaintained: 0 };
+    }
+    seksiMap[s].total++;
+    if (u.last_condition === 'RUSAK') seksiMap[s].rusak++;
+    else seksiMap[s].ok++;
+    if (u.is_maintained) seksiMap[s].maintained++;
+    else seksiMap[s].unmaintained++;
+  });
+
+  const seksiRows = Object.entries(seksiMap)
+    .sort((a, b) => b[1].total - a[1].total)
+    .map(([seksi, counts], idx) => ({
+      'No': idx + 1,
+      'Seksi Operasional': seksi,
+      'Total Populasi': counts.total,
+      'Siap Pakai (OK)': counts.ok,
+      'Perlu Perbaikan (RUSAK)': counts.rusak,
+      [`Sudah PM (${currentYear})`]: counts.maintained,
+      [`Belum PM (${currentYear})`]: counts.unmaintained,
+      'Persentase PM': `${counts.total > 0 ? Math.round((counts.maintained / counts.total) * 100) : 0}%`,
+    }));
+
+  const wsSeksi = XLSX.utils.json_to_sheet(seksiRows);
+  XLSX.utils.book_append_sheet(wb, wsSeksi, 'Rekap_Per_Seksi');
+
+  const nowStr = new Date().toISOString().slice(0, 10);
+  const fileName = `${filePrefix}_${nowStr}.xlsx`;
+
+  try {
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Download via Blob failed, fallback to XLSX.writeFile:', err);
+    XLSX.writeFile(wb, fileName);
+  }
+}
+

@@ -197,7 +197,7 @@ export default function UnitDetailModal({
                   onClose();
                   onOpenMaintenanceModal(unit);
                 }}
-                className="flex-1 min-h-[44px] sm:min-h-0 sm:h-9 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-700"
+                className="flex-1 min-h-[44px] sm:min-h-0 sm:h-9 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-700"
               >
                 <Wrench className="w-3.5 h-3.5" />
                 <span>Catat PM</span>

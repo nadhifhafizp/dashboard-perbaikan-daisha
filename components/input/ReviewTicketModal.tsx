@@ -92,6 +92,24 @@ export default function ReviewTicketModal({
               <span className="text-slate-500 font-medium">Nama Pelapor:</span>
               <span className="font-semibold text-slate-800">{payload.namaPelapor}</span>
             </div>
+            <div className="flex justify-between items-center border-b border-slate-200/60 pb-2">
+              <span className="text-slate-500 font-medium">Status Awal Tiket:</span>
+              <div>
+                {payload.status === 'Pending' ? (
+                  <span className="px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 inline-flex items-center gap-1">
+                    <span>Pending (Tunggu Part)</span>
+                  </span>
+                ) : payload.status === 'Progress' ? (
+                  <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-300 inline-flex items-center gap-1">
+                    <span>Progress (Langsung Dikerjakan)</span>
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300 inline-flex items-center gap-1">
+                    <span>Open (Menunggu Diagnosa)</span>
+                  </span>
+                )}
+              </div>
+            </div>
 
             {/* Rincian Titik Kerusakan Berstruktur */}
             <div>
@@ -130,7 +148,7 @@ export default function ReviewTicketModal({
                   {parsed.items.map((item, idx) => (
                     <div
                       key={idx}
-                      className="p-2 bg-white rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between gap-2"
+                      className="p-2 bg-white rounded-lg border border-slate-200 flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="w-5 h-5 rounded bg-slate-100 text-slate-700 font-semibold text-xs flex items-center justify-center shrink-0 border border-slate-200 tabular-nums">
@@ -187,7 +205,7 @@ export default function ReviewTicketModal({
               type="button"
               disabled={isLoading}
               onClick={onCancel}
-              className="w-full h-9 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium text-xs rounded-lg transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 shadow-2xs"
+              className="w-full h-9 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium text-xs rounded-lg transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>Koreksi Lagi</span>
@@ -196,7 +214,13 @@ export default function ReviewTicketModal({
               type="button"
               onClick={onConfirm}
               disabled={isLoading}
-              className="w-full h-9 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+              className={`w-full h-9 font-medium text-xs rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                payload.status === 'Pending'
+                  ? 'bg-amber-600 hover:bg-amber-700 focus-visible:ring-amber-500'
+                  : payload.status === 'Progress'
+                  ? 'bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-500'
+                  : 'bg-red-600 hover:bg-red-700 focus-visible:ring-red-500'
+              }`}
             >
               {isLoading ? (
                 <>
@@ -225,7 +249,13 @@ export default function ReviewTicketModal({
               ) : (
                 <>
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Ya, Kirim Laporan</span>
+                  <span>
+                    {payload.status === 'Pending'
+                      ? 'Ya, Simpan (Status Pending)'
+                      : payload.status === 'Progress'
+                      ? 'Ya, Simpan & Mulai Proses'
+                      : 'Ya, Kirim Laporan'}
+                  </span>
                 </>
               )}
             </button>

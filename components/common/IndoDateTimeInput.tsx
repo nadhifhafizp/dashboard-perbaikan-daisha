@@ -419,7 +419,7 @@ export default function IndoDateTimeInput({
           <button
             type="button"
             onClick={handleSetNow}
-            className="px-2 py-1 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-semibold transition cursor-pointer flex items-center gap-1 shadow-2xs whitespace-nowrap"
+            className="px-2 py-1 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1 whitespace-nowrap"
             title="Set ke tanggal dan jam saat ini"
           >
             <Clock className="w-3 h-3 text-slate-600" />

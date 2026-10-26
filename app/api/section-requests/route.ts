@@ -8,6 +8,7 @@ import {
   recordAuditLog,
   sanitizeText,
   validatePositiveInt,
+  validatePositiveQuantity,
 } from '@/lib/security';
 import { createInAppNotification, buildAtasanSpecialProjectEmailContent } from '@/lib/emailNotification';
 import { DEFAULT_ATASAN_SPROJECT_EMAIL } from '@/lib/workflowConstants';
@@ -27,9 +28,14 @@ function parseImageString(val: unknown): string | null {
 // Helper untuk memastikan format data materials selalu array of object bersih
 export function normalizeMaterials(raw: unknown): Array<{
   id: number;
-  sectionRequestId: number;
+  sectionRequestId?: number;
   namaKomponen: string;
+  tipe?: 'SPAREPART' | 'MATERIAL';
   qty: number;
+  satuan?: string;
+  dimensi?: string;
+  potongStok?: boolean;
+  qtyPotongStok?: number;
   keterangan?: string | null;
 }> {
   if (!raw) return [];
@@ -60,7 +66,35 @@ export function normalizeMaterials(raw: unknown): Array<{
       result.push(item);
     }
   }
-  return result.filter((m) => m && (m.namaKomponen || m.id));
+  return result
+    .filter((m) => m && (m.namaKomponen || m.id))
+    .map((m) => {
+      const nama = String(m.namaKomponen || '');
+      const lower = nama.toLowerCase();
+      const isMat =
+        m.tipe === 'MATERIAL' ||
+        lower.includes('plat') ||
+        lower.includes('cat') ||
+        lower.includes('las') ||
+        lower.includes('pipa') ||
+        lower.includes('hollow') ||
+        lower.includes('siku') ||
+        m.satuan === 'cm²' ||
+        m.satuan === 'm²';
+
+      return {
+        id: Number(m.id) || Date.now(),
+        sectionRequestId: m.sectionRequestId ? Number(m.sectionRequestId) : undefined,
+        namaKomponen: nama,
+        tipe: (m.tipe || (isMat ? 'MATERIAL' : 'SPAREPART')) as 'SPAREPART' | 'MATERIAL',
+        qty: Number(m.qty) || 1,
+        satuan: String(m.satuan || (isMat ? 'cm²' : 'Pcs')),
+        dimensi: m.dimensi ? String(m.dimensi) : undefined,
+        potongStok: Boolean(m.potongStok),
+        qtyPotongStok: m.qtyPotongStok !== undefined ? Number(m.qtyPotongStok) : undefined,
+        keterangan: m.keterangan ? String(m.keterangan) : null,
+      };
+    });
 }
 
 // Buat nomor request unik: REQ-YYYYMMDD-XXX
@@ -584,29 +618,63 @@ export async function POST(request: Request) {
       });
     }
 
-    // 4. ADD_MATERIAL: Tambah alokasi material dari gudang
+    // 4. ADD_MATERIAL: Tambah pemakaian sparepart atau material
     if (action === 'ADD_MATERIAL') {
       if (auth.user!.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Hanya admin yang dapat menambah material.' }, { status: 403 });
+        return NextResponse.json({ error: 'Hanya admin yang dapat menambah pemakaian sparepart/material.' }, { status: 403 });
       }
 
       const sectionRequestId = validatePositiveInt(body.sectionRequestId, 'ID Request', 1).value;
       const namaKomponen = sanitizeText(body.namaKomponen, 100);
-      const qty = validatePositiveInt(body.qty, 'Jumlah material', 1, 10000).value;
+      const tipe = body.tipe === 'MATERIAL' ? 'MATERIAL' : 'SPAREPART';
+      const qtyValidation = validatePositiveQuantity(body.qty, 'Jumlah pemakaian', 0.001, 1000000);
+      if (!qtyValidation.valid) {
+        return NextResponse.json({ error: qtyValidation.error || 'Jumlah pemakaian tidak valid.' }, { status: 400 });
+      }
+      const qty = qtyValidation.value;
+      const satuan = sanitizeText(body.satuan, 30) || (tipe === 'MATERIAL' ? 'cm²' : 'Pcs');
+      const dimensi = sanitizeText(body.dimensi, 100);
       const keterangan = sanitizeText(body.keterangan, 255);
+      const potongStok = Boolean(body.potongStok);
+      const qtyPotongStok = body.qtyPotongStok ? validatePositiveInt(body.qtyPotongStok, 'Jumlah potong stok', 1, 10000).value : 0;
 
-      if (!body.sectionRequestId || !namaKomponen || !body.qty) {
-        return NextResponse.json({ error: 'ID request, nama komponen, dan qty wajib diisi.' }, { status: 400 });
+      if (!body.sectionRequestId || !namaKomponen) {
+        return NextResponse.json({ error: 'ID request dan nama komponen/material wajib diisi.' }, { status: 400 });
       }
 
-      const [sparepart] = await sql<Array<{ namaKomponen: string; stokGudang: number }>>`
-        SELECT "namaKomponen", "stokGudang" FROM "Sparepart" WHERE "namaKomponen" = ${namaKomponen} LIMIT 1
+      // Cek apakah item ada di database Sparepart
+      const [sparepart] = await sql<Array<{ namaKomponen: string; stokGudang: number; satuan: string }>>`
+        SELECT "namaKomponen", "stokGudang", "satuan" FROM "Sparepart" WHERE "namaKomponen" = ${namaKomponen} LIMIT 1
       `;
-      if (!sparepart) {
-        return NextResponse.json({ error: `Sparepart "${namaKomponen}" tidak ditemukan di gudang.` }, { status: 404 });
-      }
-      if (sparepart.stokGudang < qty) {
-        return NextResponse.json({ error: `Stok "${namaKomponen}" tidak mencukupi (sisa: ${sparepart.stokGudang}).` }, { status: 400 });
+
+      let shouldDeductStock = false;
+      let deductQty = 0;
+
+      if (tipe === 'SPAREPART') {
+        // Untuk Sparepart: jika ada di gudang, potong stok fisik
+        if (sparepart) {
+          deductQty = Math.round(qty);
+          if (sparepart.stokGudang < deductQty) {
+            return NextResponse.json(
+              { error: `Stok gudang "${namaKomponen}" tidak mencukupi (sisa: ${sparepart.stokGudang} ${sparepart.satuan}).` },
+              { status: 400 }
+            );
+          }
+          shouldDeductStock = true;
+        }
+      } else {
+        // Untuk Material (plat, kawat las, cat, dll.):
+        // Luas / potongan kecil (cm², m²) biasanya dari sisa/off-cut, kecuali user meminta potong stok lembar utuh
+        if (sparepart && potongStok && qtyPotongStok > 0) {
+          if (sparepart.stokGudang < qtyPotongStok) {
+            return NextResponse.json(
+              { error: `Stok gudang "${namaKomponen}" tidak mencukupi untuk dipotong ${qtyPotongStok} ${sparepart.satuan} (sisa: ${sparepart.stokGudang}).` },
+              { status: 400 }
+            );
+          }
+          shouldDeductStock = true;
+          deductQty = qtyPotongStok;
+        }
       }
 
       const [reqData] = await sql<Array<{ nomorRequest: string; namaBarang: string }>>`
@@ -617,7 +685,12 @@ export async function POST(request: Request) {
         id: Date.now(),
         sectionRequestId,
         namaKomponen,
+        tipe,
         qty,
+        satuan,
+        dimensi: dimensi || null,
+        potongStok: shouldDeductStock,
+        qtyPotongStok: shouldDeductStock ? deductQty : 0,
         keterangan: keterangan || null,
       };
 
@@ -634,35 +707,37 @@ export async function POST(request: Request) {
               "waktuUpdate" = NOW()
           WHERE id = ${sectionRequestId}
         `;
-        await tx`
-          UPDATE "Sparepart"
-          SET "stokGudang" = "stokGudang" - ${qty}
-          WHERE "namaKomponen" = ${namaKomponen}
-        `;
-        await tx`
-          INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
-          VALUES (
-            ${namaKomponen},
-            'OUT',
-            ${qty},
-            ${reqData?.nomorRequest || `REQ-${sectionRequestId}`},
-            ${`Pemakaian untuk request seksi: ${reqData?.namaBarang || '-'}`},
-            NOW()
-          )
-        `;
+        if (shouldDeductStock && deductQty > 0) {
+          await tx`
+            UPDATE "Sparepart"
+            SET "stokGudang" = "stokGudang" - ${deductQty}
+            WHERE "namaKomponen" = ${namaKomponen}
+          `;
+          await tx`
+            INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
+            VALUES (
+              ${namaKomponen},
+              'OUT',
+              ${deductQty},
+              ${reqData?.nomorRequest || `REQ-${sectionRequestId}`},
+              ${`Pemakaian ${tipe.toLowerCase()} untuk request seksi: ${reqData?.namaBarang || '-'} (${qty} ${satuan}${dimensi ? ` • ${dimensi}` : ''})`},
+              NOW()
+            )
+          `;
+        }
       });
 
       return NextResponse.json({
         success: true,
-        message: `Material ${namaKomponen} (${qty}) berhasil ditambahkan dan stok gudang dipotong.`,
+        message: `${tipe === 'MATERIAL' ? 'Material' : 'Sparepart'} ${namaKomponen} (${qty} ${satuan}) berhasil dicatat.${shouldDeductStock ? ` Stok gudang dipotong ${deductQty} ${sparepart?.satuan || 'unit'}.` : ''}`,
         materials: updatedMaterials,
       });
     }
 
-    // 5. REMOVE_MATERIAL: Batalkan alokasi material dan kembalikan stok
+    // 5. REMOVE_MATERIAL: Batalkan pemakaian sparepart/material
     if (action === 'REMOVE_MATERIAL') {
       if (auth.user!.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Hanya admin yang dapat membatalkan material.' }, { status: 403 });
+        return NextResponse.json({ error: 'Hanya admin yang dapat membatalkan sparepart/material.' }, { status: 403 });
       }
 
       const sectionRequestId = validatePositiveInt(body.sectionRequestId, 'ID Request', 1).value;
@@ -687,7 +762,7 @@ export async function POST(request: Request) {
       );
 
       if (targetMatIndex === -1) {
-        return NextResponse.json({ error: 'Data material tidak ditemukan pada request ini.' }, { status: 404 });
+        return NextResponse.json({ error: 'Data item tidak ditemukan pada request ini.' }, { status: 404 });
       }
 
       const targetMat = currentMats[targetMatIndex];
@@ -700,27 +775,29 @@ export async function POST(request: Request) {
               "waktuUpdate" = NOW()
           WHERE id = ${sectionRequestId}
         `;
-        await tx`
-          UPDATE "Sparepart"
-          SET "stokGudang" = "stokGudang" + ${targetMat.qty}
-          WHERE "namaKomponen" = ${targetMat.namaKomponen}
-        `;
-        await tx`
-          INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
-          VALUES (
-            ${targetMat.namaKomponen},
-            'IN',
-            ${targetMat.qty},
-            ${current.nomorRequest || `REQ-${sectionRequestId}`},
-            ${'Pembatalan pemakaian material request (stok dikembalikan ke gudang)'},
-            NOW()
-          )
-        `;
+        if (targetMat.potongStok && targetMat.qtyPotongStok && targetMat.qtyPotongStok > 0) {
+          await tx`
+            UPDATE "Sparepart"
+            SET "stokGudang" = "stokGudang" + ${targetMat.qtyPotongStok}
+            WHERE "namaKomponen" = ${targetMat.namaKomponen}
+          `;
+          await tx`
+            INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
+            VALUES (
+              ${targetMat.namaKomponen},
+              'IN',
+              ${targetMat.qtyPotongStok},
+              ${current.nomorRequest || `REQ-${sectionRequestId}`},
+              ${'Pembatalan pemakaian request seksi (stok dikembalikan ke gudang)'},
+              NOW()
+            )
+          `;
+        }
       });
 
       return NextResponse.json({
         success: true,
-        message: `Pemakaian material ${targetMat.namaKomponen} (${targetMat.qty}) berhasil dibatalkan dan stok dikembalikan.`,
+        message: `Pemakaian ${targetMat.namaKomponen} (${targetMat.qty} ${targetMat.satuan || 'unit'}) berhasil dibatalkan${targetMat.potongStok ? ' dan stok gudang dikembalikan' : ''}.`,
         materials: updatedMats,
       });
     }

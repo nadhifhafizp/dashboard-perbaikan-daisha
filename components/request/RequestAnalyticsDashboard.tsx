@@ -25,6 +25,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { SectionRequestFull } from '@/components/request/BridgestoneRequestPrintModal';
+import { CHART, DONUT } from '@/lib/chart-colors';
 
 interface RequestAnalyticsDashboardProps {
   requests: SectionRequestFull[];
@@ -63,7 +64,7 @@ const URGENSI_COLORS: Record<string, string> = {
   Normal: '#2563eb',
 };
 
-const TUJUAN_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
+const TUJUAN_COLORS = [...CHART.series, '#D97706', '#059669'];
 
 export default function RequestAnalyticsDashboard({
   requests,
@@ -166,7 +167,7 @@ export default function RequestAnalyticsDashboard({
       {/* 1. Metric Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Total Request */}
-        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2">
+        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/90 space-y-2">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">Total Permohonan</span>
             <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
@@ -179,14 +180,14 @@ export default function RequestAnalyticsDashboard({
             </div>
             <span className="text-xs text-slate-500 font-medium">Semua Seksi</span>
           </div>
-          <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-100 flex items-center justify-between">
+          <div className="text-xs text-slate-500 pt-1 border-t border-slate-100 flex items-center justify-between">
             <span>Tingkat Selesai</span>
             <span className="font-bold text-slate-800 tabular-nums">{metrics.completionRate}%</span>
           </div>
         </div>
 
         {/* Card 2: Menunggu Approval / Pipeline */}
-        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2">
+        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/90 space-y-2">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">Menunggu Approval</span>
             <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -201,7 +202,7 @@ export default function RequestAnalyticsDashboard({
               Antrean
             </span>
           </div>
-          <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-100 flex items-center justify-between">
+          <div className="text-xs text-slate-500 pt-1 border-t border-slate-100 flex items-center justify-between">
             <span>Rasio Antrean</span>
             <span className="font-bold text-slate-800 tabular-nums">
               {metrics.total > 0 ? Math.round((metrics.waitingApproval / metrics.total) * 100) : 0}%
@@ -210,7 +211,7 @@ export default function RequestAnalyticsDashboard({
         </div>
 
         {/* Card 3: Sedang Dikerjakan (WIP) */}
-        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2">
+        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/90 space-y-2">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">Sedang Pengerjaan</span>
             <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -222,7 +223,7 @@ export default function RequestAnalyticsDashboard({
               {metrics.inProgress}
             </div>
             {metrics.pendingMaterial > 0 ? (
-              <span className="text-[11px] text-rose-700 font-bold bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200 flex items-center gap-1">
+              <span className="text-xs text-rose-700 font-bold bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200 flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3 text-rose-600" />
                 <span>{metrics.pendingMaterial} Material</span>
               </span>
@@ -230,7 +231,7 @@ export default function RequestAnalyticsDashboard({
               <span className="text-xs text-blue-800 font-semibold">Aktif</span>
             )}
           </div>
-          <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-100 flex items-center justify-between">
+          <div className="text-xs text-slate-500 pt-1 border-t border-slate-100 flex items-center justify-between">
             <span>Dalam Pengerjaan</span>
             <span className="font-bold text-slate-800 tabular-nums">
               {metrics.total > 0 ? Math.round((metrics.inProgress / metrics.total) * 100) : 0}%
@@ -239,7 +240,7 @@ export default function RequestAnalyticsDashboard({
         </div>
 
         {/* Card 4: Selesai & Lead Time */}
-        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2">
+        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/90 space-y-2">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">Selesai Dikerjakan</span>
             <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -254,7 +255,7 @@ export default function RequestAnalyticsDashboard({
               {metrics.completionRate}%
             </span>
           </div>
-          <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-100 flex items-center justify-between">
+          <div className="text-xs text-slate-500 pt-1 border-t border-slate-100 flex items-center justify-between">
             <span>Rata-rata Lead Time</span>
             <span className="font-bold text-slate-900 tabular-nums">{metrics.avgLeadTime} hari</span>
           </div>
@@ -264,11 +265,11 @@ export default function RequestAnalyticsDashboard({
       {/* 2. Visual Charts: Volume per Seksi & Distribusi Tujuan / Urgensi */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Chart 1: Volume Request per Seksi (Horizontal / Bar Chart) */}
-        <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 shadow-2xs space-y-4">
+        <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-red-600" />
-              <span>Volume Permohonan per Seksi</span>
+              <Building2 className="w-4 h-4 text-slate-500" />
+              <span>Permohonan per Seksi</span>
             </h3>
             <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 tabular-nums">
               Top {metrics.seksiChartData.length} Seksi
@@ -288,15 +289,15 @@ export default function RequestAnalyticsDashboard({
                   margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} />
                   <YAxis
                     type="category"
                     dataKey="name"
                     width={110}
-                    tick={{ fontSize: 11, fill: '#334155', fontWeight: 600 }}
+                    tick={{ fontSize: 12, fill: '#334155', fontWeight: 600 }}
                   />
                   <Tooltip content={<CustomTooltip unit="Request" />} />
-                  <Bar dataKey="count" fill="#dc2626" radius={[0, 4, 4, 0]} maxBarSize={22} />
+                  <Bar dataKey="count" fill={CHART.main} radius={[0, 4, 4, 0]} maxBarSize={22} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -304,10 +305,10 @@ export default function RequestAnalyticsDashboard({
         </div>
 
         {/* Chart 2: Distribusi Tujuan Permohonan (Donut Chart) */}
-        <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 shadow-2xs space-y-4 flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 space-y-4 flex flex-col justify-between">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Target className="w-4 h-4 text-emerald-600" />
-            <span>Kategori Tujuan Permohonan</span>
+            <Target className="w-4 h-4 text-slate-500" />
+            <span>Tujuan Permohonan</span>
           </h3>
 
           <div className="h-48 relative flex items-center justify-center">
@@ -321,8 +322,8 @@ export default function RequestAnalyticsDashboard({
                       data={metrics.tujuanChartData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={70}
+                      innerRadius={DONUT.inner}
+                      outerRadius={DONUT.outer}
                       paddingAngle={3}
                       dataKey="value"
                     >
@@ -337,7 +338,7 @@ export default function RequestAnalyticsDashboard({
                   <span className="text-xl font-black text-slate-900 tracking-tight tabular-nums">
                     {metrics.total}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-semibold uppercase">Total</span>
+                  <span className="text-xs text-slate-500 font-semibold uppercase">Total</span>
                 </div>
               </>
             )}
@@ -349,7 +350,7 @@ export default function RequestAnalyticsDashboard({
               <div key={item.name} className="flex items-center justify-between py-1 border-b border-slate-100/70">
                 <div className="flex items-center gap-2 truncate">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                  <span className="text-slate-700 font-medium truncate text-[11px]">{item.name}</span>
+                  <span className="text-slate-700 font-medium truncate text-xs">{item.name}</span>
                 </div>
                 <span className="font-bold text-slate-900 ml-1.5 tabular-nums">{item.value}</span>
               </div>
@@ -361,7 +362,7 @@ export default function RequestAnalyticsDashboard({
       {/* 3. Pipeline Flow Breakdown & Urgensi Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Pipeline Bottleneck / Alur Tahapan */}
-        <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200/60 p-4.5 sm:p-5 shadow-2xs space-y-4">
+        <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200/60 p-4.5 sm:p-5 space-y-4">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-600" />
             <span>Tahapan Alur Pengerjaan (Pipeline)</span>
@@ -369,42 +370,42 @@ export default function RequestAnalyticsDashboard({
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
-              <span className="text-[11px] font-medium text-slate-500">1. Approval Atasan Seksi</span>
+              <span className="text-xs font-medium text-slate-500">1. Approval Atasan Seksi</span>
               <div className="text-xl font-bold text-slate-900 tracking-tight tabular-nums">
                 {requests.filter(r => r.flowStep === 'STEP_2_ATASAN_SEKSI' || r.statusApprovalAtasanSeksi === 'WAITING').length}
               </div>
             </div>
 
             <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
-              <span className="text-[11px] font-medium text-slate-500">2. Evaluasi Workshop</span>
+              <span className="text-xs font-medium text-slate-500">2. Evaluasi Workshop</span>
               <div className="text-xl font-bold text-slate-900 tracking-tight tabular-nums">
                 {requests.filter(r => r.flowStep === 'STEP_3_WORKSHOP').length}
               </div>
             </div>
 
             <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
-              <span className="text-[11px] font-medium text-slate-500">3. Approval S.Project</span>
+              <span className="text-xs font-medium text-slate-500">3. Approval S.Project</span>
               <div className="text-xl font-bold text-slate-900 tracking-tight tabular-nums">
                 {requests.filter(r => r.flowStep === 'STEP_4_ATASAN_SP').length}
               </div>
             </div>
 
             <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
-              <span className="text-[11px] font-medium text-slate-500">4. Pengerjaan Fisik</span>
+              <span className="text-xs font-medium text-slate-500">4. Pengerjaan Fisik</span>
               <div className="text-xl font-bold text-blue-600 tracking-tight tabular-nums">
                 {requests.filter(r => r.flowStep === 'STEP_6_PENGERJAAN').length}
               </div>
             </div>
 
             <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
-              <span className="text-[11px] font-medium text-slate-500">5. Tertahan Material</span>
+              <span className="text-xs font-medium text-slate-500">5. Tertahan Material</span>
               <div className="text-xl font-bold text-rose-600 tracking-tight tabular-nums">
                 {metrics.pendingMaterial}
               </div>
             </div>
 
             <div className="p-3 rounded-lg bg-slate-50/70 space-y-1">
-              <span className="text-[11px] font-medium text-slate-500">6. Selesai Serah Terima</span>
+              <span className="text-xs font-medium text-slate-500">6. Selesai Serah Terima</span>
               <div className="text-xl font-bold text-emerald-600 tracking-tight tabular-nums">
                 {metrics.completed}
               </div>
@@ -413,7 +414,7 @@ export default function RequestAnalyticsDashboard({
         </div>
 
         {/* Tingkat Urgensi Request */}
-        <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 shadow-2xs space-y-4">
+        <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 space-y-4">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
             <span>Prioritas Urgensi</span>

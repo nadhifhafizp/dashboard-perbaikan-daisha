@@ -170,6 +170,8 @@ export async function POST(request: Request) {
       const detail = sanitizeText(body.detail, 2000);
       const catatanInput = sanitizeText(body.catatan || body.catatanTambahan || body.lokasi, 500);
       const isSeksiReport = Boolean(body.isSeksiReport || auth.user?.role === 'USER_SEKSI');
+      const rawStatus = sanitizeText(body.status, 20);
+      const targetStatus = ['Open', 'Progress', 'Pending'].includes(rawStatus) ? rawStatus : 'Open';
 
       if (!noDaishaValidation.valid) {
         return NextResponse.json({ error: noDaishaValidation.error }, { status: 400 });
@@ -275,7 +277,7 @@ export async function POST(request: Request) {
       // Buat Tiket dalam 1 query saja
       await sql`
         INSERT INTO "Ticket" ("idTiket", "noDaisha", "namaPelapor", "status", "waktuMasuk", "catatan", "items")
-        VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, 'Open', ${parsedDateMasuk}, ${finalCatatan}, ${JSON.stringify(itemsJson)}::jsonb)
+        VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, ${targetStatus}, ${parsedDateMasuk}, ${finalCatatan}, ${JSON.stringify(itemsJson)}::jsonb)
       `;
 
       // Pengurangan stok otomatis untuk komponen Ganti Baru (Projek 3)
@@ -339,9 +341,9 @@ export async function POST(request: Request) {
       }
 
       const normalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-      if (!['Progress', 'Done', 'Scrap'].includes(normalizedStatus)) {
+      if (!['Progress', 'Done', 'Scrap', 'Pending'].includes(normalizedStatus)) {
         return NextResponse.json(
-          { error: "Status tidak valid. Tiket yang sedang/sudah diproses tidak dapat dikembalikan ke status 'Open'." },
+          { error: "Status tidak valid. Status harus Progress, Pending, Done, atau Scrap." },
           { status: 400 }
         );
       }

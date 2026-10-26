@@ -20,14 +20,14 @@ import {
   CheckCircle2,
   Truck,
   LayoutDashboard,
+  BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 import { DAFTAR_SEKSI } from '@/lib/masterData';
 import MaintenanceKPICards, { BreakdownItem } from '@/components/maintenance/MaintenanceKPICards';
 import TargetVsActualChart from '@/components/maintenance/TargetVsActualChart';
-import SectionPopulationChart, { SeksiSummaryItem } from '@/components/maintenance/SectionPopulationChart';
-import AdminSectionDonutGrid from '@/components/maintenance/AdminSectionDonutGrid';
+import { type SeksiSummaryItem } from '@/components/maintenance/SectionPopulationChart';
 import SectionComplianceTable from '@/components/maintenance/SectionComplianceTable';
 import FleetExplorer, { FleetUnit } from '@/components/maintenance/FleetExplorer';
 import MaintenanceLogsTable, { MaintenanceLogRow } from '@/components/maintenance/MaintenanceLogsTable';
@@ -117,9 +117,9 @@ function MaintenanceModuleContent() {
   const [recentLogs, setRecentLogs] = useState<MaintenanceLogRow[]>([]);
   const [stagingRecords, setStagingRecords] = useState<PmStagingRecord[]>([]);
 
-  // Navigation Panel: DASHBOARD vs STAGING vs FLEET vs LOGS
+  // Navigation Panel: STAGING vs FLEET vs LOGS (Dashboard dipusatkan di /kpi?tab=pm)
   const queryTab = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'STAGING' | 'FLEET' | 'LOGS'>('DASHBOARD');
+  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'STAGING' | 'FLEET' | 'LOGS'>('STAGING');
 
   useEffect(() => {
     if (queryTab) {
@@ -391,7 +391,7 @@ function MaintenanceModuleContent() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-24 font-sans">
       {/* 1. Page Header (Flat layout - no enclosing card) */}
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-slate-200/80">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-3 border-b border-slate-200">
         <div className="space-y-1">
           <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-1 text-xs">
             <Link
@@ -403,39 +403,16 @@ function MaintenanceModuleContent() {
             </Link>
             <span className="text-slate-300">/</span>
             <span className="font-semibold text-slate-900">
-              {activeSeksi ? `PM Seksi ${activeSeksi}` : 'Maintenance Daisha'}
+              {activeSeksi ? `PM Seksi ${activeSeksi}` : 'PM Daisha'}
             </span>
           </nav>
 
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600 shrink-0">
-              <CalendarClock className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight text-balance">
-                  {activeSeksi
-                    ? `Preventive Maintenance (PM) : Seksi ${activeSeksi}`
-                    : 'Modul Maintenance & Kepatuhan Armada Daisha'}
-                </h1>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
-                  <CalendarDays className="w-3 h-3" aria-hidden="true" />
-                  Tahun {currentYear}
-                </span>
-                {activeSeksi && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    <Building2 className="w-3 h-3" aria-hidden="true" />
-                    Seksi {activeSeksi}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-500 font-normal mt-0.5">
-                {activeSeksi
-                  ? `Pemantauan status kesehatan, kepatuhan PM berkala, dan analitik armada Daisha Seksi ${activeSeksi}`
-                  : 'Dashboard operasional kepatuhan tahunan, target harian teknisi, antrean bengkel, dan pemantauan armada'}
-              </p>
-            </div>
-          </div>
+          <h1 className="t-title text-slate-900 tracking-tight">
+            {activeSeksi ? `PM Seksi ${activeSeksi}` : 'PM Daisha'}
+          </h1>
+          <p className="t-caption text-slate-500">
+            Target kepatuhan armada tahun {currentYear}
+          </p>
         </div>
 
         {/* Action Controls */}
@@ -446,9 +423,9 @@ function MaintenanceModuleContent() {
               value={selectedSeksiFilter}
               onChange={(e) => handleSeksiFilterChange(e.target.value)}
               aria-label="Filter armada berdasarkan Seksi Operasional"
-              className="min-h-[44px] sm:min-h-0 sm:h-9 px-3 bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600/20 focus-visible:border-red-600 cursor-pointer"
+              className="h-11 sm:h-10 px-3 bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600/20 focus-visible:border-red-600 cursor-pointer"
             >
-              <option value="">Semua Seksi (Pabrik)</option>
+              <option value="">Semua Seksi</option>
               {seksiList.map((s) => (
                 <option key={s} value={s}>
                   Seksi {s}
@@ -461,11 +438,11 @@ function MaintenanceModuleContent() {
             type="button"
             onClick={() => fetchData(true)}
             disabled={loading || refreshing}
-            className="min-h-[44px] sm:min-h-0 sm:h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-medium shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="h-11 sm:h-10 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             title="Muat Ulang Data"
             aria-label="Segarkan data pemeliharaan"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${refreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
+            <RefreshCw className={`w-4 h-4 text-slate-500 ${refreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
             <span>Segarkan</span>
           </button>
 
@@ -473,19 +450,19 @@ function MaintenanceModuleContent() {
           {isSeksi ? (
             <Link
               href="/lapor-rusak"
-              className="min-h-[44px] sm:min-h-0 sm:h-9 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-1"
+              className="h-11 sm:h-10 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
             >
               <AlertTriangle className="w-4 h-4 text-white" aria-hidden="true" />
-              <span>Lapor Daisha Rusak</span>
+              <span>Lapor Rusak</span>
             </Link>
           ) : (
             <button
               type="button"
               onClick={() => handleOpenInput()}
-              className="min-h-[44px] sm:min-h-0 sm:h-9 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+              className="h-11 sm:h-10 min-h-[40px] px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <PlusCircle className="w-4 h-4 text-white" />
-              <span>Catat Maintenance / Repair</span>
+              <span>Catat PM</span>
             </button>
           )}
         </div>
@@ -493,32 +470,27 @@ function MaintenanceModuleContent() {
 
       {/* 2. Primary Module Panel Navigation (Segmented Switcher) */}
       <nav aria-label="Navigasi Panel Maintenance" className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
-        <button
-          type="button"
-          onClick={() => handleTabChange('DASHBOARD')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
-            activeTab === 'DASHBOARD'
-              ? 'bg-red-600 text-white border-red-600 shadow-2xs'
-              : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
-          }`}
+        <Link
+          href={`/kpi?tab=pm${activeSeksi ? `&seksi=${encodeURIComponent(activeSeksi)}` : ''}`}
+          className="h-10 min-h-[40px] px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300 shrink-0"
         >
-          <LayoutDashboard className="w-3.5 h-3.5" />
-          <span>Dashboard & Analitik PM</span>
-        </button>
+          <BarChart3 className="w-4 h-4 text-red-600" />
+          <span>KPI PM</span>
+        </Link>
 
         <button
           type="button"
           onClick={() => handleTabChange('STAGING')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
+          className={`h-10 min-h-[40px] px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
             activeTab === 'STAGING'
-              ? 'bg-red-600 text-white border-red-600 shadow-2xs'
+              ? 'bg-red-600 text-white border-red-600'
               : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
           }`}
         >
-          <Truck className="w-3.5 h-3.5" />
-          <span>{activeSeksi ? 'Penyiapan & Penjemputan PM' : 'Antrean Penjemputan Bengkel'}</span>
+          <Truck className="w-4 h-4" />
+          <span>{activeSeksi ? 'Penjemputan PM' : 'Antrean Penjemputan'}</span>
           {waitingStagingCount > 0 && (
-            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums ${
+            <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold tabular-nums ${
               activeTab === 'STAGING' ? 'bg-white text-red-700' : 'bg-amber-500 text-white'
             }`}>
               {waitingStagingCount}
@@ -529,27 +501,27 @@ function MaintenanceModuleContent() {
         <button
           type="button"
           onClick={() => handleTabChange('FLEET')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
+          className={`h-10 min-h-[40px] px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
             activeTab === 'FLEET'
-              ? 'bg-red-600 text-white border-red-600 shadow-2xs'
+              ? 'bg-red-600 text-white border-red-600'
               : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
           }`}
         >
-          <Grid className="w-3.5 h-3.5" />
-          <span>Katalog Armada {activeSeksi ? `Seksi ${activeSeksi}` : 'Pabrik'} ({units.length})</span>
+          <Grid className="w-4 h-4" />
+          <span>Katalog Armada ({units.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('LOGS')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
+          className={`h-10 min-h-[40px] px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
             activeTab === 'LOGS'
-              ? 'bg-red-600 text-white border-red-600 shadow-2xs'
+              ? 'bg-red-600 text-white border-red-600'
               : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
           }`}
         >
-          <FileText className="w-3.5 h-3.5" />
-          <span>Riwayat Log PM & Repair ({recentLogs.length})</span>
+          <FileText className="w-4 h-4" />
+          <span>Riwayat PM ({recentLogs.length})</span>
         </button>
       </nav>
 
@@ -575,51 +547,9 @@ function MaintenanceModuleContent() {
         </div>
       ) : (
         <>
-          {/* PANEL 1: DASHBOARD & ANALITIK KEBIJAKAN PM */}
+          {/* PANEL 1: DASHBOARD & ANALITIK PM */}
           {activeTab === 'DASHBOARD' && (
             <div className="space-y-6">
-              {/* Kebijakan Mutlak Target 1 Tahun 1x PM */}
-              <div className="bg-slate-900 text-slate-100 rounded-xl p-4 sm:p-5 border border-slate-800 shadow-2xs">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-9 h-9 rounded-lg bg-red-600/20 border border-red-500/30 text-red-400 flex items-center justify-center shrink-0">
-                      <Target className="w-4 h-4" aria-hidden="true" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="text-sm sm:text-base font-semibold text-white tracking-tight text-balance">
-                          Kebijakan Mutlak: 1 Tahun Wajib 1x PM untuk Seluruh Armada Daisha
-                        </h2>
-                        <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">
-                          Target 100% / Tahun
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
-                        Seluruh {summary.totalUnits.toLocaleString('id-ID')} unit armada Daisha {activeSeksi ? `Seksi ${activeSeksi}` : 'pabrik'} wajib menjalani Preventive Maintenance minimal 1 kali dalam 1 tahun berjalan ({currentYear}). Target harian diturunkan proporsional dari sisa armada belum PM ({summary.unmaintainedUnits.toLocaleString('id-ID')} unit) dibagi sisa {summary.remainingWorkDays} hari kerja.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Quick Metrics Bar */}
-                  <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap bg-slate-950/70 p-2.5 rounded-lg border border-slate-800">
-                    <div className="px-3 py-1 text-center">
-                      <span className="text-[11px] font-normal text-slate-400 block">Target siklus</span>
-                      <span className="text-xs sm:text-sm font-semibold text-amber-400">1 Thn 1x PM</span>
-                    </div>
-                    <div className="w-px h-6 bg-slate-800" />
-                    <div className="px-3 py-1 text-center">
-                      <span className="text-[11px] font-normal text-slate-400 block">Target harian</span>
-                      <span className="text-xs sm:text-sm font-semibold text-emerald-400 font-mono tabular-nums">{summary.dailyTarget} Unit/Hari</span>
-                    </div>
-                    <div className="w-px h-6 bg-slate-800" />
-                    <div className="px-3 py-1 text-center">
-                      <span className="text-[11px] font-normal text-slate-400 block">Kepatuhan armada</span>
-                      <span className="text-xs sm:text-sm font-semibold text-white font-mono tabular-nums">{summary.percentage}%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Top KPI Cards */}
               <MaintenanceKPICards
                 summary={summary}
@@ -677,11 +607,11 @@ function MaintenanceModuleContent() {
                     <section
                       id="section-drilldown-panel"
                       aria-label={`Rincian Kepatuhan PM Seksi ${selectedDrilldownSeksi}`}
-                      className="scroll-mt-6 rounded-2xl bg-white border border-slate-200/90 p-4 sm:p-5 space-y-4 shadow-2xs"
+                      className="scroll-mt-6 rounded-2xl bg-white border border-slate-200/90 p-4 sm:p-5 space-y-4"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
                             {selectedDrilldownSeksi.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
@@ -689,10 +619,10 @@ function MaintenanceModuleContent() {
                               <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
                                 Rincian Kepatuhan PM Seksi {selectedDrilldownSeksi}
                               </h3>
-                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                              <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                 {targetUnits.length.toLocaleString('id-ID')} Unit
                               </span>
-                              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 Target {variantChartTotalTarget} Unit/Hari
                               </span>
                             </div>
@@ -709,15 +639,15 @@ function MaintenanceModuleContent() {
                               handleSeksiFilterChange(selectedDrilldownSeksi);
                               handleTabChange('FLEET');
                             }}
-                            className="h-8 px-3 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                            className="h-10 px-4 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer"
                           >
-                            <span>Katalog Armada Seksi</span>
+                            <span>Katalog Armada</span>
                             <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                           </button>
                           <button
                             type="button"
                             onClick={() => setSelectedDrilldownSeksi('')}
-                            className="h-8 px-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg transition inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                            className="h-10 px-3.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
                             title="Tutup rincian seksi"
                           >
                             <X className="w-4 h-4 text-slate-500" />
@@ -769,10 +699,10 @@ function MaintenanceModuleContent() {
                       type="button"
                       onClick={() => fetchData(true)}
                       disabled={loading || refreshing}
-                      className="h-8 px-3 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 shadow-2xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 self-end sm:self-auto"
+                      className="h-10 px-4 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 self-end sm:self-auto"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${refreshing ? 'animate-spin' : ''}`} />
-                      <span>Segarkan Antrean</span>
+                      <span>Segarkan</span>
                     </button>
                   </div>
 

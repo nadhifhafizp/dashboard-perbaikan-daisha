@@ -32,7 +32,7 @@ import {
 
 export default function LaporRusakSeksiPage() {
   const router = useRouter();
-  const { currentUser, isSeksi, isLoading: authLoading } = useAuth();
+  const { currentUser, isAdmin, isSeksi, isLoading: authLoading } = useAuth();
   const { seksiList } = useDaishaCatalog();
   const { tickets, refresh } = useTickets({ autoRefreshIntervalMs: 0 });
 
@@ -83,12 +83,16 @@ export default function LaporRusakSeksiPage() {
     message: '',
   });
 
-  // Guard login
+  // Guard login & role (role admin menggunakan form /input)
   useEffect(() => {
-    if (!authLoading && !currentUser) {
-      router.replace('/login?from=/lapor-rusak');
+    if (!authLoading) {
+      if (!currentUser) {
+        router.replace('/login?from=/lapor-rusak');
+      } else if (isAdmin) {
+        router.replace('/input');
+      }
     }
-  }, [authLoading, currentUser, router]);
+  }, [authLoading, currentUser, isAdmin, router]);
 
   // Inisialisasi data user
   useEffect(() => {
@@ -257,10 +261,10 @@ export default function LaporRusakSeksiPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto space-y-5 pb-24 md:pb-10 font-sans">
-      {/* 1. Header Card */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5 text-xs">
+      {/* 1. Header (Flat layout) */}
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-3 border-b border-slate-200">
+        <div className="space-y-1">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-1 text-xs">
             <Link
               href="/"
               className="inline-flex items-center gap-1 font-medium text-slate-500 hover:text-slate-900 transition"
@@ -269,50 +273,34 @@ export default function LaporRusakSeksiPage() {
               <span>Portal {isSeksi ? `Seksi ${activeSeksi}` : 'Workshop'}</span>
             </Link>
             <span className="text-slate-300">/</span>
-            <span className="font-semibold text-slate-900">Lapor Daisha Rusak</span>
-          </div>
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-600" />
-            <span>Lapor Daisha Rusak : Seksi {activeSeksi}</span>
+            <span className="font-semibold text-slate-900">Lapor Rusak</span>
+          </nav>
+          <h1 className="t-title text-slate-900 tracking-tight">
+            Lapor Rusak
           </h1>
-          <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Pelaporan unit rusak khusus seksi {activeSeksi} (tanpa perlu diagnosa kerusakan teknis)
+          <p className="t-caption text-slate-500">
+            Pelaporan unit rusak armada Seksi {activeSeksi}
           </p>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Link
             href="/riwayat"
-            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 h-8.5 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 shadow-2xs"
+            className="w-full sm:w-auto h-11 sm:h-10 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5"
           >
-            <Clock className="w-3.5 h-3.5 text-slate-500" />
-            <span>Status Antrean</span>
+            <Clock className="w-4 h-4 text-slate-500" />
+            <span>Antrean</span>
           </Link>
         </div>
-      </div>
+      </header>
 
-      {/* 2. Banner Otomatisasi Seksi */}
-      <div className="p-4 rounded-xl bg-gradient-to-r from-red-50 to-slate-50 border border-red-200/70 flex items-start gap-3 shadow-2xs">
-        <div className="p-2 rounded-lg bg-red-600 text-white shrink-0 mt-0.5 shadow-2xs">
-          <Wrench className="w-4 h-4" />
-        </div>
-        <div className="text-xs text-slate-700 space-y-1">
-          <p className="font-semibold text-slate-900">
-            Armada Dipetakan untuk Seksi {activeSeksi}
-          </p>
-          <p className="leading-relaxed text-slate-600">
-            Daftar pilihan Daisha di bawah <strong>hanya memuat unit milik Seksi {activeSeksi}</strong>. Pilih nomor Daisha dan posisi saat ini. Teknisi workshop maintenance yang akan memeriksa fisik dan mengeksekusi perbaikan.
-          </p>
-        </div>
-      </div>
-
-      {/* 3. Form Utama */}
+      {/* 2. Form Utama */}
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Section 1: Identitas Seksi & Pelapor */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-4">
+        <div className="bg-white p-5 rounded-xl border border-slate-200/80 space-y-4">
           <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
             <Building2 className="w-4 h-4 text-red-600" />
-            <span>1. Asal Seksi & Pelapor</span>
+            <span>1. Pelapor</span>
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -328,7 +316,7 @@ export default function LaporRusakSeksiPage() {
                     <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
                     <span className="font-bold text-xs text-slate-900">Seksi {activeSeksi}</span>
                   </div>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                     <CheckCircle2 className="w-3 h-3" />
                     Terkunci Otomatis
                   </span>
@@ -350,7 +338,7 @@ export default function LaporRusakSeksiPage() {
                   ))}
                 </select>
               )}
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Seksi pemilik armada Daisha yang dilaporkan rusak.
               </p>
             </div>
@@ -374,7 +362,7 @@ export default function LaporRusakSeksiPage() {
                   required
                 />
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Nama personil seksi untuk konfirmasi perbaikan.
               </p>
             </div>
@@ -382,21 +370,21 @@ export default function LaporRusakSeksiPage() {
         </div>
 
         {/* Section 2: Pemilihan Unit Daisha Seksi Terkait */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-4">
+        <div className="bg-white p-5 rounded-xl border border-slate-200/80 space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-2">
             <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               <Tag className="w-4 h-4 text-red-600" />
-              <span>2. Daisha Milik Seksi {activeSeksi}</span>
+              <span>2. Unit</span>
             </h2>
 
             {/* Toggle Mode Input: Pilih dari Daftar vs Ketik Nomor / Scan QR */}
-            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-[11px] font-semibold text-slate-600">
+            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-xs font-semibold text-slate-600">
               <button
                 type="button"
                 onClick={() => setInputMode('SELECT')}
                 className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
                   inputMode === 'SELECT'
-                    ? 'bg-white text-slate-900 shadow-2xs'
+                    ? 'bg-white text-slate-900'
                     : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
@@ -407,7 +395,7 @@ export default function LaporRusakSeksiPage() {
                 onClick={() => setInputMode('MANUAL')}
                 className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
                   inputMode === 'MANUAL'
-                    ? 'bg-white text-slate-900 shadow-2xs'
+                    ? 'bg-white text-slate-900'
                     : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
@@ -478,14 +466,14 @@ export default function LaporRusakSeksiPage() {
                   <button
                     type="button"
                     onClick={() => setIsScanning(true)}
-                    className="min-h-[44px] h-10 px-3.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer shrink-0 shadow-2xs"
+                    className="min-h-[44px] h-10 px-3.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer shrink-0"
                     title="Scan barcode atau QR code pada fisik Daisha"
                   >
                     <Camera className="w-4 h-4" />
                     <span className="hidden sm:inline">Scan QR</span>
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Pilih nomor unit fisik yang rusak. Hanya unit yang terdaftar di Seksi {activeSeksi} yang muncul.
                 </p>
               </div>
@@ -521,14 +509,14 @@ export default function LaporRusakSeksiPage() {
                 <button
                   type="button"
                   onClick={() => setIsScanning(true)}
-                  className="min-h-[44px] h-10 px-3.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer shrink-0 shadow-2xs"
+                  className="min-h-[44px] h-10 px-3.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer shrink-0"
                   title="Scan barcode atau QR code pada fisik Daisha"
                 >
                   <Camera className="w-4 h-4" />
                   <span className="hidden sm:inline">Scan QR</span>
                 </button>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Ketik nomor Daisha atau gunakan kamera untuk memindai kode QR pada unit.
               </p>
             </div>
@@ -536,37 +524,37 @@ export default function LaporRusakSeksiPage() {
 
           {/* Kartu Konfirmasi Identitas Unit Terpilih */}
           {cleanNoDaisha && (
-            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
                   DS
                 </div>
                 <div>
                   <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <span>{cleanNoDaisha}</span>
                     {detectedSize && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-800 border border-slate-300">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-800 border border-slate-300">
                         {detectedSize.code} {detectedSize.label !== detectedSize.code ? `(${detectedSize.label})` : ''}
                       </span>
                     )}
                     {matchedUnit ? (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
                         Terverifikasi Seksi {activeSeksi}
                       </span>
                     ) : (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                         Unit Manual
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-600 mt-0.5">
+                  <p className="text-xs text-slate-600 mt-0.5">
                     Tipe: <span className="font-semibold text-slate-800">{matchedUnit?.namaDaisha || `Daisha ${activeSeksi}`}</span> • Seksi: <span className="font-semibold text-slate-800">{activeSeksi}</span>
                   </p>
                 </div>
               </div>
 
-              <div className="text-right text-[11px] text-slate-500 font-medium">
+              <div className="text-right text-xs text-slate-500 font-medium">
                 Antrean Bengkel: <span className="text-red-600 font-bold">Open (Menunggu Evakuasi & Diagnosa)</span>
               </div>
             </div>
@@ -589,10 +577,10 @@ export default function LaporRusakSeksiPage() {
         </div>
 
         {/* Section 3: Posisi Penempatan di Area Seksi */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-4">
+        <div className="bg-white p-5 rounded-xl border border-slate-200/80 space-y-4">
           <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
             <MapPin className="w-4 h-4 text-red-600" />
-            <span>3. Posisi Fisik Unit di Seksi {activeSeksi}</span>
+            <span>3. Kerusakan</span>
           </h2>
 
           <div>
@@ -607,14 +595,14 @@ export default function LaporRusakSeksiPage() {
               placeholder={`Contoh: Unit diletakkan di dekat Line 2 ${activeSeksi}, roda macet / bearing rontok tidak bisa ditarik...`}
               className="w-full p-3 border border-slate-300 rounded-lg text-xs font-normal text-slate-800 bg-white focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none transition resize-none placeholder:text-slate-400"
             />
-            <p className="text-[11px] text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Cantumkan titik lokasi unit di seksi Anda agar tim Workshop Maintenance dapat segera menemukan dan mengevakuasi unit.
             </p>
           </div>
         </div>
 
         {/* Section 4: Tombol Kirim */}
-        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-xs text-slate-500 text-center sm:text-left">
             Laporan akan langsung diteruskan ke Workshop Maintenance atas nama Seksi <strong>{activeSeksi}</strong>.
           </div>
@@ -623,7 +611,7 @@ export default function LaporRusakSeksiPage() {
             <button
               type="submit"
               disabled={loading || !cleanNoDaisha}
-              className="min-h-[44px] h-10 px-5 bg-red-600 hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-lg transition inline-flex items-center justify-center gap-2 shadow-2xs cursor-pointer w-full sm:w-auto"
+              className="min-h-[44px] h-10 px-5 bg-red-600 hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-lg transition inline-flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
             >
               {loading ? (
                 <>
@@ -633,7 +621,7 @@ export default function LaporRusakSeksiPage() {
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>Kirim Laporan Daisha Rusak</span>
+                  <span>Kirim Laporan</span>
                 </>
               )}
             </button>

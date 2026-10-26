@@ -39,40 +39,45 @@ export default function MobileNav({
   const navItems: { href: string; icon: React.ElementType; label: string }[] = [];
 
   if (isAdmin) {
-    if (pathname.startsWith('/maintenance') || pathname.startsWith('/fleet') || pathname.startsWith('/catalog')) {
+    if (pathname.startsWith('/kpi')) {
       navItems.push(
         { href: '/', icon: Home, label: 'Portal' },
-        { href: '/maintenance', icon: Target, label: 'PM' },
-        { href: '/catalog', icon: Layers, label: 'Master' },
-        { href: '/daisha', icon: BarChart2, label: 'Perbaikan' },
+        { href: '/kpi?tab=daisha', icon: BarChart2, label: 'Daisha' },
+        { href: '/kpi?tab=pm', icon: Target, label: 'PM' },
+        { href: '/kpi?tab=request', icon: SendHorizonal, label: 'Request' },
+      );
+    } else if (pathname.startsWith('/maintenance') || pathname.startsWith('/catalog')) {
+      navItems.push(
+        { href: '/', icon: Home, label: 'Portal' },
+        { href: '/maintenance?tab=staging', icon: Target, label: 'Antrean PM' },
+        { href: '/maintenance?tab=fleet', icon: Layers, label: 'Armada' },
+        { href: '/kpi?tab=daisha', icon: BarChart2, label: 'KPI Daisha' },
       );
     } else if (pathname.startsWith('/request')) {
       navItems.push(
         { href: '/', icon: Home, label: 'Portal' },
-        { href: '/request', icon: LayoutDashboard, label: 'Dashboard' },
         { href: '/request/tracking', icon: ClipboardList, label: 'Pelacakan' },
-        { href: '/daisha', icon: BarChart2, label: 'Perbaikan' },
+        { href: '/request', icon: PenSquare, label: 'Buat' },
+        { href: '/kpi?tab=request', icon: BarChart2, label: 'KPI Req' },
       );
     } else if (pathname.startsWith('/spareparts')) {
       navItems.push(
         { href: '/', icon: Home, label: 'Portal' },
         { href: '/spareparts', icon: Package, label: 'Stok' },
-        { href: '/maintenance', icon: Target, label: 'PM' },
-        { href: '/daisha', icon: BarChart2, label: 'Daisha' },
+        { href: '/kpi?tab=spareparts', icon: BarChart2, label: 'KPI Stok' },
       );
     } else if (pathname.startsWith('/users')) {
       navItems.push(
         { href: '/', icon: Home, label: 'Portal' },
         { href: '/users', icon: Users, label: 'User' },
-        { href: '/daisha', icon: BarChart2, label: 'Perbaikan' },
-        { href: '/maintenance', icon: Target, label: 'PM' },
+        { href: '/admin', icon: Settings, label: 'Bengkel' },
       );
     } else {
       navItems.push(
         { href: '/', icon: Home, label: 'Portal' },
-        { href: '/daisha', icon: BarChart2, label: 'Analitik' },
+        { href: '/kpi', icon: BarChart2, label: 'Pusat KPI' },
+        { href: '/admin', icon: Settings, label: 'Bengkel' },
         { href: '/input', icon: PenSquare, label: 'Lapor' },
-        { href: '/admin', icon: Settings, label: 'Tindakan' },
       );
     }
   } else if (isOperator) {
@@ -94,7 +99,7 @@ export default function MobileNav({
       {/* Top Mobile Bar */}
       <div className="md:hidden bg-slate-900 border-b border-slate-800 text-white flex items-center justify-between px-3.5 py-2.5 z-20">
         <div className="flex items-center gap-2">
-          <div className="bg-white px-2 py-0.5 rounded flex items-center shadow-xs">
+          <div className="bg-white px-2 py-0.5 rounded flex items-center">
             <Image
               src="/logo-bs.png"
               alt="Logo Bridgestone"
@@ -120,7 +125,7 @@ export default function MobileNav({
       </div>
 
       {/* Bottom Navigation Bar */}
-      <nav aria-label="Navigasi Bawah Layar Sentuh" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1 flex items-center justify-around shadow-sm">
+      <nav aria-label="Navigasi Bawah Layar Sentuh" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1 flex items-center justify-around">
         {navItems.map(item => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -134,7 +139,7 @@ export default function MobileNav({
               }`}
             >
               <Icon className="w-4 h-4" />
-              <span className="text-[10px] mt-0.5">{item.label}</span>
+              <span className="text-xs mt-0.5">{item.label}</span>
               {isActive && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />}
             </Link>
           );
@@ -147,7 +152,7 @@ export default function MobileNav({
           aria-label="Keluar dari akun sistem"
         >
           <LogOut className="w-4 h-4" />
-          <span className="text-[10px] mt-0.5">Keluar</span>
+          <span className="text-xs mt-0.5">Keluar</span>
         </button>
       </nav>
     </>

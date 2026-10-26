@@ -339,7 +339,7 @@ export default function PrintTicketTagModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-medium text-sm cursor-pointer shadow-2xs transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-medium text-sm cursor-pointer transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             aria-label="Tutup pratinjau tag fisik"
             title="Tutup Pratinjau"
           >
@@ -366,8 +366,8 @@ export default function PrintTicketTagModal({
                   />
                 </div>
                 <div>
-                  <p className="text-white font-black text-[11px] tracking-widest uppercase leading-tight">PT. Bridgestone Tire Indonesia</p>
-                  <p className="text-red-200 print:text-white font-bold text-[9px] tracking-wider uppercase">Daisha Repair &amp; Maintenance</p>
+                  <p className="text-white font-black text-xs tracking-widest uppercase leading-tight">PT. Bridgestone Tire Indonesia</p>
+                  <p className="text-red-200 print:text-white font-bold text-xs tracking-wider uppercase">Daisha Repair &amp; Maintenance</p>
                 </div>
               </div>
               <div className="text-right">
@@ -378,7 +378,7 @@ export default function PrintTicketTagModal({
 
             {/* 2. UNIT NUMBER HERO */}
             <div className="px-4 pt-4 pb-3 border-b-2 border-black text-center">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 print:text-slate-700 mb-0.5">NOMOR UNIT DAISHA</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 print:text-slate-700 mb-0.5">NOMOR UNIT DAISHA</p>
               <div className="flex items-center justify-center gap-3">
                 <span className="font-black text-5xl tracking-tight text-slate-900 leading-none tabular-nums">
                   {ticket.noDaisha}
@@ -394,18 +394,18 @@ export default function PrintTicketTagModal({
                 <span className="text-slate-300 print:text-black">|</span>
                 <span className="text-sm font-bold text-slate-700 print:text-black uppercase">{ticket.seksi}</span>
               </div>
-              <p className="text-[9px] font-semibold text-slate-400 print:text-black mt-1">
+              <p className="text-xs font-semibold text-slate-400 print:text-black mt-1">
                 ↩ Kembalikan ke: <strong>{ticket.seksi}</strong> setelah selesai diperbaiki
               </p>
             </div>
 
             {/* 3. METADATA ROW */}
             <div className="px-4 py-2 border-b border-black/30 flex justify-between items-center bg-slate-50 print:bg-transparent">
-              <div className="text-[9px]">
+              <div className="text-xs">
                 <span className="font-bold uppercase tracking-wide text-slate-500 print:text-black">Pelapor: </span>
                 <span className="font-black text-slate-900">{ticket.namaPelapor}</span>
               </div>
-              <div className="text-[9px]">
+              <div className="text-xs">
                 <span className="font-bold uppercase tracking-wide text-slate-500 print:text-black">Tgl Masuk: </span>
                 <span className="font-black text-slate-900">{ticket.waktuMasuk}</span>
               </div>
@@ -414,8 +414,8 @@ export default function PrintTicketTagModal({
             {/* 4. DAMAGE CHECKLIST */}
             <div className="px-4 pt-3 pb-3">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-black uppercase tracking-wider">RINCIAN KERUSAKAN &amp; TINDAKAN:</span>
-                <span className="text-[9px] font-bold bg-slate-200 px-2 py-0.5 rounded-full border border-slate-300 print:border-black">
+                <span className="text-xs font-black uppercase tracking-wider">RINCIAN KERUSAKAN &amp; TINDAKAN:</span>
+                <span className="text-xs font-bold bg-slate-200 px-2 py-0.5 rounded-full border border-slate-300 print:border-black">
                   {parsed.totalQtyAll} pcs total
                 </span>
               </div>
@@ -435,17 +435,17 @@ export default function PrintTicketTagModal({
                         {item.komponen && item.komponen !== 'Umum' && item.komponen !== 'Others' && (
                           <span className="text-[8px] font-bold uppercase tracking-wide text-slate-400 print:text-slate-600 block leading-tight">{item.komponen}</span>
                         )}
-                        <span className="text-[11px] font-extrabold text-slate-900 leading-tight block">
+                        <span className="text-xs font-extrabold text-slate-900 leading-tight block">
                           {item.gejala}
                         </span>
                       </div>
 
                       {/* Right badges */}
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="text-[9px] font-black bg-slate-100 border border-black px-1.5 py-0.5 rounded">
+                        <span className="text-xs font-black bg-slate-100 border border-black px-1.5 py-0.5 rounded">
                           {item.qty}&times;
                         </span>
-                        <span className={`text-[9px] font-black px-2 py-0.5 rounded border-2 ${
+                        <span className={`text-xs font-black px-2 py-0.5 rounded border-2 ${
                           item.tindakan === 'Ganti'
                             ? 'bg-blue-600 text-white border-blue-800 print:bg-white print:text-black print:border-black'
                             : 'bg-orange-500 text-white border-orange-700 print:bg-white print:text-black print:border-black'
@@ -456,7 +456,7 @@ export default function PrintTicketTagModal({
                     </div>
                   ))
                 ) : (
-                  <div className="p-3 text-[11px] font-medium text-center text-slate-600">{ticket.detail}</div>
+                  <div className="p-3 text-xs font-medium text-center text-slate-600">{ticket.detail}</div>
                 )}
               </div>
 
@@ -470,7 +470,7 @@ export default function PrintTicketTagModal({
 
             {/* 5. SIGNATURE / HANDOVER BOXES */}
             <div className="px-4 pb-3 border-t-2 border-black pt-3">
-              <p className="text-[9px] font-black uppercase tracking-wider mb-2">VERIFIKASI SERAH TERIMA UNIT:</p>
+              <p className="text-xs font-black uppercase tracking-wider mb-2">VERIFIKASI SERAH TERIMA UNIT:</p>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { label: '1. Pelapor', sub: ticket.namaPelapor },
@@ -517,7 +517,7 @@ export default function PrintTicketTagModal({
             <button
               type="button"
               onClick={handlePrint}
-              className="flex-1 sm:flex-initial min-h-[40px] px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg shadow-xs transition cursor-pointer flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+              className="flex-1 sm:flex-initial min-h-[40px] px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition cursor-pointer flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
             >
               <Printer className="w-4 h-4" />
               <span>Cetak Tag Fisik (Print)</span>

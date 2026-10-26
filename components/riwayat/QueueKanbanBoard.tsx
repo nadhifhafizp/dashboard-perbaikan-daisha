@@ -43,10 +43,10 @@ export default function QueueKanbanBoard({
       .sort((a, b) => parseToTimestamp(a.tglMasuk) - parseToTimestamp(b.tglMasuk));
   }, [tickets]);
 
-  // 2. Kolom 2: Sedang Dikerjakan (Status 'Progress')
+  // 2. Kolom 2: Sedang Dikerjakan / Pending (Status 'Progress' | 'Pending')
   const inProgressTickets = React.useMemo(() => {
     return tickets
-      .filter((t) => t.status === 'Progress')
+      .filter((t) => t.status === 'Progress' || t.status === 'Pending')
       .sort((a, b) => parseToTimestamp(a.tglMasuk) - parseToTimestamp(b.tglMasuk));
   }, [tickets]);
 
@@ -64,7 +64,7 @@ export default function QueueKanbanBoard({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
       {/* Kolom 1: Menunggu antrean */}
-      <div className="bg-slate-50/80 rounded-xl border border-amber-200/70 p-3.5 flex flex-col h-[580px] shadow-2xs">
+      <div className="bg-slate-50/80 rounded-xl border border-amber-200/70 p-3.5 flex flex-col h-[580px]">
         {/* Header Kolom */}
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-amber-200/50 shrink-0">
           <div className="flex items-center gap-2">
@@ -101,9 +101,9 @@ export default function QueueKanbanBoard({
               return (
                 <div
                   key={ticket.idTiketAsli}
-                  className={`bg-white rounded-lg p-2.5 border transition hover:shadow-xs space-y-1.5 cursor-pointer ${
+                  className={`bg-white rounded-lg p-2.5 border transition space-y-1.5 cursor-pointer ${
                     isTopPriority
-                      ? 'border-amber-400 ring-1 ring-amber-300 shadow-2xs'
+                      ? 'border-amber-400 ring-1 ring-amber-300'
                       : isNeedsDiagnosis
                       ? 'border-amber-300/90 bg-amber-50/20'
                       : 'border-slate-200 hover:border-amber-300'
@@ -122,7 +122,7 @@ export default function QueueKanbanBoard({
                       >
                         #{queueNumber}
                       </span>
-                      <span className="px-2 py-0.5 bg-red-700 text-white font-mono font-medium text-xs rounded shadow-2xs">
+                      <span className="px-2 py-0.5 bg-red-700 text-white font-mono font-medium text-xs rounded">
                         {ticket.noDaisha}
                       </span>
                       {sizeInfo && (
@@ -181,7 +181,7 @@ export default function QueueKanbanBoard({
       </div>
 
       {/* Kolom 2: Sedang diperbaiki */}
-      <div className="bg-slate-50/80 rounded-xl border border-blue-200/70 p-3.5 flex flex-col h-[580px] shadow-2xs">
+      <div className="bg-slate-50/80 rounded-xl border border-blue-200/70 p-3.5 flex flex-col h-[580px]">
         {/* Header Kolom */}
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-blue-200/50 shrink-0">
           <div className="flex items-center gap-2">
@@ -216,13 +216,13 @@ export default function QueueKanbanBoard({
               return (
                 <div
                   key={ticket.idTiketAsli}
-                  className="bg-white rounded-lg p-2.5 border border-blue-200 hover:border-blue-400 hover:shadow-xs transition space-y-1.5 cursor-pointer shadow-2xs"
+                  className="bg-white rounded-lg p-2.5 border border-blue-200 hover:border-blue-400 transition space-y-1.5 cursor-pointer"
                   onClick={() => onViewDetail(ticket)}
                 >
                   {/* Baris 1 */}
                   <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="px-2 py-0.5 bg-red-700 text-white font-mono font-medium text-xs rounded shadow-2xs">
+                      <span className="px-2 py-0.5 bg-red-700 text-white font-mono font-medium text-xs rounded">
                         {ticket.noDaisha}
                       </span>
                       {sizeInfo && (
@@ -232,9 +232,15 @@ export default function QueueKanbanBoard({
                           {sizeInfo.label}
                         </span>
                       )}
-                      <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded border border-blue-200">
-                        Diproses
-                      </span>
+                      {ticket.status === 'Pending' ? (
+                        <span className="px-1.5 py-0.5 bg-orange-100 text-orange-800 text-xs font-semibold rounded border border-orange-200">
+                          Pending Part
+                        </span>
+                      ) : (
+                        <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded border border-blue-200">
+                          Diproses
+                        </span>
+                      )}
                     </div>
                     <span className="text-xs font-medium text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 shrink-0">
                       {ticket.seksi}
@@ -284,7 +290,7 @@ export default function QueueKanbanBoard({
       </div>
 
       {/* Kolom 3: Siap diambil / selesai */}
-      <div className="bg-slate-50/80 rounded-xl border border-emerald-200/70 p-3.5 flex flex-col h-[580px] shadow-2xs">
+      <div className="bg-slate-50/80 rounded-xl border border-emerald-200/70 p-3.5 flex flex-col h-[580px]">
         {/* Header Kolom */}
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-emerald-200/50 shrink-0">
           <div className="flex items-center gap-2">
@@ -324,13 +330,13 @@ export default function QueueKanbanBoard({
               return (
                 <div
                   key={ticket.idTiketAsli}
-                  className="bg-white rounded-lg p-2.5 border border-emerald-200 hover:border-emerald-400 hover:shadow-xs transition space-y-1.5 cursor-pointer shadow-2xs"
+                  className="bg-white rounded-lg p-2.5 border border-emerald-200 hover:border-emerald-400 transition space-y-1.5 cursor-pointer"
                   onClick={() => onViewDetail(ticket)}
                 >
                   {/* Baris 1 */}
                   <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="px-2 py-0.5 bg-red-700 text-white font-mono font-medium text-xs rounded shadow-2xs">
+                      <span className="px-2 py-0.5 bg-red-700 text-white font-mono font-medium text-xs rounded">
                         {ticket.noDaisha}
                       </span>
                       {sizeInfo && (

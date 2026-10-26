@@ -428,7 +428,7 @@ export default function MaintenanceInputModal({
         {/* Modal Header */}
         <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-2xs">
+            <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white">
               <ClipboardCheck className="w-5 h-5" />
             </div>
             <div>
@@ -436,11 +436,11 @@ export default function MaintenanceInputModal({
                 <h3 id="pm-input-modal-title" className="text-sm font-bold text-white tracking-tight">
                   Input Preventive Maintenance (PM) Daisha
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   PM Berkala
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 mt-0.5">
+              <p className="text-xs text-slate-300 mt-0.5">
                 Lembar ceklis inspeksi 9 komponen standar & pelumasan tahunan Daisha
               </p>
             </div>
@@ -467,7 +467,7 @@ export default function MaintenanceInputModal({
 
           {/* SMART VALIDATION WARNING BANNER */}
           {smartWarning?.show && (
-            <div className="p-3.5 bg-amber-50 border border-amber-300 text-amber-900 text-xs rounded-xl shadow-xs space-y-2">
+            <div className="p-3.5 bg-amber-50 border border-amber-300 text-amber-900 text-xs rounded-xl space-y-2">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-1">
@@ -492,7 +492,7 @@ export default function MaintenanceInputModal({
                   type="button"
                   onClick={() => handleSubmit(undefined, true)}
                   disabled={isSubmitting}
-                  className="px-3 py-1 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition shadow-2xs flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-1 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition flex items-center gap-1 cursor-pointer"
                 >
                   {isSubmitting && <Loader2 className="w-3 h-3 animate-spin" />}
                   <span>Tetap Lanjutkan (Bypass)</span>
@@ -502,7 +502,7 @@ export default function MaintenanceInputModal({
           )}
 
           {/* 1. Kategori Pengerjaan: Terkunci pada Maintenance Berkala (PM) */}
-          <div className="p-3 bg-emerald-50/80 border border-emerald-200/90 rounded-xl flex items-center justify-between shadow-2xs">
+          <div className="p-3 bg-emerald-50/80 border border-emerald-200/90 rounded-xl flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0">
                 <Wrench className="w-4 h-4" />
@@ -511,12 +511,12 @@ export default function MaintenanceInputModal({
                 <span className="text-xs font-bold text-emerald-950 block">
                   Kategori Pengerjaan: Preventive Maintenance (PM Rutin)
                 </span>
-                <span className="text-[11px] text-emerald-800">
+                <span className="text-xs text-emerald-800">
                   Inspeksi fisik 9 komponen, pengujian fungsi rem/roda, dan pelumasan berkala
                 </span>
               </div>
             </div>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 shrink-0">
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 shrink-0">
               Siklus PM
             </span>
           </div>
@@ -528,7 +528,7 @@ export default function MaintenanceInputModal({
                 Nomor Daisha <span className="text-red-500">*</span>
               </label>
               {isChecking && (
-                <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                <span className="text-xs text-slate-500 flex items-center gap-1">
                   <Loader2 className="w-3 h-3 animate-spin text-red-500" />
                   Mengecek database...
                 </span>
@@ -598,7 +598,7 @@ export default function MaintenanceInputModal({
           </div>
 
           {/* 4. LEMBAR CEKLIS INSPEKSI 9 KOMPONEN DAISHA */}
-          <div className="border border-slate-200/90 rounded-2xl overflow-hidden bg-slate-50/50 shadow-2xs space-y-3 p-4">
+          <div className="border border-slate-200/90 rounded-2xl overflow-hidden bg-slate-50/50 space-y-3 p-4">
             {/* Header Checklist & Action Bar */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 pb-3 border-b border-slate-200">
               <div>
@@ -607,11 +607,11 @@ export default function MaintenanceInputModal({
                     <ClipboardCheck className="w-4 h-4 text-emerald-600" />
                     <span>Lembar Ceklis Pemeriksaan Komponen</span>
                   </h4>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
                     9 Komponen
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Periksa kondisi fisik dan fungsi masing-masing komponen Daisha saat servis PM
                 </p>
               </div>
@@ -620,7 +620,7 @@ export default function MaintenanceInputModal({
               <button
                 type="button"
                 onClick={handleSetAllOk}
-                className="h-7 px-3 bg-white hover:bg-emerald-50 text-emerald-700 text-[11px] font-bold rounded-lg border border-emerald-300 shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
+                className="h-7 px-3 bg-white hover:bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-300 transition flex items-center gap-1.5 cursor-pointer"
                 title="Tandai semua komponen dalam kondisi baik"
               >
                 <Check className="w-3.5 h-3.5" />
@@ -647,7 +647,7 @@ export default function MaintenanceInputModal({
                 </span>
               </div>
 
-              <div className="flex items-center gap-1 text-[11px] font-semibold">
+              <div className="flex items-center gap-1 text-xs font-semibold">
                 <button
                   type="button"
                   onClick={() => setFilterPartView('ALL')}
@@ -696,14 +696,14 @@ export default function MaintenanceInputModal({
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold">
+                          <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold">
                             {idx + 1}
                           </span>
                           <span className="text-xs font-bold text-slate-900">
                             {part.name}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-500 mt-0.5 ml-7">
+                        <p className="text-xs text-slate-500 mt-0.5 ml-7">
                           {part.standardCheck}
                         </p>
                       </div>
@@ -713,9 +713,9 @@ export default function MaintenanceInputModal({
                         <button
                           type="button"
                           onClick={() => handlePartConditionChange(part.id, 'OK')}
-                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                          className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition cursor-pointer flex items-center gap-1 ${
                             isOk
-                              ? 'bg-emerald-600 border-emerald-600 text-white shadow-2xs'
+                              ? 'bg-emerald-600 border-emerald-600 text-white'
                               : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                           }`}
                         >
@@ -726,9 +726,9 @@ export default function MaintenanceInputModal({
                         <button
                           type="button"
                           onClick={() => handlePartConditionChange(part.id, 'SERVIS')}
-                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                          className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition cursor-pointer flex items-center gap-1 ${
                             isServis
-                              ? 'bg-amber-500 border-amber-500 text-white shadow-2xs'
+                              ? 'bg-amber-500 border-amber-500 text-white'
                               : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                           }`}
                         >
@@ -739,9 +739,9 @@ export default function MaintenanceInputModal({
                         <button
                           type="button"
                           onClick={() => handlePartConditionChange(part.id, 'GANTI')}
-                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                          className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition cursor-pointer flex items-center gap-1 ${
                             isGanti
-                              ? 'bg-rose-600 border-rose-600 text-white shadow-2xs'
+                              ? 'bg-rose-600 border-rose-600 text-white'
                               : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                           }`}
                         >
@@ -755,7 +755,7 @@ export default function MaintenanceInputModal({
                     {!isOk && (
                       <div className="pt-2 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                         <div>
-                          <label className="text-[10px] font-bold text-slate-700 block mb-1">
+                          <label className="text-xs font-bold text-slate-700 block mb-1">
                             Tindakan Teknisi:
                           </label>
                           <div className="flex flex-wrap gap-1">
@@ -764,7 +764,7 @@ export default function MaintenanceInputModal({
                                 key={opt}
                                 type="button"
                                 onClick={() => handlePartActionChange(part.id, opt)}
-                                className={`text-[10px] px-2 py-0.5 rounded-md border font-medium transition cursor-pointer ${
+                                className={`text-xs px-2 py-0.5 rounded-md border font-medium transition cursor-pointer ${
                                   part.action === opt
                                     ? isGanti
                                       ? 'bg-rose-600 text-white border-rose-600 font-bold'
@@ -779,7 +779,7 @@ export default function MaintenanceInputModal({
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-bold text-slate-700 block mb-1">
+                          <label className="text-xs font-bold text-slate-700 block mb-1">
                             Keterangan Masalah / Part:
                           </label>
                           <input
@@ -787,7 +787,7 @@ export default function MaintenanceInputModal({
                             value={part.note}
                             onChange={(e) => handlePartNoteChange(part.id, e.target.value)}
                             placeholder="Misal: Roda aus tapak sobek, bearing kering..."
-                            className="w-full h-7 px-2 text-[11px] bg-white border border-slate-300 rounded-md text-slate-900 outline-none focus:ring-1 focus:ring-slate-800"
+                            className="w-full h-7 px-2 text-xs bg-white border border-slate-300 rounded-md text-slate-900 outline-none focus:ring-1 focus:ring-slate-800"
                           />
                         </div>
                       </div>
@@ -858,7 +858,7 @@ export default function MaintenanceInputModal({
 
           {/* Action Buttons */}
           <div className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-2.5">
-            <div className="text-[11px] text-slate-500 text-center sm:text-left">
+            <div className="text-xs text-slate-500 text-center sm:text-left">
               {isUnitDamaged ? (
                 <span className="text-amber-700 font-semibold flex items-center gap-1">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
@@ -883,7 +883,7 @@ export default function MaintenanceInputModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 sm:flex-initial px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-xl transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="flex-1 sm:flex-initial px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>

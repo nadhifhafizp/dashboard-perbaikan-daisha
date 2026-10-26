@@ -52,7 +52,7 @@ export default function TicketTable({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden flex flex-col">
+    <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
       {/* Header Tabel */}
       <div className="p-3.5 sm:p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-slate-50/50">
         <div className="flex items-center gap-2">
@@ -60,8 +60,8 @@ export default function TicketTable({
             <ClipboardList className="w-3.5 h-3.5" />
           </div>
           <h3 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
-            <span>Daftar Tiket Perbaikan</span>
-            <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+            <span>Daftar Tiket</span>
+            <span className="text-xs font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
               {filteredData.length} Tiket
             </span>
           </h3>
@@ -70,7 +70,7 @@ export default function TicketTable({
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
           {/* Selector Urutan Data */}
           <div className="flex items-center gap-1.5 text-xs text-slate-600">
-            <span className="text-slate-500 font-normal text-[11px]">Urutkan:</span>
+            <span className="text-slate-500 font-normal text-xs">Urutkan:</span>
             <select
               value={sortBy}
               onChange={(e) => {
@@ -78,7 +78,7 @@ export default function TicketTable({
                 setCurrentPage(1);
               }}
               aria-label="Pilih opsi pengurutan data tiket"
-              className="h-8 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer shadow-2xs"
+              className="h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -90,7 +90,7 @@ export default function TicketTable({
 
           {/* Selector Jumlah Baris per Halaman */}
           <div className="flex items-center gap-1.5 text-xs text-slate-600">
-            <span className="text-slate-500 font-normal text-[11px]">Tampilkan:</span>
+            <span className="text-slate-500 font-normal text-xs">Tampilkan:</span>
             <select
               value={itemsPerPage}
               onChange={(e) => {
@@ -98,7 +98,7 @@ export default function TicketTable({
                 setCurrentPage(1);
               }}
               aria-label="Pilih jumlah baris tiket per halaman"
-              className="h-8 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer shadow-2xs"
+              className="h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer"
             >
               <option value={10}>10 baris</option>
               <option value={20}>20 baris</option>
@@ -113,7 +113,7 @@ export default function TicketTable({
           <button
             type="button"
             onClick={exportToExcel}
-            className="h-8 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition flex items-center gap-1.5 cursor-pointer text-xs shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition flex items-center gap-1.5 cursor-pointer text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Ekspor Excel</span>
@@ -125,7 +125,7 @@ export default function TicketTable({
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
           <thead>
-            <tr className="bg-slate-50/50 text-[11px] font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200/80 select-none">
+            <tr className="bg-slate-50/50 text-xs font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200/80 select-none">
               <th scope="col" className="py-3 px-3 text-center w-12">No</th>
               <th scope="col" className="py-3 px-3.5">ID Tiket</th>
               <th scope="col" aria-sort={getAriaSort('unit_asc', 'unit_desc')} className="py-3 px-3.5">
@@ -204,14 +204,14 @@ export default function TicketTable({
                 <td colSpan={10} className="py-12 text-center text-slate-500">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <span className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></span>
-                    <span>Memuat data tiket perbaikan...</span>
+                    <span>Memuat data tiket...</span>
                   </div>
                 </td>
               </tr>
             ) : paginatedData.length === 0 ? (
               <tr>
                 <td colSpan={10} className="py-12 text-center text-slate-500 font-medium">
-                  Tidak ada tiket perbaikan yang cocok dengan kriteria filter saat ini.
+                  Tiket tidak ditemukan.
                 </td>
               </tr>
             ) : (
@@ -221,7 +221,7 @@ export default function TicketTable({
 
                 return (
                   <tr key={item.id} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3 px-3 text-center text-slate-400 text-[11px] tabular-nums">
+                    <td className="py-3 px-3 text-center text-slate-400 text-xs tabular-nums">
                       {startIndex + idx + 1}
                     </td>
                     <td className="py-3 px-3.5 font-medium text-slate-600 text-xs tabular-nums">
@@ -232,7 +232,7 @@ export default function TicketTable({
                         <span className="font-bold text-slate-900 text-xs tabular-nums">{item.noDaisha}</span>
                         {sizeInfo && (
                           <span
-                            className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
+                            className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
                             title={sizeInfo.description}
                           >
                             {sizeInfo.code}
@@ -260,14 +260,14 @@ export default function TicketTable({
                                     )}
                                     <span className="text-slate-700">{it.gejala.replace(/^[•\s-]+/, '')}</span>
                                     {it.qty > 1 && (
-                                      <span className="text-slate-500 font-medium tabular-nums text-[11px]">
+                                      <span className="text-slate-500 font-medium tabular-nums text-xs">
                                         ({it.qty}x)
                                       </span>
                                     )}
                                   </div>
                                   {it.tindakan && (
                                     <span
-                                      className={`px-2 py-0.5 rounded-md text-[11px] font-medium shrink-0 ${
+                                      className={`px-2 py-0.5 rounded-md text-xs font-medium shrink-0 ${
                                         it.tindakan === 'Ganti'
                                           ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
                                           : 'bg-amber-50 text-amber-800 border border-amber-200/60'
@@ -279,7 +279,7 @@ export default function TicketTable({
                                 </div>
                               ))}
                               {parsed.catatan && (
-                                <div className="text-[11px] text-amber-800 flex items-center gap-1 mt-1">
+                                <div className="text-xs text-amber-800 flex items-center gap-1 mt-1">
                                   <MapPin className="w-3.5 h-3.5 text-amber-700 shrink-0" />
                                   <span>Posisi: {parsed.catatan}</span>
                                 </div>
@@ -290,11 +290,11 @@ export default function TicketTable({
                         if (parsed.isWaitingDiagnosis) {
                           return (
                             <div className="space-y-1 py-0.5">
-                              <span className="text-[11px] font-medium text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                              <span className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
                                 <Search className="w-3 h-3 text-amber-800" />
                                 <span>Menunggu Diagnosa</span>
                               </span>
-                              <p className="text-[11px] text-slate-600 font-normal">
+                              <p className="text-xs text-slate-600 font-normal">
                                 {parsed.catatan ? `Gejala: ${parsed.catatan}` : 'Kerusakan belum diidentifikasi di lapangan'}
                               </p>
                             </div>
@@ -303,12 +303,12 @@ export default function TicketTable({
                         return (
                           <div>
                             <span className="font-semibold text-slate-900 block text-xs">{item.jenisKerusakan}</span>
-                            <span className="text-[11px] text-slate-600">{item.detail && item.detail !== '-' ? item.detail : 'Kerusakan umum'}</span>
+                            <span className="text-xs text-slate-600">{item.detail && item.detail !== '-' ? item.detail : 'Kerusakan umum'}</span>
                           </div>
                         );
                       })()}
                       {item.reason && item.reason !== '-' && item.reason.trim() !== '' && (
-                        <p className="text-[11px] text-emerald-800 mt-1 font-normal">
+                        <p className="text-xs text-emerald-800 mt-1 font-normal">
                           Catatan: {item.reason}
                         </p>
                       )}
@@ -355,7 +355,7 @@ export default function TicketTable({
                       <span className="font-bold text-sm text-slate-900 tabular-nums">{item.noDaisha}</span>
                       {sizeInfo && (
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
+                          className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
                           title={sizeInfo.description}
                         >
                           {sizeInfo.code}
@@ -377,16 +377,16 @@ export default function TicketTable({
 
                 {/* Baris 3: Titik Kerusakan */}
                 <div className="border-l-2 border-slate-200 pl-3 py-1 space-y-1">
-                  <div className="text-[11px] font-medium text-slate-500 mb-0.5 uppercase tracking-wider">
+                  <div className="text-xs font-medium text-slate-500 mb-0.5 uppercase tracking-wider">
                     Rincian Kerusakan:
                   </div>
                   {parsed.isWaitingDiagnosis ? (
                     <div className="space-y-1 py-0.5">
-                      <span className="text-[11px] font-medium text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                      <span className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
                         <Search className="w-3 h-3 text-amber-800" />
                         <span>Menunggu Diagnosa</span>
                       </span>
-                      <p className="text-[11px] text-slate-600 font-normal">
+                      <p className="text-xs text-slate-600 font-normal">
                         {parsed.catatan ? `Gejala: ${parsed.catatan}` : 'Kerusakan belum diidentifikasi di lapangan'}
                       </p>
                     </div>
@@ -404,14 +404,14 @@ export default function TicketTable({
                           )}
                           <span className="text-slate-700">{it.gejala.replace(/^[•\s-]+/, '')}</span>
                           {it.qty > 1 && (
-                            <span className="text-slate-500 font-medium tabular-nums text-[11px]">
+                            <span className="text-slate-500 font-medium tabular-nums text-xs">
                               ({it.qty}x)
                             </span>
                           )}
                         </div>
                         {it.tindakan && (
                           <span
-                            className={`px-2 py-0.5 rounded-md text-[11px] font-medium shrink-0 ${
+                            className={`px-2 py-0.5 rounded-md text-xs font-medium shrink-0 ${
                               it.tindakan === 'Ganti'
                                 ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
                                 : 'bg-amber-50 text-amber-800 border border-amber-200/60'
@@ -429,13 +429,13 @@ export default function TicketTable({
                     </div>
                   )}
                   {parsed.catatan && !parsed.isWaitingDiagnosis && (
-                    <div className="text-[11px] text-amber-800 flex items-center gap-1 mt-1">
+                    <div className="text-xs text-amber-800 flex items-center gap-1 mt-1">
                       <MapPin className="w-3 h-3 text-amber-700 shrink-0" />
                       <span>Posisi: {parsed.catatan}</span>
                     </div>
                   )}
                   {item.reason && item.reason !== '-' && item.reason.trim() !== '' && (
-                    <p className="text-[11px] text-emerald-800 mt-1 font-normal">
+                    <p className="text-xs text-emerald-800 mt-1 font-normal">
                       Catatan: {item.reason}
                     </p>
                   )}

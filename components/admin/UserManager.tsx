@@ -232,32 +232,32 @@ export default function UserManager() {
   return (
     <div className="space-y-6">
       {/* Header Manajemen User */}
-      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base sm:text-lg font-semibold text-slate-900 flex items-center gap-2">
             <Users className="w-5 h-5 text-red-600" />
-            <span>Manajemen Akun Pengguna</span>
+            <span>Akun Pengguna</span>
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Daftar akun pengguna, otoritas hak akses, dan pengelolaan password.
+            Daftar akun pengguna, hak akses, dan password.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setIsAddModalOpen(true)}
-          className="w-full sm:w-auto h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+          className="w-full sm:w-auto h-11 sm:h-10 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>Tambah Akun Baru</span>
+          <span>Tambah Akun</span>
         </button>
       </div>
 
       {/* Tampilan Desktop: Tabel Pengguna */}
-      <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden hidden md:block">
+      <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-200/80 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+              <tr className="bg-slate-50/50 border-b border-slate-200/80 text-slate-600 font-semibold uppercase tracking-wider text-xs">
                 <th className="py-3.5 px-4">Pengguna</th>
                 <th className="py-3.5 px-4">Username</th>
                 <th className="py-3.5 px-4">Peran (Role)</th>
@@ -283,14 +283,14 @@ export default function UserManager() {
                   <tr key={u.id} className="hover:bg-slate-50/70 transition">
                     <td className="py-3.5 px-4">
                       <div className="font-semibold text-slate-900">{u.name}</div>
-                      <div className="text-[11px] text-slate-400">ID #{u.id}</div>
+                      <div className="text-xs text-slate-400">ID #{u.id}</div>
                     </td>
                     <td className="py-3.5 px-4 font-semibold text-slate-700">
                       @{u.username}
                     </td>
                     <td className="py-3.5 px-4">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium uppercase ${
+                        className={`inline-flex items-center gap-1 h-6 px-2.5 rounded-full text-xs font-semibold uppercase ${
                           u.role === 'ADMIN'
                             ? 'bg-purple-50 text-purple-800 border border-purple-200'
                             : u.role === 'USER_SEKSI'
@@ -316,7 +316,7 @@ export default function UserManager() {
                         )}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate text-[11px]">
+                    <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate text-xs">
                       {u.description || '-'}
                     </td>
                     <td className="py-3.5 px-4 text-right space-x-1.5">
@@ -327,11 +327,11 @@ export default function UserManager() {
                           setPasswordForm({ newPassword: '', confirmPassword: '' });
                           setIsPasswordModalOpen(true);
                         }}
-                        className="h-7 px-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/70 rounded-md font-medium text-[11px] transition cursor-pointer inline-flex items-center gap-1 shadow-2xs"
-                        title="Ganti atau reset password akun ini"
+                        className="h-10 min-h-[40px] px-3 bg-white hover:bg-amber-50 text-amber-800 border border-slate-200 rounded-lg font-semibold text-xs transition cursor-pointer inline-flex items-center gap-1.5"
+                        title="Ganti password"
                       >
-                        <Key className="w-3.5 h-3.5" />
-                        <span>Ganti Password</span>
+                        <Key className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Password</span>
                       </button>
                       <button
                         type="button"
@@ -345,15 +345,15 @@ export default function UserManager() {
                           });
                           setIsEditModalOpen(true);
                         }}
-                        className="h-7 px-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md font-medium text-[11px] transition cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                        className="h-10 min-h-[40px] px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg font-semibold text-xs transition cursor-pointer inline-flex items-center gap-1.5"
                       >
-                        <Edit3 className="w-3.5 h-3.5" />
+                        <Edit3 className="w-3.5 h-3.5 text-slate-500" />
                         <span>Edit</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setUserToDelete(u)}
-                        className="h-7 px-2.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-md font-medium text-[11px] transition cursor-pointer inline-flex items-center gap-1"
+                        className="h-10 min-h-[40px] px-3 bg-white hover:bg-red-50 text-red-600 border border-slate-200 rounded-lg font-semibold text-xs transition cursor-pointer inline-flex items-center gap-1.5"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Hapus</span>
@@ -379,14 +379,14 @@ export default function UserManager() {
           </div>
         ) : (
           users.map((u) => (
-            <div key={u.id} className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-3">
+            <div key={u.id} className="bg-white p-4 rounded-xl border border-slate-200/80 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="font-semibold text-sm text-slate-900">{u.name}</div>
                   <div className="text-xs text-slate-500 font-medium">@{u.username}</div>
                 </div>
                 <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-medium uppercase ${
+                  className={`inline-flex items-center gap-1 h-6 px-2.5 rounded-full text-xs font-semibold uppercase ${
                     u.role === 'ADMIN'
                       ? 'bg-purple-50 text-purple-800 border border-purple-200'
                       : u.role === 'USER_SEKSI'
@@ -427,10 +427,10 @@ export default function UserManager() {
                     setPasswordForm({ newPassword: '', confirmPassword: '' });
                     setIsPasswordModalOpen(true);
                   }}
-                  className="flex-1 py-1.5 px-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg font-medium text-xs transition cursor-pointer flex items-center justify-center gap-1"
+                  className="flex-1 h-11 sm:h-10 px-3 bg-white hover:bg-amber-50 text-amber-800 border border-slate-200 rounded-lg font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <Key className="w-3.5 h-3.5" />
-                  <span>Reset Pass</span>
+                  <Key className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Password</span>
                 </button>
                 <button
                   type="button"
@@ -444,15 +444,15 @@ export default function UserManager() {
                     });
                     setIsEditModalOpen(true);
                   }}
-                  className="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-xs transition cursor-pointer flex items-center justify-center gap-1"
+                  className="h-11 sm:h-10 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <Edit3 className="w-3.5 h-3.5" />
+                  <Edit3 className="w-3.5 h-3.5 text-slate-500" />
                   <span>Edit</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setUserToDelete(u)}
-                  className="py-1.5 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg font-medium text-xs transition cursor-pointer flex items-center justify-center"
+                  className="h-11 sm:h-10 px-3.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 rounded-lg font-semibold text-xs transition cursor-pointer flex items-center justify-center"
                   aria-label="Hapus Akun"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -548,13 +548,13 @@ export default function UserManager() {
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-lg border border-slate-200 transition cursor-pointer shadow-2xs"
+                  className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-lg border border-slate-200 transition cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
+                  className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer transition"
                 >
                   Simpan Akun Baru
                 </button>
@@ -634,13 +634,13 @@ export default function UserManager() {
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-lg border border-slate-200 transition cursor-pointer shadow-2xs"
+                  className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-lg border border-slate-200 transition cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
+                  className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer transition"
                 >
                   Simpan Perubahan
                 </button>
@@ -702,13 +702,13 @@ export default function UserManager() {
                 <button
                   type="button"
                   onClick={() => setIsPasswordModalOpen(false)}
-                  className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-lg border border-slate-200 transition cursor-pointer shadow-2xs"
+                  className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-lg border border-slate-200 transition cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="h-9 px-4 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg cursor-pointer shadow-2xs transition"
+                  className="h-9 px-4 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg cursor-pointer transition"
                 >
                   Perbarui Password
                 </button>

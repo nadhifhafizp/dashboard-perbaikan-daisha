@@ -113,7 +113,7 @@ export default function DaishaVariantSelector({
   });
 
   return (
-    <div className="mt-3 p-3.5 sm:p-4 bg-slate-50/90 border border-slate-200/90 rounded-xl shadow-2xs">
+    <div className="mt-3 p-3.5 sm:p-4 bg-slate-50/90 border border-slate-200/90 rounded-xl">
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200/70">
         <div className="flex items-center gap-2">
@@ -124,7 +124,7 @@ export default function DaishaVariantSelector({
             <h3 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
               Pilih Varian {jenisDaisha}
             </h3>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-xs text-slate-500">
               Klik salah satu varian di bawah untuk mengisi awalan kode & menyaring nomor yang sah secara otomatis.
             </p>
           </div>
@@ -142,7 +142,7 @@ export default function DaishaVariantSelector({
       {isGTRing && (
         <div className="mt-3 flex flex-wrap items-center gap-2 pt-1">
           <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs">
-            <span className="text-[11px] font-bold text-slate-500 px-1.5">Ukuran:</span>
+            <span className="text-xs font-bold text-slate-500 px-1.5">Ukuran:</span>
             {['ALL', 'Small', 'Medium', 'Large'].map((opt) => (
               <button
                 key={opt}
@@ -150,7 +150,7 @@ export default function DaishaVariantSelector({
                 onClick={() => setFilterUkuran(opt)}
                 className={`px-2 py-1 rounded text-xs font-semibold transition cursor-pointer ${
                   filterUkuran === opt
-                    ? 'bg-red-600 text-white shadow-2xs'
+                    ? 'bg-red-600 text-white'
                     : 'text-slate-700 hover:bg-slate-100'
                 }`}
               >
@@ -160,7 +160,7 @@ export default function DaishaVariantSelector({
           </div>
 
           <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs">
-            <span className="text-[11px] font-bold text-slate-500 px-1.5">Susunan:</span>
+            <span className="text-xs font-bold text-slate-500 px-1.5">Susunan:</span>
             {['ALL', 'Susun 3', 'Susun 4'].map((opt) => (
               <button
                 key={opt}
@@ -168,7 +168,7 @@ export default function DaishaVariantSelector({
                 onClick={() => setFilterSusunan(opt)}
                 className={`px-2 py-1 rounded text-xs font-semibold transition cursor-pointer ${
                   filterSusunan === opt
-                    ? 'bg-red-600 text-white shadow-2xs'
+                    ? 'bg-red-600 text-white'
                     : 'text-slate-700 hover:bg-slate-100'
                 }`}
               >
@@ -193,17 +193,17 @@ export default function DaishaVariantSelector({
                 p-3 rounded-xl border text-left transition relative cursor-pointer flex flex-col justify-between
                 ${
                   isSelected
-                    ? 'bg-red-50/80 border-red-500 ring-2 ring-red-500/30 shadow-xs'
+                    ? 'bg-red-50/80 border-red-500 ring-2 ring-red-500/30'
                     : 'bg-white hover:bg-slate-100/80 border-slate-200 hover:border-slate-300'
                 }
               `}
             >
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="px-2 py-0.5 rounded text-[11px] font-black font-mono bg-slate-100 text-slate-800 border border-slate-200">
+                  <span className="px-2 py-0.5 rounded text-xs font-black font-mono bg-slate-100 text-slate-800 border border-slate-200">
                     {v.codePrefix}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">
+                  <span className="text-xs font-bold text-slate-500 uppercase">
                     {v.totalUnits} Unit
                   </span>
                 </div>
@@ -212,12 +212,12 @@ export default function DaishaVariantSelector({
                   {v.name}
                 </div>
 
-                <div className="text-[11px] font-mono text-slate-600 font-medium mt-1">
+                <div className="text-xs font-mono text-slate-600 font-medium mt-1">
                   {v.rangeFormat}
                 </div>
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
                 <span className={`font-semibold ${isSelected ? 'text-red-700' : 'text-slate-500'}`}>
                   {isSelected ? 'Sedang Dipilih' : 'Klik untuk isi awalan'}
                 </span>

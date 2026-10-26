@@ -433,7 +433,7 @@ export default function CatalogManager() {
   return (
     <div className="space-y-5">
       {/* 1. Header Toolbar & Quick Stats */}
-      <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-5 rounded-lg border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-[#E60012]" />
@@ -450,7 +450,7 @@ export default function CatalogManager() {
           <button
             type="button"
             onClick={() => refreshCatalog()}
-            className="h-9 px-3 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-300 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            className="h-9 px-3 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-300 transition flex items-center gap-1.5 cursor-pointer"
             title="Muat ulang data katalog"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-red-600' : 'text-slate-500'}`} />
@@ -462,7 +462,7 @@ export default function CatalogManager() {
               setNewDaishaForm({ name: '', seksi: 'Building', codePrefix: '', totalUnits: 0 });
               setIsAddDaishaModalOpen(true);
             }}
-            className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
+            className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Tambah Jenis Daisha</span>
@@ -472,7 +472,7 @@ export default function CatalogManager() {
 
       {/* 2. Compact Industrial KPI Metric Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500">Seksi Pabrik Terdaftar</span>
             <p className="text-2xl font-bold text-slate-900 mt-0.5 tabular-nums">
@@ -483,7 +483,7 @@ export default function CatalogManager() {
           <Building2 className="w-6 h-6 text-slate-400" />
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500">Model & Varian Daisha</span>
             <p className="text-2xl font-bold text-slate-900 mt-0.5 tabular-nums">
@@ -494,7 +494,7 @@ export default function CatalogManager() {
           <Layers className="w-6 h-6 text-slate-400" />
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500">Total Populasi Armada Fisik</span>
             <p className="text-2xl font-bold text-slate-900 mt-0.5 tabular-nums">
@@ -507,7 +507,7 @@ export default function CatalogManager() {
       </div>
 
       {/* 3. Filter Bar */}
-      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs space-y-3">
+      <div className="bg-white p-4 rounded-lg border border-slate-200 space-y-3">
         {/* Seksi Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
           <span className="text-xs font-semibold text-slate-500 shrink-0 mr-1">
@@ -523,7 +523,7 @@ export default function CatalogManager() {
             }`}
           >
             <span>Semua Seksi</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded tabular-nums ${selectedSeksi === 'all' ? 'bg-[#B3000E] text-white' : 'bg-slate-200 text-slate-700'}`}>
+            <span className={`text-xs px-1.5 py-0.2 rounded tabular-nums ${selectedSeksi === 'all' ? 'bg-[#B3000E] text-white' : 'bg-slate-200 text-slate-700'}`}>
               {tree.length}
             </span>
           </button>
@@ -543,7 +543,7 @@ export default function CatalogManager() {
                 }`}
               >
                 <span>{s}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded tabular-nums ${isSelected ? 'bg-[#B3000E] text-white' : 'bg-slate-200 text-slate-700'}`}>
+                <span className={`text-xs px-1.5 py-0.2 rounded tabular-nums ${isSelected ? 'bg-[#B3000E] text-white' : 'bg-slate-200 text-slate-700'}`}>
                   {count}
                 </span>
               </button>
@@ -560,7 +560,7 @@ export default function CatalogManager() {
               placeholder="Cari nama daisha, kode prefix, komponen, gejala..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-8 pl-8 pr-3 border border-slate-300 rounded text-xs text-slate-900 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none placeholder:text-slate-400 shadow-2xs"
+              className="w-full h-8 pl-8 pr-3 border border-slate-300 rounded text-xs text-slate-900 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none placeholder:text-slate-400"
             />
           </div>
 
@@ -601,7 +601,7 @@ export default function CatalogManager() {
             return (
               <div
                 key={group.seksi}
-                className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden"
+                className="bg-white rounded-lg border border-slate-200 overflow-hidden"
               >
                 {/* Header Seksi */}
                 <div
@@ -751,7 +751,7 @@ export default function CatalogManager() {
                           {isExpanded && (
                             <div className="p-4 bg-slate-50 border-b border-slate-200 space-y-4">
                               {/* Sub-seksi Varian & Rentang Seri Unit */}
-                              <div className="bg-white rounded-lg border border-slate-200 p-3.5 space-y-2.5 shadow-2xs">
+                              <div className="bg-white rounded-lg border border-slate-200 p-3.5 space-y-2.5">
                                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                                   <div className="flex items-center gap-2">
                                     <Tag className="w-4 h-4 text-red-600" />
@@ -800,22 +800,22 @@ export default function CatalogManager() {
                                           <div className="flex items-center gap-1.5 flex-wrap">
                                             <span className="font-bold text-slate-900 truncate">{v.name}</span>
                                             {v.ukuran && (
-                                              <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-blue-100 text-blue-800">
+                                              <span className="px-1.5 py-0.2 rounded text-xs font-semibold bg-blue-100 text-blue-800">
                                                 {v.ukuran}
                                               </span>
                                             )}
                                             {v.susunan && (
-                                              <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                                              <span className="px-1.5 py-0.2 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">
                                                 {v.susunan}
                                               </span>
                                             )}
                                             {v.tipe && (
-                                              <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">
+                                              <span className="px-1.5 py-0.2 rounded text-xs font-semibold bg-amber-100 text-amber-800">
                                                 {v.tipe}
                                               </span>
                                             )}
                                           </div>
-                                          <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
+                                          <div className="flex items-center gap-2 text-slate-500 font-mono text-xs">
                                             {v.codePrefix && (
                                               <span className="text-slate-700 font-semibold">{v.codePrefix}</span>
                                             )}

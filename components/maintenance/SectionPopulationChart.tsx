@@ -11,6 +11,7 @@ import {
   Cell,
 } from 'recharts';
 import { Layers } from 'lucide-react';
+import { CHART } from '@/lib/chart-colors';
 
 export interface SeksiSummaryItem {
   seksi: string;
@@ -38,12 +39,12 @@ export default function SectionPopulationChart({
     .sort((a, b) => b.total - a.total);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/60 shadow-2xs p-4.5 flex flex-col justify-between h-full">
-      <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+    <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 flex flex-col justify-between h-full">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-red-600" />
-          <h2 className="text-sm sm:text-base font-bold text-slate-900">
-            Populasi Armada per Seksi
+          <Layers className="w-4 h-4 text-slate-700" />
+          <h2 className="text-sm sm:text-base font-semibold text-slate-900">
+            Populasi armada per seksi
           </h2>
         </div>
 
@@ -110,12 +111,11 @@ export default function SectionPopulationChart({
               {chartData.map((entry, index) => {
                 const isPrimary = index === 0;
                 const isSelected = selectedSeksi === entry.seksi;
-                const fill = isSelected || (selectedSeksi === 'ALL' && isPrimary) ? '#dc2626' : '#64748b';
+                const fill = isSelected || (selectedSeksi === 'ALL' && isPrimary) ? CHART.main : CHART.muted;
                 return (
                   <Cell
                     key={entry.seksi}
                     fill={fill}
-                    opacity={selectedSeksi === 'ALL' || selectedSeksi === entry.seksi ? 1 : 0.4}
                   />
                 );
               })}

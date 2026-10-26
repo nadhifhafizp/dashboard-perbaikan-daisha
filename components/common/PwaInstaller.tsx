@@ -156,7 +156,7 @@ export default function PwaInstaller({
           <button
             type="button"
             onClick={handleInstallClick}
-            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-lg transition shadow-xs cursor-pointer flex items-center gap-1.5"
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-1.5"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Install</span>
@@ -229,7 +229,7 @@ export default function PwaInstaller({
               <button
                 type="button"
                 onClick={() => setShowManualGuide(false)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition cursor-pointer"
               >
                 Mengerti
               </button>

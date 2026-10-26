@@ -34,6 +34,7 @@ yarn-error.log*
 *.tmp
 cookie.txt
 .next-server.*
+/scratch/
 
 # database (local SQLite files, dev.db, journals)
 *.db

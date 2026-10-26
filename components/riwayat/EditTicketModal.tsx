@@ -308,7 +308,7 @@ function EditTicketModalDialog({
                   ? 'Diagnosa Kerusakan Unit Daisha'
                   : 'Edit Data Tiket Perbaikan'}
               </h2>
-              <p className="text-[11px] text-slate-500 font-mono">
+              <p className="text-xs text-slate-500 font-mono">
                 {ticket.idTiketAsli || ticket.noTiket}
               </p>
             </div>
@@ -474,7 +474,7 @@ function EditTicketModalDialog({
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full sm:w-auto min-h-[44px] sm:min-h-0 sm:h-9 px-5 py-2 text-white font-medium rounded-lg shadow-xs transition cursor-pointer flex items-center justify-center gap-2 text-xs disabled:opacity-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1 ${
+              className={`w-full sm:w-auto min-h-[44px] sm:min-h-0 sm:h-9 px-5 py-2 text-white font-medium rounded-lg transition cursor-pointer flex items-center justify-center gap-2 text-xs disabled:opacity-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1 ${
                 initial.isNeedsDiagnosis
                   ? 'bg-amber-600 hover:bg-amber-700 focus-visible:ring-amber-500'
                   : 'bg-red-600 hover:bg-red-700 focus-visible:ring-red-600'

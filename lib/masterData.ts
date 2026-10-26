@@ -1,13 +1,6 @@
 /**
- * lib/masterData.ts — Definisi Seksi & Tipe Data Daisha
- * 
- * ============================================================================
- * CATATAN ARSITEKTUR:
- * Seluruh data katalog Daisha, varian, dan rincian kerusakan kini telah
- * dimigrasikan sepenuhnya ke database PostgreSQL (tabel DaishaType,
- * DaishaComponent, DaishaSymptom, DaishaVariant, Section).
- * Modul ini hanya menyimpan daftar konstanta seksi dan helper ringan.
- * ============================================================================
+ * lib/masterData.ts - Definisi Seksi & Tipe Data Daisha
+ * Data katalog Daisha dimigrasikan ke PostgreSQL; modul ini memuat konstanta seksi dan helper kompatibilitas.
  */
 
 export interface DaishaMasterInfo {

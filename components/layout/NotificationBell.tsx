@@ -100,7 +100,7 @@ export default function NotificationBell() {
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-600 text-white text-xs font-bold flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -117,7 +117,7 @@ export default function NotificationBell() {
               <button
                 type="button"
                 onClick={markAllAsRead}
-                className="text-[10px] text-red-600 hover:text-red-800 font-semibold cursor-pointer"
+                className="text-xs text-red-600 hover:text-red-800 font-semibold cursor-pointer"
               >
                 Tandai semua dibaca
               </button>
@@ -140,16 +140,16 @@ export default function NotificationBell() {
                 >
                   <div className="flex justify-between items-start gap-2">
                     <span className="font-bold text-slate-900 leading-tight">{n.judul}</span>
-                    <span className="text-[9px] text-slate-400 shrink-0 tabular-nums">
+                    <span className="text-xs text-slate-400 shrink-0 tabular-nums">
                       {formatTime(n.waktu)}
                     </span>
                   </div>
-                  <p className="text-slate-600 text-[11px] leading-relaxed">{n.pesan}</p>
+                  <p className="text-slate-600 text-xs leading-relaxed">{n.pesan}</p>
                   {n.link && (
                     <Link
                       href={n.link}
                       onClick={() => setIsOpen(false)}
-                      className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 hover:text-red-800 pt-0.5"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-800 pt-0.5"
                     >
                       <span>Buka Form</span>
                       <ExternalLink className="w-3 h-3" />

@@ -206,7 +206,7 @@ function AdminTicketTableComponent({
   }, [filteredTickets, startIndex, itemsPerPage]);
 
   return (
-    <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden flex flex-col">
+    <div className="w-full bg-white rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
       {/* Header Info */}
       <div className="p-3.5 sm:p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50/50">
         <div>
@@ -214,7 +214,7 @@ function AdminTicketTableComponent({
             <ClipboardList className="w-4 h-4 text-slate-700" />
             <span>Daftar Tiket Antrean Bengkel (Raw Data)</span>
           </h2>
-          <span className="text-[11px] text-slate-500 font-normal">
+          <span className="text-xs text-slate-500 font-normal">
             Menampilkan {paginatedTickets.length} dari {filteredTickets.length} tiket (
             {filterTab === 'all' ? 'Semua Status' : filterTab})
           </span>
@@ -226,7 +226,7 @@ function AdminTicketTableComponent({
         {/* Filter Baris 1 */}
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           <div>
-            <label htmlFor="admin-filter-seksi" className="block text-[11px] font-medium text-slate-600 mb-1">
+            <label htmlFor="admin-filter-seksi" className="block text-xs font-medium text-slate-600 mb-1">
               Seksi Asal
             </label>
             <select
@@ -237,7 +237,7 @@ function AdminTicketTableComponent({
                 setSelectedDaisha('all');
                 setCurrentPage(1);
               }}
-              className="w-full h-8 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer shadow-2xs"
+              className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer"
             >
               <option value="all">Semua Seksi ({tickets.length})</option>
               {seksiList.map((s) => {
@@ -252,7 +252,7 @@ function AdminTicketTableComponent({
           </div>
 
           <div>
-            <label htmlFor="admin-filter-daisha" className="block text-[11px] font-medium text-slate-600 mb-1">
+            <label htmlFor="admin-filter-daisha" className="block text-xs font-medium text-slate-600 mb-1">
               Jenis Daisha
             </label>
             <select
@@ -262,7 +262,7 @@ function AdminTicketTableComponent({
                 setSelectedDaisha(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full h-8 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer shadow-2xs"
+              className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer"
             >
               <option value="all">
                 {selectedSeksi !== 'all' ? `Semua Jenis (${selectedSeksi})` : 'Semua Jenis Daisha'}
@@ -284,7 +284,7 @@ function AdminTicketTableComponent({
           </div>
 
           <div>
-            <label htmlFor="admin-filter-aging" className="block text-[11px] font-medium text-slate-600 mb-1 flex items-center gap-1">
+            <label htmlFor="admin-filter-aging" className="block text-xs font-medium text-slate-600 mb-1 flex items-center gap-1">
               <Clock className="w-3 h-3 text-slate-400" />
               <span>Durasi Menginap</span>
             </label>
@@ -295,7 +295,7 @@ function AdminTicketTableComponent({
                 setSelectedAging(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full h-8 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer shadow-2xs"
+              className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer"
             >
               <option value="all">Semua Durasi</option>
               <option value="today">Hari Ini (&lt; 24 Jam)</option>
@@ -309,14 +309,14 @@ function AdminTicketTableComponent({
               <button
                 type="button"
                 onClick={resetAllFilters}
-                className="w-full h-8 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                className="w-full h-10 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer"
                 title="Kembalikan semua filter ke default"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset Filter</span>
+                <span>Reset</span>
               </button>
             ) : (
-              <div className="w-full h-8 px-3 text-[11px] text-slate-400 font-normal flex items-center justify-center select-none">
+              <div className="w-full h-10 px-3 text-xs text-slate-400 font-normal flex items-center justify-center select-none">
                 Filter Standar
               </div>
             )}
@@ -336,7 +336,7 @@ function AdminTicketTableComponent({
                   setSearch(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full h-8 pl-8 pr-7 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none placeholder:text-slate-400 shadow-2xs"
+                className="w-full h-10 pl-8 pr-7 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none placeholder:text-slate-400"
               />
               {search && (
                 <button
@@ -357,7 +357,7 @@ function AdminTicketTableComponent({
             <button
               type="button"
               onClick={() => setIsQrScannerOpen(true)}
-              className="h-8 px-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shrink-0 shadow-2xs cursor-pointer"
+              className="h-10 px-3.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shrink-0 cursor-pointer"
               title="Scan Barcode / QR Tag Fisik Daisha dengan Kamera"
             >
               <ScanLine className="w-3.5 h-3.5" />
@@ -367,7 +367,7 @@ function AdminTicketTableComponent({
 
           <div className="flex items-center gap-2.5 flex-wrap">
             <div className="flex items-center gap-1.5">
-              <label htmlFor="admin-sort-select" className="text-[11px] text-slate-500 shrink-0 font-medium">
+              <label htmlFor="admin-sort-select" className="text-xs text-slate-500 shrink-0 font-medium">
                 Urutkan:
               </label>
               <select
@@ -377,7 +377,7 @@ function AdminTicketTableComponent({
                   setSortBy(e.target.value as SortOption);
                   setCurrentPage(1);
                 }}
-                className="h-8 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer shadow-2xs"
+                className="h-10 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -388,7 +388,7 @@ function AdminTicketTableComponent({
             </div>
 
             <div className="flex items-center gap-1.5">
-              <label htmlFor="admin-per-page-select" className="text-[11px] text-slate-500 shrink-0 font-medium">
+              <label htmlFor="admin-per-page-select" className="text-xs text-slate-500 shrink-0 font-medium">
                 Tampilkan:
               </label>
               <select
@@ -398,7 +398,7 @@ function AdminTicketTableComponent({
                   setItemsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="h-8 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer shadow-2xs"
+                className="h-10 px-2.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none cursor-pointer"
               >
                 <option value={10}>10 baris</option>
                 <option value={20}>20 baris</option>
@@ -441,7 +441,7 @@ function AdminTicketTableComponent({
                       <span className="font-mono font-bold text-sm text-slate-900">{t.noDaisha}</span>
                       {sizeInfo && (
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
+                          className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
                           title={sizeInfo.description}
                         >
                           {sizeInfo.code}
@@ -461,16 +461,16 @@ function AdminTicketTableComponent({
 
                 {/* Kerusakan */}
                 <div className="border-l-2 border-slate-200 pl-3 py-1 space-y-1">
-                  <div className="text-[11px] font-medium text-slate-500 mb-0.5 uppercase tracking-wider">
+                  <div className="text-xs font-medium text-slate-500 mb-0.5 uppercase tracking-wider">
                     Rincian Kerusakan:
                   </div>
                   {parsed.isWaitingDiagnosis ? (
                     <div className="space-y-1 py-0.5">
-                      <span className="text-[11px] font-medium text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                      <span className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
                         <Search className="w-3 h-3 text-amber-800" />
                         <span>Menunggu Diagnosa</span>
                       </span>
-                      <p className="text-[11px] text-slate-600 font-normal">
+                      <p className="text-xs text-slate-600 font-normal">
                         {parsed.catatan ? `Gejala: ${parsed.catatan}` : 'Kerusakan belum diidentifikasi di lapangan'}
                       </p>
                     </div>
@@ -484,14 +484,14 @@ function AdminTicketTableComponent({
                             )}
                             <span className="text-slate-700">{it.gejala.replace(/^[•\s-]+/, '')}</span>
                             {it.qty > 1 && (
-                              <span className="text-slate-500 font-medium tabular-nums text-[11px]">
+                              <span className="text-slate-500 font-medium tabular-nums text-xs">
                                 ({it.qty}x)
                               </span>
                             )}
                           </div>
                           {it.tindakan && (
                             <span
-                              className={`px-2 py-0.5 rounded-md text-[11px] font-medium shrink-0 ${
+                              className={`px-2 py-0.5 rounded-md text-xs font-medium shrink-0 ${
                                 it.tindakan === 'Ganti'
                                   ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
                                   : 'bg-amber-50 text-amber-800 border border-amber-200/60'
@@ -510,13 +510,13 @@ function AdminTicketTableComponent({
                     </div>
                   )}
                   {parsed.catatan && !parsed.isWaitingDiagnosis && (
-                    <div className="text-[11px] text-amber-800 flex items-center gap-1 mt-1">
+                    <div className="text-xs text-amber-800 flex items-center gap-1 mt-1">
                       <MapPin className="w-3 h-3 text-amber-700 shrink-0" />
                       <span>Posisi: {parsed.catatan}</span>
                     </div>
                   )}
                   {t.reason && t.reason !== '-' && t.reason.trim() !== '' && (
-                    <p className="text-[11px] text-emerald-800 mt-1 font-normal">Catatan: {t.reason}</p>
+                    <p className="text-xs text-emerald-800 mt-1 font-normal">Catatan: {t.reason}</p>
                   )}
                 </div>
 
@@ -537,7 +537,7 @@ function AdminTicketTableComponent({
                   {parsed.isWaitingDiagnosis && t.status !== 'Done' && t.status !== 'Scrap' && (
                     <button
                       onClick={() => onEditTicket(t)}
-                      className="h-8 px-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium rounded-lg shadow-2xs transition flex items-center justify-center gap-1 cursor-pointer"
+                      className="h-11 sm:h-10 px-3 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium rounded-lg transition flex items-center justify-center gap-1 cursor-pointer"
                       title="Diagnosa & Input Titik Kerusakan di Bengkel"
                     >
                       <Wrench className="w-3.5 h-3.5" />
@@ -546,14 +546,14 @@ function AdminTicketTableComponent({
                   )}
                   <button
                     onClick={() => onSelectTicket(t)}
-                    className="flex-1 h-8 px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium rounded-lg shadow-2xs transition flex items-center justify-center gap-1 cursor-pointer"
+                    className="flex-1 h-11 sm:h-10 px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium rounded-lg transition flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <Wrench className="w-3.5 h-3.5" />
                     <span>Proses</span>
                   </button>
                   <button
                     onClick={() => onTagTicket(t)}
-                    className="h-8 px-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium rounded-lg shadow-2xs transition cursor-pointer flex items-center gap-1"
+                    className="h-11 sm:h-10 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1"
                     title="Cetak Tag Fisik Daisha"
                   >
                     <Tag className="w-3.5 h-3.5 text-slate-500" />
@@ -563,7 +563,7 @@ function AdminTicketTableComponent({
                     type="button"
                     onClick={() => onDeleteTicket(t)}
                     disabled={isProcessing}
-                    className="h-8 w-8 bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 border border-slate-200 text-xs font-medium rounded-lg shadow-2xs transition disabled:opacity-50 cursor-pointer flex items-center justify-center"
+                    className="h-11 w-11 sm:h-10 sm:w-10 bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 border border-slate-200 text-xs font-medium rounded-lg transition disabled:opacity-50 cursor-pointer flex items-center justify-center"
                     title="Hapus Tiket"
                     aria-label={`Hapus tiket ${t.idTiketAsli || t.noTiket}`}
                   >
@@ -580,7 +580,7 @@ function AdminTicketTableComponent({
       <div className="overflow-x-auto flex-1 hidden md:block">
         <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
           <thead>
-            <tr className="bg-slate-50/50 text-[11px] font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200/80 select-none">
+            <tr className="bg-slate-50/50 text-xs font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200/80 select-none">
               <th scope="col" className="py-3 px-3.5">
                 Tiket
               </th>
@@ -668,7 +668,7 @@ function AdminTicketTableComponent({
                         <span>{t.noDaisha}</span>
                         {sizeInfo && (
                           <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
+                            className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}
                             title={sizeInfo.description}
                           >
                             {sizeInfo.code}
@@ -680,7 +680,7 @@ function AdminTicketTableComponent({
                       {t.namaDaisha}
                     </td>
                     <td className="py-3 px-3.5">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-medium border border-slate-200/80">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200/80">
                         {t.seksi}
                       </span>
                     </td>
@@ -702,14 +702,14 @@ function AdminTicketTableComponent({
                                     )}
                                     <span className="text-slate-700">{it.gejala.replace(/^[•\s-]+/, '')}</span>
                                     {it.qty > 1 && (
-                                      <span className="text-slate-500 font-medium tabular-nums text-[11px]">
+                                      <span className="text-slate-500 font-medium tabular-nums text-xs">
                                         ({it.qty}x)
                                       </span>
                                     )}
                                   </div>
                                   {it.tindakan && (
                                     <span
-                                      className={`px-2 py-0.5 rounded-md text-[11px] font-medium shrink-0 ${
+                                      className={`px-2 py-0.5 rounded-md text-xs font-medium shrink-0 ${
                                         it.tindakan === 'Ganti'
                                           ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
                                           : 'bg-amber-50 text-amber-800 border border-amber-200/60'
@@ -721,7 +721,7 @@ function AdminTicketTableComponent({
                                 </div>
                               ))}
                               {parsed.catatan && (
-                                <div className="text-[11px] text-amber-800 flex items-center gap-1 mt-1">
+                                <div className="text-xs text-amber-800 flex items-center gap-1 mt-1">
                                   <MapPin className="w-3.5 h-3.5 text-amber-700 shrink-0" />
                                   <span>Posisi: {parsed.catatan}</span>
                                 </div>
@@ -732,11 +732,11 @@ function AdminTicketTableComponent({
                         if (parsed.isWaitingDiagnosis) {
                           return (
                             <div className="space-y-1 py-0.5">
-                              <span className="text-[11px] font-medium text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                              <span className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
                                 <Search className="w-3 h-3 text-amber-800" />
                                 <span>Menunggu Diagnosa</span>
                               </span>
-                              <p className="text-[11px] text-slate-600 font-normal">
+                              <p className="text-xs text-slate-600 font-normal">
                                 {parsed.catatan ? `Gejala: ${parsed.catatan}` : 'Kerusakan belum diidentifikasi di lapangan'}
                               </p>
                             </div>
@@ -745,52 +745,52 @@ function AdminTicketTableComponent({
                         return (
                           <div>
                             <span className="font-semibold text-slate-900 block text-xs">{t.jenisKerusakan || 'Kerusakan umum'}</span>
-                            <span className="text-[11px] text-slate-600">{t.detail && t.detail !== '-' ? t.detail : '-'}</span>
+                            <span className="text-xs text-slate-600">{t.detail && t.detail !== '-' ? t.detail : '-'}</span>
                           </div>
                         );
                       })()}
                       {t.reason && t.reason !== '-' && t.reason.trim() !== '' && (
-                        <p className="text-[11px] text-emerald-800 mt-1 font-normal">
+                        <p className="text-xs text-emerald-800 mt-1 font-normal">
                           Catatan: {t.reason}
                         </p>
                       )}
                     </td>
                     <td className="py-3 px-3.5 text-slate-700 text-xs">
                       <div className="font-medium text-slate-900">{t.pelapor || '-'}</div>
-                      <div className="text-[11px] text-slate-400 font-normal tabular-nums">{t.tglMasuk || '-'}</div>
+                      <div className="text-xs text-slate-400 font-normal tabular-nums">{t.tglMasuk || '-'}</div>
                     </td>
                     <td className="py-3 px-3.5 text-center">
                       <StatusBadge status={t.status} />
                     </td>
                     <td className="py-3 px-3.5 text-center">
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => onSelectTicket(t)}
-                          className="h-7 px-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-[11px] font-medium transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                          className="h-9 sm:h-10 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5"
                           title="Proses / Update Tindakan Tiket"
                         >
-                          <Wrench className="w-3 h-3" />
+                          <Wrench className="w-3.5 h-3.5" />
                           <span>Proses</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => onTagTicket(t)}
-                          className="h-7 px-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-[11px] font-medium transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                          className="h-9 sm:h-10 px-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5"
                           title="Cetak Tag Fisik Daisha"
                         >
-                          <Tag className="w-3 h-3 text-slate-500" />
+                          <Tag className="w-3.5 h-3.5 text-slate-500" />
                           <span>Tag</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => onDeleteTicket(t)}
                           disabled={isProcessing}
-                          className="h-7 w-7 flex items-center justify-center bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 border border-slate-200 rounded-md text-[11px] transition cursor-pointer disabled:opacity-50 shadow-2xs"
+                          className="h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 border border-slate-200 rounded-lg text-xs transition cursor-pointer disabled:opacity-50"
                           title="Hapus Tiket"
                           aria-label={`Hapus tiket ${t.idTiketAsli || t.noTiket}`}
                         >
-                          <Trash2 className="w-3 h-3 text-rose-600" />
+                          <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                         </button>
                       </div>
                     </td>
@@ -805,7 +805,7 @@ function AdminTicketTableComponent({
       {/* Pagination Footer */}
       {totalPages > 1 && (
         <div className="p-3 sm:p-3.5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span className="text-[11px] text-slate-500 font-normal">
+          <span className="text-xs text-slate-500 font-normal">
             Halaman {currentPage} dari {totalPages} ({filteredTickets.length} total tiket)
           </span>
           <PaginationControl

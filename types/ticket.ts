@@ -1,4 +1,4 @@
-export type TicketStatus = 'Open' | 'Progress' | 'Done' | 'Scrap';
+export type TicketStatus = 'Open' | 'Progress' | 'Pending' | 'Done' | 'Scrap';
 
 export interface RawTicketData {
   [key: string]: unknown;

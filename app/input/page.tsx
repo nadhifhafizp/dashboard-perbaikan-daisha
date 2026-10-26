@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { CreateTicketPayload, Ticket } from '@/types/ticket';
+import { CreateTicketPayload, Ticket, TicketStatus } from '@/types/ticket';
 import { getInitialDateTime, cleanInputDateTime } from '@/lib/date';
 import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
 import QrScannerModal from '@/components/input/QrScannerModal';
@@ -16,7 +16,7 @@ import { DaishaVariantInfo } from '@/lib/daishaVariants';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 import { useTickets, broadcastTicketChange } from '@/hooks/useTickets';
-import { ArrowLeft, LayoutDashboard, ClipboardList, Settings, User, Layers, Ruler, Camera, AlertTriangle, Search, Wrench, Lightbulb, Truck, Save, Tag, X } from 'lucide-react';
+import { ArrowLeft, LayoutDashboard, ClipboardList, Settings, User, Layers, Ruler, Camera, AlertTriangle, Search, Wrench, Lightbulb, Truck, Save, Tag, X, Clock } from 'lucide-react';
 
 const INVALID_OPERATOR_NAMES = [
   'Staff Input / Teknisi Lapangan',
@@ -95,7 +95,7 @@ export default function InputKerusakanPage() {
       tickets.find(
         (t: Ticket) =>
           t.noDaisha.trim().toUpperCase() === normalizedNoDaisha &&
-          (t.status === 'Open' || t.status === 'Progress')
+          (t.status === 'Open' || t.status === 'Progress' || t.status === 'Pending')
       ) || null
     );
   }, [tickets, normalizedNoDaisha, dismissedDuplicateUnit]);
@@ -254,8 +254,8 @@ export default function InputKerusakanPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent, targetStatus?: TicketStatus) => {
+    if (e && e.preventDefault) e.preventDefault();
 
     if (!formData.namaPelapor.trim() || isInvalidOperatorName(formData.namaPelapor)) {
       showFeedback(
@@ -330,12 +330,26 @@ export default function InputKerusakanPage() {
       finalDetail = `${finalDetail} (Catatan: ${formData.catatanTambahan.trim()})`;
     }
 
+    // Aturan status:
+    // 1. Jika mode "Cek di Bengkel" (tidak nginput kerusakan dulu) -> status tetap 'Open'
+    // 2. Jika nginput kerusakan & user adalah role Admin atau Operator Workshop:
+    //    -> Sesuai pilihan tombol ('Pending' jika part kosong/tunggu part, atau 'Progress' jika langsung dikerjakan)
+    // 3. Lainnya -> 'Open'
+    let finalStatus: TicketStatus = 'Open';
+    if (isDiagnosaBengkel) {
+      finalStatus = 'Open';
+    } else if (isAdmin || isOperator) {
+      finalStatus = targetStatus || 'Progress';
+    } else {
+      finalStatus = 'Open';
+    }
+
     const payloadExcel: CreateTicketPayload = {
       action: 'CREATE',
       idTiket: 'TCK-' + Date.now(),
       waktuMasuk: cleanInputDateTime(formData.waktuMasuk),
       waktuKeluar: '-',
-      status: 'Open',
+      status: finalStatus,
       namaPelapor: formData.namaPelapor.trim(),
       seksi: formData.seksi,
       namaDaisha: formData.jenisDaisha,
@@ -385,7 +399,7 @@ export default function InputKerusakanPage() {
           namaPelapor: pendingPayload.namaPelapor,
           tglMasuk: pendingPayload.waktuMasuk,
           tglKeluar: '-',
-          status: 'Open',
+          status: pendingPayload.status,
           namaDaisha: pendingPayload.namaDaisha,
           seksi: pendingPayload.seksi,
           noDaisha: pendingPayload.noDaisha,
@@ -403,11 +417,18 @@ export default function InputKerusakanPage() {
         // 3. Reset dismissed duplicate unit agar peringatan langsung aktif jika unit yang sama dicek kembali
         setDismissedDuplicateUnit(null);
 
+        const statusLabelDesc =
+          pendingPayload.status === 'Pending'
+            ? 'dengan status PENDING (Menunggu Part)'
+            : pendingPayload.status === 'Progress'
+            ? 'dan LANGSUNG DIPROSES (Status Progress)'
+            : 'dengan status OPEN (Menunggu Diagnosa Bengkel)';
+
         showFeedback(
           'success',
           'Laporan Berhasil Disimpan',
-          `Laporan unit ${pendingPayload.noDaisha} (${pendingPayload.namaDaisha}) berhasil dikirim ke antrean workshop. Anda dapat mencetak Tag Fisik Unit sekarang untuk digantungkan pada Daisha.`,
-          `Seksi: ${pendingPayload.seksi} | Komponen: ${pendingPayload.kategori} | Gejala: ${pendingPayload.detail}`,
+          `Laporan unit ${pendingPayload.noDaisha} (${pendingPayload.namaDaisha}) berhasil disimpan ${statusLabelDesc}. Anda dapat mencetak Tag Fisik Unit sekarang untuk digantungkan pada Daisha.`,
+          `Seksi: ${pendingPayload.seksi} | Status: ${pendingPayload.status} | Komponen: ${pendingPayload.kategori}`,
           'Tutup',
           'Cetak Tag Fisik Unit',
           () => {
@@ -457,7 +478,7 @@ export default function InputKerusakanPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 p-3 sm:p-5 md:p-8 flex justify-center items-start pb-24 md:pb-10">
-      <div className="bg-white p-5 sm:p-7 rounded-xl shadow-2xs border border-slate-200/80 w-full max-w-3xl">
+      <div className="bg-white p-5 sm:p-7 rounded-xl border border-slate-200/80 w-full max-w-3xl">
         {/* Header Form dengan Breadcrumb & Quick Nav */}
         <div className="border-b border-slate-100 pb-4 mb-5">
           <div className="flex items-center gap-2 mb-2.5 flex-wrap text-xs">
@@ -472,11 +493,11 @@ export default function InputKerusakanPage() {
                 </Link>
                 <span className="text-slate-300">/</span>
                 <Link
-                  href="/daisha"
+                  href="/kpi"
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition border border-slate-200"
                 >
                   <LayoutDashboard className="w-3.5 h-3.5 text-red-600" />
-                  <span>Dashboard Daisha</span>
+                  <span>KPI Daisha</span>
                 </Link>
                 <span className="text-slate-300">/</span>
               </>
@@ -495,43 +516,43 @@ export default function InputKerusakanPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-3 mt-2">
             <div>
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
-                Input Daisha Rusak
+              <h1 className="t-title text-slate-900 tracking-tight">
+                Input Kerusakan
               </h1>
-              <p className="text-[11px] sm:text-xs text-slate-500 font-normal mt-0.5">
-                Catat laporan perbaikan unit sesuai katalog workshop maintenance
+              <p className="t-caption text-slate-500 mt-0.5">
+                Pencatatan laporan perbaikan unit bengkel
               </p>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
               {!isOperator && (
                 <Link
-                  href="/daisha"
-                  className="h-8 px-3 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs"
+                  href="/kpi"
+                  className="h-11 sm:h-10 px-4 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200"
                 >
-                  <LayoutDashboard className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Dashboard</span>
+                  <LayoutDashboard className="w-4 h-4 text-slate-500" />
+                  <span>KPI Daisha</span>
                 </Link>
               )}
               {!isAdmin && (
                 <Link
                   href="/riwayat"
-                  className={`h-8 px-3 text-xs font-medium rounded-lg transition inline-flex items-center gap-1.5 border shadow-2xs ${
+                  className={`h-11 sm:h-10 px-4 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5 border ${
                     isOperator
-                      ? 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900'
+                      ? 'bg-red-600 hover:bg-red-700 text-white border-red-600'
                       : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
-                  <ClipboardList className={`w-3.5 h-3.5 ${isOperator ? 'text-white' : 'text-slate-500'}`} />
-                  <span>Status Antrean</span>
+                  <ClipboardList className={`w-4 h-4 ${isOperator ? 'text-white' : 'text-slate-500'}`} />
+                  <span>Antrean</span>
                 </Link>
               )}
               {isAdmin && (
                 <Link
                   href="/admin"
-                  className="h-8 px-3 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs"
+                  className="h-11 sm:h-10 px-4 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200"
                 >
-                  <Settings className="w-3.5 h-3.5 text-slate-500" />
+                  <Settings className="w-4 h-4 text-slate-500" />
                   <span>Panel Admin</span>
                 </Link>
               )}
@@ -541,10 +562,10 @@ export default function InputKerusakanPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Section 1: Informasi Pelapor & Waktu */}
-          <div className="p-4 sm:p-5 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+          <div className="p-4 sm:p-5 bg-white rounded-xl border border-slate-200/80">
             <h2 className="text-xs font-semibold text-slate-900 mb-3 flex items-center gap-2">
               <User className="w-4 h-4 text-red-600" />
-              <span>1. Informasi Pelapor & Waktu</span>
+              <span>1. Pelapor</span>
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -583,10 +604,10 @@ export default function InputKerusakanPage() {
           </div>
 
           {/* Section 2: Identifikasi Unit Daisha */}
-          <div className="p-4 sm:p-5 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+          <div className="p-4 sm:p-5 bg-white rounded-xl border border-slate-200/80">
             <h2 className="text-xs font-semibold text-slate-900 mb-3 flex items-center gap-2">
               <Layers className="w-4 h-4 text-red-600" />
-              <span>2. Identifikasi Unit Daisha</span>
+              <span>2. Unit</span>
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -686,7 +707,7 @@ export default function InputKerusakanPage() {
                   </label>
                   {detectedSize && (
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${detectedSize.badgeBg} ${detectedSize.textColor} ${detectedSize.borderColor}`}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${detectedSize.badgeBg} ${detectedSize.textColor} ${detectedSize.borderColor}`}
                     >
                       <Ruler className="w-3 h-3" />
                       <span>Ukuran: {detectedSize.label}</span>
@@ -707,11 +728,11 @@ export default function InputKerusakanPage() {
                   className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none uppercase placeholder-slate-400"
                 />
                 {detectedSize ? (
-                  <span className={`text-[11px] font-normal mt-1 block ${detectedSize.textColor}`}>
+                  <span className={`text-xs font-normal mt-1 block ${detectedSize.textColor}`}>
                     Otomatis terdeteksi: <strong>{detectedSize.description}</strong> dari awalan &apos;{detectedSize.code}&apos;
                   </span>
                 ) : (
-                  <span className="text-[11px] text-slate-500 mt-1 block">
+                  <span className="text-xs text-slate-500 mt-1 block">
                     Awalan kode: <strong>S</strong> = Small, <strong>M</strong> = Medium, <strong>L</strong> = Large
                   </span>
                 )}
@@ -721,7 +742,7 @@ export default function InputKerusakanPage() {
                 <button
                   type="button"
                   onClick={() => setIsScanning(true)}
-                  className="w-full h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                  className="w-full h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Camera className="w-4 h-4" />
                   <span>Scan Barcode / QR Kamera</span>
@@ -740,12 +761,12 @@ export default function InputKerusakanPage() {
                         <h4 className="font-semibold text-amber-950 text-xs">
                           Unit {duplicateActiveTicket.noDaisha} Sedang Dalam Antrean Bengkel
                         </h4>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-100 text-amber-900">
+                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-900">
                           Status: {duplicateActiveTicket.status}
                         </span>
                       </div>
 
-                      <p className="text-slate-600 mt-1 font-normal text-[11px]">
+                      <p className="text-slate-600 mt-1 font-normal text-xs">
                         Tiket ID: <strong className="font-mono text-slate-900 tabular-nums">{duplicateActiveTicket.idTiketAsli}</strong> • Seksi:{' '}
                         <strong>{duplicateActiveTicket.seksi}</strong> • Dilaporkan oleh:{' '}
                         <strong>{duplicateActiveTicket.pelapor}</strong> ({duplicateActiveTicket.tglMasuk})
@@ -775,10 +796,10 @@ export default function InputKerusakanPage() {
                 <div className="mt-3 pt-2.5 border-t border-amber-200/70 flex flex-wrap items-center justify-between gap-2">
                   <Link
                     href={isAdmin ? '/admin' : '/riwayat'}
-                    className="h-8 px-3 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    className="h-10 px-4 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <Search className="w-3.5 h-3.5" />
-                    <span>{isAdmin ? 'Buka di Panel Tindakan' : 'Buka Tiket di Riwayat Laporan'}</span>
+                    <span>{isAdmin ? 'Buka Tindakan' : 'Buka Riwayat'}</span>
                   </Link>
 
                   <button
@@ -794,14 +815,14 @@ export default function InputKerusakanPage() {
           </div>
 
           {/* Section 3: Status / Mode Kerusakan Unit */}
-          <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-3">
+          <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h2 className="text-xs font-semibold text-slate-900 flex items-center gap-2">
                   <Wrench className="w-4 h-4 text-red-600" />
-                  <span>3. Identifikasi Kerusakan Unit</span>
+                  <span>3. Kerusakan</span>
                 </h2>
-                <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                <p className="text-xs text-slate-500 font-normal mt-0.5">
                   Pilih apakah kerusakan sudah diketahui atau perlu diinspeksi teknisi saat tiba di bengkel.
                 </p>
               </div>
@@ -813,7 +834,7 @@ export default function InputKerusakanPage() {
                   onClick={() => setIsDiagnosaBengkel(false)}
                   className={`px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer ${
                     !isDiagnosaBengkel
-                      ? 'bg-white text-slate-900 shadow-2xs font-semibold'
+                      ? 'bg-white text-slate-900 font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -824,7 +845,7 @@ export default function InputKerusakanPage() {
                   onClick={() => setIsDiagnosaBengkel(true)}
                   className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
                     isDiagnosaBengkel
-                      ? 'bg-amber-600 text-white shadow-2xs font-semibold'
+                      ? 'bg-amber-600 text-white font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -860,7 +881,7 @@ export default function InputKerusakanPage() {
                     placeholder="Contoh: Roda seret saat didorong, rangka miring, bunyi kasar di bearing..."
                     className="w-full h-10 px-3 border border-amber-300/80 bg-white rounded-lg text-xs text-slate-900 font-normal focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none placeholder-slate-400"
                   />
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     Bantu teknisi bengkel dengan menuliskan apa yang Anda rasakan atau lihat saat menggunakan unit ini.
                   </p>
                 </div>
@@ -891,33 +912,87 @@ export default function InputKerusakanPage() {
             />
           )}
 
-          {/* Submit Action Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full h-11 text-white font-medium text-xs sm:text-sm rounded-lg transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-2xs ${
-              isDiagnosaBengkel
-                ? 'bg-amber-600 hover:bg-amber-700'
-                : 'bg-red-600 hover:bg-red-700'
-            }`}
-          >
-            {loading ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                <span>Menyimpan ke Sistem Workshop...</span>
-              </>
-            ) : isDiagnosaBengkel ? (
-              <>
-                <Truck className="w-4 h-4" />
-                <span>Daftarkan Unit ke Antrean Bengkel</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                <span>Simpan Laporan Kerusakan Daisha</span>
-              </>
-            )}
-          </button>
+          {/* Submit Action Buttons */}
+          {isDiagnosaBengkel ? (
+            <button
+              type="button"
+              onClick={(e) => handleSubmit(e, 'Open')}
+              disabled={loading}
+              className="w-full h-11 text-white font-medium text-xs sm:text-sm rounded-lg transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer bg-amber-600 hover:bg-amber-700 shadow-xs"
+            >
+              {loading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  <span>Menyimpan ke Sistem Workshop...</span>
+                </>
+              ) : (
+                <>
+                  <Truck className="w-4 h-4" />
+                  <span>Daftarkan Unit (Status Open)</span>
+                </>
+              )}
+            </button>
+          ) : (isAdmin || isOperator) ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, 'Pending')}
+                disabled={loading}
+                className="w-full h-11 sm:h-12 text-white font-medium text-xs sm:text-sm rounded-lg transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer bg-amber-600 hover:bg-amber-700 shadow-xs"
+                title="Simpan tiket dengan status Pending jika sparepart pengganti belum tersedia"
+              >
+                {loading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span>Menyimpan Pending...</span>
+                  </>
+                ) : (
+                  <>
+                    <Clock className="w-4 h-4" />
+                    <span>Pending (Tunggu Part)</span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, 'Progress')}
+                disabled={loading}
+                className="w-full h-11 sm:h-12 text-white font-medium text-xs sm:text-sm rounded-lg transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer bg-red-600 hover:bg-red-700 shadow-xs"
+                title="Simpan tiket dan otomatis mulai pengerjaan dengan status Progress"
+              >
+                {loading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span>Menyimpan & Proses...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Simpan & Proses</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => handleSubmit(e, 'Open')}
+              disabled={loading}
+              className="w-full h-11 text-white font-medium text-xs sm:text-sm rounded-lg transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer bg-red-600 hover:bg-red-700 shadow-xs"
+            >
+              {loading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  <span>Menyimpan ke Sistem Workshop...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>Simpan Laporan</span>
+                </>
+              )}
+            </button>
+          )}
         </form>
       </div>
 

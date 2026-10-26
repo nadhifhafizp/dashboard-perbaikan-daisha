@@ -145,7 +145,7 @@ export default function DetailTicketModal({
                   komponenList.map((k) => (
                     <span
                       key={k}
-                      className="px-2.5 py-1 bg-white font-medium text-slate-800 rounded-lg border border-slate-200 flex items-center gap-1.5 shadow-2xs"
+                      className="px-2.5 py-1 bg-white font-medium text-slate-800 rounded-lg border border-slate-200 flex items-center gap-1.5"
                     >
                       <Layers className="w-3.5 h-3.5 text-slate-500" />
                       <span>{k}</span>
@@ -195,7 +195,7 @@ export default function DetailTicketModal({
                   {parsed.gantiItems.map((item, idx) => (
                     <div
                       key={`ganti-${idx}`}
-                      className="p-2.5 bg-white rounded-lg border border-blue-200/80 shadow-2xs flex items-center justify-between gap-2"
+                      className="p-2.5 bg-white rounded-lg border border-blue-200/80 flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="w-5 h-5 rounded bg-blue-50 text-blue-700 font-semibold text-xs flex items-center justify-center shrink-0 border border-blue-100">
@@ -245,7 +245,7 @@ export default function DetailTicketModal({
                   {parsed.repairItems.map((item, idx) => (
                     <div
                       key={`repair-${idx}`}
-                      className="p-2.5 bg-white rounded-lg border border-amber-200/80 shadow-2xs flex items-center justify-between gap-2"
+                      className="p-2.5 bg-white rounded-lg border border-amber-200/80 flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="w-5 h-5 rounded bg-amber-50 text-amber-800 font-semibold text-xs flex items-center justify-center shrink-0 border border-amber-200/60">
@@ -289,7 +289,7 @@ export default function DetailTicketModal({
                   {parsed.otherItems.map((item, idx) => (
                     <div
                       key={`other-${idx}`}
-                      className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs text-slate-800 font-medium"
+                      className="p-2.5 bg-white rounded-lg border border-slate-200 text-slate-800 font-medium"
                     >
                       {item.gejala}
                     </div>
@@ -314,7 +314,7 @@ export default function DetailTicketModal({
                           onClose();
                           onEdit(ticket);
                         }}
-                        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition cursor-pointer flex items-center gap-1.5 shadow-2xs self-start sm:self-auto"
+                        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
                       >
                         <Wrench className="w-3.5 h-3.5" />
                         <span>Input Diagnosa Sekarang</span>
@@ -404,7 +404,7 @@ export default function DetailTicketModal({
           <button
             type="button"
             onClick={() => setIsPrintTagOpen(true)}
-            className="order-2 sm:order-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+            className="order-2 sm:order-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
           >
             <Tag className="w-3.5 h-3.5" />
             <span>Cetak Tag Fisik</span>
@@ -417,7 +417,7 @@ export default function DetailTicketModal({
                 onClose();
                 onEdit(ticket);
               }}
-              className="order-1 sm:order-3 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+              className="order-1 sm:order-3 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>Koreksi / Edit Tiket</span>

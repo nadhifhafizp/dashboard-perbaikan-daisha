@@ -140,7 +140,7 @@ export default function QuickStageModal({
               </p>
             </div>
 
-            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
               1 Unit Siap
             </span>
           </div>
@@ -159,7 +159,7 @@ export default function QuickStageModal({
                   key={loc}
                   type="button"
                   onClick={() => setLokasi(loc)}
-                  className={`text-[10px] px-2 py-0.5 rounded-md border transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+                  className={`text-xs px-2 py-0.5 rounded-md border transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                     lokasi === loc
                       ? 'bg-emerald-600 text-white border-emerald-600 font-bold'
                       : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
@@ -181,7 +181,7 @@ export default function QuickStageModal({
               className="w-full h-9 px-3 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600/20 focus-visible:border-emerald-600 font-medium text-slate-900"
               required
             />
-            <p className="text-[10px] text-slate-500">
+            <p className="text-xs text-slate-500">
               Cantumkan titik penempatan unit agar mekanik bengkel langsung mengambilnya.
             </p>
           </div>
@@ -223,7 +223,7 @@ export default function QuickStageModal({
             <button
               type="submit"
               disabled={submitting || !lokasi.trim()}
-              className="flex-2 h-9 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed rounded-lg transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
+              className="flex-2 h-9 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
             >
               {submitting ? (
                 <>

@@ -112,7 +112,7 @@ export default function WorkshopStagingAlert({ onRefreshData }: WorkshopStagingA
             type="button"
             onClick={() => fetchRecords()}
             disabled={loading}
-            className="h-8 px-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 shadow-2xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="h-10 px-3 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             title="Segarkan antrean penjemputan"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
@@ -121,7 +121,7 @@ export default function WorkshopStagingAlert({ onRefreshData }: WorkshopStagingA
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="h-8 px-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 shadow-2xs transition flex items-center gap-1 cursor-pointer"
+            className="h-10 px-3 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition flex items-center gap-1 cursor-pointer"
           >
             <span>{expanded ? 'Tutup' : 'Lihat'}</span>
             {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -163,7 +163,7 @@ export default function WorkshopStagingAlert({ onRefreshData }: WorkshopStagingA
                           {item.units.map((unitNo) => (
                             <span
                               key={unitNo}
-                              className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-900 border border-slate-200"
+                              className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-900 border border-slate-200"
                             >
                               {unitNo}
                             </span>
@@ -179,7 +179,7 @@ export default function WorkshopStagingAlert({ onRefreshData }: WorkshopStagingA
                               {item.lokasi}
                             </span>
                           </div>
-                          <p className="text-[10px] text-slate-500 font-normal">
+                          <p className="text-xs text-slate-500 font-normal">
                             Oleh {item.pelapor}
                           </p>
                         </div>
@@ -187,7 +187,7 @@ export default function WorkshopStagingAlert({ onRefreshData }: WorkshopStagingA
 
                       <td className="py-2.5 px-3">
                         {item.catatan ? (
-                          <span className="text-slate-600 italic text-[11px] max-w-[180px] truncate block" title={item.catatan}>
+                          <span className="text-slate-600 italic text-xs max-w-[180px] truncate block" title={item.catatan}>
                             &quot;{item.catatan}&quot;
                           </span>
                         ) : (
@@ -195,7 +195,7 @@ export default function WorkshopStagingAlert({ onRefreshData }: WorkshopStagingA
                         )}
                       </td>
 
-                      <td className="py-2.5 px-3 text-slate-500 text-[11px] tabular-nums">
+                      <td className="py-2.5 px-3 text-slate-500 text-xs tabular-nums">
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3 text-slate-400" aria-hidden="true" />
                           <span>
@@ -211,7 +211,7 @@ export default function WorkshopStagingAlert({ onRefreshData }: WorkshopStagingA
 
                       <td className="py-2.5 px-3 text-center">
                         <span
-                          className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border ${
+                          className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${
                             isWaiting
                               ? 'bg-amber-100 text-amber-800 border-amber-200'
                               : 'bg-blue-100 text-blue-800 border-blue-200'
@@ -228,7 +228,7 @@ export default function WorkshopStagingAlert({ onRefreshData }: WorkshopStagingA
                             type="button"
                             disabled={isUpdating}
                             onClick={() => handleUpdateStatus(item.id, 'PICKED_UP')}
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-2xs transition cursor-pointer"
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition cursor-pointer"
                           >
                             {isUpdating ? (
                               <RefreshCw className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
@@ -242,7 +242,7 @@ export default function WorkshopStagingAlert({ onRefreshData }: WorkshopStagingA
                             type="button"
                             disabled={isUpdating}
                             onClick={() => handleUpdateStatus(item.id, 'COMPLETED')}
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-2xs transition cursor-pointer"
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition cursor-pointer"
                           >
                             {isUpdating ? (
                               <RefreshCw className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />

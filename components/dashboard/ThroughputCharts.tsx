@@ -16,6 +16,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { Info, Timer, TrendingUp, PieChart as PieIcon, Clock } from 'lucide-react';
+import { CHART, DONUT } from '@/lib/chart-colors';
 
 interface ThroughputChartsProps {
   chartTrenHarian: { tanggal: string; Masuk: number; Selesai: number; Pcs?: number }[];
@@ -77,31 +78,15 @@ export default function ThroughputCharts({
     return timelineMonthlyData;
   }, [timelineScale, chartTrenHarian, timelineMonthlyData]);
 
-  // Data untuk model komparasi bilateral (inflow vs outflow):
-  // MasukNeg bernilai negatif agar bar Masuk memanjang ke sisi kiri (negatif X)
-  // SelesaiPos bernilai positif agar bar Selesai memanjang ke sisi kanan (positif X)
-  const horizontalMirrorData = useMemo(() => {
-    return activeTimelineData.map((d) => ({
-      ...d,
-      MasukNeg: d.Masuk > 0 ? -d.Masuk : 0,
-      SelesaiPos: d.Selesai > 0 ? d.Selesai : 0,
-    }));
-  }, [activeTimelineData]);
-
-  // Hitung batas simetris sumbu X dengan headroom 55% agar label angka di ujung bar tidak terpotong
-  const mirrorXMaxDomain = useMemo(() => {
+  // Hitung batas maksimum sumbu Y dengan headroom agar label angka tidak terpotong
+  const yMaxDomain = useMemo(() => {
     let max = 4;
     for (const d of activeTimelineData) {
       if ((d.Masuk || 0) > max) max = d.Masuk;
       if ((d.Selesai || 0) > max) max = d.Selesai;
     }
-    return Math.ceil(max * 1.55);
+    return Math.ceil(max * 1.3);
   }, [activeTimelineData]);
-
-  // Tinggi chart dinamis agar pas dan proporsional dengan jumlah baris yang tampil
-  const mirrorChartHeight = useMemo(() => {
-    return Math.max(340, horizontalMirrorData.length * 42);
-  }, [horizontalMirrorData.length]);
 
   const totalMasukTimeline = useMemo(
     () => activeTimelineData.reduce((acc, d) => acc + (d.Masuk || 0), 0),
@@ -121,16 +106,16 @@ export default function ThroughputCharts({
   return (
     <div className="space-y-6">
       {/* 1. Grafik Utama: Komparasi volume masuk vs selesai */}
-      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 shadow-2xs">
+      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60">
         <div>
           <div className="flex flex-wrap justify-between items-center gap-3 mb-2">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-slate-500" />
               <div>
                 <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-                  Arus Unit Masuk vs Selesai
+                  Masuk vs Selesai
                 </h3>
-                <span className="text-[10px] text-slate-400 font-normal">
+                <span className="text-xs text-slate-400 font-normal">
                   {timelineScale === '7days' ? '7 Hari Terakhir' : timelineScale === '14days' ? '14 Hari Terakhir' : 'Akumulasi Bulanan'}
                 </span>
               </div>
@@ -143,7 +128,7 @@ export default function ThroughputCharts({
                 onClick={() => setTimelineScale('7days')}
                 className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
                   timelineScale === '7days'
-                    ? 'bg-white text-slate-900 shadow-xs'
+                    ? 'bg-white text-slate-900'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
                 title="Tampilkan rentang 7 hari kerja terakhir (1 minggu)"
@@ -155,7 +140,7 @@ export default function ThroughputCharts({
                 onClick={() => setTimelineScale('14days')}
                 className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
                   timelineScale === '14days'
-                    ? 'bg-white text-slate-900 shadow-xs'
+                    ? 'bg-white text-slate-900'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
                 title="Tampilkan rentang 14 hari kerja terakhir"
@@ -167,7 +152,7 @@ export default function ThroughputCharts({
                 onClick={() => setTimelineScale('monthly')}
                 className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
                   timelineScale === 'monthly'
-                    ? 'bg-white text-slate-900 shadow-xs'
+                    ? 'bg-white text-slate-900'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
                 title="Tampilkan agregasi data per bulan"
@@ -218,49 +203,40 @@ export default function ThroughputCharts({
             })()}
 
             <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-400 font-normal ml-auto">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-              <span>Poros Netral (0)</span>
+              <span>Sumbu Horizontal: Tanggal</span>
             </div>
           </div>
         </div>
 
-        {/* 1 Grafik Utuh: Komparasi Bilateral Unit Masuk vs Selesai */}
-        <div className="w-full my-2" style={{ height: `${mirrorChartHeight}px` }}>
-          {horizontalMirrorData.length > 0 ? (
+        {/* 1 Grafik: Komparasi Volume Masuk vs Selesai (Tanggal di Sumbu Bawah / X-Axis) */}
+        <div className="w-full my-2 h-[310px]">
+          {activeTimelineData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={horizontalMirrorData}
-                layout="vertical"
-                margin={{ top: 12, right: 45, left: 20, bottom: 12 }}
-                stackOffset="sign"
+                data={activeTimelineData}
+                margin={{ top: 22, right: 25, left: -15, bottom: 15 }}
               >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                <ReferenceLine x={0} stroke="#94a3b8" strokeWidth={1.5} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis
-                  type="number"
-                  domain={[-mirrorXMaxDomain, mirrorXMaxDomain]}
-                  tick={{ fontSize: 12, fill: '#64748b' }}
-                  tickFormatter={(val) => String(Math.abs(val))}
-                  allowDecimals={false}
-                  axisLine={{ stroke: '#e2e8f0' }}
+                  dataKey="tanggal"
+                  tick={{ fontSize: 11, fill: '#334155', fontWeight: 600 }}
+                  axisLine={{ stroke: '#cbd5e1' }}
                   tickLine={false}
                 />
                 <YAxis
-                  type="category"
-                  dataKey="tanggal"
-                  interval={0}
-                  tick={{ fontSize: 12, fill: '#334155', fontWeight: 600 }}
-                  axisLine={{ stroke: '#cbd5e1' }}
+                  type="number"
+                  domain={[0, yMaxDomain]}
+                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  allowDecimals={false}
+                  axisLine={{ stroke: '#e2e8f0' }}
                   tickLine={false}
-                  width={90}
                 />
                 <Tooltip
                   cursor={{ fill: 'rgba(241, 245, 249, 0.6)' }}
                   content={({ active, payload, label }) => {
                     if (!active || !payload || !payload.length) return null;
-                    const masukRaw = payload.find((p) => p.dataKey === 'MasukNeg')?.value;
-                    const masukVal = Math.abs(Number(masukRaw || 0));
-                    const selesaiVal = Number(payload.find((p) => p.dataKey === 'SelesaiPos')?.value || 0);
+                    const masukVal = Number(payload.find((p) => p.dataKey === 'Masuk')?.value || 0);
+                    const selesaiVal = Number(payload.find((p) => p.dataKey === 'Selesai')?.value || 0);
                     const balance = masukVal - selesaiVal;
                     return (
                       <div className="bg-white/95 backdrop-blur-xs border border-slate-200 rounded-xl p-3 shadow-lg text-xs space-y-1.5 min-w-[190px]">
@@ -290,14 +266,14 @@ export default function ThroughputCharts({
                                 ? 'text-emerald-600 font-bold'
                                 : balance > 0
                                 ? 'text-amber-600 font-bold'
-                                : 'text-red-600 font-bold'
+                                : 'text-emerald-700 font-bold'
                             }
                           >
                             {balance === 0
                               ? 'Seimbang (0 Unit)'
                               : balance > 0
                               ? `+${balance} Unit Pending`
-                              : `${Math.abs(balance)} Unit Selesai Bersih`}
+                              : `${Math.abs(balance)} Surplus Selesai`}
                           </span>
                         </div>
                       </div>
@@ -305,63 +281,31 @@ export default function ThroughputCharts({
                   }}
                 />
                 <Bar
-                  dataKey="MasukNeg"
+                  dataKey="Masuk"
                   name="Unit Masuk"
-                  fill="#E60012"
-                  stackId="h-mirror"
-                  radius={[5, 0, 0, 5]}
-                  barSize={18}
+                  fill="#dc2626"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={32}
                 >
                   <LabelList
-                    dataKey="MasukNeg"
-                    content={(props: unknown) => {
-                      const { x = 0, y = 0, width = 0, height = 18, value } = (props || {}) as { x?: number; y?: number; width?: number; height?: number; value?: unknown };
-                      if (!value || Number(value) === 0) return null;
-                      const leftTip = Math.min(x, x + (width || 0));
-                      return (
-                        <text
-                          x={leftTip - 8}
-                          y={y + (height || 18) / 2 + 1}
-                          fill="#B3000E"
-                          textAnchor="end"
-                          dominantBaseline="central"
-                          fontSize={11.5}
-                          fontWeight={800}
-                        >
-                          {Math.abs(Number(value))}
-                        </text>
-                      );
-                    }}
+                    dataKey="Masuk"
+                    position="top"
+                    formatter={(val: any) => (Number(val) > 0 ? val : '')}
+                    style={{ fontSize: 11, fontWeight: 700, fill: '#dc2626' }}
                   />
                 </Bar>
                 <Bar
-                  dataKey="SelesaiPos"
+                  dataKey="Selesai"
                   name="Unit Selesai"
-                  fill="#10b981"
-                  stackId="h-mirror"
-                  radius={[0, 5, 5, 0]}
-                  barSize={18}
+                  fill="#059669"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={32}
                 >
                   <LabelList
-                    dataKey="SelesaiPos"
-                    content={(props: unknown) => {
-                      const { x = 0, y = 0, width = 0, height = 18, value } = (props || {}) as { x?: number; y?: number; width?: number; height?: number; value?: unknown };
-                      if (!value || Number(value) === 0) return null;
-                      const rightTip = Math.max(x, x + (width || 0));
-                      return (
-                        <text
-                          x={rightTip + 8}
-                          y={y + (height || 18) / 2 + 1}
-                          fill="#047857"
-                          textAnchor="start"
-                          dominantBaseline="central"
-                          fontSize={11.5}
-                          fontWeight={800}
-                        >
-                          {Number(value)}
-                        </text>
-                      );
-                    }}
+                    dataKey="Selesai"
+                    position="top"
+                    formatter={(val: any) => (Number(val) > 0 ? val : '')}
+                    style={{ fontSize: 11, fontWeight: 700, fill: '#059669' }}
                   />
                 </Bar>
               </BarChart>
@@ -380,11 +324,11 @@ export default function ThroughputCharts({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
         {/* 2. Diagram Donat: Status pipeline */}
-        <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 shadow-2xs flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
           <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
             <PieIcon className="w-4 h-4 text-slate-500" />
             <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-              Komposisi Status Tiket
+              Status Tiket
             </h3>
           </div>
 
@@ -398,8 +342,8 @@ export default function ThroughputCharts({
                       data={statusData.filter((d) => d.value > 0)}
                       cx="50%"
                       cy="50%"
-                      innerRadius={54}
-                      outerRadius={84}
+                      innerRadius={DONUT.inner}
+                      outerRadius={DONUT.outer}
                       paddingAngle={3}
                       dataKey="value"
                       startAngle={90}
@@ -460,7 +404,7 @@ export default function ThroughputCharts({
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: st.color }} />
                         <div>
                           <span className="text-slate-800 font-semibold block">{meaning.title}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">{meaning.sub}</span>
+                          <span className="text-xs text-slate-400 font-normal">{meaning.sub}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 text-right">
@@ -485,13 +429,13 @@ export default function ThroughputCharts({
         </div>
 
         {/* 3. Batang Horizontal: Durasi perbaikan / lead time */}
-        <div className="lg:col-span-7 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 shadow-2xs flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
           <div>
             <div className="flex flex-wrap justify-between items-start gap-3 mb-2 pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-slate-500" />
                 <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-                  Durasi Perbaikan (Lead Time)
+                  Durasi Perbaikan
                 </h3>
               </div>
 
@@ -508,7 +452,7 @@ export default function ThroughputCharts({
             </div>
 
             {/* Legenda Makna Warna SLA */}
-            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80 mb-2">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80 mb-2">
               <span className="font-semibold text-slate-900">Makna Warna SLA:</span>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="inline-flex items-center gap-1 font-medium text-emerald-800">
@@ -563,7 +507,7 @@ export default function ThroughputCharts({
                           <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs shadow-lg space-y-1.5 min-w-[200px]">
                             <p className="font-bold text-slate-900 border-b border-slate-100 pb-1 flex items-center justify-between">
                               <span>Rentang: {label}</span>
-                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${slaInfo.cls}`}>
+                              <span className={`text-xs font-bold px-1.5 py-0.5 rounded border ${slaInfo.cls}`}>
                                 {slaInfo.badge}
                               </span>
                             </p>
@@ -573,7 +517,7 @@ export default function ThroughputCharts({
                                 {item?.total || 0} Unit ({item?.persen || 0}%)
                               </span>
                             </div>
-                            <p className="text-[11px] text-slate-500">{slaInfo.label}</p>
+                            <p className="text-xs text-slate-500">{slaInfo.label}</p>
                           </div>
                         );
                       }}

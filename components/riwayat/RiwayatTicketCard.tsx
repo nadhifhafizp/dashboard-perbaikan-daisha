@@ -50,11 +50,11 @@ function RiwayatTicketCardComponent({
       : [];
 
   return (
-    <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-slate-300 transition space-y-2.5">
+    <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition space-y-2.5">
       {/* Baris 1: No Unit + Tipe Daisha + Seksi + Status */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
-          <span className="px-2.5 py-0.5 bg-red-600 text-white font-mono font-semibold text-xs sm:text-sm rounded shadow-2xs shrink-0">
+          <span className="px-2.5 py-0.5 bg-red-600 text-white font-mono font-semibold text-xs sm:text-sm rounded shrink-0">
             {ticket.noDaisha}
           </span>
           {sizeInfo && (
@@ -93,7 +93,7 @@ function RiwayatTicketCardComponent({
             komponenList.map((k) => (
               <span
                 key={k}
-                className="px-2 py-0.5 rounded font-medium text-xs text-slate-800 bg-white border border-slate-200 shadow-2xs"
+                className="px-2 py-0.5 rounded font-medium text-xs text-slate-800 bg-white border border-slate-200"
               >
                 {k}
               </span>
@@ -111,7 +111,7 @@ function RiwayatTicketCardComponent({
             {/* 1. Kelompok Ganti Baru */}
             {parsed.gantiItems.length > 0 && (
               <div className="flex items-start gap-2 bg-blue-50/80 p-2 rounded-lg border border-blue-200/80">
-                <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-medium text-xs shrink-0 flex items-center gap-1 shadow-2xs tabular-nums">
+                <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-medium text-xs shrink-0 flex items-center gap-1 tabular-nums">
                   <RotateCw className="w-3 h-3" />
                   <span>Ganti ({parsed.totalQtyGanti} pcs)</span>
                 </span>
@@ -139,7 +139,7 @@ function RiwayatTicketCardComponent({
             {/* 2. Kelompok Repair / Servis */}
             {parsed.repairItems.length > 0 && (
               <div className="flex items-start gap-2 bg-amber-50/80 p-2 rounded-lg border border-amber-200/80">
-                <span className="px-2 py-0.5 rounded bg-amber-600 text-white font-medium text-xs shrink-0 flex items-center gap-1 shadow-2xs tabular-nums">
+                <span className="px-2 py-0.5 rounded bg-amber-600 text-white font-medium text-xs shrink-0 flex items-center gap-1 tabular-nums">
                   <Wrench className="w-3 h-3" />
                   <span>Repair ({parsed.totalQtyRepair} pcs)</span>
                 </span>
@@ -213,7 +213,7 @@ function RiwayatTicketCardComponent({
             <button
               type="button"
               onClick={() => onPrintTag(ticket)}
-              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1 shadow-2xs"
+              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1"
               title="Cetak Tag Fisik Daisha untuk digantungkan di unit"
             >
               <Tag className="w-3.5 h-3.5" />
@@ -236,7 +236,7 @@ function RiwayatTicketCardComponent({
               onClick={() => onEdit(ticket)}
               className={`px-2.5 py-1 text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1 ${
                 isNeedsDiagnosis
-                  ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-2xs'
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
                   : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200'
               }`}
             >

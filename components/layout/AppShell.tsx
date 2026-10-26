@@ -124,7 +124,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           onClick={handleToggleDesktopCollapse}
-          className="hidden md:flex fixed top-3.5 left-3.5 z-40 p-2 bg-[var(--card)] hover:bg-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg shadow-xs border border-[var(--border)] transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600"
+          className="hidden md:flex fixed top-3.5 left-3.5 z-40 p-2 bg-[var(--card)] hover:bg-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg border border-[var(--border)] transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600"
           title="Buka Sidebar (Ctrl+B)"
           aria-label="Buka Sidebar navigasi"
         >

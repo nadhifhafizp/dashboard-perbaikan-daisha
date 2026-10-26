@@ -95,7 +95,7 @@ export default function FeedbackModal({
             <button
               type="button"
               onClick={onSecondaryClick}
-              className="w-full h-9 px-3.5 font-medium text-xs rounded-lg shadow-2xs transition bg-slate-900 hover:bg-slate-800 text-white cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-slate-700"
+              className="w-full h-9 px-3.5 font-medium text-xs rounded-lg transition bg-slate-900 hover:bg-slate-800 text-white cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-slate-700"
             >
               {secondaryButtonText}
             </button>
@@ -103,7 +103,7 @@ export default function FeedbackModal({
           <button
             type="button"
             onClick={onClose}
-            className={`w-full h-9 px-3.5 font-medium text-xs rounded-lg shadow-2xs transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+            className={`w-full h-9 px-3.5 font-medium text-xs rounded-lg transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 ${
               type === 'success' && secondaryButtonText
                 ? 'bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 focus:ring-slate-300'
                 : type === 'success'

@@ -13,6 +13,7 @@ import {
   LabelList,
 } from 'recharts';
 import { Info, Truck, Layers } from 'lucide-react';
+import { CHART } from '@/lib/chart-colors';
 
 interface DaishaChartsProps {
   chartUnitFreq: { unit: string; total: number; jenis: string; displayName?: string }[];
@@ -52,7 +53,7 @@ export default function DaishaCharts({
   const xDomainMax = Math.ceil(maxVal * 1.25);
 
   return (
-    <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 shadow-2xs flex flex-col h-full">
+    <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 flex flex-col h-full">
       {/* 1. Header Card */}
       <div className="flex flex-wrap justify-between items-center gap-3 mb-3 pb-2 border-b border-slate-100">
         <div className="flex items-center gap-2">
@@ -60,10 +61,10 @@ export default function DaishaCharts({
           <div>
             <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
               {activeMode === 'unit'
-                ? 'Unit Paling Sering Masuk'
-                : 'Model Paling Sering Masuk'}
+                ? 'Unit Sering Masuk'
+                : 'Model Sering Masuk'}
             </h3>
-            <span className="text-[10px] text-slate-400 font-normal">
+            <span className="text-xs text-slate-400 font-normal">
               {activeMode === 'unit' ? 'Top 10 Nomor Unit Fisik' : 'Top 10 Kategori Model'}
             </span>
           </div>
@@ -76,7 +77,7 @@ export default function DaishaCharts({
             onClick={() => setActiveMode('unit')}
             className={`px-2.5 py-1 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
               activeMode === 'unit'
-                ? 'bg-white text-slate-900 font-semibold shadow-xs'
+                ? 'bg-white text-slate-900 font-semibold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -88,7 +89,7 @@ export default function DaishaCharts({
             onClick={() => setActiveMode('jenis')}
             className={`px-2.5 py-1 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
               activeMode === 'jenis'
-                ? 'bg-white text-slate-900 font-semibold shadow-xs'
+                ? 'bg-white text-slate-900 font-semibold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -118,7 +119,7 @@ export default function DaishaCharts({
               <YAxis
                 dataKey="name"
                 type="category"
-                tick={{ fontSize: isMobile ? 11 : 12, fill: '#1e293b', fontWeight: 600 }}
+                tick={{ fontSize: 12, fill: '#1e293b', fontWeight: 600 }}
                 tickFormatter={(val: string) => isMobile && val.length > 13 ? `${val.slice(0, 12)}…` : val}
                 width={isMobile ? 115 : 175}
                 axisLine={false}
@@ -129,43 +130,23 @@ export default function DaishaCharts({
                   if (!active || !payload || !payload.length) return null;
                   const item = payload[0]?.payload as { total: number; sub?: string; unit?: string };
                   const count = item?.total || 0;
-                  const ratio = maxVal > 0 ? count / maxVal : 1;
-                  const statusTag =
-                    ratio >= 0.75
-                      ? { label: 'Kritis (Prioritas Penanganan Bengkel)', cls: 'text-red-700 bg-red-50 border-red-200' }
-                      : ratio >= 0.4
-                      ? { label: 'Perlu Pemantauan Rutin', cls: 'text-amber-700 bg-amber-50 border-amber-200' }
-                      : { label: 'Frekuensi Wajar / Normal', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
 
                   return (
-                    <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs shadow-lg space-y-1.5 min-w-[200px]">
-                      <p className="font-bold text-slate-800 border-b border-slate-100 pb-1">
-                        {item?.unit ? `Unit: ${item.unit} (${item.sub})` : `Model: ${label}`}
+                    <div className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs shadow-md">
+                      <p className="font-bold text-slate-800">
+                        {item?.unit ? `${item.unit} (${item.sub})` : label}: <span className="text-blue-600 font-extrabold">{count} kasus</span>
                       </p>
-                      <div className="flex items-center justify-between font-semibold">
-                        <span className="text-slate-500">Frekuensi Masuk:</span>
-                        <span className="text-red-700 font-extrabold text-sm">{count}x Masuk</span>
-                      </div>
-                      <div className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${statusTag.cls}`}>
-                        {statusTag.label}
-                      </div>
                     </div>
                   );
                 }}
               />
               <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={16}>
-                {currentData.map((entry, idx) => {
-                  const ratio = maxVal > 0 ? entry.total / maxVal : 1;
-                  // Gradien intensitas data-driven: nilai tertinggi = opacity 1.0 (merah pekat), nilai terendah = opacity 0.35 (merah muda)
-                  const opacity = Math.max(0.35, 0.35 + 0.65 * ratio);
-                  return (
-                    <Cell
-                      key={`cell-daisha-${idx}`}
-                      fill="#E60012"
-                      fillOpacity={opacity}
-                    />
-                  );
-                })}
+                {currentData.map((entry, idx) => (
+                  <Cell
+                    key={`cell-daisha-${idx}`}
+                    fill={idx === 0 ? CHART.main : CHART.muted}
+                  />
+                ))}
                 <LabelList
                   dataKey="total"
                   position="right"

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
 import ConfirmModal from '@/components/ConfirmModal';
-import SparepartsAnalyticsDashboard from '@/components/spareparts/SparepartsAnalyticsDashboard';
 import {
   Package,
   Plus,
@@ -53,7 +52,6 @@ export default function SparepartsPage() {
 
   const [spareparts, setSpareparts] = useState<Sparepart[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeMainTab, setActiveMainTab] = useState<'ANALYTICS' | 'INVENTORY'>('ANALYTICS');
   const [search, setSearch] = useState('');
   const [filterKategori, setFilterKategori] = useState('all');
 
@@ -117,7 +115,7 @@ export default function SparepartsPage() {
   // Guard: only admin
   if (!isAdmin) {
     return (
-      <div className="p-8 text-center max-w-md mx-auto my-12 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+      <div className="p-8 text-center max-w-md mx-auto my-12 bg-white rounded-xl border border-slate-200/80">
         <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
         <h2 className="text-sm font-semibold text-slate-800">Akses Dibatasi</h2>
         <p className="text-xs text-slate-500 mt-1">Halaman ini hanya bisa diakses oleh akun Administrator Workshop.</p>
@@ -240,52 +238,58 @@ export default function SparepartsPage() {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs">
-        <div>
+      {/* 1. Page Header (Flat Layout) */}
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-3 border-b border-slate-200">
+        <div className="space-y-1">
           {isAdmin && (
-            <div className="flex items-center gap-2 mb-1.5">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-1 text-xs">
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition"
+                className="inline-flex items-center gap-1 font-medium text-slate-500 hover:text-slate-800 transition"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Portal Utama</span>
+                <span>Portal</span>
               </Link>
-              <span className="text-slate-300 text-xs">/</span>
-              <span className="text-xs font-medium text-slate-700">
-                Monitoring Sparepart
+              <span className="text-slate-300">/</span>
+              <span className="font-semibold text-slate-900">
+                Stok Sparepart
               </span>
-            </div>
+            </nav>
           )}
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Package className="w-5 h-5 text-slate-700" />
-            <span>Manajemen Spareparts & Material</span>
+          <h1 className="t-title text-slate-900 tracking-tight">
+            Stok Sparepart
           </h1>
-          <p className="text-xs text-slate-500 font-normal mt-0.5 max-w-2xl">
-            Inventaris stok bengkel: terhubung ke perbaikan Daisha dan request antar seksi
+          <p className="t-caption text-slate-500">
+            Inventaris suku cadang bengkel dan mutasi gudang
           </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          <Link
+            href="/kpi?tab=spareparts"
+            className="flex-1 sm:flex-none h-11 sm:h-10 px-3.5 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200 transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <BarChart3 className="w-4 h-4 text-red-600" />
+            <span>KPI Stok</span>
+          </Link>
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="flex-1 sm:flex-none h-8 px-3.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition shadow-2xs inline-flex items-center justify-center gap-1.5 cursor-pointer"
+            className="flex-1 sm:flex-none h-11 sm:h-10 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             <span>Tambah Item</span>
           </button>
           <button
             type="button"
             onClick={() => fetchSpareparts()}
             disabled={loading}
-            className="flex-1 sm:flex-none h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="flex-1 sm:flex-none h-11 sm:h-10 px-3.5 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             <span>{loading ? 'Memuat...' : 'Segarkan'}</span>
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Error Recovery Banner */}
       {fetchError && (
@@ -297,99 +301,45 @@ export default function SparepartsPage() {
           <button
             type="button"
             onClick={() => void fetchSpareparts(true)}
-            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shrink-0 cursor-pointer transition shadow-xs"
+            className="h-10 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shrink-0 cursor-pointer transition flex items-center justify-center"
           >
             Coba Lagi
           </button>
         </div>
       )}
 
-      {/* ================= VIEW NAVIGATION TABS ================= */}
-      <div role="tablist" aria-label="Navigasi Inventaris Spareparts" className="flex items-center gap-2 border-b border-slate-200 pt-1">
-        <button
-          type="button"
-          role="tab"
-          id="tab-analytics"
-          aria-selected={activeMainTab === 'ANALYTICS'}
-          aria-controls="panel-analytics"
-          onClick={() => setActiveMainTab('ANALYTICS')}
-          className={`pb-2.5 px-3 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer ${
-            activeMainTab === 'ANALYTICS'
-              ? 'border-red-600 text-red-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <BarChart3 className="w-3.5 h-3.5" />
-          <span>Dashboard Analitik Inventaris</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          id="tab-inventory"
-          aria-selected={activeMainTab === 'INVENTORY'}
-          aria-controls="panel-inventory"
-          onClick={() => setActiveMainTab('INVENTORY')}
-          className={`pb-2.5 px-3 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer ${
-            activeMainTab === 'INVENTORY'
-              ? 'border-red-600 text-red-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Package className="w-3.5 h-3.5" />
-          <span>Katalog Stok & Log Mutasi ({spareparts.length})</span>
-        </button>
-      </div>
-
-      {/* ================= TAB CONTENT (ANALYTICS VS INVENTORY) ================= */}
-      {activeMainTab === 'ANALYTICS' ? (
-        <SparepartsAnalyticsDashboard
-          spareparts={spareparts}
-          onOpenRestock={(part) => {
-            const found = spareparts.find((s) => s.namaKomponen === part.namaKomponen);
-            if (found) setSelectedPart(found);
-            setMutasiForm({ qty: 0, referensi: '', keterangan: '' });
-            setShowRestockModal(true);
-          }}
-          onFilterByCategory={(kategori) => {
-            setFilterKategori(kategori);
-            setActiveMainTab('INVENTORY');
-          }}
-        />
-      ) : (
-        <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-3.5 bg-white rounded-xl border border-slate-200/80">
           <div className="flex justify-between items-center mb-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Item</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Item</span>
             <Package className="w-3.5 h-3.5 text-slate-400" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 tabular-nums">{spareparts.length}</div>
+          <div className="t-kpi text-slate-900">{spareparts.length}</div>
         </div>
-        <div className={`p-3.5 rounded-xl border shadow-2xs ${lowStockCount > 0 ? 'bg-amber-50/40 border-amber-200/80' : 'bg-white border-slate-200/80'}`}>
+        <div className={`p-3.5 rounded-xl border ${lowStockCount > 0 ? 'bg-amber-50/40 border-amber-200/80' : 'bg-white border-slate-200/80'}`}>
           <div className="flex justify-between items-center mb-1">
-            <span className={`text-[11px] font-semibold uppercase tracking-wider ${lowStockCount > 0 ? 'text-amber-800' : 'text-slate-500'}`}>Stok Menipis</span>
+            <span className={`text-xs font-semibold uppercase tracking-wider ${lowStockCount > 0 ? 'text-amber-800' : 'text-slate-500'}`}>Stok Menipis</span>
             <AlertTriangle className={`w-3.5 h-3.5 ${lowStockCount > 0 ? 'text-amber-600' : 'text-slate-400'}`} />
           </div>
-          <div className={`text-2xl font-bold tabular-nums ${lowStockCount > 0 ? 'text-amber-700' : 'text-slate-900'}`}>{lowStockCount}</div>
+          <div className={`t-kpi ${lowStockCount > 0 ? 'text-amber-700' : 'text-slate-900'}`}>{lowStockCount}</div>
         </div>
-        <div className="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+        <div className="p-3.5 bg-white rounded-xl border border-slate-200/80">
           <div className="flex justify-between items-center mb-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Kategori</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Kategori</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900 tabular-nums">{new Set(spareparts.map(s => s.kategori)).size}</div>
+          <div className="t-kpi text-slate-900">{new Set(spareparts.map(s => s.kategori)).size}</div>
         </div>
-        <div className="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+        <div className="p-3.5 bg-white rounded-xl border border-slate-200/80">
           <div className="flex justify-between items-center mb-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Stok</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Stok</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900 tabular-nums">{spareparts.reduce((a, s) => a + s.stokGudang, 0)}</div>
+          <div className="t-kpi text-slate-900">{spareparts.reduce((a, s) => a + s.stokGudang, 0)}</div>
         </div>
       </div>
 
       {/* Filter + Table */}
-      <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden">
         <div className="p-3 sm:p-3.5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-2.5 items-start sm:items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             <div className="relative flex-1 sm:flex-none">
@@ -403,7 +353,7 @@ export default function SparepartsPage() {
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Cari komponen…"
                 aria-label="Cari nama komponen suku cadang"
-                className="h-8 pl-8 pr-3 border border-slate-200 rounded-lg text-xs bg-white focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:border-red-600 w-full sm:w-56 text-slate-800 shadow-2xs transition"
+                className="h-10 pl-8 pr-3 border border-slate-200 rounded-lg text-xs bg-white focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:border-red-600 w-full sm:w-56 text-slate-800 transition"
               />
             </div>
             <select
@@ -412,7 +362,7 @@ export default function SparepartsPage() {
               value={filterKategori}
               onChange={e => setFilterKategori(e.target.value)}
               aria-label="Filter kategori suku cadang"
-              className="h-8 px-2.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 bg-white focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:border-red-600 cursor-pointer shadow-2xs"
+              className="h-10 px-3 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 bg-white focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:border-red-600 cursor-pointer"
             >
               <option value="all">Semua Kategori</option>
               {KATEGORI_OPTIONS.map(k => <option key={k} value={k}>{k}</option>)}
@@ -447,7 +397,7 @@ export default function SparepartsPage() {
                 <button
                   type="button"
                   onClick={() => { setSearch(''); setFilterKategori('all'); }}
-                  className="mt-2 h-8 px-3 bg-slate-800 text-white text-xs font-medium rounded-lg hover:bg-slate-900 transition cursor-pointer"
+                  className="mt-2 h-10 px-4 bg-slate-800 text-white text-xs font-medium rounded-lg hover:bg-slate-900 transition cursor-pointer"
                 >
                   Reset Filter
                 </button>
@@ -455,10 +405,10 @@ export default function SparepartsPage() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(true)}
-                  className="mt-2 h-8 px-3.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition cursor-pointer inline-flex items-center gap-1.5 mx-auto shadow-2xs"
+                  className="mt-2 h-10 px-4 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition cursor-pointer inline-flex items-center gap-1.5 mx-auto"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Tambah Sparepart Baru</span>
+                  <span>Tambah Sparepart</span>
                 </button>
               )}
             </div>
@@ -499,7 +449,7 @@ export default function SparepartsPage() {
                       type="button"
                       onClick={() => { setSelectedPart(s); setMutasiForm({ qty: 0, referensi: '', keterangan: '' }); setShowRestockModal(true); }}
                       aria-label={`Restock ${s.namaKomponen}`}
-                      className="flex-1 h-8 px-2 bg-white hover:bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg border border-slate-200 transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs"
+                      className="flex-1 h-11 sm:h-10 px-3 bg-white hover:bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg border border-slate-200 transition cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <ArrowDownToLine className="w-3.5 h-3.5" />
                       <span>Restock</span>
@@ -508,7 +458,7 @@ export default function SparepartsPage() {
                       type="button"
                       onClick={() => { setSelectedPart(s); setMutasiForm({ qty: 0, referensi: '', keterangan: '' }); setShowUseModal(true); }}
                       aria-label={`Catat pemakaian ${s.namaKomponen}`}
-                      className="flex-1 h-8 px-2 bg-white hover:bg-amber-50 text-amber-700 text-xs font-medium rounded-lg border border-slate-200 transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs"
+                      className="flex-1 h-11 sm:h-10 px-3 bg-white hover:bg-amber-50 text-amber-700 text-xs font-medium rounded-lg border border-slate-200 transition cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <ArrowUpFromLine className="w-3.5 h-3.5" />
                       <span>Pakai</span>
@@ -517,19 +467,19 @@ export default function SparepartsPage() {
                       type="button"
                       onClick={() => viewLogs(s)}
                       aria-label={`Riwayat mutasi ${s.namaKomponen}`}
-                      className="h-8 w-8 bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition cursor-pointer flex items-center justify-center shadow-2xs"
+                      className="h-11 w-11 sm:h-10 sm:w-10 bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition cursor-pointer flex items-center justify-center"
                       title="Riwayat Mutasi"
                     >
-                      <ClipboardList className="w-3.5 h-3.5" />
+                      <ClipboardList className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => setPartToDelete(s)}
                       aria-label={`Hapus ${s.namaKomponen}`}
-                      className="h-8 w-8 bg-white hover:bg-rose-50 text-rose-600 text-xs font-medium rounded-lg border border-slate-200 transition cursor-pointer flex items-center justify-center shadow-2xs"
+                      className="h-11 w-11 sm:h-10 sm:w-10 bg-white hover:bg-rose-50 text-rose-600 text-xs font-medium rounded-lg border border-slate-200 transition cursor-pointer flex items-center justify-center"
                       title="Hapus"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -542,7 +492,7 @@ export default function SparepartsPage() {
         <div className="overflow-x-auto hidden md:block">
           <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-50/50 text-[11px] font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200/80 select-none">
+              <tr className="bg-slate-50/50 text-xs font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200/80 select-none">
                 <th scope="col" className="p-3">Nama Komponen</th>
                 <th scope="col" className="p-3">Kategori</th>
                 <th scope="col" className="p-3 text-center">Stok</th>
@@ -574,7 +524,7 @@ export default function SparepartsPage() {
                       <button
                         type="button"
                         onClick={() => { setSearch(''); setFilterKategori('all'); }}
-                        className="mt-3 h-8 px-3 bg-slate-800 text-white text-xs font-medium rounded-lg hover:bg-slate-900 transition cursor-pointer"
+                        className="mt-3 h-10 px-4 bg-slate-800 text-white text-xs font-medium rounded-lg hover:bg-slate-900 transition cursor-pointer"
                       >
                         Reset Filter
                       </button>
@@ -582,10 +532,10 @@ export default function SparepartsPage() {
                       <button
                         type="button"
                         onClick={() => setShowAddModal(true)}
-                        className="mt-3 h-8 px-3.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                        className="mt-3 h-10 px-4 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition cursor-pointer inline-flex items-center gap-1.5"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Tambah Sparepart Baru</span>
+                        <span>Tambah Sparepart</span>
                       </button>
                     )}
                   </td>
@@ -610,56 +560,56 @@ export default function SparepartsPage() {
                       </td>
                       <td className="p-3 text-center">
                         {isLow ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/60 rounded-md text-[11px] font-medium">
-                            <AlertTriangle className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1 h-6 px-2.5 bg-amber-50 text-amber-800 border border-amber-200/60 rounded-full text-xs font-semibold">
+                            <AlertTriangle className="w-3 h-3 text-amber-600" />
                             <span>Min</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-md text-[11px] font-medium">
-                            <CheckCircle2 className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1 h-6 px-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200/60 rounded-full text-xs font-semibold">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                             <span>Aman</span>
                           </span>
                         )}
                       </td>
                       <td className="p-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button
                             type="button"
                             onClick={() => { setSelectedPart(s); setMutasiForm({ qty: 0, referensi: '', keterangan: '' }); setShowRestockModal(true); }}
-                            className="h-7 px-2.5 bg-white hover:bg-emerald-50 text-emerald-700 hover:border-emerald-200 rounded-md border border-slate-200 shadow-2xs transition cursor-pointer inline-flex items-center gap-1 text-[11px] font-medium"
+                            className="h-10 min-h-[40px] px-3 bg-white hover:bg-emerald-50 text-emerald-700 hover:border-emerald-200 rounded-lg border border-slate-200 transition cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold"
                             title="Restock"
                             aria-label={`Restock ${s.namaKomponen}`}
                           >
-                            <ArrowDownToLine className="w-3 h-3" />
+                            <ArrowDownToLine className="w-3.5 h-3.5" />
                             <span>Restock</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => { setSelectedPart(s); setMutasiForm({ qty: 0, referensi: '', keterangan: '' }); setShowUseModal(true); }}
-                            className="h-7 px-2.5 bg-white hover:bg-amber-50 text-amber-700 hover:border-amber-200 rounded-md border border-slate-200 shadow-2xs transition cursor-pointer inline-flex items-center gap-1 text-[11px] font-medium"
+                            className="h-10 min-h-[40px] px-3 bg-white hover:bg-amber-50 text-amber-800 hover:border-amber-200 rounded-lg border border-slate-200 transition cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold"
                             title="Pemakaian"
                             aria-label={`Catat pemakaian ${s.namaKomponen}`}
                           >
-                            <ArrowUpFromLine className="w-3 h-3" />
+                            <ArrowUpFromLine className="w-3.5 h-3.5" />
                             <span>Pakai</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => viewLogs(s)}
-                            className="h-7 w-7 bg-white hover:bg-slate-50 text-slate-600 rounded-md border border-slate-200 shadow-2xs transition cursor-pointer flex items-center justify-center"
+                            className="h-10 w-10 min-h-[40px] min-w-[40px] bg-white hover:bg-slate-50 text-slate-600 rounded-lg border border-slate-200 transition cursor-pointer flex items-center justify-center"
                             title="Riwayat Mutasi"
                             aria-label={`Riwayat mutasi ${s.namaKomponen}`}
                           >
-                            <ClipboardList className="w-3.5 h-3.5" />
+                            <ClipboardList className="w-4 h-4" />
                           </button>
                           <button
                             type="button"
                             onClick={() => setPartToDelete(s)}
-                            className="h-7 w-7 bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 rounded-md border border-slate-200 shadow-2xs transition cursor-pointer flex items-center justify-center"
+                            className="h-10 w-10 min-h-[40px] min-w-[40px] bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 rounded-lg border border-slate-200 transition cursor-pointer flex items-center justify-center"
                             title="Hapus"
                             aria-label={`Hapus ${s.namaKomponen}`}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -671,8 +621,6 @@ export default function SparepartsPage() {
           </table>
         </div>
       </div>
-        </>
-      )}
 
       {/* Modal: Tambah Item */}
       {showAddModal && (
@@ -730,8 +678,8 @@ export default function SparepartsPage() {
               </div>
             </div>
             <div className="p-3.5 sm:p-4 border-t border-slate-100 flex gap-2 justify-end bg-slate-50/50">
-              <button type="button" onClick={() => setShowAddModal(false)} className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition cursor-pointer shadow-2xs">Batal</button>
-              <button type="submit" disabled={submitting} className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-2xs">
+              <button type="button" onClick={() => setShowAddModal(false)} className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition cursor-pointer">Batal</button>
+              <button type="submit" disabled={submitting} className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5">
                 <Save className="w-3.5 h-3.5" />
                 <span>{submitting ? 'Menyimpan...' : 'Simpan'}</span>
               </button>
@@ -777,8 +725,8 @@ export default function SparepartsPage() {
               </div>
             </div>
             <div className="p-3.5 sm:p-4 border-t border-slate-100 flex gap-2 justify-end bg-slate-50/50">
-              <button type="button" onClick={() => setShowRestockModal(false)} className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition cursor-pointer shadow-2xs">Batal</button>
-              <button type="button" onClick={handleRestock} disabled={submitting || mutasiForm.qty <= 0} className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-lg transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-2xs">
+              <button type="button" onClick={() => setShowRestockModal(false)} className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition cursor-pointer">Batal</button>
+              <button type="button" onClick={handleRestock} disabled={submitting || mutasiForm.qty <= 0} className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-lg transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5">
                 <ArrowDownToLine className="w-3.5 h-3.5" />
                 <span>{submitting ? 'Memproses...' : `Tambah ${mutasiForm.qty} ${selectedPart.satuan}`}</span>
               </button>
@@ -828,8 +776,8 @@ export default function SparepartsPage() {
               </div>
             </div>
             <div className="p-3.5 sm:p-4 border-t border-slate-100 flex gap-2 justify-end bg-slate-50/50">
-              <button type="button" onClick={() => setShowUseModal(false)} className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition cursor-pointer shadow-2xs">Batal</button>
-              <button type="button" onClick={handleUse} disabled={submitting || mutasiForm.qty <= 0 || mutasiForm.qty > selectedPart.stokGudang} className="h-9 px-4 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-2xs">
+              <button type="button" onClick={() => setShowUseModal(false)} className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition cursor-pointer">Batal</button>
+              <button type="button" onClick={handleUse} disabled={submitting || mutasiForm.qty <= 0 || mutasiForm.qty > selectedPart.stokGudang} className="h-9 px-4 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5">
                 <ArrowUpFromLine className="w-3.5 h-3.5" />
                 <span>{submitting ? 'Memproses...' : `Keluarkan ${mutasiForm.qty} ${selectedPart.satuan}`}</span>
               </button>
@@ -886,7 +834,7 @@ export default function SparepartsPage() {
               )}
             </div>
             <div className="p-3.5 sm:p-4 border-t border-slate-100 flex justify-end bg-slate-50/50">
-              <button type="button" onClick={() => setShowLogModal(false)} className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition cursor-pointer shadow-2xs">Tutup</button>
+              <button type="button" onClick={() => setShowLogModal(false)} className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition cursor-pointer">Tutup</button>
             </div>
           </div>
         </div>

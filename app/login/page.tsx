@@ -62,7 +62,7 @@ function LoginForm() {
 
         {/* Card Header */}
         <div className="pt-8 pb-5 px-6 text-center border-b border-slate-100 flex flex-col items-center justify-center bg-slate-50/50">
-          <div className="mb-3 bg-white p-2 rounded-lg border border-slate-200/60 shadow-2xs">
+          <div className="mb-3 bg-white p-2 rounded-lg border border-slate-200/60">
             <Image
               src="/logo-bs.png"
               alt="Logo Bridgestone"
@@ -83,7 +83,7 @@ function LoginForm() {
               <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-amber-900">Sesi Berakhir (Idle Timeout)</p>
-                <p className="mt-0.5 leading-relaxed text-[11px]">
+                <p className="mt-0.5 leading-relaxed text-xs">
                   Tidak ada aktivitas selama 30 menit demi keamanan. Silakan masuk kembali.
                 </p>
               </div>
@@ -146,7 +146,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-10 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-2xs transition disabled:opacity-50 text-xs mt-2 flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500/30"
+              className="w-full h-10 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition disabled:opacity-50 text-xs mt-2 flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500/30"
             >
               {loading ? (
                 <>
@@ -160,7 +160,7 @@ function LoginForm() {
           </form>
         </div>
 
-        <div className="px-6 py-3 border-t border-slate-100 text-center text-[11px] text-slate-500 font-normal">
+        <div className="px-6 py-3 border-t border-slate-100 text-center text-xs text-slate-500 font-normal">
           © 2026 PT Bridgestone Tire Indonesia • Workshop Management
         </div>
       </div>

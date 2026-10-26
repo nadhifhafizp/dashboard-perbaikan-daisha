@@ -215,7 +215,7 @@ export default function QrScannerModal({
               <h3 id="qr-scanner-title" className="text-xs sm:text-sm font-semibold text-white">
                 Scan Barcode / QR Daisha
               </h3>
-              <p className="text-[11px] text-slate-400">Deteksi otomatis nomor unit Daisha</p>
+              <p className="text-xs text-slate-400">Deteksi otomatis nomor unit Daisha</p>
             </div>
           </div>
           <button
@@ -317,14 +317,14 @@ export default function QrScannerModal({
         {/* Tombol Opsi Jepret Foto Cepat (Sebagai alternatif) */}
         {streamError && !isCameraActive && (
           <div className="mt-4 space-y-2">
-            <p className="text-[11px] text-slate-400 text-center">
+            <p className="text-xs text-slate-400 text-center">
               Gagal membuka streaming kamera langsung. Silakan gunakan tombol foto di bawah:
             </p>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessingFile}
-              className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-medium text-xs rounded-xl shadow-xs transition duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-medium text-xs rounded-xl transition duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <Camera className="w-4 h-4" />
               <span>Jepret / Ambil Foto Barcode</span>

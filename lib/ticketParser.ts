@@ -15,12 +15,13 @@ import { formatDisplayDate } from './date';
  * Menormalkan status tiket dari berbagai format input menjadi status standar sistem.
  * 
  * @param val - Nilai status mentah (misal: "dalam proses", "complete", "afkir")
- * @returns TicketStatus standar ('Open' | 'Progress' | 'Done' | 'Scrap')
+ * @returns TicketStatus standar ('Open' | 'Progress' | 'Pending' | 'Done' | 'Scrap')
  */
 export function normalizeStatus(val: unknown): TicketStatus {
   if (!val) return 'Open';
   const s = String(val).trim().toLowerCase();
-  if (s === 'progress' || s === 'dalam proses' || s === 'sedang dikerjakan') return 'Progress';
+  if (s === 'progress' || s === 'dalam proses' || s === 'sedang dikerjakan' || s === 'proses') return 'Progress';
+  if (s === 'pending' || s === 'tunda' || s === 'menunggu part' || s === 'pending part') return 'Pending';
   if (s === 'done' || s === 'selesai' || s === 'complete') return 'Done';
   if (s === 'scrap' || s === 'afkir' || s === 'rusak') return 'Scrap';
   return 'Open';

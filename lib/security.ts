@@ -17,9 +17,7 @@ import { cookies } from 'next/headers';
 import { parseAndVerifySession, SESSION_COOKIE_NAME, SessionPayload } from '@/lib/auth';
 import { UserRole } from '@/lib/users';
 
-// ============================================================================
-// 1. RATE LIMITING (Sliding-Window Memory Store)
-// ============================================================================
+// 1. Rate limiting (sliding-window memory store)
 
 interface RateLimitRecord {
   count: number;
@@ -76,9 +74,7 @@ export function resetRateLimit(key: string): void {
   rateLimitStore.delete(key);
 }
 
-// ============================================================================
-// 2. FILE & PAYLOAD SIZE LIMIT (Mencegah DoS Memory Exhaustion)
-// ============================================================================
+// 2. Payload size limit
 
 // Default limit: 1 MB (1.048.576 bytes) — sangat aman untuk JSON dan metadata workshop
 export const DEFAULT_MAX_PAYLOAD_BYTES = 1024 * 1024; 
@@ -107,9 +103,7 @@ export function validatePayloadSize(
   return { ok: true };
 }
 
-// ============================================================================
-// 3. AUDIT LOGGING (Pencatatan Jejak Aktivitas Terstruktur)
-// ============================================================================
+// 3. Structured audit logging
 
 export interface AuditLogEntry {
   action: string;
@@ -136,9 +130,7 @@ export function recordAuditLog(entry: AuditLogEntry): void {
   );
 }
 
-// ============================================================================
-// 4. IP & CLIENT RECOGNITION
-// ============================================================================
+// 4. Client IP resolution
 
 /**
  * Mendeteksi IP Address pemanggil request secara andal.
@@ -153,9 +145,7 @@ export function getClientIp(request: Request): string {
   return '127.0.0.1';
 }
 
-// ============================================================================
-// 5. AUTHENTICATION & AUTHORIZATION GUARD (Untuk API Routes)
-// ============================================================================
+// 5. Authentication & authorization guard
 
 export interface AuthGuardResult {
   authorized: boolean;
@@ -228,9 +218,7 @@ export async function requireAuth(
   };
 }
 
-// ============================================================================
-// 6. VALIDASI & SANITASI INPUT DATA (XSS Defense & Data Integrity)
-// ============================================================================
+// 6. Input validation & sanitization
 
 /**
  * Sanitasi string teks:
@@ -271,3 +259,15 @@ export function validatePositiveInt(val: unknown, fieldName = 'Nilai', min = 1, 
   }
   return { valid: true, value: num };
 }
+
+/**
+ * Validasi kuantitas positif (bisa desimal untuk luas seperti cm²/m², panjang, berat, atau integer).
+ */
+export function validatePositiveQuantity(val: unknown, fieldName = 'Kuantitas', min = 0.001, max = 1000000): { valid: boolean; value: number; error?: string } {
+  const num = typeof val === 'number' ? val : parseFloat(String(val).replace(',', '.'));
+  if (isNaN(num) || num < min || num > max) {
+    return { valid: false, value: min, error: `${fieldName} harus berupa angka positif antara ${min} dan ${max}.` };
+  }
+  return { valid: true, value: num };
+}
+

@@ -19,6 +19,7 @@ import {
   PlusCircle,
   Download,
   RefreshCw,
+  BarChart3,
 } from 'lucide-react';
 
 const API_URL = '/api/repair';
@@ -227,48 +228,45 @@ export default function AdminPage() {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs">
-        <div>
-          <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-2 text-xs text-slate-500">
+      {/* 1. Page Header (Flat Layout) */}
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-3 border-b border-slate-200">
+        <div className="space-y-1">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-1 text-xs text-slate-500">
             <Link href="/" className="inline-flex items-center gap-1 font-medium hover:text-slate-900 transition">
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Portal</span>
             </Link>
             <span className="text-slate-300">/</span>
             <Link href="/daisha" className="font-medium hover:text-slate-900 transition">
-              Dashboard Daisha
+              Perbaikan Daisha
             </Link>
             <span className="text-slate-300">/</span>
             <span className="font-semibold text-slate-900">Panel Tindakan</span>
           </nav>
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-              Panel Tindakan Workshop
-            </h1>
-            <p className="text-[11px] sm:text-xs text-slate-500 font-normal mt-0.5">
-              Alur perbaikan bertahap: Antrean (Open) → Dikerjakan (Progress) → Selesai (Done)
-            </p>
-          </div>
+          <h1 className="t-title text-slate-900 tracking-tight">
+            Tindakan Workshop
+          </h1>
+          <p className="t-caption text-slate-500">
+            Status perbaikan dan progres tiket bengkel
+          </p>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
           <Link
-            href="/daisha"
-            className="h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 border border-slate-200 shadow-2xs"
+            href="/kpi?tab=daisha"
+            className="h-11 sm:h-10 px-4 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 border border-slate-300"
           >
-            <LayoutDashboard className="w-3.5 h-3.5 text-slate-500" />
-            <span>Dashboard</span>
+            <BarChart3 className="w-4 h-4 text-red-600" />
+            <span>KPI Daisha</span>
           </Link>
 
           <Link
             href="/input"
-            className="h-8 px-3 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 shadow-2xs"
+            className="h-11 sm:h-10 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5"
           >
-            <PlusCircle className="w-3.5 h-3.5" />
+            <PlusCircle className="w-4 h-4" />
             <span>Input Baru</span>
           </Link>
-
 
           <button
             type="button"
@@ -279,24 +277,24 @@ export default function AdminPage() {
               )
             }
             disabled={tickets.length === 0}
-            className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-lg shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="h-11 sm:h-10 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             title="Unduh seluruh data Excel (.xlsx)"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>Ekspor ({tickets.length})</span>
+            <Download className="w-4 h-4 text-emerald-600" />
+            <span>Ekspor Excel</span>
           </button>
 
           <button
             type="button"
             onClick={() => refresh()}
             disabled={loading}
-            className="h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 border border-slate-200"
+            className="h-11 sm:h-10 px-3.5 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 border border-slate-300"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
+            <RefreshCw className={`w-4 h-4 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
+            <span>Segarkan</span>
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Rekap Tiket & Status Panel Tindakan */}
       <div className="space-y-4">

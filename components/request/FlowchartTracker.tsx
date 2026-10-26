@@ -59,7 +59,7 @@ export default function FlowchartTracker({
   if (isCompact) {
     const currentInfo = WORKFLOW_STEPS[currentStep as FlowStepCode] || WORKFLOW_STEPS.STEP_2_WAITING_ATASAN_SEKSI;
     return (
-      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
         <span className="w-2 h-2 rounded-full bg-red-600" />
         <span className="text-slate-500 font-normal">Status:</span>
         <span>{currentInfo.label}</span>
@@ -68,17 +68,17 @@ export default function FlowchartTracker({
   }
 
   return (
-    <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/90 shadow-2xs space-y-3">
+    <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/90 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
           <span>Alur Proses Permohonan</span>
         </span>
         {isRejected ? (
-          <span className="text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+          <span className="text-xs font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
             Ditolak
           </span>
         ) : (
-          <span className="text-[11px] text-slate-500 font-medium tabular-nums">
+          <span className="text-xs text-slate-500 font-medium tabular-nums">
             Tahap {activeIndex + 1} dari 8
           </span>
         )}
@@ -100,9 +100,9 @@ export default function FlowchartTracker({
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
                       isStepRejected
-                        ? 'bg-rose-600 text-white shadow-xs'
+                        ? 'bg-rose-600 text-white'
                         : isCurrent
-                        ? 'bg-red-600 text-white ring-4 ring-red-100 shadow-xs'
+                        ? 'bg-red-600 text-white ring-4 ring-red-100'
                         : isPassed
                         ? 'bg-emerald-600 text-white'
                         : 'bg-white border-2 border-slate-200 text-slate-400'
@@ -111,7 +111,7 @@ export default function FlowchartTracker({
                     {isPassed ? <CheckCircle2 className="w-3.5 h-3.5" /> : STEP_ICONS[code]}
                   </div>
                   <span
-                    className={`text-[10px] mt-1.5 font-semibold leading-tight line-clamp-2 break-words text-center w-full min-h-[26px] ${
+                    className={`text-xs mt-1.5 font-semibold leading-tight line-clamp-2 break-words text-center w-full min-h-[26px] ${
                       isStepRejected
                         ? 'text-rose-700'
                         : isCurrent
@@ -124,7 +124,7 @@ export default function FlowchartTracker({
                   >
                     {stepInfo.label}
                   </span>
-                  <span className="text-[9px] text-slate-400 truncate w-full">
+                  <span className="text-xs text-slate-400 truncate w-full">
                     {stepInfo.actor}
                   </span>
                 </div>

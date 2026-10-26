@@ -225,7 +225,7 @@ function AdminTicketFormDialog({
                   #{ticket.idTiketAsli || ticket.noTiket}
                 </span>
               </h2>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-xs text-slate-500">
                 Atur tindakan per part (Repair vs Ganti) dan tentukan status pengerjaan
               </p>
             </div>
@@ -246,11 +246,11 @@ function AdminTicketFormDialog({
           {/* 1. Ringkasan Info Unit */}
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono font-bold text-xs bg-red-600 text-white px-2 py-0.5 rounded shadow-2xs">
+              <span className="font-mono font-bold text-xs bg-red-600 text-white px-2 py-0.5 rounded">
                 {ticket.noDaisha}
               </span>
               {sizeInfo && (
-                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}>
+                <span className={`text-xs font-semibold px-1.5 py-0.5 rounded border ${sizeInfo.badgeBg} ${sizeInfo.textColor} ${sizeInfo.borderColor}`}>
                   {sizeInfo.code}
                 </span>
               )}
@@ -258,7 +258,7 @@ function AdminTicketFormDialog({
               <span className="text-slate-300">•</span>
               <span className="text-slate-600 font-medium">Seksi: {ticket.seksi}</span>
             </div>
-            <div className="text-[11px] text-slate-500">
+            <div className="text-xs text-slate-500">
               Pelapor: <strong className="text-slate-700 font-medium">{ticket.pelapor}</strong>
             </div>
           </div>
@@ -273,7 +273,7 @@ function AdminTicketFormDialog({
               <button
                 type="button"
                 onClick={() => setShowAddPart(!showAddPart)}
-                className="text-[11px] font-medium text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
+                className="text-xs font-medium text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3 h-3" />
                 <span>{showAddPart ? 'Tutup Input Part' : 'Tambah Part Lain'}</span>
@@ -309,7 +309,7 @@ function AdminTicketFormDialog({
                       >
                         -
                       </button>
-                      <span className="px-2 py-0.5 text-[11px] font-bold text-slate-800 tabular-nums">
+                      <span className="px-2 py-0.5 text-xs font-bold text-slate-800 tabular-nums">
                         {it.qty} pcs
                       </span>
                       <button
@@ -326,9 +326,9 @@ function AdminTicketFormDialog({
                       <button
                         type="button"
                         onClick={() => handleSetItemTindakan(idx, 'Repair')}
-                        className={`px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
+                        className={`px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${
                           it.tindakan === 'Repair'
-                            ? 'bg-amber-500 text-white shadow-2xs'
+                            ? 'bg-amber-500 text-white'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
@@ -337,9 +337,9 @@ function AdminTicketFormDialog({
                       <button
                         type="button"
                         onClick={() => handleSetItemTindakan(idx, 'Ganti')}
-                        className={`px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
+                        className={`px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${
                           it.tindakan === 'Ganti'
-                            ? 'bg-blue-600 text-white shadow-2xs'
+                            ? 'bg-blue-600 text-white'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
@@ -365,7 +365,7 @@ function AdminTicketFormDialog({
             {/* Form Inline Tambah Part Lain */}
             {showAddPart && (
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2 mt-2">
-                <div className="font-semibold text-slate-700 text-[11px]">
+                <div className="font-semibold text-slate-700 text-xs">
                   Tambah Part / Kerusakan Lain yang Ditemukan di Bengkel:
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -374,23 +374,23 @@ function AdminTicketFormDialog({
                     placeholder="Nama Komponen (contoh: Bearing, Roda, Tiang)"
                     value={newKomponen}
                     onChange={(e) => setNewKomponen(e.target.value)}
-                    className="h-8 px-2.5 bg-white border border-slate-300 rounded-md text-xs outline-none focus:border-red-600"
+                    className="h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-red-600"
                   />
                   <input
                     type="text"
                     placeholder="Gejala (contoh: Aus berat, Pecah, Miring)"
                     value={newGejala}
                     onChange={(e) => setNewGejala(e.target.value)}
-                    className="h-8 px-2.5 bg-white border border-slate-300 rounded-md text-xs outline-none focus:border-red-600"
+                    className="h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-red-600"
                   />
                 </div>
                 <div className="flex items-center justify-between gap-2 pt-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-600 text-[11px]">Tindakan:</span>
+                    <span className="text-slate-600 text-xs">Tindakan:</span>
                     <button
                       type="button"
                       onClick={() => setNewTindakan('Ganti')}
-                      className={`px-2 py-0.5 rounded text-[11px] font-semibold cursor-pointer ${
+                      className={`h-8 px-2.5 rounded-md text-xs font-semibold cursor-pointer ${
                         newTindakan === 'Ganti' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'
                       }`}
                     >
@@ -399,7 +399,7 @@ function AdminTicketFormDialog({
                     <button
                       type="button"
                       onClick={() => setNewTindakan('Repair')}
-                      className={`px-2 py-0.5 rounded text-[11px] font-semibold cursor-pointer ${
+                      className={`h-8 px-2.5 rounded-md text-xs font-semibold cursor-pointer ${
                         newTindakan === 'Repair' ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-700'
                       }`}
                     >
@@ -409,9 +409,9 @@ function AdminTicketFormDialog({
                   <button
                     type="button"
                     onClick={handleAddPartSubmit}
-                    className="h-7 px-3 bg-red-600 hover:bg-red-700 text-white rounded-md text-[11px] font-medium transition cursor-pointer"
+                    className="h-10 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition cursor-pointer"
                   >
-                    Tambahkan ke Daftar
+                    Tambah Part
                   </button>
                 </div>
               </div>
@@ -423,7 +423,7 @@ function AdminTicketFormDialog({
             <label className="block font-semibold text-slate-800 mb-1 flex items-center justify-between">
               <span>Catatan Pengerjaan / Alasan Penggantian Part</span>
               {hasGantiItem && (
-                <span className="text-[11px] font-semibold text-blue-600 flex items-center gap-1">
+                <span className="text-xs font-semibold text-blue-600 flex items-center gap-1">
                   <Info className="w-3 h-3" />
                   Wajib ada alasan ganti
                 </span>
@@ -458,7 +458,7 @@ function AdminTicketFormDialog({
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Selesai (Done)</span>
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">Siap diambil seksi</div>
+                  <div className="text-xs text-slate-500 mt-0.5">Siap diambil seksi</div>
                 </div>
               </button>
 
@@ -476,7 +476,7 @@ function AdminTicketFormDialog({
                     <Wrench className="w-3.5 h-3.5 text-blue-600" />
                     <span>Dikerjakan (Progress)</span>
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">Masih dalam servis</div>
+                  <div className="text-xs text-slate-500 mt-0.5">Masih dalam servis</div>
                 </div>
               </button>
 
@@ -494,7 +494,7 @@ function AdminTicketFormDialog({
                     <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
                     <span>Rusak Total (Scrap)</span>
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">Afkir / tidak layak</div>
+                  <div className="text-xs text-slate-500 mt-0.5">Afkir / tidak layak</div>
                 </div>
               </button>
             </div>
@@ -512,7 +512,7 @@ function AdminTicketFormDialog({
                 onChange={setWaktuKeluar}
                 disabled={isProcessing}
               />
-              <p className="text-[11px] text-slate-400 mt-1">
+              <p className="text-xs text-slate-400 mt-1">
                 Waktu saat unit Daisha dinyatakan siap digunakan kembali
               </p>
             </div>
@@ -524,17 +524,17 @@ function AdminTicketFormDialog({
               type="button"
               onClick={onCancel}
               disabled={isProcessing}
-              className="h-9 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs transition cursor-pointer"
+              className="h-10 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs transition cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isProcessing}
-              className="h-9 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50"
+              className="h-10 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium text-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>{isProcessing ? 'Menyimpan Tindakan...' : 'Simpan Tindakan'}</span>
+              <span>{isProcessing ? 'Menyimpan...' : 'Simpan'}</span>
             </button>
           </div>
         </form>

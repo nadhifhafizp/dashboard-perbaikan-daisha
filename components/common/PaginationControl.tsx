@@ -31,7 +31,7 @@ export default function PaginationControl({
   const containerClasses =
     variant === 'plain'
       ? 'w-full flex flex-col sm:flex-row justify-between items-center gap-3 text-xs'
-      : 'p-3 sm:p-3.5 bg-white rounded-xl border border-slate-200/80 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs shadow-2xs';
+      : 'p-3 sm:p-3.5 bg-white rounded-xl border border-slate-200/80 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs';
 
   return (
     <div className={containerClasses}>

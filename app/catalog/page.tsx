@@ -57,10 +57,10 @@ export default function CatalogPage() {
         </nav>
 
         <Link
-          href="/fleet"
+          href="/maintenance?tab=fleet"
           className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition inline-flex items-center gap-1"
         >
-          <span>Ke Kontrol Armada</span>
+          <span>Ke Katalog Armada</span>
         </Link>
       </div>
 

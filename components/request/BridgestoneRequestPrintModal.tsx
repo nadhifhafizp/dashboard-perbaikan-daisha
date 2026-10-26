@@ -70,7 +70,15 @@ export interface SectionRequestFull {
   kebutuhanMaterial?: string;
   flowStep?: string;
   alasanPending?: string;
-  materials?: Array<{ id: number; namaKomponen: string; qty: number; keterangan?: string }>;
+  materials?: Array<{
+    id: number;
+    namaKomponen: string;
+    tipe?: string;
+    qty: number;
+    satuan?: string;
+    dimensi?: string;
+    keterangan?: string;
+  }>;
 }
 
 interface BridgestoneRequestPrintModalProps {
@@ -396,6 +404,9 @@ export default function BridgestoneRequestPrintModal({
           <strong>Penjelasan tentang pelaksanaan : Evaluasi, Design, Pembelian Barang</strong>
           <div style="font-size: 10.5px; margin-top: 3px; min-height: 24px;">
             ${requestData.penjelasanPelaksanaan || requestData.catatanAdmin || '-'}
+            ${requestData.kebutuhanSparepart ? `<br/><strong>Rencana Sparepart:</strong> ${requestData.kebutuhanSparepart}` : ''}
+            ${requestData.kebutuhanMaterial ? `<br/><strong>Rencana Material:</strong> ${requestData.kebutuhanMaterial}` : ''}
+            ${requestData.materials && requestData.materials.length > 0 ? `<div style="margin-top: 4px; font-size: 9.5px; padding-top: 2px; border-top: 1px dashed #ccc;"><strong>Realisasi Barang Terpakai:</strong> ${requestData.materials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')}</div>` : ''}
           </div>
         </td>
       </tr>
@@ -571,7 +582,7 @@ export default function BridgestoneRequestPrintModal({
                   ENG-KP-011 (2)
                 </span>
               </h2>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-xs text-slate-500">
                 Pratinjau resmi standar formulir permohonan pembuatan/modifikasi Bridgestone
               </p>
             </div>
@@ -580,18 +591,18 @@ export default function BridgestoneRequestPrintModal({
             <button
               type="button"
               onClick={handlePrint}
-              className="h-8 px-3.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              className="h-10 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer"
             >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Cetak / Download PDF</span>
+              <Printer className="w-4 h-4" />
+              <span>Cetak PDF</span>
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="h-8 w-8 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition flex items-center justify-center cursor-pointer"
+              className="h-10 w-10 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition flex items-center justify-center cursor-pointer"
               title="Tutup"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -601,7 +612,7 @@ export default function BridgestoneRequestPrintModal({
           <div className="bg-white mx-auto shadow-md border-2 border-slate-900 p-3 sm:p-5 text-slate-900 text-xs font-sans max-w-3xl">
             {/* Top Registration & Logo */}
             <div className="flex justify-between items-center border-b border-slate-900 pb-1.5 mb-1.5">
-              <span className="text-[10px] text-slate-600 font-mono">
+              <span className="text-xs text-slate-600 font-mono">
                 Regist. No. : ENG-KP-011 (2), Issue Date : 25 April 2012
               </span>
               <div className="flex items-center gap-1.5">
@@ -618,7 +629,7 @@ export default function BridgestoneRequestPrintModal({
             </div>
 
             {/* Routing & Seksi Box */}
-            <div className="grid grid-cols-12 border border-slate-900 text-[11px] mt-1">
+            <div className="grid grid-cols-12 border border-slate-900 text-xs mt-1">
               {/* Tanggal & No Req */}
               <div className="col-span-12 sm:col-span-4 p-2.5 border-b sm:border-b-0 sm:border-r border-slate-900 space-y-1">
                 <div>
@@ -633,15 +644,15 @@ export default function BridgestoneRequestPrintModal({
 
               {/* Seksi Pemohon Signatures */}
               <div className="col-span-12 sm:col-span-4 p-0 border-b sm:border-b-0 sm:border-r border-slate-900">
-                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-[10px]">
+                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-xs">
                   Seksi Pemohon
                 </div>
-                <div className="grid grid-cols-3 text-center text-[9px] divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
                   <div className="py-0.5">DRAFTER</div>
                   <div className="py-0.5">FOREMAN</div>
                   <div className="py-0.5">{requestData.kodeSeksi || '3122'}</div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-[9px] divide-x divide-slate-900 h-11 items-end pb-1">
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-11 items-end pb-1">
                   <div className="truncate px-1 font-medium">{requestData.drafter || requestData.picPemohon || '-'}</div>
                   <div className="truncate px-1 font-medium">{requestData.foreman || '-'}</div>
                   <div className="truncate px-1 font-medium">{requestData.seksiPemohon}</div>
@@ -650,15 +661,15 @@ export default function BridgestoneRequestPrintModal({
 
               {/* Bengkel Prod */}
               <div className="col-span-12 sm:col-span-4 p-0">
-                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-[10px]">
+                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-xs">
                   Bengkel Prod.
                 </div>
-                <div className="grid grid-cols-3 text-center text-[9px] divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
                   <div className="py-0.5">PWS</div>
                   <div className="py-0.5">K.SIE</div>
                   <div className="py-0.5">8210</div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-[9px] divide-x divide-slate-900 h-11 items-end pb-1">
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-11 items-end pb-1">
                   <div className="truncate px-1 font-medium">{requestData.picBengkel || '-'}</div>
                   <div className="truncate px-1 font-medium">{requestData.keputusan8210 || '-'}</div>
                   <div className="truncate px-1 font-medium">{requestData.keputusan820 || '-'}</div>
@@ -667,7 +678,7 @@ export default function BridgestoneRequestPrintModal({
             </div>
 
             {/* Perihal & Nama Machine */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-[11px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-xs">
               <div className="p-2">
                 <span className="font-bold">PERIHAL : </span>
                 <span>{requestData.perihal || requestData.namaBarang || '-'}</span>
@@ -679,7 +690,7 @@ export default function BridgestoneRequestPrintModal({
             </div>
 
             {/* Tujuan, Alasan, Badges, Qty */}
-            <div className="border-x border-b border-slate-900 p-2 text-[11px] space-y-1.5">
+            <div className="border-x border-b border-slate-900 p-2 text-xs space-y-1.5">
               <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                 <div>
                   <span className="font-bold">TUJUAN : </span>
@@ -704,13 +715,13 @@ export default function BridgestoneRequestPrintModal({
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-[10px] uppercase">
+                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs uppercase">
                     {requestData.tujuan || 'SAFETY'}
                   </span>
-                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-[10px] uppercase">
+                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs uppercase">
                     {requestData.urgensi || 'NORMAL'}
                   </span>
-                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-[10px]">
+                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs">
                     QTY: {requestData.jumlah} {requestData.satuan}
                   </span>
                 </div>
@@ -722,7 +733,7 @@ export default function BridgestoneRequestPrintModal({
             </div>
 
             {/* Seksi, Nama, Telp */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-[11px]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-xs">
               <div className="p-2">
                 <span className="font-bold">SEKSI : </span>
                 <span>{requestData.seksiPemohon}</span>
@@ -738,11 +749,11 @@ export default function BridgestoneRequestPrintModal({
             </div>
 
             {/* Visual Condition: Keadaan Sekarang vs Rencana Tindakan */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 text-[11px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 text-xs">
               {/* Kolom Kiri: Keadaan Sekarang */}
               <div className="p-2.5 space-y-2">
                 <div className="font-bold text-slate-900">Keadaan Sekarang :</div>
-                <p className="text-slate-800 text-[11px] leading-relaxed min-h-[32px]">
+                <p className="text-slate-800 text-xs leading-relaxed min-h-[32px]">
                   {requestData.keadaanSekarang || requestData.catatan || '(Belum ada penjelasan keadaan sekarang)'}
                 </p>
                 <div className="border border-slate-300 rounded bg-slate-50 min-h-[140px] flex items-center justify-center overflow-hidden">
@@ -754,7 +765,7 @@ export default function BridgestoneRequestPrintModal({
                       className="max-h-[180px] w-full object-contain p-1"
                     />
                   ) : (
-                    <span className="text-[11px] text-slate-400 italic">Tidak ada foto kondisi sekarang</span>
+                    <span className="text-xs text-slate-400 italic">Tidak ada foto kondisi sekarang</span>
                   )}
                 </div>
               </div>
@@ -762,7 +773,7 @@ export default function BridgestoneRequestPrintModal({
               {/* Kolom Kanan: Rencana Tindakan */}
               <div className="p-2.5 space-y-2">
                 <div className="font-bold text-slate-900">Rencana Tindakan :</div>
-                <p className="text-slate-800 text-[11px] leading-relaxed min-h-[32px]">
+                <p className="text-slate-800 text-xs leading-relaxed min-h-[32px]">
                   {requestData.rencanaTindakan || requestData.spesifikasi || '(Belum ada rencana tindakan)'}
                 </p>
                 <div className="border border-slate-300 rounded bg-slate-50 min-h-[140px] flex items-center justify-center overflow-hidden">
@@ -774,28 +785,52 @@ export default function BridgestoneRequestPrintModal({
                       className="max-h-[180px] w-full object-contain p-1"
                     />
                   ) : (
-                    <span className="text-[11px] text-slate-400 italic">Tidak ada foto rencana tindakan</span>
+                    <span className="text-xs text-slate-400 italic">Tidak ada foto rencana tindakan</span>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Target Hasil */}
-            <div className="border-x border-b border-slate-900 p-2 text-[11px]">
+            <div className="border-x border-b border-slate-900 p-2 text-xs">
               <span className="font-bold">Target Hasil : (Pcs/Day, Rp./Month, etc)</span>
               <p className="text-slate-800 mt-0.5">{requestData.targetHasil || '-'}</p>
             </div>
 
             {/* Penjelasan Pelaksanaan */}
-            <div className="border-x border-b border-slate-900 p-2 text-[11px]">
+            <div className="border-x border-b border-slate-900 p-2 text-xs">
               <span className="font-bold">Penjelasan tentang pelaksanaan : Evaluasi, Design, Pembelian Barang</span>
               <p className="text-slate-800 mt-1 min-h-[22px]">
                 {requestData.penjelasanPelaksanaan || requestData.catatanAdmin || '-'}
               </p>
+              {(requestData.kebutuhanSparepart || requestData.kebutuhanMaterial) && (
+                <div className="mt-1.5 pt-1.5 border-t border-dashed border-slate-300 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {requestData.kebutuhanSparepart && (
+                    <div>
+                      <span className="font-semibold text-slate-700">Rencana Sparepart: </span>
+                      <span className="text-slate-900">{requestData.kebutuhanSparepart}</span>
+                    </div>
+                  )}
+                  {requestData.kebutuhanMaterial && (
+                    <div>
+                      <span className="font-semibold text-slate-700">Rencana Material: </span>
+                      <span className="text-slate-900">{requestData.kebutuhanMaterial}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {requestData.materials && requestData.materials.length > 0 && (
+                <div className="mt-1.5 pt-1 border-t border-dashed border-slate-300 text-xs text-slate-700">
+                  <span className="font-bold">Realisasi Barang Terpakai: </span>
+                  <span>
+                    {requestData.materials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Evaluasi, Keputusan & Hasil Check */}
-            <div className="grid grid-cols-12 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 text-[10px]">
+            <div className="grid grid-cols-12 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 text-xs">
               {/* Evaluasi Pekerjaan Table */}
               <div className="col-span-12 sm:col-span-5 p-0">
                 <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900">
@@ -845,31 +880,31 @@ export default function BridgestoneRequestPrintModal({
                   <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900">
                     KEPUTUSAN
                   </div>
-                  <div className="grid grid-cols-2 text-center text-[9px] divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
+                  <div className="grid grid-cols-2 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
                     <div className="py-0.5">8210</div>
                     <div className="py-0.5">820</div>
                   </div>
-                  <div className="grid grid-cols-2 text-center text-[9px] divide-x divide-slate-900 h-10 items-end pb-1 border-b border-slate-900">
+                  <div className="grid grid-cols-2 text-center text-xs divide-x divide-slate-900 h-10 items-end pb-1 border-b border-slate-900">
                     <div className="truncate px-1">{requestData.keputusan8210 || '-'}</div>
                     <div className="truncate px-1">{requestData.keputusan820 || '-'}</div>
                   </div>
                   <div className="p-2 flex items-center justify-center gap-1.5 flex-wrap">
                     <span
-                      className={`px-2 py-0.5 border border-slate-900 font-bold text-[10px] rounded ${
+                      className={`px-2 py-0.5 border border-slate-900 font-bold text-xs rounded ${
                         isGo ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
                       }`}
                     >
                       GO
                     </span>
                     <span
-                      className={`px-2 py-0.5 border border-slate-900 font-bold text-[10px] rounded ${
+                      className={`px-2 py-0.5 border border-slate-900 font-bold text-xs rounded ${
                         isPending ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
                       }`}
                     >
                       PENDING
                     </span>
                     <span
-                      className={`px-2 py-0.5 border border-slate-900 font-bold text-[10px] rounded ${
+                      className={`px-2 py-0.5 border border-slate-900 font-bold text-xs rounded ${
                         isReject ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
                       }`}
                     >
@@ -877,7 +912,7 @@ export default function BridgestoneRequestPrintModal({
                     </span>
                   </div>
                 </div>
-                <div className="text-[9px] text-slate-500 text-center p-1 border-t border-dashed border-slate-300">
+                <div className="text-xs text-slate-500 text-center p-1 border-t border-dashed border-slate-300">
                   Selesai Bekerja &#10140; COPY KE SEKSI PEMOHON
                 </div>
               </div>
@@ -888,25 +923,25 @@ export default function BridgestoneRequestPrintModal({
                   HASIL CHECK
                 </div>
                 <div className="p-2 space-y-1.5 border-b border-slate-900">
-                  <div className="font-bold text-[9.5px]">Perbandingan Hasil : (Target VS Actual)</div>
-                  <p className="text-slate-800 text-[10px] min-h-[28px]">{requestData.hasilCheck || '-'}</p>
-                  <div className="text-right text-[9px] text-slate-500">
+                  <div className="font-bold text-xs">Perbandingan Hasil : (Target VS Actual)</div>
+                  <p className="text-slate-800 text-xs min-h-[28px]">{requestData.hasilCheck || '-'}</p>
+                  <div className="text-right text-xs text-slate-500">
                     Checker: <strong>{requestData.hasilCheckPemohon || '-'}</strong>
                   </div>
                 </div>
-                <div className="p-2 space-y-0.5 text-[9.5px] border-b border-slate-900">
+                <div className="p-2 space-y-0.5 text-xs border-b border-slate-900">
                   <div className="font-bold">SCHEDULE :</div>
                   <div>Plan: {requestData.schedulePlanning || '-'}</div>
                   <div>Actual: {requestData.scheduleActual || '-'}</div>
                 </div>
-                <div className="text-center text-[9px] font-bold p-1 bg-slate-50">
+                <div className="text-center text-xs font-bold p-1 bg-slate-50">
                   Kembali 8210 &#10140; ORIGINAL FILE ENG.
                 </div>
               </div>
             </div>
 
             {/* Asbestos Disclaimer */}
-            <div className="text-center font-bold italic text-[9.5px] p-1.5 text-slate-700">
+            <div className="text-center font-bold italic text-xs p-1.5 text-slate-700">
               Perhatian : Barang/Material yang dipergunakan di PT. Bridgestone Tire Indonesia tidak boleh mengandung ASBES
             </div>
           </div>
@@ -921,17 +956,17 @@ export default function BridgestoneRequestPrintModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-8 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition cursor-pointer shadow-2xs"
+              className="h-10 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition cursor-pointer"
             >
               Tutup
             </button>
             <button
               type="button"
               onClick={handlePrint}
-              className="h-8 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              className="h-10 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer"
             >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Cetak / Download PDF</span>
+              <Printer className="w-4 h-4" />
+              <span>Cetak PDF</span>
             </button>
           </div>
         </div>

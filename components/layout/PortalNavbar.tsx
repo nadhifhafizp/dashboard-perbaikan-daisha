@@ -12,7 +12,7 @@ export default function PortalNavbar() {
   const { currentUser, openLogoutModal, isLoggingOut } = useAuth();
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
+    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-15 flex items-center justify-between gap-4">
         {/* Sisi Kiri: Logo Bridgestone & Nama Sistem */}
         <div className="flex items-center gap-3.5">
@@ -35,7 +35,7 @@ export default function PortalNavbar() {
             <span className="text-xs font-bold text-slate-900 tracking-wide">
               Workshop Management
             </span>
-            <span className="text-[10px] text-slate-500 font-normal">
+            <span className="text-xs text-slate-500 font-normal">
               PT Bridgestone Tire Indonesia
             </span>
           </div>
@@ -62,7 +62,7 @@ export default function PortalNavbar() {
                 <p className="text-xs font-medium text-slate-800 leading-tight truncate max-w-[120px]">
                   {currentUser.name || currentUser.username}
                 </p>
-                <span className="text-[10px] font-semibold text-red-600">
+                <span className="text-xs font-semibold text-red-600">
                   {currentUser.role}
                 </span>
               </div>

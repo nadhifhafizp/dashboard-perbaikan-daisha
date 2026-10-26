@@ -79,7 +79,7 @@ export default function MaintenanceLogsTable({ logs }: MaintenanceLogsTableProps
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-4 sm:p-5 space-y-4">
+    <div className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
@@ -87,7 +87,7 @@ export default function MaintenanceLogsTable({ logs }: MaintenanceLogsTableProps
           </div>
           <div>
             <h2 className="text-base font-bold text-slate-900">
-              Riwayat Pemeliharaan & Perbaikan
+              Riwayat Pemeliharaan
             </h2>
           </div>
         </div>
@@ -96,10 +96,10 @@ export default function MaintenanceLogsTable({ logs }: MaintenanceLogsTableProps
           type="button"
           onClick={handleExportExcel}
           disabled={filteredLogs.length === 0}
-          className="h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          className="h-10 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
         >
           <Download className="w-3.5 h-3.5 text-slate-500" />
-          <span>Ekspor Excel ({filteredLogs.length})</span>
+          <span>Ekspor Excel</span>
         </button>
       </div>
 

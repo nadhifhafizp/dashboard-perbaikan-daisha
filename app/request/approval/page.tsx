@@ -203,7 +203,7 @@ function ApprovalContent() {
   return (
     <div className="min-h-screen bg-slate-100/80 font-sans pb-16">
       {/* Top Header */}
-      <header className="bg-white border-b border-slate-200 shadow-2xs sticky top-0 z-30">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative w-7 h-7">
@@ -213,7 +213,7 @@ function ApprovalContent() {
               <span className="text-xs font-bold text-slate-900 block leading-tight">
                 PT Bridgestone Tire Indonesia
               </span>
-              <span className="text-[10px] text-slate-500 font-mono">
+              <span className="text-xs text-slate-500 font-mono">
                 Persetujuan Formulir Permohonan Seksi (ENG-KP-011)
               </span>
             </div>
@@ -246,14 +246,14 @@ function ApprovalContent() {
                 <strong>Admin & PIC Workshop Produksi</strong> untuk tahap Evaluasi Pekerjaan (Waktu, Men Power, Sparepart, Material).
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-800 bg-emerald-100/90 px-2.5 py-1 rounded-md border border-emerald-300">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-100/90 px-2.5 py-1 rounded-md border border-emerald-300">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                   <span>Notifikasi otomatis telah terkirim ke Admin Workshop (via Web Apps & Email)</span>
                 </span>
                 {adminEmailData && (
                   <a
                     href={adminEmailData.mailtoUrl}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-semibold shadow-2xs transition"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-semibold transition"
                   >
                     <Mail className="w-3.5 h-3.5" />
                     <span>Buka Email ke Admin Workshop</span>
@@ -354,7 +354,7 @@ function ApprovalContent() {
           <div className="bg-white rounded-2xl shadow-md border-2 border-slate-900 p-4 sm:p-6 text-slate-900 text-xs font-sans space-y-3">
             {/* Top Registration & Logo */}
             <div className="flex justify-between items-center border-b border-slate-900 pb-1.5">
-              <span className="text-[10px] text-slate-600 font-mono">
+              <span className="text-xs text-slate-600 font-mono">
                 Regist. No. : ENG-KP-011 (2), Issue Date : 25 April 2012
               </span>
               <div className="flex items-center gap-1.5">
@@ -371,7 +371,7 @@ function ApprovalContent() {
             </div>
 
             {/* Routing & Seksi Box */}
-            <div className="grid grid-cols-12 border border-slate-900 text-[11px]">
+            <div className="grid grid-cols-12 border border-slate-900 text-xs">
               {/* Tanggal & No Req */}
               <div className="col-span-12 sm:col-span-4 p-2.5 border-b sm:border-b-0 sm:border-r border-slate-900 space-y-1">
                 <div>
@@ -394,15 +394,15 @@ function ApprovalContent() {
 
               {/* Seksi Pemohon */}
               <div className="col-span-12 sm:col-span-4 p-0 border-b sm:border-b-0 sm:border-r border-slate-900">
-                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-[10px]">
+                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-xs">
                   Seksi Pemohon
                 </div>
-                <div className="grid grid-cols-3 text-center text-[9px] divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
                   <div className="py-0.5">DRAFTER</div>
                   <div className="py-0.5">FOREMAN</div>
                   <div className="py-0.5">{requestData.kodeSeksi || '3122'}</div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-[9px] divide-x divide-slate-900 h-12 items-end pb-1">
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-end pb-1">
                   <div className="truncate px-1 font-medium">{requestData.drafter || requestData.picPemohon || '-'}</div>
                   <div className="truncate px-1 font-bold text-emerald-800 bg-emerald-50/50 py-0.5">
                     {actionDone === 'APPROVED' ? (namaAtasan || requestData.foreman || 'Approved') : requestData.foreman || '(Pending)'}
@@ -413,15 +413,15 @@ function ApprovalContent() {
 
               {/* Bengkel Prod */}
               <div className="col-span-12 sm:col-span-4 p-0">
-                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-[10px]">
+                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-xs">
                   Bengkel Prod.
                 </div>
-                <div className="grid grid-cols-3 text-center text-[9px] divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
                   <div className="py-0.5">PWS</div>
                   <div className="py-0.5">K.SIE</div>
                   <div className="py-0.5">8210</div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-[9px] divide-x divide-slate-900 h-12 items-end pb-1">
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-end pb-1">
                   <div className="truncate px-1 font-medium">{requestData.picBengkel || '-'}</div>
                   <div className="truncate px-1 font-medium">{requestData.keputusan8210 || '-'}</div>
                   <div className="truncate px-1 font-medium">{requestData.keputusan820 || '-'}</div>
@@ -430,7 +430,7 @@ function ApprovalContent() {
             </div>
 
             {/* Perihal & Mesin */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-[11px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-xs">
               <div className="p-2">
                 <span className="font-bold">PERIHAL : </span>
                 <span>{requestData.perihal || requestData.namaBarang}</span>
@@ -442,7 +442,7 @@ function ApprovalContent() {
             </div>
 
             {/* Tujuan & Alasan */}
-            <div className="border-x border-b border-slate-900 p-2 text-[11px] space-y-1">
+            <div className="border-x border-b border-slate-900 p-2 text-xs space-y-1">
               <div className="flex justify-between items-start">
                 <div>
                   <span className="font-bold">TUJUAN : </span>
@@ -450,10 +450,10 @@ function ApprovalContent() {
                   <span className="ml-2 font-normal text-slate-700">({requestData.alasan || requestData.spesifikasi || '-'})</span>
                 </div>
                 <div className="flex gap-1.5 shrink-0">
-                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-[10px]">
+                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs">
                     {requestData.urgensi || 'Normal'}
                   </span>
-                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-[10px]">
+                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs">
                     QTY: {requestData.jumlah} {requestData.satuan}
                   </span>
                 </div>
@@ -461,10 +461,10 @@ function ApprovalContent() {
             </div>
 
             {/* Visual Condition: Keadaan Sekarang vs Rencana Tindakan */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 text-[11px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 text-xs">
               <div className="p-2.5 space-y-2">
                 <div className="font-bold">Keadaan Sekarang :</div>
-                <p className="text-slate-800 text-[11px] leading-relaxed min-h-[30px]">
+                <p className="text-slate-800 text-xs leading-relaxed min-h-[30px]">
                   {requestData.keadaanSekarang || requestData.catatan || '-'}
                 </p>
                 <div className="border border-slate-200 rounded bg-slate-50 min-h-[140px] flex items-center justify-center overflow-hidden">
@@ -472,14 +472,14 @@ function ApprovalContent() {
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={requestData.fotoSebelum} alt="Keadaan Sekarang" className="max-h-[180px] w-full object-contain p-1" />
                   ) : (
-                    <span className="text-[11px] text-slate-500 italic">Tidak ada foto kondisi sekarang</span>
+                    <span className="text-xs text-slate-500 italic">Tidak ada foto kondisi sekarang</span>
                   )}
                 </div>
               </div>
 
               <div className="p-2.5 space-y-2">
                 <div className="font-bold">Rencana Tindakan :</div>
-                <p className="text-slate-800 text-[11px] leading-relaxed min-h-[30px]">
+                <p className="text-slate-800 text-xs leading-relaxed min-h-[30px]">
                   {requestData.rencanaTindakan || requestData.spesifikasi || '-'}
                 </p>
                 <div className="border border-slate-200 rounded bg-slate-50 min-h-[140px] flex items-center justify-center overflow-hidden">
@@ -487,20 +487,20 @@ function ApprovalContent() {
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={requestData.fotoSesudah} alt="Rencana Tindakan" className="max-h-[180px] w-full object-contain p-1" />
                   ) : (
-                    <span className="text-[11px] text-slate-500 italic">Tidak ada foto rencana tindakan</span>
+                    <span className="text-xs text-slate-500 italic">Tidak ada foto rencana tindakan</span>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Target Hasil */}
-            <div className="border-x border-b border-slate-900 p-2 text-[11px]">
+            <div className="border-x border-b border-slate-900 p-2 text-xs">
               <span className="font-bold">Target Hasil : </span>
               <span>{requestData.targetHasil || '-'}</span>
             </div>
 
             {/* Penjelasan Pelaksanaan */}
-            <div className="border-x border-b border-slate-900 p-2 text-[11px]">
+            <div className="border-x border-b border-slate-900 p-2 text-xs">
               <span className="font-bold">Penjelasan tentang pelaksanaan : </span>
               <span>{requestData.penjelasanPelaksanaan || '-'}</span>
             </div>
@@ -541,7 +541,7 @@ function ApprovalContent() {
                 type="button"
                 onClick={handleReject}
                 disabled={submitting}
-                className="min-h-[44px] sm:min-h-0 sm:h-9 px-4 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition cursor-pointer shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-50"
+                className="min-h-[44px] sm:min-h-0 sm:h-9 px-4 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-50"
               >
                 {submitting ? 'Memproses...' : 'Konfirmasi Tolak'}
               </button>

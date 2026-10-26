@@ -61,8 +61,11 @@ export async function GET(request: Request) {
     const now = new Date();
     const currentYear = yearParam ? parseInt(yearParam, 10) : now.getFullYear();
 
-    // Fast in-memory cache hit (Multi-key Map: langsung response dalam < 1ms untuk filter yang sudah pernah dimuat)
-    const cacheKey = `maint_${currentYear}_${filterJenis || 'all'}_${filterUkuran || 'all'}_${filterSeksi || 'all'}`;
+    const normalizedSeksi =
+      !filterSeksi || ['all', 'all seksi', 'semua'].includes(filterSeksi.trim().toLowerCase())
+        ? 'all'
+        : filterSeksi.trim().toLowerCase();
+    const cacheKey = `maint_${currentYear}_${filterJenis || 'all'}_${filterUkuran || 'all'}_${normalizedSeksi}`;
     const cachedEntry = maintenanceCacheMap.get(cacheKey);
     if (cachedEntry && Date.now() - cachedEntry.timestamp < CACHE_TTL) {
       return NextResponse.json(cachedEntry.payload, {
@@ -181,17 +184,21 @@ export async function GET(request: Request) {
       ]);
 
       // Saring armada Daisha jika ada filter seksi spesifik
-      const targetDaisha =
-        filterSeksi && filterSeksi.trim() && filterSeksi.toLowerCase() !== 'all seksi'
-          ? allDaisha.filter(
-              (d) => (d.seksi || '').toLowerCase() === filterSeksi.trim().toLowerCase()
-            )
-          : Array.from(allDaisha);
+      const isAllSeksi =
+        !filterSeksi ||
+        !filterSeksi.trim() ||
+        ['all', 'all seksi', 'semua'].includes(filterSeksi.trim().toLowerCase());
+
+      const targetDaisha = !isAllSeksi
+        ? allDaisha.filter(
+            (d) => (d.seksi || '').toLowerCase() === filterSeksi.trim().toLowerCase()
+          )
+        : Array.from(allDaisha);
 
       const targetUnitIds = new Set(targetDaisha.map((d) => d.id));
       const targetUnitNos = new Set(targetDaisha.map((d) => (d.nomor_daisha || '').toUpperCase()));
 
-      const targetTodayLogs = filterSeksi && filterSeksi.toLowerCase() !== 'all seksi'
+      const targetTodayLogs = !isAllSeksi
         ? todayLogs.filter((l) => targetUnitIds.has(l.daisha_id) || targetUnitNos.has((l.nomor_daisha || '').toUpperCase()))
         : todayLogs;
 
@@ -375,29 +382,19 @@ export async function GET(request: Request) {
         filteredUnits = filteredUnits.filter((u) => u.ukuran === filterUkuran);
       }
 
-      // Condition Stats for Current Year
-      let okCount = 0;
-      let rusakCount = 0;
-      if (filterSeksi && filterSeksi.trim() && filterSeksi.toLowerCase() !== 'all seksi') {
-        okCount = targetDaisha.filter((d) => (d.last_condition || 'OK') !== 'RUSAK').length;
-        rusakCount = targetDaisha.filter((d) => (d.last_condition || 'OK') === 'RUSAK').length;
-      } else {
-        conditionRows.forEach((r) => {
-          if (r.kondisi === 'OK') okCount += r.count;
-          else if (r.kondisi === 'RUSAK') rusakCount += r.count;
-          else okCount += r.count;
-        });
-      }
+      // Condition Stats selalu dihitung dari seluruh populasi armada targetDaisha
+      const okCount = targetDaisha.filter((d) => (d.last_condition || 'OK') !== 'RUSAK').length;
+      const rusakCount = targetDaisha.filter((d) => (d.last_condition || 'OK') === 'RUSAK').length;
       const totalCondition = okCount + rusakCount;
       const conditionStats = {
         okCount,
         rusakCount,
         totalCondition,
-        okPercentage: totalCondition > 0 ? Math.round((okCount / totalCondition) * 100) : 100,
-        rusakPercentage: totalCondition > 0 ? Math.round((rusakCount / totalCondition) * 100) : 0,
+        okPercentage: totalCondition > 0 ? Number(((okCount / totalCondition) * 100).toFixed(1)) : 100,
+        rusakPercentage: totalCondition > 0 ? Number(((rusakCount / totalCondition) * 100).toFixed(1)) : 0,
       };
 
-      const finalRecentLogs = filterSeksi && filterSeksi.toLowerCase() !== 'all seksi'
+      const finalRecentLogs = !isAllSeksi
         ? recentLogs.filter((l) => targetUnitIds.has(l.daisha_id) || targetUnitNos.has((l.nomor_daisha || '').toUpperCase()))
         : recentLogs;
 

@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { Calendar, Building2, Filter, X } from 'lucide-react';
 import type { SeksiJenisBreakdown } from '@/hooks/useDashboardAnalytics';
+import { CHART, DONUT } from '@/lib/chart-colors';
 
 interface SectionChartsProps {
   chartSeksiStacked: {
@@ -30,17 +31,11 @@ interface SectionChartsProps {
 }
 
 const SEKSI_COLORS = [
-  '#2563eb', // Royal Blue
-  '#0d9488', // Teal
-  '#f59e0b', // Amber
-  '#8b5cf6', // Violet
-  '#E60012', // Bridgestone Red
-  '#06b6d4', // Cyan
-  '#10b981', // Emerald
-  '#ec4899', // Pink
-  '#6366f1', // Indigo
-  '#f97316', // Orange
-  '#64748b', // Slate
+  ...CHART.series,
+  '#D97706',
+  '#059669',
+  '#E60012',
+  '#475569',
 ];
 
 interface SectionDonutTooltipProps {
@@ -73,12 +68,12 @@ function SectionDonutTooltip({ active, payload }: SectionDonutTooltipProps) {
         </div>
         {data.jenisList && data.jenisList.length > 0 && (
           <div className="pt-0.5">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
               Model Daisha Sering Masuk:
             </span>
             <div className="space-y-0.5">
               {data.jenisList.slice(0, 3).map((j) => (
-                <div key={j.jenis} className="flex justify-between items-center text-[11px] text-slate-700">
+                <div key={j.jenis} className="flex justify-between items-center text-xs text-slate-700">
                   <span className="truncate pr-2">• {j.jenis}</span>
                   <span className="font-bold tabular-nums">{j.count}x</span>
                 </div>
@@ -147,13 +142,13 @@ export default function SectionCharts({
   }, [activeSeksiList, totalSeksiAll]);
 
   return (
-    <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 shadow-2xs flex flex-col h-full justify-between">
+    <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 flex flex-col h-full justify-between">
       {/* 1. Header Minimalis */}
       <div className="flex flex-wrap justify-between items-center gap-3 mb-2 pb-2 border-b border-slate-100">
         <div className="flex items-center gap-2">
           <Building2 className="w-4 h-4 text-slate-500" />
           <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-            Distribusi Masuk per Seksi
+            Masuk per Seksi
           </h3>
         </div>
 
@@ -201,7 +196,7 @@ export default function SectionCharts({
         {seksiDonutData.length > 0 ? (
           <div className="flex flex-col items-center justify-center">
             {/* Donut Chart Berukuran Besar & Jelas */}
-            <div className="relative h-64 w-64 sm:h-72 sm:w-72 flex items-center justify-center">
+            <div className="relative h-52 w-52 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -210,8 +205,8 @@ export default function SectionCharts({
                     nameKey="seksi"
                     cx="50%"
                     cy="50%"
-                    innerRadius={74}
-                    outerRadius={114}
+                    innerRadius={DONUT.inner}
+                    outerRadius={DONUT.outer}
                     paddingAngle={seksiDonutData.length > 1 ? 3 : 0}
                     startAngle={90}
                     endAngle={-270}
@@ -245,7 +240,7 @@ export default function SectionCharts({
                     y="47%"
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className="fill-slate-900 font-extrabold text-3xl sm:text-4xl"
+                    className="fill-slate-900 font-extrabold text-2xl"
                   >
                     {totalSeksiAll}
                   </text>
@@ -289,7 +284,7 @@ export default function SectionCharts({
                     />
                     <span className="text-slate-800 font-medium">{entry.seksi}</span>
                     {isTop1 && (
-                      <span className="text-[10px] font-extrabold px-1.5 py-0.2 bg-amber-100 text-amber-900 border border-amber-200 rounded">
+                      <span className="text-xs font-extrabold px-1.5 py-0.2 bg-amber-100 text-amber-900 border border-amber-200 rounded">
                         Top
                       </span>
                     )}

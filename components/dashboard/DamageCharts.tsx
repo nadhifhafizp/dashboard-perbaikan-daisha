@@ -15,6 +15,7 @@ import {
   LabelList,
 } from 'recharts';
 import { Wrench, PieChart as PieIcon, RefreshCw, Hammer } from 'lucide-react';
+import { CHART, DONUT } from '@/lib/chart-colors';
 
 interface DamageChartsProps {
   chartKategori: { kategori: string; total: number; totalPcs?: number }[];
@@ -90,10 +91,9 @@ export default function DamageCharts({
   const gantiVal = metricMode === 'pcs' ? (tindakanStats?.gantiPcs || tindakanStats?.gantiCount || 0) : (tindakanStats?.gantiCount || 0);
   const totalTindakan = repairVal + gantiVal;
 
-  // Selaras dengan badge RiwayatTicketCard: Ganti Baru = Blue (#2563eb), Repair Fisik = Amber (#f59e0b)
   const tindakanDonutData = [
-    { name: 'Ganti Sparepart Baru', value: gantiVal, color: '#2563eb', sub: 'Penggantian suku cadang baru' },
-    { name: 'Repair / Servis Fisik', value: repairVal, color: '#f59e0b', sub: 'Perbaikan tanpa ganti part' },
+    { name: 'Ganti Sparepart Baru', value: gantiVal, color: CHART.main, sub: 'Penggantian suku cadang baru' },
+    { name: 'Repair / Servis Fisik', value: repairVal, color: CHART.status.warn, sub: 'Perbaikan tanpa ganti part' },
   ].filter((d) => d.value > 0);
 
   // Hitung tinggi eksplisit agar setiap baris memiliki ruang vertikal yang cukup (38-42px per bar)
@@ -119,7 +119,7 @@ export default function DamageCharts({
       {/* 1. Header Ringkas & Metric Switcher */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
-          Analisis Kerusakan Komponen & Tindakan
+          Kerusakan Komponen
         </h3>
 
         {/* Toggle Kasus vs Pcs */}
@@ -129,7 +129,7 @@ export default function DamageCharts({
             onClick={() => setMetricMode('kasus')}
             className={`px-3 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
               metricMode === 'kasus'
-                ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                ? 'bg-white text-slate-900 font-bold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -140,7 +140,7 @@ export default function DamageCharts({
             onClick={() => setMetricMode('pcs')}
             className={`px-3 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
               metricMode === 'pcs'
-                ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                ? 'bg-white text-slate-900 font-bold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -156,7 +156,7 @@ export default function DamageCharts({
         <div className="lg:col-span-6 bg-white p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
           <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
             <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
-              Komponen Paling Sering Rusak
+              Top Komponen
             </h4>
             <span className="text-xs font-medium text-slate-500">
               {metricMode === 'pcs' ? 'Kuantitas (Pcs)' : 'Frekuensi (Kasus)'}
@@ -204,7 +204,7 @@ export default function DamageCharts({
                               {val} {metricMode === 'pcs' ? 'pcs part' : 'kali kejadian'}
                             </span>
                           </div>
-                          <div className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${statusTag.cls}`}>
+                          <div className={`text-xs font-bold px-2 py-0.5 rounded-md border ${statusTag.cls}`}>
                             {statusTag.label}
                           </div>
                         </div>
@@ -212,19 +212,13 @@ export default function DamageCharts({
                     }}
                   />
                   <Bar dataKey="displayVal" radius={[0, 4, 4, 0]} barSize={16}>
-                    {dataKategori.map((entry, idx) => {
-                      const ratio = maxKategori > 0 ? entry.displayVal / maxKategori : 1;
-                      // Gradien intensitas data-driven royal blue
-                      const opacity = Math.max(0.45, 0.45 + 0.55 * ratio);
-                      return (
-                        <Cell
-                          key={`cell-kat-${idx}`}
-                          fill="#2563EB"
-                          fillOpacity={opacity}
-                        />
-                      );
-                    })}
-                    <LabelList dataKey="displayVal" position="right" fill="#1e3a8a" fontSize={12} fontWeight={800} />
+                    {dataKategori.map((entry, idx) => (
+                      <Cell
+                        key={`cell-kat-${idx}`}
+                        fill={idx === 0 ? CHART.main : CHART.muted}
+                      />
+                    ))}
+                    <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={12} fontWeight={700} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -240,7 +234,7 @@ export default function DamageCharts({
         <div className="lg:col-span-6 bg-white p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
           <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
             <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
-              Top 10 Gejala Kerusakan
+              Top Gejala
             </h4>
             <span className="text-xs font-medium text-slate-500">
               {metricMode === 'pcs' ? 'Pcs Part' : 'Kasus'}
@@ -288,7 +282,7 @@ export default function DamageCharts({
                               {val} {metricMode === 'pcs' ? 'pcs part' : 'kejadian'}
                             </span>
                           </div>
-                          <div className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${statusTag.cls}`}>
+                          <div className={`text-xs font-bold px-2 py-0.5 rounded-md border ${statusTag.cls}`}>
                             {statusTag.label}
                           </div>
                         </div>
@@ -296,19 +290,13 @@ export default function DamageCharts({
                     }}
                   />
                   <Bar dataKey="displayVal" radius={[0, 4, 4, 0]} barSize={16}>
-                    {dataGejala.map((entry, idx) => {
-                      const ratio = maxGejala > 0 ? entry.displayVal / maxGejala : 1;
-                      // Gradien intensitas data-driven amber
-                      const opacity = Math.max(0.35, 0.35 + 0.65 * ratio);
-                      return (
-                        <Cell
-                          key={`cell-gejala-${idx}`}
-                          fill="#D97706"
-                          fillOpacity={opacity}
-                        />
-                      );
-                    })}
-                    <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={12} fontWeight={800} />
+                    {dataGejala.map((entry, idx) => (
+                      <Cell
+                        key={`cell-gejala-${idx}`}
+                        fill={idx === 0 ? CHART.main : CHART.muted}
+                      />
+                    ))}
+                    <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={12} fontWeight={700} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -325,7 +313,7 @@ export default function DamageCharts({
       <div className="bg-white p-5 rounded-xl border border-slate-200/60">
         <div className="flex flex-wrap justify-between items-center gap-2 mb-3 pb-2 border-b border-slate-100">
           <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
-            Proporsi Tindakan: Servis Fisik vs Ganti Sparepart
+            Proporsi Tindakan
           </h4>
           <span className="text-xs font-medium text-slate-500">
             {metricMode === 'pcs' ? 'Pcs Part' : 'Kasus'}
@@ -342,8 +330,8 @@ export default function DamageCharts({
                     data={tindakanDonutData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={54}
-                    outerRadius={82}
+                    innerRadius={DONUT.inner}
+                    outerRadius={DONUT.outer}
                     paddingAngle={4}
                     dataKey="value"
                     startAngle={90}

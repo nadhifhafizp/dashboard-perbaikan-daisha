@@ -68,10 +68,10 @@ export default function SectionComplianceTable({
         <div>
           <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
             <Building2 className="w-4 h-4 text-red-600" aria-hidden="true" />
-            <span>Matriks Kepatuhan PM Lintas Seksi Pabrik</span>
+            <span>Kepatuhan PM seksi</span>
           </h2>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Tabel eksekutif pemantauan target 1 tahun 1x PM untuk seluruh seksi operasional
+            Realisasi target tahunan per seksi
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export default function SectionComplianceTable({
       </div>
 
       {/* Tabel Utama (Table-first) */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-2xs">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full text-left text-xs whitespace-nowrap">
           <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
             <tr>
@@ -111,7 +111,7 @@ export default function SectionComplianceTable({
 
               // Evaluasi status kepatuhan operasional
               let statusBadge = (
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                   <CheckCircle2 className="w-3 h-3 text-emerald-600" aria-hidden="true" />
                   <span>Selesai 100%</span>
                 </span>
@@ -120,21 +120,21 @@ export default function SectionComplianceTable({
               if (pct < 100) {
                 if (pct >= 50) {
                   statusBadge = (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                       <TrendingUp className="w-3 h-3 text-emerald-600" aria-hidden="true" />
                       <span>On Track</span>
                     </span>
                   );
                 } else if (pct >= 25) {
                   statusBadge = (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
                       <Clock className="w-3 h-3 text-amber-600" aria-hidden="true" />
                       <span>Dalam Proses</span>
                     </span>
                   );
                 } else {
                   statusBadge = (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-700 bg-rose-50 px-2 py-0.5 rounded">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-rose-700 bg-rose-50 px-2 py-0.5 rounded">
                       <AlertTriangle className="w-3 h-3 text-rose-600" aria-hidden="true" />
                       <span>Perlu Percepatan</span>
                     </span>
@@ -156,7 +156,7 @@ export default function SectionComplianceTable({
                         Seksi {item.seksi}
                       </span>
                       {isSelected && (
-                        <span className="text-[10px] bg-red-600 text-white px-1.5 py-0.2 rounded font-bold">
+                        <span className="text-xs bg-red-600 text-white px-1.5 py-0.2 rounded font-bold">
                           Rincian Terbuka ↓
                         </span>
                       )}
@@ -169,7 +169,7 @@ export default function SectionComplianceTable({
 
                   <td className="py-2.5 px-3 min-w-[140px]">
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[11px]">
+                      <div className="flex items-center justify-between text-xs">
                         <span className="font-semibold text-slate-900 tabular-nums">
                           {pct}%
                         </span>
@@ -198,7 +198,7 @@ export default function SectionComplianceTable({
 
                   <td className="py-2.5 px-3 text-center">
                     {staged > 0 ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-300 tabular-nums">
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-300 tabular-nums">
                         {staged} Unit
                       </span>
                     ) : (
@@ -214,7 +214,7 @@ export default function SectionComplianceTable({
                     <button
                       type="button"
                       onClick={() => onSelectSeksi(isSelected ? '' : item.seksi)}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg transition cursor-pointer border shadow-2xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg transition cursor-pointer border focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 ${
                         isSelected
                           ? 'bg-red-600 text-white border-red-600'
                           : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300'
@@ -241,7 +241,7 @@ export default function SectionComplianceTable({
                 {totals.total.toLocaleString('id-ID')}
               </td>
               <td className="py-2.5 px-3">
-                <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center justify-between text-xs">
                   <span className="tabular-nums font-bold">{totalPercentage}%</span>
                   <span className="text-slate-500 tabular-nums">
                     {totals.maintained.toLocaleString('id-ID')} unit

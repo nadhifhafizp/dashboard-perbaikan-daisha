@@ -24,6 +24,7 @@ const eslintConfig = defineConfig([
     ".cursor/**",
     ".daisha-profile/**",
     "scripts/**",
+    "scratch/**",
   ]),
 ]);
 
