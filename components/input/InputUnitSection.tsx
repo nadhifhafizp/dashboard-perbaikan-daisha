@@ -60,7 +60,76 @@ export default function InputUnitSection({
         )}
       </div>
 
-      {/* Nomor Unit & Barcode Scanner Button (Ditaruh Pertama Agar Cepat Terdeteksi) */}
+      {/* Tipe / Jenis Daisha */}
+      <div className="space-y-1.5 pt-1">
+        <div className="flex items-center justify-between">
+          <label htmlFor="input-jenis-daisha" className="block text-xs font-semibold text-slate-700">
+            Tipe / Jenis Daisha *
+          </label>
+          {formData.seksi && (
+            <span className="text-[11px] text-slate-500">
+              Seksi: <strong className="text-slate-800">{formData.seksi}</strong>
+            </span>
+          )}
+        </div>
+        <select
+          id="input-jenis-daisha"
+          name="jenisDaisha"
+          value={formData.jenisDaisha}
+          onChange={handleChange}
+          required
+          className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
+        >
+          <option value="">-- Pilih Jenis Daisha --</option>
+          {pilihanDaishaTersedia.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Pilihan Seluruh Jenis Daisha Toggle (Opsional) */}
+      <div className="flex items-center pt-1">
+        <input
+          type="checkbox"
+          name="showAll"
+          id="showAll"
+          checked={showAllDaisha}
+          onChange={handleChange}
+          className="mr-2 h-4 w-4 text-red-600 rounded border-slate-300 accent-red-600 cursor-pointer"
+        />
+        <label
+          htmlFor="showAll"
+          className="text-xs text-slate-600 font-medium cursor-pointer select-none"
+        >
+          Tampilkan semua tipe tanpa dibatasi Seksi
+        </label>
+      </div>
+
+      {/* Filter & Pemilihan Varian / Susunan Daisha (PILIH VARIAN DULU BARU SCAN) */}
+      {formData.jenisDaisha && (
+        <div className="pt-2 border-t border-slate-100">
+          <DaishaVariantSelector
+            key={formData.jenisDaisha}
+            jenisDaisha={formData.jenisDaisha}
+            currentNoDaisha={formData.noDaisha}
+            onSelectVariant={(variant) => {
+              setFormData((prev) => {
+                const cleanExisting = prev.noDaisha.trim().toUpperCase().replace(/[\s\-_]/g, '');
+                const numMatch = cleanExisting.match(/\d+$/);
+                let newNo = variant.codePrefix;
+                if (numMatch) {
+                  newNo = `${variant.codePrefix}${numMatch[0]}`;
+                }
+                return { ...prev, noDaisha: newNo };
+              });
+            }}
+          />
+        </div>
+      )}
+
+      {/* Nomor Unit & Barcode Scanner Button */}
       <div className="space-y-2">
         <label htmlFor="input-no-daisha" className="block text-xs font-semibold text-slate-800">
           Nomor Seri / ID Daisha *
@@ -117,75 +186,6 @@ export default function InputUnitSection({
           </div>
         )}
       </div>
-
-      {/* Tipe / Jenis Daisha */}
-      <div className="space-y-1.5 pt-1">
-        <div className="flex items-center justify-between">
-          <label htmlFor="input-jenis-daisha" className="block text-xs font-semibold text-slate-700">
-            Tipe / Jenis Daisha *
-          </label>
-          {formData.seksi && (
-            <span className="text-[11px] text-slate-500">
-              Seksi: <strong className="text-slate-800">{formData.seksi}</strong>
-            </span>
-          )}
-        </div>
-        <select
-          id="input-jenis-daisha"
-          name="jenisDaisha"
-          value={formData.jenisDaisha}
-          onChange={handleChange}
-          required
-          className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
-        >
-          <option value="">-- Pilih Jenis Daisha --</option>
-          {pilihanDaishaTersedia.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Pilihan Seluruh Jenis Daisha Toggle (Opsional) */}
-      <div className="flex items-center pt-1">
-        <input
-          type="checkbox"
-          name="showAll"
-          id="showAll"
-          checked={showAllDaisha}
-          onChange={handleChange}
-          className="mr-2 h-4 w-4 text-red-600 rounded border-slate-300 accent-red-600 cursor-pointer"
-        />
-        <label
-          htmlFor="showAll"
-          className="text-xs text-slate-600 font-medium cursor-pointer select-none"
-        >
-          Tampilkan semua tipe tanpa dibatasi Seksi
-        </label>
-      </div>
-
-      {/* Filter & Pemilihan Varian / Susunan Daisha */}
-      {formData.jenisDaisha && (
-        <div className="pt-2 border-t border-slate-100">
-          <DaishaVariantSelector
-            key={formData.jenisDaisha}
-            jenisDaisha={formData.jenisDaisha}
-            currentNoDaisha={formData.noDaisha}
-            onSelectVariant={(variant) => {
-              setFormData((prev) => {
-                const cleanExisting = prev.noDaisha.trim().toUpperCase().replace(/[\s\-_]/g, '');
-                const numMatch = cleanExisting.match(/\d+$/);
-                let newNo = variant.codePrefix;
-                if (numMatch) {
-                  newNo = `${variant.codePrefix}${numMatch[0]}`;
-                }
-                return { ...prev, noDaisha: newNo };
-              });
-            }}
-          />
-        </div>
-      )}
 
       {/* Warning Card Duplikasi Unit Aktif */}
       {duplicateActiveTicket && (

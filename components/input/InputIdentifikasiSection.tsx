@@ -171,6 +171,28 @@ export default function InputIdentifikasiSection({
           </div>
         </div>
 
+        {/* Filter & Pemilihan Varian / Susunan Daisha (PILIH VARIAN DULU BARU SCAN) */}
+        {formData.jenisDaisha && (
+          <div className="pt-2 border-t border-slate-100">
+            <DaishaVariantSelector
+              key={formData.jenisDaisha}
+              jenisDaisha={formData.jenisDaisha}
+              currentNoDaisha={formData.noDaisha}
+              onSelectVariant={(variant) => {
+                setFormData((prev) => {
+                  const cleanExisting = prev.noDaisha.trim().toUpperCase().replace(/[\s\-_]/g, '');
+                  const numMatch = cleanExisting.match(/\d+$/);
+                  let newNo = variant.codePrefix;
+                  if (numMatch) {
+                    newNo = `${variant.codePrefix}${numMatch[0]}`;
+                  }
+                  return { ...prev, noDaisha: newNo };
+                });
+              }}
+            />
+          </div>
+        )}
+
         {/* BARIS 3: NOMOR SERI / ID DAISHA & SCAN KAMERA */}
         <div className="space-y-2 pt-1 border-t border-slate-100">
           <label htmlFor="input-no-daisha" className="block text-xs font-semibold text-slate-800">
@@ -228,28 +250,6 @@ export default function InputIdentifikasiSection({
             </div>
           )}
         </div>
-
-        {/* Filter & Pemilihan Varian / Susunan Daisha */}
-        {formData.jenisDaisha && (
-          <div className="pt-2 border-t border-slate-100">
-            <DaishaVariantSelector
-              key={formData.jenisDaisha}
-              jenisDaisha={formData.jenisDaisha}
-              currentNoDaisha={formData.noDaisha}
-              onSelectVariant={(variant) => {
-                setFormData((prev) => {
-                  const cleanExisting = prev.noDaisha.trim().toUpperCase().replace(/[\s\-_]/g, '');
-                  const numMatch = cleanExisting.match(/\d+$/);
-                  let newNo = variant.codePrefix;
-                  if (numMatch) {
-                    newNo = `${variant.codePrefix}${numMatch[0]}`;
-                  }
-                  return { ...prev, noDaisha: newNo };
-                });
-              }}
-            />
-          </div>
-        )}
 
         {/* Warning Card Duplikasi Unit Aktif */}
         {duplicateActiveTicket && (
