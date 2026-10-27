@@ -73,8 +73,17 @@ export default function InputKerusakanPage() {
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Kolom Kiri: Identifikasi Unit & Informasi Pelapor (5 Kolom) */}
+          {/* Kolom Kiri: 1. Pelapor & Seksi, 2. Scan & Unit Daisha (5 Kolom) */}
           <div className="lg:col-span-5 space-y-5">
+            {/* 1. PELAPOR SIAPA & SEKSI MANA */}
+            <InputPelaporSection
+              formData={formData}
+              setFormData={setFormData}
+              handleChange={handleChange}
+              seksiList={seksiList}
+            />
+
+            {/* 2. SCAN BARCODE / NOMOR UNIT DAISHA */}
             <InputUnitSection
               formData={formData}
               setFormData={setFormData}
@@ -90,12 +99,6 @@ export default function InputKerusakanPage() {
               setDismissedDuplicateUnit={setDismissedDuplicateUnit}
               setIsScanning={setIsScanning}
               isAdmin={isAdmin}
-            />
-
-            <InputPelaporSection
-              formData={formData}
-              setFormData={setFormData}
-              handleChange={handleChange}
             />
 
             {/* Desktop Action Buttons */}

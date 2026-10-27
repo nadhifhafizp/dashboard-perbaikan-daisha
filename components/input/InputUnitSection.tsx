@@ -48,7 +48,7 @@ export default function InputUnitSection({
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
           <Layers className="w-4 h-4 text-red-600" />
-          <span>1. Identifikasi Unit Daisha</span>
+          <span>2. Scan &amp; Nomor Unit Daisha</span>
         </h2>
         {detectedSize && (
           <span
@@ -118,51 +118,33 @@ export default function InputUnitSection({
         )}
       </div>
 
-      {/* Grid Seksi & Tipe Daisha */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-        <div>
-          <label htmlFor="input-seksi" className="block text-xs font-semibold text-slate-700 mb-1.5">
-            Seksi Asal Unit *
-          </label>
-          <select
-            id="input-seksi"
-            name="seksi"
-            value={formData.seksi}
-            onChange={handleChange}
-            required
-            className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
-          >
-            <option value="">-- Pilih Seksi --</option>
-            {seksiList
-              .filter((s) => s.toLowerCase() !== 'all seksi')
-              .map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="input-jenis-daisha" className="block text-xs font-semibold text-slate-700 mb-1.5">
+      {/* Tipe / Jenis Daisha */}
+      <div className="space-y-1.5 pt-1">
+        <div className="flex items-center justify-between">
+          <label htmlFor="input-jenis-daisha" className="block text-xs font-semibold text-slate-700">
             Tipe / Jenis Daisha *
           </label>
-          <select
-            id="input-jenis-daisha"
-            name="jenisDaisha"
-            value={formData.jenisDaisha}
-            onChange={handleChange}
-            required
-            className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
-          >
-            <option value="">-- Pilih Jenis Daisha --</option>
-            {pilihanDaishaTersedia.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
+          {formData.seksi && (
+            <span className="text-[11px] text-slate-500">
+              Seksi: <strong className="text-slate-800">{formData.seksi}</strong>
+            </span>
+          )}
         </div>
+        <select
+          id="input-jenis-daisha"
+          name="jenisDaisha"
+          value={formData.jenisDaisha}
+          onChange={handleChange}
+          required
+          className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
+        >
+          <option value="">-- Pilih Jenis Daisha --</option>
+          {pilihanDaishaTersedia.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Pilihan Seluruh Jenis Daisha Toggle (Opsional) */}
