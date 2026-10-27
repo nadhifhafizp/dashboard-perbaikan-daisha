@@ -25,6 +25,7 @@ interface EditTicketModalProps {
   onSave: (data: {
     waktuMasuk: string;
     noDaisha: string;
+    namaPelapor?: string;
     seksi: string;
     namaDaisha: string;
     jenisKerusakan: string;
@@ -76,6 +77,7 @@ function parseInitialTicketData(ticket: Ticket) {
     formData: {
       waktuMasuk: toDateTimeLocalValue(ticket.tglMasuk),
       noDaisha: ticket.noDaisha || '',
+      namaPelapor: ticket.pelapor || '',
       seksi: ticket.seksi && ticket.seksi !== '-' ? ticket.seksi : '',
       namaDaisha: ticket.namaDaisha && ticket.namaDaisha !== '-' ? ticket.namaDaisha : '',
       catatanTambahan: !isNeedsDiagnosis ? (parsed.catatan || '') : '',
@@ -250,6 +252,7 @@ function EditTicketModalDialog({
     onSave({
       waktuMasuk: cleanInputDateTime(formData.waktuMasuk),
       noDaisha: formData.noDaisha,
+      namaPelapor: formData.namaPelapor,
       seksi: formData.seksi,
       namaDaisha: formData.namaDaisha,
       jenisKerusakan: assembled.kategoriKerusakan,
@@ -339,6 +342,22 @@ function EditTicketModalDialog({
               <IndoDateTimeInput
                 value={formData.waktuMasuk}
                 onChange={(val) => setFormData((prev) => ({ ...prev, waktuMasuk: val }))}
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="edit-nama-pelapor" className="block text-xs font-medium text-slate-700 mb-1">
+                Nama Pelapor *
+              </label>
+              <input
+                id="edit-nama-pelapor"
+                type="text"
+                name="namaPelapor"
+                value={formData.namaPelapor}
+                onChange={handleFormChange}
+                placeholder="Nama pelapor / operator"
+                className="w-full p-2 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-2 focus:ring-red-600 outline-none"
                 required
               />
             </div>

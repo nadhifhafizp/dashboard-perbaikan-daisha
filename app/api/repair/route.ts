@@ -584,28 +584,43 @@ export async function POST(request: Request) {
       const waktuMasukRaw = sanitizeText(body.waktuMasuk, 30);
       let parsedWaktuMasuk: Date | null = null;
       if (waktuMasukRaw && waktuMasukRaw !== '-') {
-        const d = new Date(waktuMasukRaw);
-        if (!isNaN(d.getTime())) parsedWaktuMasuk = d;
+        const ts = parseToTimestamp(waktuMasukRaw);
+        if (ts > 0) {
+          parsedWaktuMasuk = new Date(ts);
+        } else {
+          const d = new Date(waktuMasukRaw);
+          if (!isNaN(d.getTime())) parsedWaktuMasuk = d;
+        }
       }
+
+      // Update Rincian Kerusakan
+      await sql`DELETE FROM "TicketDetail" WHERE "idTiket" = ${idTiket}`;
+      const parsedDetails = parseTicketDamageDetail(detail);
+      const itemsJson = parsedDetails.items.map(it => ({
+        komponen: it.komponen,
+        gejala: it.gejala,
+        tindakan: it.tindakan || 'Repair',
+        qty: it.qty || 1,
+      }));
 
       await sql`
         UPDATE "Ticket"
         SET 
           "noDaisha" = ${noDaisha},
           "namaPelapor" = ${namaPelapor || auth.user?.name || 'Operator'},
-          "waktuMasuk" = COALESCE(${parsedWaktuMasuk}, "waktuMasuk")
+          "waktuMasuk" = COALESCE(${parsedWaktuMasuk}, "waktuMasuk"),
+          "items" = ${JSON.stringify(itemsJson)}::jsonb
         WHERE "idTiket" = ${idTiket}
       `;
 
-      // Update Rincian Kerusakan
-      await sql`DELETE FROM "TicketDetail" WHERE "idTiket" = ${idTiket}`;
-      const parsedDetails = parseTicketDamageDetail(detail);
       if (parsedDetails.items.length > 0) {
         await sql`
           INSERT INTO "TicketDetail" ("idTiket", "komponen", "gejala", "tindakan", "qty")
           VALUES ${sql(parsedDetails.items.map(it => [idTiket, it.komponen, it.gejala, it.tindakan || 'Repair', it.qty || 1]))}
         `;
       }
+
+      invalidateRepairCache();
 
       recordAuditLog({
         action: 'TICKET_EDIT',
@@ -636,6 +651,31 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Terjadi kesalahan internal pada server database" },
       { status: 500 }
+    );
+  }
+}
+
+// 3. FUNGSI PUT: Alias koreksi tiket untuk kompatibilitas RESTful client
+export async function PUT(request: Request) {
+  try {
+    const rawBody = await request.json();
+    const payloadWithAction = {
+      action: 'EDIT_TICKET',
+      ...rawBody,
+    };
+
+    // Forward ke POST handler yang sudah memiliki auth & audit lengkap
+    const forwardedRequest = new Request(request.url, {
+      method: 'POST',
+      headers: request.headers,
+      body: JSON.stringify(payloadWithAction),
+    });
+
+    return POST(forwardedRequest);
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Format data PUT tidak valid' },
+      { status: 400 }
     );
   }
 }

@@ -24,6 +24,7 @@ import {
   ScanLine,
   Clock,
   X,
+  Edit3,
 } from 'lucide-react';
 
 interface AdminTicketTableProps {
@@ -534,14 +535,25 @@ function AdminTicketTableComponent({
 
                 {/* Action buttons */}
                 <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-                  {parsed.isWaitingDiagnosis && t.status !== 'Done' && t.status !== 'Scrap' && (
+                  {parsed.isWaitingDiagnosis && t.status !== 'Done' && t.status !== 'Scrap' ? (
                     <button
+                      type="button"
                       onClick={() => onEditTicket(t)}
                       className="h-11 sm:h-10 px-3 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium rounded-lg transition flex items-center justify-center gap-1 cursor-pointer"
                       title="Diagnosa & Input Titik Kerusakan di Bengkel"
                     >
                       <Wrench className="w-3.5 h-3.5" />
                       <span>Diagnosa</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onEditTicket(t)}
+                      className="h-11 sm:h-10 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium rounded-lg transition cursor-pointer flex items-center justify-center gap-1"
+                      title="Edit Data Tiket (Tanggal, Unit, Pelapor, Kerusakan)"
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Edit</span>
                     </button>
                   )}
                   <button
@@ -772,6 +784,15 @@ function AdminTicketTableComponent({
                         >
                           <Wrench className="w-3.5 h-3.5" />
                           <span>Proses</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onEditTicket(t)}
+                          className="h-9 sm:h-10 px-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5"
+                          title="Edit Data Tiket (Tanggal Masuk, Unit, Pelapor, Kerusakan)"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-slate-500" />
+                          <span>Edit</span>
                         </button>
                         <button
                           type="button"

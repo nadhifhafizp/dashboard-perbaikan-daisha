@@ -46,52 +46,53 @@ import {
   Calendar,
 } from 'lucide-react';
 
-export type KpiTab = 'daisha' | 'request' | 'spareparts';
-export type DaishaSubTab = 'jumlah_daisha' | 'perbaikan_daisha' | 'pm_daisha' | 'data_mentah';
+export type KpiTab =
+  | 'jumlah_daisha'
+  | 'perbaikan_daisha'
+  | 'pm_daisha'
+  | 'data_mentah'
+  | 'request'
+  | 'spareparts';
 
 function KpiDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAdmin, currentUser } = useAuth();
+  const { isAdmin } = useAuth();
 
-  // Tab State: default 'daisha' (KPI Manajemen Daisha) or read from query param
+  // Tab State: flat single-tier navigation across 6 KPI tabs
   const tabParam = searchParams.get('tab') as string | null;
   const subtabParam = searchParams.get('subtab') as string | null;
 
   const [activeTab, setActiveTab] = useState<KpiTab>(() => {
-    if (tabParam === 'pm' || tabParam === 'daisha') {
-      return 'daisha';
-    }
-    if (tabParam && ['request', 'spareparts'].includes(tabParam)) {
+    if (tabParam === 'pm' || subtabParam === 'pm_daisha') return 'pm_daisha';
+    if (subtabParam === 'jumlah_daisha') return 'jumlah_daisha';
+    if (tabParam === 'daisha' || subtabParam === 'perbaikan_daisha') return 'perbaikan_daisha';
+    if (subtabParam === 'data_mentah') return 'data_mentah';
+    if (tabParam === 'request') return 'request';
+    if (tabParam === 'spareparts') return 'spareparts';
+    if (
+      tabParam &&
+      ['jumlah_daisha', 'perbaikan_daisha', 'pm_daisha', 'data_mentah', 'request', 'spareparts'].includes(tabParam)
+    ) {
       return tabParam as KpiTab;
-    }
-    return 'daisha';
-  });
-
-  // Sub-tab di dalam KPI Daisha:
-  // 1. 'jumlah_daisha' (KPI Jumlah Seluruh Daisha: OKE vs NG & per Seksi)
-  // 2. 'perbaikan_daisha' (KPI Perbaikan Daisha: Diagnostik, Throughput, Sparepart, Filter detail)
-  // 3. 'pm_daisha' (KPI PM Daisha: Filter tahun, populasi, kesehatan, kepatuhan, mapping)
-  // 4. 'data_mentah' (Data Tiket Raw)
-  const [daishaSubTab, setDaishaSubTab] = useState<DaishaSubTab>(() => {
-    if (tabParam === 'pm') return 'pm_daisha';
-    if (subtabParam && ['jumlah_daisha', 'perbaikan_daisha', 'pm_daisha', 'data_mentah'].includes(subtabParam)) {
-      return subtabParam as DaishaSubTab;
     }
     return 'jumlah_daisha';
   });
 
   useEffect(() => {
-    if (tabParam === 'pm') {
-      setActiveTab('daisha');
-      setDaishaSubTab('pm_daisha');
-    } else if (tabParam === 'daisha') {
-      setActiveTab('daisha');
-    } else if (tabParam && ['request', 'spareparts'].includes(tabParam)) {
+    if (tabParam === 'pm' || subtabParam === 'pm_daisha') {
+      setActiveTab('pm_daisha');
+    } else if (subtabParam === 'jumlah_daisha') {
+      setActiveTab('jumlah_daisha');
+    } else if (subtabParam === 'perbaikan_daisha') {
+      setActiveTab('perbaikan_daisha');
+    } else if (subtabParam === 'data_mentah') {
+      setActiveTab('data_mentah');
+    } else if (
+      tabParam &&
+      ['jumlah_daisha', 'perbaikan_daisha', 'pm_daisha', 'data_mentah', 'request', 'spareparts'].includes(tabParam)
+    ) {
       setActiveTab(tabParam as KpiTab);
-    }
-    if (subtabParam && ['jumlah_daisha', 'perbaikan_daisha', 'pm_daisha', 'data_mentah'].includes(subtabParam)) {
-      setDaishaSubTab(subtabParam as DaishaSubTab);
     }
   }, [tabParam, subtabParam]);
 
@@ -99,6 +100,7 @@ function KpiDashboardContent() {
     setActiveTab(newTab);
     const url = new URL(window.location.href);
     url.searchParams.set('tab', newTab);
+    url.searchParams.delete('subtab');
     window.history.replaceState(null, '', url.pathname + url.search);
   };
 
@@ -254,7 +256,7 @@ function KpiDashboardContent() {
 
   // Fetch data on active tab selection
   useEffect(() => {
-    if (activeTab === 'daisha') {
+    if (activeTab === 'jumlah_daisha' || activeTab === 'pm_daisha') {
       void fetchPmData();
     } else if (activeTab === 'request') {
       void fetchRequests();
@@ -264,7 +266,12 @@ function KpiDashboardContent() {
   }, [activeTab, fetchPmData, fetchRequests, fetchSpareparts]);
 
   const handleGlobalRefresh = () => {
-    if (activeTab === 'daisha') {
+    if (
+      activeTab === 'jumlah_daisha' ||
+      activeTab === 'perbaikan_daisha' ||
+      activeTab === 'pm_daisha' ||
+      activeTab === 'data_mentah'
+    ) {
       refreshTickets();
       void fetchPmData();
     }
@@ -273,7 +280,11 @@ function KpiDashboardContent() {
   };
 
   const isCurrentTabLoading =
-    (activeTab === 'daisha' && (loadingTickets || isRefreshingTickets || loadingPm)) ||
+    ((activeTab === 'jumlah_daisha' ||
+      activeTab === 'perbaikan_daisha' ||
+      activeTab === 'pm_daisha' ||
+      activeTab === 'data_mentah') &&
+      (loadingTickets || isRefreshingTickets || loadingPm)) ||
     (activeTab === 'request' && loadingRequests) ||
     (activeTab === 'spareparts' && loadingSpareparts);
 
@@ -309,6 +320,35 @@ function KpiDashboardContent() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap self-end md:self-center">
+          <Link
+            href="/input"
+            className="h-10 min-h-[40px] px-3.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
+          >
+            <span>Input Kerusakan</span>
+            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+          </Link>
+          <Link
+            href="/maintenance?tab=staging"
+            className="h-10 min-h-[40px] px-3.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
+          >
+            <span>Penjemputan PM</span>
+            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+          </Link>
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              className="h-10 min-h-[40px] px-4 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
+            >
+              <span>Panel Tindakan</span>
+            </Link>
+          ) : (
+            <Link
+              href="/riwayat"
+              className="h-10 min-h-[40px] px-4 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
+            >
+              <span>Antrean Unit</span>
+            </Link>
+          )}
           <button
             type="button"
             onClick={handleGlobalRefresh}
@@ -325,224 +365,164 @@ function KpiDashboardContent() {
         </div>
       </header>
 
-      {/* 2. Tab Navigation Switcher (3 Pilar KPI Terpadu) */}
-      <div className="flex border-b border-slate-200 gap-1 overflow-x-auto scrollbar-none">
-        <button
-          type="button"
-          onClick={() => handleTabChange('daisha')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
-            activeTab === 'daisha'
-              ? 'border-red-600 text-red-600 bg-red-50/40'
-              : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          <span>Armada & PM</span>
-          <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
-            {pmSummary.totalUnits > 0 ? `${pmSummary.totalUnits.toLocaleString('id-ID')} Unit` : '8.773 Unit'}
-          </span>
-          {pmSummary.percentage > 0 && (
-            <span className="px-1.5 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-800 font-bold">
-              PM {pmSummary.percentage.toFixed(0)}%
+      {/* 2. Primary Tab Navigation (Flat Single-Tier: 6 Pilar KPI Terpadu) */}
+      <div className="flex items-center justify-between border-b border-slate-200 gap-2 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1 sm:gap-1.5">
+          {/* 1. Jumlah Seluruh Daisha */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('jumlah_daisha')}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'jumlah_daisha'
+                ? 'border-red-600 text-red-600 bg-red-50/40'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span>1. Jumlah Seluruh Daisha</span>
+            <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
+              {pmSummary.totalUnits > 0 ? `${pmSummary.totalUnits.toLocaleString('id-ID')} Unit` : '8.773 Unit'}
             </span>
-          )}
-        </button>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => handleTabChange('request')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
-            activeTab === 'request'
-              ? 'border-red-600 text-red-600 bg-red-50/40'
-              : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-          }`}
-        >
-          <SendHorizonal className="w-4 h-4" />
-          <span>Request Seksi</span>
-          {requests.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 font-mono">
-              {requests.length}
+          {/* 2. Perbaikan Daisha */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('perbaikan_daisha')}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'perbaikan_daisha'
+                ? 'border-red-600 text-red-600 bg-red-50/40'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Wrench className="w-4 h-4" />
+            <span>2. Perbaikan Daisha</span>
+            <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
+              {filteredData.length} Tiket
             </span>
-          )}
-        </button>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => handleTabChange('spareparts')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
-            activeTab === 'spareparts'
-              ? 'border-red-600 text-red-600 bg-red-50/40'
-              : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-          }`}
-        >
-          <Package className="w-4 h-4" />
-          <span>Stok Sparepart</span>
-          {spareparts.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800 font-mono">
-              {spareparts.length}
-            </span>
+          {/* 3. PM Daisha */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('pm_daisha')}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'pm_daisha'
+                ? 'border-red-600 text-red-600 bg-red-50/40'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>3. PM Daisha</span>
+            {pmSummary.percentage > 0 && (
+              <span className="px-1.5 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                PM {pmSummary.percentage.toFixed(0)}%
+              </span>
+            )}
+          </button>
+
+          {/* 4. Data Tiket */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('data_mentah')}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'data_mentah'
+                ? 'border-red-600 text-red-600 bg-red-50/40'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Data Tiket</span>
+          </button>
+
+          {/* 5. Request Seksi */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('request')}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'request'
+                ? 'border-red-600 text-red-600 bg-red-50/40'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <SendHorizonal className="w-4 h-4" />
+            <span>Request Seksi</span>
+            {requests.length > 0 && (
+              <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 font-mono">
+                {requests.length}
+              </span>
+            )}
+          </button>
+
+          {/* 6. Stok Sparepart */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('spareparts')}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'spareparts'
+                ? 'border-red-600 text-red-600 bg-red-50/40'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Package className="w-4 h-4" />
+            <span>Stok Sparepart</span>
+            {spareparts.length > 0 && (
+              <span className="px-1.5 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800 font-mono">
+                {spareparts.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Toolbar Kanan: Ekspor Excel jika di perbaikan / data tiket, atau Tahun PM jika di PM */}
+        <div className="hidden sm:flex items-center gap-2 shrink-0 pb-1">
+          {activeTab === 'pm_daisha' && (
+            <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200">
+              <span className="text-xs font-semibold text-slate-600">Tahun PM:</span>
+              <select
+                value={pmYear}
+                onChange={(e) => setPmYear(Number(e.target.value))}
+                className="text-xs font-bold bg-transparent text-slate-800 cursor-pointer focus:outline-none"
+              >
+                {[2024, 2025, 2026, 2027].map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
-        </button>
+
+          {(activeTab === 'data_mentah' || activeTab === 'perbaikan_daisha') && (
+            <button
+              type="button"
+              onClick={exportToExcel}
+              className="inline-flex items-center gap-1.5 h-9 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg transition cursor-pointer"
+              title="Unduh seluruh data tiket ke file Excel"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              <span>Ekspor Excel</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 3. Tab Body Container */}
       <div>
-        {/* TAB 1: ARMADA & PM (GABUNGAN POPULASI, PM, DAN REPAIR) */}
-        {activeTab === 'daisha' && (
+        {/* 1. KPI JUMLAH SELURUH DAISHA */}
+        {activeTab === 'jumlah_daisha' && (
           <div className="space-y-6">
-            {/* Quick Action & Context Bar */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-              <div className="flex items-center gap-3 flex-wrap">
-                <p className="text-xs text-slate-600">
-                  {daishaSubTab === 'jumlah_daisha' && 'Monitoring populasi seluruh armada daisha Bridgestone dan status kesiapan 2 poin (OKE vs NG) antar seksi.'}
-                  {daishaSubTab === 'perbaikan_daisha' && 'Diagnostik kerusakan, throughput pengerjaan bengkel, komponen kritis, dan frekuensi servis seksi.'}
-                  {daishaSubTab === 'pm_daisha' && 'Monitoring populasi armada, kesehatan unit, kepatuhan PM tahunan, serta mapping per jenis/ukuran/seksi.'}
-                  {daishaSubTab === 'data_mentah' && 'Database seluruh riwayat tiket perbaikan daisha bengkel dengan filter komprehensif dan ekspor Excel.'}
-                </p>
-                {daishaSubTab === 'pm_daisha' && (
-                  <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-slate-300">
-                    <span className="text-xs font-semibold text-slate-600">Tahun PM:</span>
-                    <select
-                      value={pmYear}
-                      onChange={(e) => setPmYear(Number(e.target.value))}
-                      className="text-xs font-bold bg-transparent text-slate-800 cursor-pointer focus:outline-none"
-                    >
-                      {[2024, 2025, 2026, 2027].map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Link
-                  href="/input"
-                  className="h-10 min-h-[40px] px-3.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
-                >
-                  <span>Input Kerusakan</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                </Link>
-                <Link
-                  href="/maintenance?tab=staging"
-                  className="h-10 min-h-[40px] px-3.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
-                >
-                  <span>Penjemputan PM</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                </Link>
-                {isAdmin ? (
-                  <Link
-                    href="/admin"
-                    className="h-10 min-h-[40px] px-4 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
-                  >
-                    <span>Panel Tindakan</span>
-                  </Link>
-                ) : (
-                  <Link
-                    href="/riwayat"
-                    className="h-10 min-h-[40px] px-4 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
-                  >
-                    <span>Antrean Unit</span>
-                  </Link>
-                )}
-              </div>
-            </div>
+            <FleetHealthCharts
+              units={pmUnits}
+              tickets={dataRaw}
+              selectedSeksi={filterSeksi}
+              onSelectSeksi={(s) => setFilterSeksi(s)}
+            />
+          </div>
+        )}
 
-            {/* Sub-Tab Switcher: 3 Pilar KPI Utama Sesuai Spesifikasi */}
-            <div className="flex items-center justify-between border-b border-slate-200 pb-0 gap-2 overflow-x-auto scrollbar-none">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDaishaSubTab('jumlah_daisha')}
-                  className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-                    daishaSubTab === 'jumlah_daisha'
-                      ? 'border-red-600 text-red-600 bg-red-50/50'
-                      : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                  }`}
-                >
-                  <Layers className="w-4 h-4" />
-                  <span>1. Jumlah Seluruh Daisha</span>
-                  <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
-                    {pmSummary.totalUnits > 0 ? `${pmSummary.totalUnits.toLocaleString('id-ID')} Unit` : '8.773 Unit'}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDaishaSubTab('perbaikan_daisha')}
-                  className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-                    daishaSubTab === 'perbaikan_daisha'
-                      ? 'border-red-600 text-red-600 bg-red-50/50'
-                      : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                  }`}
-                >
-                  <Wrench className="w-4 h-4" />
-                  <span>2. Perbaikan Daisha</span>
-                  <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
-                    {filteredData.length} Tiket
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDaishaSubTab('pm_daisha')}
-                  className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-                    daishaSubTab === 'pm_daisha'
-                      ? 'border-red-600 text-red-600 bg-red-50/50'
-                      : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                  }`}
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>3. PM Daisha</span>
-                  {pmSummary.percentage > 0 && (
-                    <span className="px-1.5 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-800 font-bold">
-                      PM {pmSummary.percentage.toFixed(0)}%
-                    </span>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDaishaSubTab('data_mentah')}
-                  className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-                    daishaSubTab === 'data_mentah'
-                      ? 'border-red-600 text-red-600 bg-red-50/50'
-                      : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                  }`}
-                >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  <span>Data Tiket</span>
-                </button>
-              </div>
-
-              {(daishaSubTab === 'data_mentah' || daishaSubTab === 'perbaikan_daisha') && (
-                <button
-                  type="button"
-                  onClick={exportToExcel}
-                  className="hidden sm:inline-flex items-center gap-1.5 h-10 min-h-[40px] px-3.5 mb-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg transition cursor-pointer shrink-0"
-                  title="Unduh seluruh data tiket ke file Excel"
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                  <span>Ekspor Excel</span>
-                </button>
-              )}
-            </div>
-
-            {/* 1. KONTEN SUB-TAB: KPI JUMLAH SELURUH DAISHA (OKE VS NG, MASTER DONAT, & BREAKDOWN SETIAP SEKSI) */}
-            {daishaSubTab === 'jumlah_daisha' && (
-              <div>
-                <FleetHealthCharts
-                  units={pmUnits}
-                  tickets={dataRaw}
-                  selectedSeksi={filterSeksi}
-                  onSelectSeksi={(s) => setFilterSeksi(s)}
-                />
-              </div>
-            )}
-
-            {/* 2. KONTEN SUB-TAB: KPI PERBAIKAN DAISHA (DIAGNOSTIK, THROUGHPUT, SPARTPART, FILTER DETAIL) */}
-            {daishaSubTab === 'perbaikan_daisha' && (
+        {/* 2. KPI PERBAIKAN DAISHA */}
+        {activeTab === 'perbaikan_daisha' && (
               <div className="space-y-6">
                 {/* Filter Detail Riwayat Perbaikan */}
                 <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-4">
@@ -620,68 +600,66 @@ function KpiDashboardContent() {
               </div>
             )}
 
-            {/* 3. KONTEN SUB-TAB: KPI PM DAISHA (FILTER PER TAHUN, POPULASI, KESEHATAN, KEPATUHAN, MAPPING) */}
-            {daishaSubTab === 'pm_daisha' && (
-              <div>
-                {loadingPm ? (
-                  <div className="flex items-center justify-center min-h-[250px] bg-white rounded-xl border border-slate-200">
-                    <div className="flex flex-col items-center gap-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-red-600" />
-                      <p className="text-xs text-slate-500">Memuat visual analitik Manajemen Daisha & PM...</p>
-                    </div>
-                  </div>
-                ) : (
-                  <PmMeetingDashboard
-                    breakdown={pmBreakdown}
-                    dailyTrend={pmDailyTrend}
-                    units={pmUnits}
-                    remainingWorkDays={pmSummary.remainingWorkDays}
-                    dailyTarget={pmSummary.dailyTarget}
-                    todayActual={pmSummary.todayActual}
-                    currentYear={pmYear}
-                    onYearChange={(y) => setPmYear(y)}
-                    conditionStats={pmCondition}
-                    onExportRepair={exportToExcel}
-                    repairTicketsCount={dataRaw.filter((t) => t.status === 'Open' || t.status === 'Progress').length}
-                  />
-                )}
+        {/* 3. KPI PM DAISHA */}
+        {activeTab === 'pm_daisha' && (
+          <div className="space-y-6">
+            {loadingPm ? (
+              <div className="flex items-center justify-center min-h-[250px] bg-white rounded-xl border border-slate-200">
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-red-600" />
+                  <p className="text-xs text-slate-500">Memuat visual analitik Manajemen Daisha & PM...</p>
+                </div>
               </div>
+            ) : (
+              <PmMeetingDashboard
+                breakdown={pmBreakdown}
+                dailyTrend={pmDailyTrend}
+                units={pmUnits}
+                remainingWorkDays={pmSummary.remainingWorkDays}
+                dailyTarget={pmSummary.dailyTarget}
+                todayActual={pmSummary.todayActual}
+                currentYear={pmYear}
+                onYearChange={(y) => setPmYear(y)}
+                conditionStats={pmCondition}
+                onExportRepair={exportToExcel}
+                repairTicketsCount={dataRaw.filter((t) => t.status === 'Open' || t.status === 'Progress').length}
+              />
             )}
+          </div>
+        )}
 
-            {/* 4. KONTEN SUB-TAB: DATA MENTAH TIKET (TABEL DATABASE RAW & EKSPOR EXCEL) */}
-            {daishaSubTab === 'data_mentah' && (
-              <div className="space-y-6">
-                {/* Filter Panel Data Mentah */}
-                <FilterPanel
-                  search={search}
-                  setSearch={setSearch}
-                  filterSeksi={filterSeksi}
-                  setFilterSeksi={setFilterSeksi}
-                  filterDaisha={filterDaisha}
-                  setFilterDaisha={setFilterDaisha}
-                  filterStatus={filterStatus}
-                  setFilterStatus={setFilterStatus}
-                  startDate={startDate}
-                  setStartDate={setStartDate}
-                  endDate={endDate}
-                  setEndDate={setEndDate}
-                  filterHanyaBerulang={filterHanyaBerulang}
-                  setFilterHanyaBerulang={setFilterHanyaBerulang}
-                  pilihanDaishaFiltered={filterOptions.pilihanDaisha}
-                  handleQuickPreset={handleQuickPreset}
-                  handleResetFilter={handleResetFilter}
-                  filteredCount={filteredData.length}
-                  totalCount={dataRaw.length}
-                />
+        {/* 4. DATA MENTAH TIKET */}
+        {activeTab === 'data_mentah' && (
+          <div className="space-y-6">
+            {/* Filter Panel Data Mentah */}
+            <FilterPanel
+              search={search}
+              setSearch={setSearch}
+              filterSeksi={filterSeksi}
+              setFilterSeksi={setFilterSeksi}
+              filterDaisha={filterDaisha}
+              setFilterDaisha={setFilterDaisha}
+              filterStatus={filterStatus}
+              setFilterStatus={setFilterStatus}
+              startDate={startDate}
+              setStartDate={setStartDate}
+              endDate={endDate}
+              setEndDate={setEndDate}
+              filterHanyaBerulang={filterHanyaBerulang}
+              setFilterHanyaBerulang={setFilterHanyaBerulang}
+              pilihanDaishaFiltered={filterOptions.pilihanDaisha}
+              handleQuickPreset={handleQuickPreset}
+              handleResetFilter={handleResetFilter}
+              filteredCount={filteredData.length}
+              totalCount={dataRaw.length}
+            />
 
-                {/* Tabel Raw Data Tiket Tanpa Grafik */}
-                <TicketTable
-                  filteredData={filteredData}
-                  loading={loadingTickets}
-                  exportToExcel={exportToExcel}
-                />
-              </div>
-            )}
+            {/* Tabel Raw Data Tiket Tanpa Grafik */}
+            <TicketTable
+              filteredData={filteredData}
+              loading={loadingTickets}
+              exportToExcel={exportToExcel}
+            />
           </div>
         )}
 

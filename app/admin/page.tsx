@@ -144,10 +144,11 @@ export default function AdminPage() {
     }
   };
 
-  // Save Diagnosa Edit
+  // Save Diagnosa / Koreksi Data Tiket
   const handleSaveEdit = async (data: {
     waktuMasuk: string;
     noDaisha: string;
+    namaPelapor?: string;
     seksi: string;
     namaDaisha: string;
     jenisKerusakan: string;
@@ -158,10 +159,11 @@ export default function AdminPage() {
 
     try {
       const res = await fetch('/api/repair', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          idTiket: ticketToEdit.idTiketAsli,
+          action: 'EDIT_TICKET',
+          idTiket: ticketToEdit.idTiketAsli || ticketToEdit.noTiket,
           ...data,
         }),
       });
@@ -171,14 +173,14 @@ export default function AdminPage() {
       if (res.ok) {
         showFeedback(
           'success',
-          'Diagnosa Berhasil Disimpan',
-          `Rincian kerusakan tiket #${ticketToEdit.noTiket || ticketToEdit.idTiketAsli} telah diperbarui.`
+          'Data Tiket Berhasil Diperbarui',
+          `Koreksi data tiket #${ticketToEdit.noTiket || ticketToEdit.idTiketAsli} berhasil disimpan ke sistem.`
         );
         setTicketToEdit(null);
         refresh(true);
         broadcastTicketChange();
       } else {
-        showFeedback('error', 'Gagal Menyimpan Diagnosa', json.error || 'Terjadi kesalahan pada server.');
+        showFeedback('error', 'Gagal Menyimpan Perubahan', json.error || 'Terjadi kesalahan pada server.');
       }
     } catch {
       showFeedback('error', 'Koneksi Terputus', 'Gagal menghubungi server.');

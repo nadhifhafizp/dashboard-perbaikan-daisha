@@ -11,7 +11,32 @@ import {
   validatePositiveInt,
 } from '@/lib/security';
 
-// In-memory response cache (< 2ms response time)
+interface SymptomObj {
+  id: number;
+  description: string;
+}
+
+interface ComponentObj {
+  id: number;
+  name: string;
+  symptoms: SymptomObj[];
+}
+
+interface VariantObj {
+  id: number;
+  name: string;
+  ukuran?: string | null;
+  susunan?: string | null;
+  tipe?: string | null;
+  codePrefix?: string | null;
+  padLength?: number | null;
+  minNumber?: number | null;
+  maxNumber?: number | null;
+  totalUnits?: number | null;
+  rangeFormat?: string | null;
+  badgeColor?: string | null;
+}
+
 interface CatalogCacheData {
   success: boolean;
   seksiList: string[];
@@ -30,7 +55,9 @@ interface CatalogCacheData {
 
 let cachedCatalogResponse: CatalogCacheData | null = null;
 let cachedCatalogTimestamp = 0;
-const CATALOG_CACHE_TTL_MS = 60 * 1000; // 60 detik
+const CATALOG_CACHE_TTL_MS = 60 * 1000;
+
+const toJsonb = (data: unknown) => sql.json(data as never);
 
 export function invalidateCatalogCache(): void {
   cachedCatalogResponse = null;
@@ -44,18 +71,18 @@ export const revalidate = 0;
  * GET /api/catalog - Mengambil data katalog Daisha, Komponen, Gejala, Varian, dan Seksi
  */
 export async function GET(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION (Semua user terotentikasi berhak membaca katalog)
   const auth = await requireAuth(request);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. RATE LIMITING (120 req/menit per IP)
   const rateLimit = checkRateLimit(`catalog_get:${auth.ip}`, 120, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan katalog. Silakan coba sesaat lagi.' }, { status: 429 });
   }
 
-  // 3. FAST IN-MEMORY CACHE HIT (< 2ms)
-  if (cachedCatalogResponse && Date.now() - cachedCatalogTimestamp < CATALOG_CACHE_TTL_MS) {
+  const { searchParams } = new URL(request.url);
+  const bypassCache = searchParams.has('t') || searchParams.has('nocache');
+
+  if (!bypassCache && cachedCatalogResponse && Date.now() - cachedCatalogTimestamp < CATALOG_CACHE_TTL_MS) {
     return NextResponse.json(cachedCatalogResponse, {
       headers: {
         'X-Cache': 'HIT',
@@ -64,7 +91,6 @@ export async function GET(request: Request) {
   }
 
   try {
-
     const rows = await sql<
       Array<{
         id: number;
@@ -72,84 +98,41 @@ export async function GET(request: Request) {
         seksi: string;
         codePrefix: string | null;
         totalUnits: number | null;
-        components: Array<{
-          id: number;
-          name: string;
-          symptoms: Array<{ id: number; description: string }>;
-        }>;
-        variants: Array<{
-          id: number;
-          name: string;
-          ukuran: string | null;
-          susunan: string | null;
-          tipe: string | null;
-          codePrefix: string | null;
-          padLength: number | null;
-          minNumber: number | null;
-          maxNumber: number | null;
-          totalUnits: number | null;
-          rangeFormat: string | null;
-          badgeColor: string | null;
-        }>;
+        components: ComponentObj[];
+        variants: VariantObj[];
       }>
     >`
       SELECT 
-        dt.id, 
-        dt.name, 
-        dt.seksi,
-        dt."codePrefix",
-        COALESCE(dt."totalUnits", 0)::int as "totalUnits",
-        COALESCE(comps_sub.components, '[]'::json) as components,
-        COALESCE(variants_sub.variants, '[]'::json) as variants
-      FROM "DaishaType" dt
-      LEFT JOIN LATERAL (
-        SELECT json_agg(
-          json_build_object(
-            'id', dc.id,
-            'name', dc.name,
-            'symptoms', COALESCE(symptoms_sub.symptoms, '[]'::json)
-          ) ORDER BY dc.name ASC
-        ) as components
-        FROM "DaishaComponent" dc
-        LEFT JOIN LATERAL (
-          SELECT json_agg(
-            json_build_object(
-              'id', ds.id,
-              'description', ds.description
-            ) ORDER BY ds.id ASC
-          ) as symptoms
-          FROM "DaishaSymptom" ds
-          WHERE ds."componentId" = dc.id
-        ) symptoms_sub ON true
-        WHERE dc."daishaTypeId" = dt.id
-      ) comps_sub ON true
-      LEFT JOIN LATERAL (
-        SELECT json_agg(
-          json_build_object(
-            'id', dv.id,
-            'name', dv.name,
-            'ukuran', dv.ukuran,
-            'susunan', dv.susunan,
-            'tipe', dv.tipe,
-            'codePrefix', dv."codePrefix",
-            'padLength', COALESCE(dv."padLength", 0),
-            'minNumber', COALESCE(dv."minNumber", 1),
-            'maxNumber', COALESCE(dv."maxNumber", 1),
-            'totalUnits', COALESCE(dv."totalUnits", 0),
-            'rangeFormat', dv."rangeFormat",
-            'badgeColor', dv."badgeColor"
-          ) ORDER BY dv.id ASC
-        ) as variants
-        FROM "DaishaVariant" dv
-        WHERE dv."daishaTypeId" = dt.id
-      ) variants_sub ON true
-      ORDER BY dt.name ASC
+        id, 
+        name, 
+        seksi,
+        "codePrefix",
+        COALESCE("totalUnits", 0)::int as "totalUnits",
+        COALESCE(components, '[]'::jsonb) as components,
+        COALESCE(variants, '[]'::jsonb) as variants
+      FROM "DaishaCatalog"
+      ORDER BY name ASC
     `;
 
-    // Daftar seksi langsung dari metadata statis (hemat 1 query DB)
-    const sectionRows = Object.values(SECTION_METAS).map((s, idx) => ({
+    // Ambil data Section dari DB jika ada
+    let customSections: Array<{
+      id: number;
+      name: string;
+      colorName: string | null;
+      badgeBg: string | null;
+      textColor: string | null;
+      borderColor: string | null;
+      accentBorder: string | null;
+    }> = [];
+    try {
+      customSections = await sql`SELECT id, name, "colorName", "badgeBg", "textColor", "borderColor", "accentBorder" FROM "Section" ORDER BY id ASC`;
+    } catch {
+      // Abaikan jika tabel Section belum terisi
+    }
+
+    const defaultSectionRows = Object.values(SECTION_METAS).map((s, idx) => ({
       id: idx + 1,
-      name: s.name,
+      name: s.name as string,
       colorName: s.colorName,
       badgeBg: s.badgeBg,
       textColor: s.textColor,
@@ -157,7 +140,21 @@ export async function GET(request: Request) {
       accentBorder: s.accentBorder,
     }));
 
-    // Susun format pohon data lengkap untuk UI Admin
+    const mergedSections = [...defaultSectionRows];
+    for (const cs of customSections) {
+      if (!mergedSections.some((ms) => ms.name.toLowerCase() === cs.name.toLowerCase())) {
+        mergedSections.push({
+          id: mergedSections.length + 1,
+          name: cs.name,
+          colorName: cs.colorName || 'Custom',
+          badgeBg: cs.badgeBg || 'bg-slate-100',
+          textColor: cs.textColor || 'text-slate-900',
+          borderColor: cs.borderColor || 'border-slate-300',
+          accentBorder: cs.accentBorder || 'border-slate-500',
+        });
+      }
+    }
+
     const rawCatalog: Record<
       string,
       {
@@ -168,26 +165,28 @@ export async function GET(request: Request) {
         variants: Array<{
           id: number;
           name: string;
-          ukuran?: string | null;
-          susunan?: string | null;
-          tipe?: string | null;
-          codePrefix?: string | null;
-          padLength?: number;
-          minNumber?: number;
-          maxNumber?: number;
-          totalUnits?: number;
-          rangeFormat?: string | null;
-          badgeColor?: string | null;
+          ukuran?: string;
+          susunan?: string;
+          tipe?: string;
+          codePrefix: string;
+          padLength: number;
+          minNumber: number;
+          maxNumber: number;
+          totalUnits: number;
+          rangeFormat: string;
+          badgeColor?: string;
         }>;
       }
     > = {};
 
     const detailedList = rows.map((d) => {
       const jenisKerusakan: Record<string, string[]> = {};
-      (d.components || []).forEach((c) => {
+      const components = Array.isArray(d.components) ? d.components : [];
+      components.forEach((c) => {
         jenisKerusakan[c.name] = (c.symptoms || []).map((s) => s.description);
       });
 
+      const variants = Array.isArray(d.variants) ? d.variants : [];
       const seenVariantKeys = new Set<string>();
       const formattedVariants: Array<{
         id: number;
@@ -204,7 +203,7 @@ export async function GET(request: Request) {
         badgeColor?: string;
       }> = [];
 
-      for (const v of d.variants || []) {
+      for (const v of variants) {
         const vKey = `${v.id}_${v.codePrefix || ''}_${v.name}_${v.ukuran || ''}_${v.susunan || ''}`;
         if (seenVariantKeys.has(vKey)) continue;
         seenVariantKeys.add(vKey);
@@ -239,7 +238,7 @@ export async function GET(request: Request) {
         seksi: d.seksi,
         codePrefix: d.codePrefix || '',
         totalUnits: d.totalUnits || 0,
-        components: (d.components || []).map((c) => ({
+        components: components.map((c) => ({
           id: c.id,
           name: c.name,
           symptoms: (c.symptoms || []).map((s) => ({
@@ -251,9 +250,8 @@ export async function GET(request: Request) {
       };
     });
 
-    // Kumpulkan daftar nama seksi unik
     const seksiSet = new Set<string>(DAFTAR_SEKSI);
-    sectionRows.forEach((s) => seksiSet.add(s.name));
+    mergedSections.forEach((s) => seksiSet.add(s.name));
     rows.forEach((d) => {
       if (d.seksi) seksiSet.add(d.seksi);
     });
@@ -261,12 +259,11 @@ export async function GET(request: Request) {
     const responsePayload: CatalogCacheData = {
       success: true,
       seksiList: Array.from(seksiSet).sort(),
-      sections: sectionRows,
+      sections: mergedSections,
       catalog: rawCatalog,
       tree: detailedList,
     };
 
-    // Simpan ke in-memory cache untuk request berikutnya
     cachedCatalogResponse = responsePayload;
     cachedCatalogTimestamp = Date.now();
 
@@ -289,20 +286,16 @@ export async function GET(request: Request) {
   }
 }
 
-
 /**
  * POST /api/catalog - Menambah Daisha Baru, Komponen Baru, atau Gejala Baru
  */
 export async function POST(request: Request) {
-  // 1. AUTHORIZATION (Khusus role ADMIN)
   const auth = await requireAuth(request, ['ADMIN']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. FILE & PAYLOAD SIZE LIMIT (Maksimal 256KB)
   const sizeCheck = validatePayloadSize(request, 256 * 1024);
   if (!sizeCheck.ok) return sizeCheck.errorResponse!;
 
-  // 3. RATE LIMITING (Maksimal 30 mutasi/menit)
   const rateLimit = checkRateLimit(`catalog_post:${auth.ip}`, 30, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak operasi perubahan katalog.' }, { status: 429 });
@@ -324,21 +317,33 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama Daisha wajib diisi.' }, { status: 400 });
       }
 
-      const [existing] = await sql`SELECT id FROM "DaishaType" WHERE name = ${name} LIMIT 1`;
+      const [existing] = await sql`SELECT id FROM "DaishaCatalog" WHERE LOWER(name) = LOWER(${name}) LIMIT 1`;
       if (existing) {
         return NextResponse.json({ error: `Jenis Daisha "${name}" sudah ada.` }, { status: 400 });
       }
 
       const [newDaisha] = await sql`
-        INSERT INTO "DaishaType" (name, seksi, "codePrefix", "totalUnits", "updatedAt")
+        INSERT INTO "DaishaCatalog" (
+          name, 
+          seksi, 
+          "codePrefix", 
+          "totalUnits", 
+          components, 
+          variants, 
+          "createdAt", 
+          "updatedAt"
+        )
         VALUES (
           ${name},
           ${seksi},
           ${codePrefix || null},
           ${totalUnits},
+          '[]'::jsonb,
+          '[]'::jsonb,
+          NOW(),
           NOW()
         )
-        RETURNING *
+        RETURNING id, name, seksi, "codePrefix", "totalUnits"
       `;
 
       recordAuditLog({
@@ -360,26 +365,45 @@ export async function POST(request: Request) {
 
     // 2. Tambah Komponen Baru ke Jenis Daisha
     if (action === 'ADD_COMPONENT') {
-      const daishaTypeId = validatePositiveInt(body.daishaTypeId, 'ID Daisha', 1).value;
+      const daishaId = validatePositiveInt(body.daishaId || body.daishaTypeId, 'ID Daisha', 1).value;
       const name = sanitizeText(body.name, 100);
 
-      if (!body.daishaTypeId || !name) {
+      if (!daishaId || !name) {
         return NextResponse.json({ error: 'ID Daisha dan Nama Komponen wajib diisi.' }, { status: 400 });
       }
 
-      const [existing] = await sql`
-        SELECT id FROM "DaishaComponent"
-        WHERE "daishaTypeId" = ${daishaTypeId} AND name = ${name}
+      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
+        SELECT id, name, COALESCE(components, '[]'::jsonb) as components 
+        FROM "DaishaCatalog" 
+        WHERE id = ${daishaId} 
         LIMIT 1
       `;
-      if (existing) {
+
+      if (!daisha) {
+        return NextResponse.json({ error: 'Daisha tidak ditemukan.' }, { status: 404 });
+      }
+
+      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
+      if (comps.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
         return NextResponse.json({ error: `Komponen "${name}" sudah ada pada Daisha ini.` }, { status: 400 });
       }
 
-      const [newComp] = await sql`
-        INSERT INTO "DaishaComponent" ("daishaTypeId", name)
-        VALUES (${daishaTypeId}, ${name})
-        RETURNING *
+      const [seq] = await sql`SELECT nextval('"DaishaComponent_id_seq"') as id`;
+      const newCompId = Number(seq.id);
+
+      const newComponent: ComponentObj = {
+        id: newCompId,
+        name,
+        symptoms: [],
+      };
+
+      comps.push(newComponent);
+
+      await sql`
+        UPDATE "DaishaCatalog"
+        SET components = ${toJsonb(comps)},
+            "updatedAt" = NOW()
+        WHERE id = ${daishaId}
       `;
 
       recordAuditLog({
@@ -388,14 +412,14 @@ export async function POST(request: Request) {
         user: auth.user?.username,
         role: auth.user?.role,
         status: 'SUCCESS',
-        targetId: newComp.id,
-        details: `Komponen: ${newComp.name}, DaishaID: ${daishaTypeId}`,
+        targetId: newCompId,
+        details: `Komponen: ${name}, Daisha: ${daisha.name}`,
       });
 
       return NextResponse.json({
         success: true,
-        message: `Komponen "${newComp.name}" berhasil ditambahkan.`,
-        data: newComp,
+        message: `Komponen "${name}" berhasil ditambahkan ke ${daisha.name}.`,
+        data: newComponent,
       });
     }
 
@@ -404,14 +428,54 @@ export async function POST(request: Request) {
       const componentId = validatePositiveInt(body.componentId, 'ID Komponen', 1).value;
       const description = sanitizeText(body.description, 255);
 
-      if (!body.componentId || !description) {
+      if (!componentId || !description) {
         return NextResponse.json({ error: 'ID Komponen dan Gejala Kerusakan wajib diisi.' }, { status: 400 });
       }
 
-      const [newSymptom] = await sql`
-        INSERT INTO "DaishaSymptom" ("componentId", description)
-        VALUES (${componentId}, ${description})
-        RETURNING *
+      // Cari record DaishaCatalog yang memiliki componentId
+      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
+        SELECT id, name, COALESCE(components, '[]'::jsonb) as components
+        FROM "DaishaCatalog"
+        WHERE EXISTS (
+          SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp
+          WHERE (comp->>'id')::int = ${componentId}
+        )
+        LIMIT 1
+      `;
+
+      if (!daisha) {
+        return NextResponse.json({ error: 'Komponen tidak ditemukan di katalog.' }, { status: 404 });
+      }
+
+      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
+      const targetComp = comps.find((c) => c.id === componentId);
+      if (!targetComp) {
+        return NextResponse.json({ error: 'Komponen tidak ditemukan.' }, { status: 404 });
+      }
+
+      if (!targetComp.symptoms) {
+        targetComp.symptoms = [];
+      }
+
+      if (targetComp.symptoms.some((s) => s.description.toLowerCase() === description.toLowerCase())) {
+        return NextResponse.json({ error: 'Gejala kerusakan ini sudah ada pada komponen tersebut.' }, { status: 400 });
+      }
+
+      const [seq] = await sql`SELECT nextval('"DaishaSymptom_id_seq"') as id`;
+      const newSymptomId = Number(seq.id);
+
+      const newSymptom: SymptomObj = {
+        id: newSymptomId,
+        description,
+      };
+
+      targetComp.symptoms.push(newSymptom);
+
+      await sql`
+        UPDATE "DaishaCatalog"
+        SET components = ${toJsonb(comps)},
+            "updatedAt" = NOW()
+        WHERE id = ${daisha.id}
       `;
 
       recordAuditLog({
@@ -420,8 +484,8 @@ export async function POST(request: Request) {
         user: auth.user?.username,
         role: auth.user?.role,
         status: 'SUCCESS',
-        targetId: newSymptom.id,
-        details: `Gejala: ${newSymptom.description}, CompID: ${componentId}`,
+        targetId: newSymptomId,
+        details: `Gejala: ${description}, Komponen: ${targetComp.name}`,
       });
 
       return NextResponse.json({
@@ -433,7 +497,7 @@ export async function POST(request: Request) {
 
     // 4. Tambah Varian Baru ke Jenis Daisha
     if (action === 'ADD_VARIANT') {
-      const daishaTypeId = validatePositiveInt(body.daishaTypeId, 'ID Daisha', 1).value;
+      const daishaId = validatePositiveInt(body.daishaTypeId || body.daishaId, 'ID Daisha', 1).value;
       const name = sanitizeText(body.name, 150);
       const ukuran = sanitizeText(body.ukuran, 50);
       const susunan = sanitizeText(body.susunan, 50);
@@ -446,28 +510,49 @@ export async function POST(request: Request) {
       const rangeFormat = sanitizeText(body.rangeFormat, 100);
       const badgeColor = sanitizeText(body.badgeColor, 50);
 
-      if (!daishaTypeId || !name) {
+      if (!daishaId || !name) {
         return NextResponse.json({ error: 'ID Daisha dan Nama Varian wajib diisi.' }, { status: 400 });
       }
 
-      const [newVariant] = await sql`
-        INSERT INTO "DaishaVariant" (
-          "daishaTypeId", name, ukuran, susunan, tipe, "codePrefix",
-          "padLength", "minNumber", "maxNumber", "totalUnits", "rangeFormat", "badgeColor",
-          "updatedAt"
-        ) VALUES (
-          ${daishaTypeId}, ${name}, ${ukuran || null}, ${susunan || null}, ${tipe || null}, ${codePrefix || null},
-          ${padLength}, ${minNumber}, ${maxNumber}, ${totalUnits}, ${rangeFormat || null}, ${badgeColor || null},
-          NOW()
-        )
-        RETURNING *
+      const [daisha] = await sql<Array<{ id: number; name: string; variants: VariantObj[] }>>`
+        SELECT id, name, COALESCE(variants, '[]'::jsonb) as variants 
+        FROM "DaishaCatalog" 
+        WHERE id = ${daishaId} 
+        LIMIT 1
       `;
 
-      // Perbarui total unit pada DaishaType
+      if (!daisha) {
+        return NextResponse.json({ error: 'Daisha tidak ditemukan.' }, { status: 404 });
+      }
+
+      const variants: VariantObj[] = Array.isArray(daisha.variants) ? daisha.variants : [];
+      const [seq] = await sql`SELECT nextval('"DaishaVariant_id_seq"') as id`;
+      const newVarId = Number(seq.id);
+
+      const newVariant: VariantObj = {
+        id: newVarId,
+        name,
+        ukuran: ukuran || null,
+        susunan: susunan || null,
+        tipe: tipe || null,
+        codePrefix: codePrefix || null,
+        padLength,
+        minNumber,
+        maxNumber,
+        totalUnits,
+        rangeFormat: rangeFormat || null,
+        badgeColor: badgeColor || null,
+      };
+
+      variants.push(newVariant);
+      const totalUnitsSum = variants.reduce((acc, v) => acc + (Number(v.totalUnits) || 0), 0);
+
       await sql`
-        UPDATE "DaishaType"
-        SET "totalUnits" = (SELECT COALESCE(SUM("totalUnits"), 0)::int FROM "DaishaVariant" WHERE "daishaTypeId" = ${daishaTypeId})
-        WHERE id = ${daishaTypeId}
+        UPDATE "DaishaCatalog"
+        SET variants = ${toJsonb(variants)},
+            "totalUnits" = ${totalUnitsSum},
+            "updatedAt" = NOW()
+        WHERE id = ${daishaId}
       `;
 
       recordAuditLog({
@@ -476,13 +561,13 @@ export async function POST(request: Request) {
         user: auth.user?.username,
         role: auth.user?.role,
         status: 'SUCCESS',
-        targetId: newVariant.id,
-        details: `Varian: ${newVariant.name}, DaishaID: ${daishaTypeId}`,
+        targetId: newVarId,
+        details: `Varian: ${name}, Daisha: ${daisha.name}`,
       });
 
       return NextResponse.json({
         success: true,
-        message: `Varian "${newVariant.name}" berhasil ditambahkan ke database.`,
+        message: `Varian "${name}" berhasil ditambahkan.`,
         data: newVariant,
       });
     }
@@ -525,7 +610,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: `Seksi "${newSection.name}" berhasil disimpan di database.`,
+        message: `Seksi "${newSection.name}" berhasil disimpan.`,
         data: newSection,
       });
     }
@@ -549,15 +634,12 @@ export async function POST(request: Request) {
  * PUT /api/catalog - Edit Nama Daisha, Komponen, atau Gejala Kerusakan
  */
 export async function PUT(request: Request) {
-  // 1. AUTHORIZATION (Khusus role ADMIN)
   const auth = await requireAuth(request, ['ADMIN']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. FILE & PAYLOAD SIZE LIMIT (Maksimal 256KB)
   const sizeCheck = validatePayloadSize(request, 256 * 1024);
   if (!sizeCheck.ok) return sizeCheck.errorResponse!;
 
-  // 3. RATE LIMITING (30 req/menit)
   const rateLimit = checkRateLimit(`catalog_put:${auth.ip}`, 30, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan update katalog.' }, { status: 429 });
@@ -576,20 +658,24 @@ export async function PUT(request: Request) {
       const codePrefix = sanitizeText(body.codePrefix, 20);
       const totalUnits = validatePositiveInt(body.totalUnits ?? 0, 'Total Unit', 0, 10000).value;
 
-      if (!body.id || !name) {
+      if (!id || !name) {
         return NextResponse.json({ error: 'ID dan Nama Daisha wajib diisi.' }, { status: 400 });
       }
 
       const [updated] = await sql`
-        UPDATE "DaishaType"
+        UPDATE "DaishaCatalog"
         SET name = ${name},
             seksi = ${seksi},
             "codePrefix" = ${codePrefix || null},
             "totalUnits" = ${totalUnits},
             "updatedAt" = NOW()
         WHERE id = ${id}
-        RETURNING *
+        RETURNING id, name, seksi, "codePrefix", "totalUnits"
       `;
+
+      if (!updated) {
+        return NextResponse.json({ error: 'Jenis Daisha tidak ditemukan.' }, { status: 404 });
+      }
 
       recordAuditLog({
         action: 'CATALOG_UPDATE_DAISHA',
@@ -613,15 +699,37 @@ export async function PUT(request: Request) {
       const id = validatePositiveInt(body.id, 'ID Komponen', 1).value;
       const name = sanitizeText(body.name, 100);
 
-      if (!body.id || !name) {
+      if (!id || !name) {
         return NextResponse.json({ error: 'ID dan Nama Komponen wajib diisi.' }, { status: 400 });
       }
 
-      const [updated] = await sql`
-        UPDATE "DaishaComponent"
-        SET name = ${name}
-        WHERE id = ${id}
-        RETURNING *
+      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
+        SELECT id, name, COALESCE(components, '[]'::jsonb) as components
+        FROM "DaishaCatalog"
+        WHERE EXISTS (
+          SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp
+          WHERE (comp->>'id')::int = ${id}
+        )
+        LIMIT 1
+      `;
+
+      if (!daisha) {
+        return NextResponse.json({ error: 'Komponen tidak ditemukan.' }, { status: 404 });
+      }
+
+      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
+      const comp = comps.find((c) => c.id === id);
+      if (!comp) {
+        return NextResponse.json({ error: 'Komponen tidak ditemukan di katalog Daisha.' }, { status: 404 });
+      }
+
+      comp.name = name;
+
+      await sql`
+        UPDATE "DaishaCatalog"
+        SET components = ${toJsonb(comps)},
+            "updatedAt" = NOW()
+        WHERE id = ${daisha.id}
       `;
 
       recordAuditLog({
@@ -631,30 +739,63 @@ export async function PUT(request: Request) {
         role: auth.user?.role,
         status: 'SUCCESS',
         targetId: id,
-        details: `Nama: ${updated.name}`,
+        details: `Nama: ${name}, Daisha: ${daisha.name}`,
       });
 
       return NextResponse.json({
         success: true,
-        message: `Komponen berhasil diperbarui menjadi "${updated.name}".`,
-        data: updated,
+        message: `Komponen berhasil diperbarui menjadi "${name}".`,
+        data: comp,
       });
     }
 
     // 3. Edit Gejala
     if (action === 'EDIT_SYMPTOM' || action === 'UPDATE_SYMPTOM') {
       const id = validatePositiveInt(body.id, 'ID Gejala', 1).value;
-      const description = sanitizeText(body.description, 255);
+      const description = sanitizeText(body.description || body.name, 255);
 
-      if (!body.id || !description) {
+      if (!id || !description) {
         return NextResponse.json({ error: 'ID dan Deskripsi Gejala wajib diisi.' }, { status: 400 });
       }
 
-      const [updated] = await sql`
-        UPDATE "DaishaSymptom"
-        SET description = ${description}
-        WHERE id = ${id}
-        RETURNING *
+      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
+        SELECT id, name, COALESCE(components, '[]'::jsonb) as components
+        FROM "DaishaCatalog"
+        WHERE EXISTS (
+          SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp,
+          LATERAL jsonb_array_elements(COALESCE(comp->'symptoms', '[]'::jsonb)) sym
+          WHERE (sym->>'id')::int = ${id}
+        )
+        LIMIT 1
+      `;
+
+      if (!daisha) {
+        return NextResponse.json({ error: 'Gejala tidak ditemukan di katalog.' }, { status: 404 });
+      }
+
+      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
+      let foundSymptom: SymptomObj | null = null;
+
+      for (const comp of comps) {
+        if (comp.symptoms) {
+          const s = comp.symptoms.find((item) => item.id === id);
+          if (s) {
+            s.description = description;
+            foundSymptom = s;
+            break;
+          }
+        }
+      }
+
+      if (!foundSymptom) {
+        return NextResponse.json({ error: 'Gejala tidak ditemukan.' }, { status: 404 });
+      }
+
+      await sql`
+        UPDATE "DaishaCatalog"
+        SET components = ${toJsonb(comps)},
+            "updatedAt" = NOW()
+        WHERE id = ${daisha.id}
       `;
 
       recordAuditLog({
@@ -664,13 +805,13 @@ export async function PUT(request: Request) {
         role: auth.user?.role,
         status: 'SUCCESS',
         targetId: id,
-        details: `Gejala: ${updated.description}`,
+        details: `Gejala: ${description}`,
       });
 
       return NextResponse.json({
         success: true,
         message: `Gejala kerusakan berhasil diperbarui.`,
-        data: updated,
+        data: foundSymptom,
       });
     }
 
@@ -693,32 +834,47 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'ID dan Nama Varian wajib diisi.' }, { status: 400 });
       }
 
-      const [updated] = await sql`
-        UPDATE "DaishaVariant"
-        SET
-          name = ${name},
-          ukuran = ${ukuran || null},
-          susunan = ${susunan || null},
-          tipe = ${tipe || null},
-          "codePrefix" = ${codePrefix || null},
-          "padLength" = ${padLength},
-          "minNumber" = ${minNumber},
-          "maxNumber" = ${maxNumber},
-          "totalUnits" = ${totalUnits},
-          "rangeFormat" = ${rangeFormat || null},
-          "badgeColor" = ${badgeColor || null},
-          "updatedAt" = NOW()
-        WHERE id = ${id}
-        RETURNING *
+      const [daisha] = await sql<Array<{ id: number; name: string; variants: VariantObj[] }>>`
+        SELECT id, name, COALESCE(variants, '[]'::jsonb) as variants
+        FROM "DaishaCatalog"
+        WHERE EXISTS (
+          SELECT 1 FROM jsonb_array_elements(COALESCE(variants, '[]'::jsonb)) v
+          WHERE (v->>'id')::int = ${id}
+        )
+        LIMIT 1
       `;
 
-      if (updated?.daishaTypeId) {
-        await sql`
-          UPDATE "DaishaType"
-          SET "totalUnits" = (SELECT COALESCE(SUM("totalUnits"), 0)::int FROM "DaishaVariant" WHERE "daishaTypeId" = ${updated.daishaTypeId})
-          WHERE id = ${updated.daishaTypeId}
-        `;
+      if (!daisha) {
+        return NextResponse.json({ error: 'Varian tidak ditemukan di katalog.' }, { status: 404 });
       }
+
+      const variants: VariantObj[] = Array.isArray(daisha.variants) ? daisha.variants : [];
+      const variant = variants.find((v) => v.id === id);
+      if (!variant) {
+        return NextResponse.json({ error: 'Varian tidak ditemukan.' }, { status: 404 });
+      }
+
+      variant.name = name;
+      variant.ukuran = ukuran || null;
+      variant.susunan = susunan || null;
+      variant.tipe = tipe || null;
+      variant.codePrefix = codePrefix || null;
+      variant.padLength = padLength;
+      variant.minNumber = minNumber;
+      variant.maxNumber = maxNumber;
+      variant.totalUnits = totalUnits;
+      variant.rangeFormat = rangeFormat || null;
+      variant.badgeColor = badgeColor || null;
+
+      const totalUnitsSum = variants.reduce((acc, v) => acc + (Number(v.totalUnits) || 0), 0);
+
+      await sql`
+        UPDATE "DaishaCatalog"
+        SET variants = ${toJsonb(variants)},
+            "totalUnits" = ${totalUnitsSum},
+            "updatedAt" = NOW()
+        WHERE id = ${daisha.id}
+      `;
 
       recordAuditLog({
         action: 'CATALOG_UPDATE_VARIANT',
@@ -727,13 +883,13 @@ export async function PUT(request: Request) {
         role: auth.user?.role,
         status: 'SUCCESS',
         targetId: id,
-        details: `Varian: ${updated?.name}`,
+        details: `Varian: ${name}, Daisha: ${daisha.name}`,
       });
 
       return NextResponse.json({
         success: true,
-        message: `Varian berhasil diperbarui menjadi "${updated.name}".`,
-        data: updated,
+        message: `Varian berhasil diperbarui menjadi "${name}".`,
+        data: variant,
       });
     }
 
@@ -756,11 +912,9 @@ export async function PUT(request: Request) {
  * DELETE /api/catalog - Hapus data katalog (Khusus role ADMIN)
  */
 export async function DELETE(request: Request) {
-  // 1. AUTHORIZATION (Khusus role ADMIN)
   const auth = await requireAuth(request, ['ADMIN']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. RATE LIMITING (20 delete/menit)
   const rateLimit = checkRateLimit(`catalog_delete:${auth.ip}`, 20, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan penghapusan.' }, { status: 429 });
@@ -772,7 +926,6 @@ export async function DELETE(request: Request) {
     let type = searchParams.get('type');
     let idParam = searchParams.get('id');
 
-    // Jika tidak ada di query params, coba baca dari JSON body
     if (!type || !idParam) {
       try {
         const body = await request.json();
@@ -795,13 +948,12 @@ export async function DELETE(request: Request) {
 
     const id = validatePositiveInt(idParam, 'ID', 1).value;
 
+    // 1. Hapus Jenis Daisha
     if (type === 'daisha') {
-      await sql.begin(async (tx) => {
-        await tx`DELETE FROM "DaishaSymptom" WHERE "componentId" IN (SELECT id FROM "DaishaComponent" WHERE "daishaTypeId" = ${id})`;
-        await tx`DELETE FROM "DaishaComponent" WHERE "daishaTypeId" = ${id}`;
-        await tx`DELETE FROM "DaishaVariant" WHERE "daishaTypeId" = ${id}`;
-        await tx`DELETE FROM "DaishaType" WHERE id = ${id}`;
-      });
+      const [deleted] = await sql`DELETE FROM "DaishaCatalog" WHERE id = ${id} RETURNING id, name`;
+      if (!deleted) {
+        return NextResponse.json({ error: 'Jenis Daisha tidak ditemukan.' }, { status: 404 });
+      }
 
       recordAuditLog({
         action: 'CATALOG_DELETE_DAISHA',
@@ -810,16 +962,37 @@ export async function DELETE(request: Request) {
         role: auth.user?.role,
         status: 'SUCCESS',
         targetId: id,
+        details: `Nama: ${deleted.name}`,
       });
 
-      return NextResponse.json({ success: true, message: 'Jenis Daisha beserta seluruh komponennya berhasil dihapus.' });
+      return NextResponse.json({ success: true, message: `Jenis Daisha "${deleted.name}" beserta komponennya berhasil dihapus.` });
     }
 
+    // 2. Hapus Komponen
     if (type === 'component') {
-      await sql.begin(async (tx) => {
-        await tx`DELETE FROM "DaishaSymptom" WHERE "componentId" = ${id}`;
-        await tx`DELETE FROM "DaishaComponent" WHERE id = ${id}`;
-      });
+      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
+        SELECT id, name, COALESCE(components, '[]'::jsonb) as components
+        FROM "DaishaCatalog"
+        WHERE EXISTS (
+          SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp
+          WHERE (comp->>'id')::int = ${id}
+        )
+        LIMIT 1
+      `;
+
+      if (!daisha) {
+        return NextResponse.json({ error: 'Komponen tidak ditemukan di katalog.' }, { status: 404 });
+      }
+
+      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
+      const updatedComps = comps.filter((c) => c.id !== id);
+
+      await sql`
+        UPDATE "DaishaCatalog"
+        SET components = ${toJsonb(updatedComps)},
+            "updatedAt" = NOW()
+        WHERE id = ${daisha.id}
+      `;
 
       recordAuditLog({
         action: 'CATALOG_DELETE_COMPONENT',
@@ -828,13 +1001,42 @@ export async function DELETE(request: Request) {
         role: auth.user?.role,
         status: 'SUCCESS',
         targetId: id,
+        details: `Daisha: ${daisha.name}`,
       });
 
       return NextResponse.json({ success: true, message: 'Komponen beserta gejalanya berhasil dihapus.' });
     }
 
+    // 3. Hapus Gejala
     if (type === 'symptom') {
-      await sql`DELETE FROM "DaishaSymptom" WHERE id = ${id}`;
+      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
+        SELECT id, name, COALESCE(components, '[]'::jsonb) as components
+        FROM "DaishaCatalog"
+        WHERE EXISTS (
+          SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp,
+          LATERAL jsonb_array_elements(COALESCE(comp->'symptoms', '[]'::jsonb)) sym
+          WHERE (sym->>'id')::int = ${id}
+        )
+        LIMIT 1
+      `;
+
+      if (!daisha) {
+        return NextResponse.json({ error: 'Gejala tidak ditemukan di katalog.' }, { status: 404 });
+      }
+
+      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
+      for (const comp of comps) {
+        if (comp.symptoms) {
+          comp.symptoms = comp.symptoms.filter((s) => s.id !== id);
+        }
+      }
+
+      await sql`
+        UPDATE "DaishaCatalog"
+        SET components = ${toJsonb(comps)},
+            "updatedAt" = NOW()
+        WHERE id = ${daisha.id}
+      `;
 
       recordAuditLog({
         action: 'CATALOG_DELETE_SYMPTOM',
@@ -843,24 +1045,39 @@ export async function DELETE(request: Request) {
         role: auth.user?.role,
         status: 'SUCCESS',
         targetId: id,
+        details: `Daisha: ${daisha.name}`,
       });
 
       return NextResponse.json({ success: true, message: 'Gejala kerusakan berhasil dihapus.' });
     }
 
+    // 4. Hapus Varian
     if (type === 'variant') {
-      const [existing] = await sql<Array<{ daishaTypeId: number }>>`
-        SELECT "daishaTypeId" FROM "DaishaVariant" WHERE id = ${id} LIMIT 1
+      const [daisha] = await sql<Array<{ id: number; name: string; variants: VariantObj[] }>>`
+        SELECT id, name, COALESCE(variants, '[]'::jsonb) as variants
+        FROM "DaishaCatalog"
+        WHERE EXISTS (
+          SELECT 1 FROM jsonb_array_elements(COALESCE(variants, '[]'::jsonb)) v
+          WHERE (v->>'id')::int = ${id}
+        )
+        LIMIT 1
       `;
-      await sql`DELETE FROM "DaishaVariant" WHERE id = ${id}`;
 
-      if (existing?.daishaTypeId) {
-        await sql`
-          UPDATE "DaishaType"
-          SET "totalUnits" = (SELECT COALESCE(SUM("totalUnits"), 0)::int FROM "DaishaVariant" WHERE "daishaTypeId" = ${existing.daishaTypeId})
-          WHERE id = ${existing.daishaTypeId}
-        `;
+      if (!daisha) {
+        return NextResponse.json({ error: 'Varian tidak ditemukan di katalog.' }, { status: 404 });
       }
+
+      const variants: VariantObj[] = Array.isArray(daisha.variants) ? daisha.variants : [];
+      const updatedVariants = variants.filter((v) => v.id !== id);
+      const totalUnitsSum = updatedVariants.reduce((acc, v) => acc + (Number(v.totalUnits) || 0), 0);
+
+      await sql`
+        UPDATE "DaishaCatalog"
+        SET variants = ${toJsonb(updatedVariants)},
+            "totalUnits" = ${totalUnitsSum},
+            "updatedAt" = NOW()
+        WHERE id = ${daisha.id}
+      `;
 
       recordAuditLog({
         action: 'CATALOG_DELETE_VARIANT',
@@ -869,6 +1086,7 @@ export async function DELETE(request: Request) {
         role: auth.user?.role,
         status: 'SUCCESS',
         targetId: id,
+        details: `Daisha: ${daisha.name}`,
       });
 
       return NextResponse.json({ success: true, message: 'Varian Daisha berhasil dihapus dari database.' });

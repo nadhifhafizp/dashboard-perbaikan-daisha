@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { CreateTicketPayload, Ticket, TicketStatus } from '@/types/ticket';
 import { getInitialDateTime, cleanInputDateTime } from '@/lib/date';
@@ -27,7 +27,7 @@ export interface FormDataState {
 }
 
 export function useInputKerusakan() {
-  const { isAdmin, isOperator } = useAuth();
+  const { isAdmin, isOperator, currentUser } = useAuth();
   const [formData, setFormData] = useState<FormDataState>({
     waktuMasuk: getInitialDateTime(),
     namaPelapor: '',
@@ -37,14 +37,16 @@ export function useInputKerusakan() {
     catatanTambahan: '',
   });
 
-  // Hapus data sisa nama dari localStorage jika ada agar form selalu bersih
-  useEffect(() => {
-    try {
-      localStorage.removeItem('daisha_operator_name');
-    } catch {
-      // Abaikan jika localStorage dibatasi browser
-    }
-  }, []);
+  // Auto-populate nama pelapor & seksi dari user login jika belum diisi
+  const [hasInitializedUser, setHasInitializedUser] = useState(false);
+  if (!hasInitializedUser && currentUser) {
+    setHasInitializedUser(true);
+    setFormData((prev) => ({
+      ...prev,
+      namaPelapor: prev.namaPelapor || currentUser.name || currentUser.username || '',
+      seksi: prev.seksi || currentUser.seksi || '',
+    }));
+  }
 
   // State Pilihan Kerusakan Multi-Select Cepat
   const [selectedKerusakan, setSelectedKerusakan] = useState<string[]>([]);
@@ -95,6 +97,56 @@ export function useInputKerusakan() {
     () => detectDaishaSize(formData.noDaisha),
     [formData.noDaisha]
   );
+
+  // Auto-detect unit dari histori tiket atau katalog master
+  const matchedUnitInfo = useMemo(() => {
+    if (!normalizedNoDaisha || normalizedNoDaisha.length < 2) return null;
+
+    // 1. Cek dari tiket sebelumnya
+    const histMatch = tickets.find(
+      (t: Ticket) => t.noDaisha.trim().toUpperCase() === normalizedNoDaisha
+    );
+    if (histMatch && (histMatch.seksi || histMatch.namaDaisha)) {
+      return {
+        source: 'history' as const,
+        seksi: histMatch.seksi,
+        jenisDaisha: histMatch.namaDaisha || '',
+      };
+    }
+
+    // 2. Cek dari prefix varian katalog jika belum ada match histori
+    for (const [jenis, data] of Object.entries(catalog)) {
+      if (data.codePrefix && normalizedNoDaisha.startsWith(data.codePrefix.toUpperCase())) {
+        return {
+          source: 'catalog' as const,
+          seksi: data.seksi !== 'All seksi' ? data.seksi : '',
+          jenisDaisha: jenis,
+        };
+      }
+      if (data.variants && data.variants.length > 0) {
+        for (const v of data.variants) {
+          if (v.codePrefix && normalizedNoDaisha.startsWith(v.codePrefix.toUpperCase())) {
+            return {
+              source: 'catalog' as const,
+              seksi: data.seksi !== 'All seksi' ? data.seksi : '',
+              jenisDaisha: jenis,
+            };
+          }
+        }
+      }
+    }
+
+    return null;
+  }, [normalizedNoDaisha, tickets, catalog]);
+
+  const applyMatchedUnit = useCallback(() => {
+    if (!matchedUnitInfo) return;
+    setFormData((prev) => ({
+      ...prev,
+      seksi: matchedUnitInfo.seksi || prev.seksi,
+      jenisDaisha: matchedUnitInfo.jenisDaisha || prev.jenisDaisha,
+    }));
+  }, [matchedUnitInfo]);
 
   // Pop-up Feedback
   const [feedback, setFeedback] = useState<{
@@ -204,15 +256,7 @@ export function useInputKerusakan() {
       setFormData((prev) => ({
         ...prev,
         seksi: value,
-        jenisDaisha: '',
-        noDaisha: '',
       }));
-      setSelectedKerusakan([]);
-      setCustomKerusakanList([]);
-      setTindakanMap({});
-      setCustomTindakanMap({});
-      setQtyMap({});
-      setCustomQtyMap({});
       setDismissedDuplicateUnit(null);
     } else if (name === 'showAll') {
       const isChecked = (e.target as HTMLInputElement).checked;
@@ -222,15 +266,8 @@ export function useInputKerusakan() {
       setFormData((prev) => ({
         ...prev,
         jenisDaisha: value,
-        noDaisha: '',
-        seksi: prev.seksi || (daishaSeksi !== 'All seksi' ? daishaSeksi : '') || prev.seksi,
+        seksi: prev.seksi || (daishaSeksi && daishaSeksi !== 'All seksi' ? daishaSeksi : '') || prev.seksi,
       }));
-      setSelectedKerusakan([]);
-      setCustomKerusakanList([]);
-      setTindakanMap({});
-      setCustomTindakanMap({});
-      setQtyMap({});
-      setCustomQtyMap({});
       setDismissedDuplicateUnit(null);
     } else if (name === 'noDaisha') {
       const upperVal = value.toUpperCase();
@@ -428,6 +465,8 @@ export function useInputKerusakan() {
     detectedSize,
     duplicateActiveTicket,
     normalizedNoDaisha,
+    matchedUnitInfo,
+    applyMatchedUnit,
     setDismissedDuplicateUnit,
     isScanning,
     setIsScanning,
@@ -461,5 +500,6 @@ export function useInputKerusakan() {
     isPrintTagOpen,
     setIsPrintTagOpen,
     createdTicketForTag,
+    setCreatedTicketForTag,
   };
 }

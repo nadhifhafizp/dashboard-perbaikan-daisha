@@ -81,7 +81,13 @@ export function useDaishaCatalog() {
 
     try {
       if (force) setLoading(true);
-      const res = await fetch('/api/catalog');
+      const url = force ? `/api/catalog?t=${Date.now()}` : '/api/catalog';
+      const res = await fetch(url, {
+        cache: force ? 'no-store' : 'default',
+        headers: {
+          'Cache-Control': force ? 'no-cache' : 'default',
+        },
+      });
       if (!res.ok) return;
 
       const data = await res.json();
@@ -104,8 +110,31 @@ export function useDaishaCatalog() {
     }
   }, []);
 
+  const refreshCatalog = useCallback(async () => {
+    globalCatalogCache = null;
+    globalSeksiCache = null;
+    globalSectionsCache = null;
+    globalTreeCache = null;
+    lastCatalogFetchTimestamp = 0;
+    await fetchCatalog(true);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('daisha-catalog-updated'));
+    }
+  }, [fetchCatalog]);
+
   useEffect(() => {
     void fetchCatalog();
+
+    const handleCatalogUpdate = () => {
+      void fetchCatalog(true);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('daisha-catalog-updated', handleCatalogUpdate);
+      return () => {
+        window.removeEventListener('daisha-catalog-updated', handleCatalogUpdate);
+      };
+    }
   }, [fetchCatalog]);
 
   const daishaList = useMemo(() => {
@@ -166,7 +195,7 @@ export function useDaishaCatalog() {
     daishaList,
     tree,
     loading,
-    refreshCatalog: fetchCatalog,
+    refreshCatalog,
     getDaishaBySeksi,
     getKomponenKerusakan,
     getDetailKerusakan,

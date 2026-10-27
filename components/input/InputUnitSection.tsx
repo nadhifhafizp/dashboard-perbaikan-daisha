@@ -20,6 +20,8 @@ interface InputUnitSectionProps {
   detectedSize: DaishaSizeInfo | null;
   duplicateActiveTicket: Ticket | null;
   normalizedNoDaisha: string;
+  matchedUnitInfo?: { source: 'history' | 'catalog'; seksi?: string; jenisDaisha: string } | null;
+  applyMatchedUnit?: () => void;
   setDismissedDuplicateUnit: (val: string | null) => void;
   setIsScanning: (val: boolean) => void;
   isAdmin: boolean;
@@ -35,20 +37,83 @@ export default function InputUnitSection({
   detectedSize,
   duplicateActiveTicket,
   normalizedNoDaisha,
+  matchedUnitInfo,
+  applyMatchedUnit,
   setDismissedDuplicateUnit,
   setIsScanning,
   isAdmin,
 }: InputUnitSectionProps) {
   return (
-    <div className="p-4 sm:p-5 bg-white rounded-xl border border-slate-200/80">
-      <h2 className="text-xs font-semibold text-slate-900 mb-3 flex items-center gap-2">
-        <Layers className="w-4 h-4 text-red-600" />
-        <span>2. Unit</span>
-      </h2>
+    <div className="p-4 sm:p-5 bg-white rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <Layers className="w-4 h-4 text-red-600" />
+          <span>1. Identifikasi Unit Daisha</span>
+        </h2>
+        {detectedSize && (
+          <span
+            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${detectedSize.badgeBg} ${detectedSize.textColor} ${detectedSize.borderColor}`}
+          >
+            <Ruler className="w-3 h-3" />
+            <span>Ukuran: {detectedSize.label} ({detectedSize.code})</span>
+          </span>
+        )}
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      {/* Nomor Unit & Barcode Scanner Button (Ditaruh Pertama Agar Cepat Terdeteksi) */}
+      <div className="space-y-2">
+        <label htmlFor="input-no-daisha" className="block text-xs font-semibold text-slate-800">
+          Nomor Seri / ID Daisha *
+        </label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <input
+              id="input-no-daisha"
+              type="text"
+              name="noDaisha"
+              value={formData.noDaisha}
+              onChange={handleChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.preventDefault();
+              }}
+              placeholder="Ketik atau scan barcode (Cth: M00287, I/L-0071, S00064)"
+              required
+              className="w-full h-11 px-3.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 bg-slate-50/50 focus:bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none uppercase placeholder:font-normal placeholder-slate-400 tracking-wide"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsScanning(true)}
+            className="h-11 px-4 bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-2 cursor-pointer shrink-0"
+            title="Scan barcode fisik menggunakan kamera perangkat"
+          >
+            <Camera className="w-4 h-4 text-red-400" />
+            <span className="hidden sm:inline">Scan Kamera</span>
+          </button>
+        </div>
+
+        {/* Suggestion / Auto-match prompt jika nomor unit dikenali */}
+        {matchedUnitInfo && (!formData.jenisDaisha || formData.jenisDaisha !== matchedUnitInfo.jenisDaisha) && (
+          <div className="p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg flex items-center justify-between gap-2 text-xs animate-fade-in">
+            <span className="text-blue-900">
+              Unit dikenali: <strong>{matchedUnitInfo.jenisDaisha}</strong>
+              {matchedUnitInfo.seksi ? ` (${matchedUnitInfo.seksi})` : ''}
+            </span>
+            <button
+              type="button"
+              onClick={applyMatchedUnit}
+              className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded text-xs transition cursor-pointer shrink-0"
+            >
+              Terapkan
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Grid Seksi & Tipe Daisha */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
         <div>
-          <label htmlFor="input-seksi" className="block text-xs font-medium text-slate-700 mb-1.5">
+          <label htmlFor="input-seksi" className="block text-xs font-semibold text-slate-700 mb-1.5">
             Seksi Asal Unit *
           </label>
           <select
@@ -71,7 +136,7 @@ export default function InputUnitSection({
         </div>
 
         <div>
-          <label htmlFor="input-jenis-daisha" className="block text-xs font-medium text-slate-700 mb-1.5">
+          <label htmlFor="input-jenis-daisha" className="block text-xs font-semibold text-slate-700 mb-1.5">
             Tipe / Jenis Daisha *
           </label>
           <select
@@ -80,14 +145,9 @@ export default function InputUnitSection({
             value={formData.jenisDaisha}
             onChange={handleChange}
             required
-            disabled={!formData.seksi && !showAllDaisha}
-            className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none disabled:bg-slate-100 disabled:text-slate-400 cursor-pointer"
+            className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
           >
-            <option value="">
-              {formData.seksi || showAllDaisha
-                ? '-- Pilih Jenis Daisha --'
-                : 'Pilih Seksi Terlebih Dahulu'}
-            </option>
+            <option value="">-- Pilih Jenis Daisha --</option>
             {pilihanDaishaTersedia.map((d) => (
               <option key={d} value={d}>
                 {d}
@@ -97,7 +157,8 @@ export default function InputUnitSection({
         </div>
       </div>
 
-      <div className="flex items-center mb-4">
+      {/* Pilihan Seluruh Jenis Daisha Toggle (Opsional) */}
+      <div className="flex items-center pt-1">
         <input
           type="checkbox"
           name="showAll"
@@ -110,13 +171,13 @@ export default function InputUnitSection({
           htmlFor="showAll"
           className="text-xs text-slate-600 font-medium cursor-pointer select-none"
         >
-          Tampilkan seluruh jenis Daisha di dropdown tanpa terikat filter Seksi
+          Tampilkan semua tipe tanpa dibatasi Seksi
         </label>
       </div>
 
       {/* Filter & Pemilihan Varian / Susunan Daisha */}
       {formData.jenisDaisha && (
-        <div className="mb-4">
+        <div className="pt-2 border-t border-slate-100">
           <DaishaVariantSelector
             key={formData.jenisDaisha}
             jenisDaisha={formData.jenisDaisha}
@@ -135,58 +196,6 @@ export default function InputUnitSection({
           />
         </div>
       )}
-
-      {/* Nomor Unit & Barcode Scanner Button */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end pt-3 border-t border-slate-100">
-        <div>
-          <div className="flex items-center justify-between mb-1.5 gap-2">
-            <label htmlFor="input-no-daisha" className="block text-xs font-medium text-slate-700">
-              Nomor Unit Daisha *
-            </label>
-            {detectedSize && (
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${detectedSize.badgeBg} ${detectedSize.textColor} ${detectedSize.borderColor}`}
-              >
-                <Ruler className="w-3 h-3" />
-                <span>Ukuran: {detectedSize.label}</span>
-              </span>
-            )}
-          </div>
-          <input
-            id="input-no-daisha"
-            type="text"
-            name="noDaisha"
-            value={formData.noDaisha}
-            onChange={handleChange}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') e.preventDefault();
-            }}
-            placeholder="Ketik atau scan barcode (Cth: M00287, S00064)"
-            required
-            className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none uppercase placeholder-slate-400"
-          />
-          {detectedSize ? (
-            <span className={`text-xs font-normal mt-1 block ${detectedSize.textColor}`}>
-              Otomatis terdeteksi: <strong>{detectedSize.description}</strong> dari awalan &apos;{detectedSize.code}&apos;
-            </span>
-          ) : (
-            <span className="text-xs text-slate-500 mt-1 block">
-              Awalan kode: <strong>S</strong> = Small, <strong>M</strong> = Medium, <strong>L</strong> = Large
-            </span>
-          )}
-        </div>
-
-        <div>
-          <button
-            type="button"
-            onClick={() => setIsScanning(true)}
-            className="w-full h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Camera className="w-4 h-4" />
-            <span>Scan Barcode / QR Kamera</span>
-          </button>
-        </div>
-      </div>
 
       {/* Warning Card Duplikasi Unit Aktif */}
       {duplicateActiveTicket && (

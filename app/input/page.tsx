@@ -26,6 +26,8 @@ export default function InputKerusakanPage() {
     detectedSize,
     duplicateActiveTicket,
     normalizedNoDaisha,
+    matchedUnitInfo,
+    applyMatchedUnit,
     setDismissedDuplicateUnit,
     isScanning,
     setIsScanning,
@@ -59,72 +61,97 @@ export default function InputKerusakanPage() {
     isPrintTagOpen,
     setIsPrintTagOpen,
     createdTicketForTag,
+    setCreatedTicketForTag,
   } = useInputKerusakan();
 
+  const totalDamageCount = selectedKerusakan.length + customKerusakanList.length;
+
   return (
-    <div className="min-h-screen bg-slate-50 p-3 sm:p-5 md:p-8 flex justify-center items-start pb-24 md:pb-10">
-      <div className="bg-white p-5 sm:p-7 rounded-xl border border-slate-200/80 w-full max-w-3xl">
-        {/* Header Form dengan Breadcrumb & Quick Nav */}
-        <InputHeader isAdmin={isAdmin} isOperator={isOperator} />
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-24 md:pb-12">
+      {/* Header Form dengan Breadcrumb & Quick Nav */}
+      <InputHeader isAdmin={isAdmin} isOperator={isOperator} />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Section 1: Informasi Pelapor & Waktu */}
-          <InputPelaporSection
-            formData={formData}
-            setFormData={setFormData}
-            handleChange={handleChange}
-          />
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Kolom Kiri: Identifikasi Unit & Informasi Pelapor (5 Kolom) */}
+          <div className="lg:col-span-5 space-y-5">
+            <InputUnitSection
+              formData={formData}
+              setFormData={setFormData}
+              handleChange={handleChange}
+              seksiList={seksiList}
+              pilihanDaishaTersedia={pilihanDaishaTersedia}
+              showAllDaisha={showAllDaisha}
+              detectedSize={detectedSize}
+              duplicateActiveTicket={duplicateActiveTicket}
+              normalizedNoDaisha={normalizedNoDaisha}
+              matchedUnitInfo={matchedUnitInfo}
+              applyMatchedUnit={applyMatchedUnit}
+              setDismissedDuplicateUnit={setDismissedDuplicateUnit}
+              setIsScanning={setIsScanning}
+              isAdmin={isAdmin}
+            />
 
-          {/* Section 2: Identifikasi Unit Daisha */}
-          <InputUnitSection
-            formData={formData}
-            setFormData={setFormData}
-            handleChange={handleChange}
-            seksiList={seksiList}
-            pilihanDaishaTersedia={pilihanDaishaTersedia}
-            showAllDaisha={showAllDaisha}
-            detectedSize={detectedSize}
-            duplicateActiveTicket={duplicateActiveTicket}
-            normalizedNoDaisha={normalizedNoDaisha}
-            setDismissedDuplicateUnit={setDismissedDuplicateUnit}
-            setIsScanning={setIsScanning}
-            isAdmin={isAdmin}
-          />
+            <InputPelaporSection
+              formData={formData}
+              setFormData={setFormData}
+              handleChange={handleChange}
+            />
 
-          {/* Section 3: Status / Mode Kerusakan Unit & Katalog */}
-          <InputDamageSection
-            formData={formData}
-            setFormData={setFormData}
-            isDiagnosaBengkel={isDiagnosaBengkel}
-            setIsDiagnosaBengkel={setIsDiagnosaBengkel}
-            catatanGejala={catatanGejala}
-            setCatatanGejala={setCatatanGejala}
-            katalogKerusakan={katalogKerusakan}
-            selectedKerusakan={selectedKerusakan}
-            tindakanMap={tindakanMap}
-            qtyMap={qtyMap}
-            customKerusakanList={customKerusakanList}
-            customTindakanMap={customTindakanMap}
-            customQtyMap={customQtyMap}
-            toggleKerusakan={toggleKerusakan}
-            setItemTindakan={setItemTindakan}
-            setItemQty={setItemQty}
-            handleAddCustom={handleAddCustom}
-            handleRemoveCustom={handleRemoveCustom}
-            setCustomTindakan={setCustomTindakan}
-            setCustomItemQty={setCustomItemQty}
-          />
+            {/* Desktop Action Buttons */}
+            <div className="hidden lg:block">
+              <InputSubmitActions
+                isDiagnosaBengkel={isDiagnosaBengkel}
+                isAdmin={isAdmin}
+                isOperator={isOperator}
+                loading={loading}
+                totalDamageCount={totalDamageCount}
+                noDaisha={formData.noDaisha}
+                onSubmit={handleSubmit}
+              />
+            </div>
+          </div>
 
-          {/* Action Buttons */}
-          <InputSubmitActions
-            isDiagnosaBengkel={isDiagnosaBengkel}
-            isAdmin={isAdmin}
-            isOperator={isOperator}
-            loading={loading}
-            onSubmit={handleSubmit}
-          />
-        </form>
-      </div>
+          {/* Kolom Kanan: Mode Kerusakan & Katalog Titik Kerusakan (7 Kolom) */}
+          <div className="lg:col-span-7 space-y-5">
+            <InputDamageSection
+              formData={formData}
+              setFormData={setFormData}
+              isDiagnosaBengkel={isDiagnosaBengkel}
+              setIsDiagnosaBengkel={setIsDiagnosaBengkel}
+              catatanGejala={catatanGejala}
+              setCatatanGejala={setCatatanGejala}
+              katalogKerusakan={katalogKerusakan}
+              selectedKerusakan={selectedKerusakan}
+              tindakanMap={tindakanMap}
+              qtyMap={qtyMap}
+              customKerusakanList={customKerusakanList}
+              customTindakanMap={customTindakanMap}
+              customQtyMap={customQtyMap}
+              toggleKerusakan={toggleKerusakan}
+              setItemTindakan={setItemTindakan}
+              setItemQty={setItemQty}
+              handleAddCustom={handleAddCustom}
+              handleRemoveCustom={handleRemoveCustom}
+              setCustomTindakan={setCustomTindakan}
+              setCustomItemQty={setCustomItemQty}
+            />
+
+            {/* Mobile / Tablet Action Buttons */}
+            <div className="lg:hidden">
+              <InputSubmitActions
+                isDiagnosaBengkel={isDiagnosaBengkel}
+                isAdmin={isAdmin}
+                isOperator={isOperator}
+                loading={loading}
+                totalDamageCount={totalDamageCount}
+                noDaisha={formData.noDaisha}
+                onSubmit={handleSubmit}
+              />
+            </div>
+          </div>
+        </div>
+      </form>
 
       {/* Camera QR/Barcode Scanner Modal */}
       <QrScannerModal
@@ -166,16 +193,21 @@ export default function InputKerusakanPage() {
         detail={feedback.detail}
         buttonText={feedback.buttonText}
         secondaryButtonText={feedback.secondaryButtonText}
-        onSecondaryClick={feedback.onSecondaryClick}
         onClose={() => setFeedback((prev) => ({ ...prev, isOpen: false }))}
+        onSecondaryClick={feedback.onSecondaryClick}
       />
 
-      {/* Modal Cetak Tag Fisik Unit Daisha */}
-      <PrintTicketTagModal
-        isOpen={isPrintTagOpen}
-        ticket={createdTicketForTag}
-        onClose={() => setIsPrintTagOpen(false)}
-      />
+      {/* Modal Cetak Tag Fisik Daisha setelah Submit Berhasil */}
+      {createdTicketForTag && (
+        <PrintTicketTagModal
+          isOpen={isPrintTagOpen}
+          ticket={createdTicketForTag}
+          onClose={() => {
+            setIsPrintTagOpen(false);
+            setCreatedTicketForTag(null);
+          }}
+        />
+      )}
     </div>
   );
 }
