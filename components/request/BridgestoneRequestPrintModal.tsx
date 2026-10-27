@@ -570,7 +570,7 @@ export default function BridgestoneRequestPrintModal({
     >
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-4xl max-h-[94vh] flex flex-col overflow-hidden animate-scale-up">
         {/* Modal Toolbar Header */}
-        <div className="p-3.5 sm:p-4 px-5 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between gap-3">
+        <div className="p-3.5 sm:p-4 px-5 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between gap-3 no-print">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-red-50 border border-red-200 text-red-700 flex items-center justify-center">
               <FileText className="w-4 h-4" />
@@ -609,7 +609,7 @@ export default function BridgestoneRequestPrintModal({
 
         {/* Paper Container Preview (Accurate visual document) */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/70">
-          <div className="bg-white mx-auto shadow-md border-2 border-slate-900 p-3 sm:p-5 text-slate-900 text-xs font-sans max-w-3xl">
+          <div className="printable-request-area bg-white mx-auto shadow-md border-2 border-slate-900 p-3 sm:p-5 text-slate-900 text-xs font-sans max-w-3xl">
             {/* Top Registration & Logo */}
             <div className="flex justify-between items-center border-b border-slate-900 pb-1.5 mb-1.5">
               <span className="text-xs text-slate-600 font-mono">

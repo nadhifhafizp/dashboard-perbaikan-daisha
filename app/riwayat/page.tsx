@@ -55,7 +55,7 @@ export default function RiwayatLaporanPage() {
 
   // Filter States
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'Open' | 'Done' | 'Scrap'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'Open' | 'Progress' | 'Done' | 'Scrap'>('all');
   const [selectedSeksi, setSelectedSeksi] = useState<string>('all');
   const [selectedDaisha, setSelectedDaisha] = useState<string>('all');
   const [selectedAging, setSelectedAging] = useState<string>('all');
@@ -156,10 +156,8 @@ export default function RiwayatLaporanPage() {
   const filteredTickets = useMemo(() => {
     const list = tickets.filter((t) => {
       // 1. Status Filter
-      if (statusFilter === 'Open') {
-        if (t.status !== 'Open' && t.status !== 'Progress') return false;
-      } else if (statusFilter !== 'all' && t.status !== statusFilter) {
-        return false;
+      if (statusFilter !== 'all') {
+        if (t.status !== statusFilter) return false;
       }
 
       // 2. Seksi Filter
@@ -239,8 +237,8 @@ export default function RiwayatLaporanPage() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Toggle View Mode */}
-            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+            {/* Toggle View Mode (Khusus Desktop) */}
+            <div className="hidden md:flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
               <button
                 type="button"
                 onClick={() => setViewMode('kanban')}
@@ -262,7 +260,7 @@ export default function RiwayatLaporanPage() {
                     ? 'bg-white text-slate-900'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
-                title="Tampilan Tabel"
+                title="Tampilan Tabel / Kartu"
               >
                 <ListFilter className="w-3.5 h-3.5 text-blue-600" />
                 <span>Tabel</span>
@@ -522,7 +520,50 @@ export default function RiwayatLaporanPage() {
           </div>
         </div>
 
-        {/* 4. Konten Utama: Papan Antrean Kanban ATAU Daftar Tabel */}
+        {/* 4. Tab Status Cepat Khusus Layar Mobile */}
+        <div className="md:hidden flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto text-xs border border-slate-200">
+          <button
+            type="button"
+            onClick={() => { setStatusFilter('all'); setCurrentPage(1); }}
+            className={`px-3 py-2 rounded-lg font-semibold shrink-0 transition ${
+              statusFilter === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Semua ({counts.all})
+          </button>
+          <button
+            type="button"
+            onClick={() => { setStatusFilter('Open'); setCurrentPage(1); }}
+            className={`px-3 py-2 rounded-lg font-semibold shrink-0 transition flex items-center gap-1.5 ${
+              statusFilter === 'Open' ? 'bg-white text-amber-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <span>Antrean ({counts.waiting})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setStatusFilter('Progress'); setCurrentPage(1); }}
+            className={`px-3 py-2 rounded-lg font-semibold shrink-0 transition flex items-center gap-1.5 ${
+              statusFilter === 'Progress' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-blue-500" />
+            <span>Diproses ({counts.inProgress})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setStatusFilter('Done'); setCurrentPage(1); }}
+            className={`px-3 py-2 rounded-lg font-semibold shrink-0 transition flex items-center gap-1.5 ${
+              statusFilter === 'Done' ? 'bg-white text-emerald-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>Selesai ({counts.done})</span>
+          </button>
+        </div>
+
+        {/* 5. Konten Utama: Papan Antrean Kanban ATAU Daftar Tabel */}
         {loading && tickets.length === 0 ? (
           <div className="py-16 text-center text-slate-500 text-xs flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200/80">
             <span className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
@@ -554,37 +595,68 @@ export default function RiwayatLaporanPage() {
               </Link>
             )}
           </div>
-        ) : viewMode === 'kanban' ? (
-          /* TAMPILAN 1: KANBAN LIVE QUEUE BOARD */
-          <QueueKanbanBoard
-            tickets={filteredTickets}
-            onViewDetail={(t) => setTicketForDetail(t)}
-            onPrintTag={(t) => setTicketForTag(t)}
-          />
         ) : (
-          /* TAMPILAN 2: DAFTAR KARTU / LIST */
-          <div className="space-y-4">
-            <div className="space-y-2.5">
-              {paginatedTickets.map((ticket) => (
-                <RiwayatTicketCard
-                  key={ticket.idTiketAsli}
-                  ticket={ticket}
-                  onViewDetail={(t) => setTicketForDetail(t)}
+          <>
+            {/* TAMPILAN MOBILE: Selalu Daftar Kartu (RiwayatTicketCard) dengan scroll vertikal alami tanpa nested scroll */}
+            <div className="md:hidden space-y-4">
+              <div className="space-y-2.5">
+                {paginatedTickets.map((ticket) => (
+                  <RiwayatTicketCard
+                    key={ticket.idTiketAsli}
+                    ticket={ticket}
+                    onViewDetail={(t) => setTicketForDetail(t)}
+                    onPrintTag={(t) => setTicketForTag(t)}
+                  />
+                ))}
+              </div>
+
+              {filteredTickets.length > 0 && (
+                <PaginationControl
+                  currentPage={safeCurrentPage}
+                  totalItems={filteredTickets.length}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                  itemLabel="tiket"
                 />
-              ))}
+              )}
             </div>
 
-            {filteredTickets.length > 0 && (
-              <PaginationControl
-                currentPage={safeCurrentPage}
-                totalItems={filteredTickets.length}
-                itemsPerPage={itemsPerPage}
-                onPageChange={setCurrentPage}
-                onItemsPerPageChange={setItemsPerPage}
-                itemLabel="tiket"
-              />
-            )}
-          </div>
+            {/* TAMPILAN DESKTOP: Kanban Board atau Daftar Tabel Kompak */}
+            <div className="hidden md:block">
+              {viewMode === 'kanban' ? (
+                <QueueKanbanBoard
+                  tickets={filteredTickets}
+                  onViewDetail={(t) => setTicketForDetail(t)}
+                  onPrintTag={(t) => setTicketForTag(t)}
+                />
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2.5">
+                    {paginatedTickets.map((ticket) => (
+                      <RiwayatTicketCard
+                        key={ticket.idTiketAsli}
+                        ticket={ticket}
+                        onViewDetail={(t) => setTicketForDetail(t)}
+                        onPrintTag={(t) => setTicketForTag(t)}
+                      />
+                    ))}
+                  </div>
+
+                  {filteredTickets.length > 0 && (
+                    <PaginationControl
+                      currentPage={safeCurrentPage}
+                      totalItems={filteredTickets.length}
+                      itemsPerPage={itemsPerPage}
+                      onPageChange={setCurrentPage}
+                      onItemsPerPageChange={setItemsPerPage}
+                      itemLabel="tiket"
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
 

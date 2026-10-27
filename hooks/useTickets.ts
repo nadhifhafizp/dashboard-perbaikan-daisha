@@ -71,10 +71,21 @@ export function broadcastTicketChange() {
 interface UseTicketsOptions {
   autoRefreshIntervalMs?: number; // default 15000ms (15 detik) untuk sinkronisasi antrean real-time
   initialFetch?: boolean;
+  days?: number;
+  from?: string;
+  to?: string;
+  all?: boolean;
 }
 
 export function useTickets(options: UseTicketsOptions = {}) {
-  const { autoRefreshIntervalMs = 15_000, initialFetch = true } = options;
+  const {
+    autoRefreshIntervalMs = 15_000,
+    initialFetch = true,
+    days,
+    from,
+    to,
+    all,
+  } = options;
   const router = useRouter();
 
   const [tickets, setTickets] = useState<Ticket[]>(() => sharedTicketCache || []);
@@ -99,7 +110,15 @@ export function useTickets(options: UseTicketsOptions = {}) {
         const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
         try {
-          const fetchUrl = forceFresh ? `${API_URL}?fresh=${Date.now()}` : API_URL;
+          const urlParams = new URLSearchParams();
+          if (forceFresh) urlParams.set('fresh', String(Date.now()));
+          if (days) urlParams.set('days', String(days));
+          if (from) urlParams.set('from', from);
+          if (to) urlParams.set('to', to);
+          if (all) urlParams.set('all', 'true');
+
+          const paramStr = urlParams.toString();
+          const fetchUrl = paramStr ? `${API_URL}?${paramStr}` : API_URL;
           const response = await fetch(fetchUrl, {
             cache: 'no-store',
             signal: controller.signal,

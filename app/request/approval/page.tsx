@@ -285,7 +285,7 @@ function ApprovalContent() {
               </h2>
               <p className="text-xs text-amber-900 mt-0.5 leading-relaxed">
                 PIC Seksi pemohon (<strong className="text-slate-900">{requestData?.picPemohon}</strong>) meminta persetujuan Anda sebagai Atasan Seksi.
-                Silakan tinjau lembar formulir di bawah ini, kemudian klik tombol <strong>"Setujui & Tanda Tangani (Assign)"</strong>.
+                Silakan tinjau lembar formulir di bawah ini, kemudian klik tombol <strong>&quot;Setujui &amp; Tanda Tangani (Assign)&quot;</strong>.
               </p>
             </div>
           </div>

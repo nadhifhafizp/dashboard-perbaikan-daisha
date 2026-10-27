@@ -148,7 +148,7 @@ export default function FleetExplorer({
   }, [units, filterSeksi, filterJenis, filterStatus, search]);
 
   // Reset page when filter changes
-  const handleFilterChange = (setter: (val: any) => void, value: any) => {
+  const handleFilterChange = <T,>(setter: (val: T) => void, value: T) => {
     setter(value);
     setCurrentPage(1);
   };
@@ -373,7 +373,7 @@ export default function FleetExplorer({
           <div className="lg:col-span-2">
             <select
               value={filterStatus}
-              onChange={(e) => handleFilterChange(setFilterStatus, e.target.value as any)}
+              onChange={(e) => handleFilterChange(setFilterStatus, e.target.value as 'ALL' | 'MAINTAINED' | 'UNMAINTAINED')}
               className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
             >
               <option value="ALL">Semua Status PM</option>

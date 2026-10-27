@@ -16,6 +16,7 @@ import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { cleanInputDateTime, toDateTimeLocalValue } from '@/lib/date';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import IndoDateTimeInput from '@/components/common/IndoDateTimeInput';
+import { buildTicketDamagePayload } from '@/lib/ticketUtils';
 
 interface EditTicketModalProps {
   isOpen: boolean;
@@ -235,40 +236,24 @@ function EditTicketModalDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const formattedKerusakanList: string[] = [];
-    const kategoriSet = new Set<string>();
-
-    for (const key of selectedKerusakan) {
-      const [komponen, detail] = key.split(':::');
-      const tindakan = tindakanMap[key] || 'Repair';
-      const qty = qtyMap[key] || 1;
-      const qtyStr = qty > 1 ? ` (${qty}x)` : '';
-      formattedKerusakanList.push(`• [${komponen}] ${detail}${qtyStr} [${tindakan}]`);
-      kategoriSet.add(komponen);
-    }
-
-    for (const custom of customKerusakanList) {
-      const tindakan = customTindakanMap[custom] || 'Repair';
-      const qty = customQtyMap[custom] || 1;
-      const qtyStr = qty > 1 ? ` (${qty}x)` : '';
-      formattedKerusakanList.push(`• [Others] ${custom}${qtyStr} [${tindakan}]`);
-      kategoriSet.add('Others');
-    }
-
-    let compiledDetail = formattedKerusakanList.join('\n');
-    if (formData.catatanTambahan && formData.catatanTambahan.trim()) {
-      compiledDetail += `\nCatatan Tambahan: ${formData.catatanTambahan.trim()}`;
-    }
-
-    const compiledKategori = Array.from(kategoriSet).join(', ') || 'Umum';
+    const assembled = buildTicketDamagePayload({
+      isDiagnosaBengkel: false,
+      selectedKerusakan,
+      tindakanMap,
+      qtyMap,
+      customKerusakanList,
+      customTindakanMap,
+      customQtyMap,
+      catatanTambahan: formData.catatanTambahan,
+    });
 
     onSave({
       waktuMasuk: cleanInputDateTime(formData.waktuMasuk),
       noDaisha: formData.noDaisha,
       seksi: formData.seksi,
       namaDaisha: formData.namaDaisha,
-      jenisKerusakan: compiledKategori,
-      detail: compiledDetail,
+      jenisKerusakan: assembled.kategoriKerusakan,
+      detail: assembled.detail,
     });
   };
 

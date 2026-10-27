@@ -74,6 +74,72 @@ function formatJenisName(raw: string): string {
   return clean;
 }
 
+function CustomJenisTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: JenisBacklogItem }>;
+}) {
+  if (active && payload && payload.length) {
+    const d = payload[0].payload;
+    const isAchieved = d.realActual >= d.dailyTarget && d.dailyTarget > 0;
+    return (
+      <div className="bg-white text-slate-800 p-3 rounded-xl shadow-lg border border-slate-200 text-xs space-y-2 min-w-[240px]">
+        <div className="pb-1.5 border-b border-slate-100 flex items-center justify-between">
+          <span className="font-bold text-slate-900 text-sm">{d.nama}</span>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+            Total {d.total} Unit
+          </span>
+        </div>
+
+        <div className="space-y-1.5 pt-0.5 tabular-nums">
+          <div className="flex items-center justify-between bg-rose-50 text-rose-800 px-2 py-1 rounded font-semibold border border-rose-200">
+            <span className="flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+              <span>Sisa Backlog (Belum PM):</span>
+            </span>
+            <span className="font-bold text-rose-900 text-xs">{d.backlog} Unit</span>
+          </div>
+
+          <div className="flex items-center justify-between text-slate-600 px-1">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-slate-400" />
+              <span>Target Harian Wajib:</span>
+            </span>
+            <span className="font-bold text-slate-900">{d.dailyTarget} Unit</span>
+          </div>
+
+          <div className="flex items-center justify-between text-slate-900 font-semibold px-1">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+              <span>Real Actual Hari Ini:</span>
+            </span>
+            <span className={isAchieved ? 'text-emerald-600 font-bold' : 'text-slate-900'}>
+              {d.realActual} Unit
+            </span>
+          </div>
+
+          <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-xs px-1">
+            <span className="text-slate-500">Status GAP Hari Ini:</span>
+            <span className={`font-bold ${d.gap >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {d.gap >= 0 ? `+${d.gap} Unit (Tercapai)` : `${d.gap} Unit (Defisit)`}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+            <span>Realisasi Kepatuhan PM:</span>
+            <span className="font-semibold text-slate-800">
+              {d.percentage}% ({d.maintained}/{d.total})
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function TargetVsActualChart({
   data,
   dailyTarget,
@@ -231,69 +297,6 @@ export default function TargetVsActualChart({
   const todayTrendActual = todayItem ? todayItem.actual : 0;
   const todayTrendTarget = todayItem ? todayItem.target || dailyTarget : dailyTarget;
 
-  // Custom Tooltip untuk BarChart Per Jenis Daisha
-  const CustomJenisTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: JenisBacklogItem }> }) => {
-    if (active && payload && payload.length) {
-      const d = payload[0].payload;
-      const isAchieved = d.realActual >= d.dailyTarget && d.dailyTarget > 0;
-      return (
-        <div className="bg-white text-slate-800 p-3 rounded-xl shadow-lg border border-slate-200 text-xs space-y-2 min-w-[240px]">
-          <div className="pb-1.5 border-b border-slate-100 flex items-center justify-between">
-            <span className="font-bold text-slate-900 text-sm">{d.nama}</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-              Total {d.total} Unit
-            </span>
-          </div>
-
-          <div className="space-y-1.5 pt-0.5 tabular-nums">
-            {/* Sisa Backlog (Paling Penting) */}
-            <div className="flex items-center justify-between bg-rose-50 text-rose-800 px-2 py-1 rounded font-semibold border border-rose-200">
-              <span className="flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
-                <span>Sisa Backlog (Belum PM):</span>
-              </span>
-              <span className="font-bold text-rose-900 text-xs">{d.backlog} Unit</span>
-            </div>
-
-            {/* Target Harian */}
-            <div className="flex items-center justify-between text-slate-600 px-1">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm bg-slate-400" />
-                <span>Target Harian Wajib:</span>
-              </span>
-              <span className="font-bold text-slate-900">{d.dailyTarget} Unit</span>
-            </div>
-
-            {/* Real Actual */}
-            <div className="flex items-center justify-between text-slate-900 font-semibold px-1">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
-                <span>Real Actual Hari Ini:</span>
-              </span>
-              <span className={isAchieved ? 'text-emerald-600 font-bold' : 'text-slate-900'}>
-                {d.realActual} Unit
-              </span>
-            </div>
-
-            {/* GAP Selisih */}
-            <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-xs px-1">
-              <span className="text-slate-500">Status GAP Hari Ini:</span>
-              <span className={`font-bold ${d.gap >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {d.gap >= 0 ? `+${d.gap} Unit (Tercapai)` : `${d.gap} Unit (Defisit)`}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between text-xs text-slate-500 px-1">
-              <span>Realisasi Kepatuhan PM:</span>
-              <span className="font-semibold text-slate-800">{d.percentage}% ({d.maintained}/{d.total})</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 space-y-4">
       {/* 1. Header & Segmented Mode Switcher */}
@@ -448,7 +451,7 @@ export default function TargetVsActualChart({
                 <span className="hidden sm:inline">Urutkan:</span>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
+                  onChange={(e) => setSortBy(e.target.value as 'backlog' | 'gap' | 'target' | 'name')}
                   className="h-10 px-2.5 bg-white text-slate-700 border border-slate-200 rounded-lg text-xs font-medium cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                 >
                   <option value="backlog">Sisa Backlog Terbanyak</option>

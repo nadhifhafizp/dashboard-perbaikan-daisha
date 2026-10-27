@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import sql from '@/lib/db';
+import sql, { withTransaction } from '@/lib/db';
 import { requireAuth, checkRateLimit, sanitizeText } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
@@ -139,31 +139,35 @@ export async function POST(request: Request) {
         );
       }
 
-      // Simpan ke tabel PmStaging
-      const [inserted] = await sql<PmStagingItem[]>`
-        INSERT INTO "PmStaging" ("seksi", "units", "lokasi", "catatan", "pelapor", "status", "createdAt")
-        VALUES (
-          ${seksi},
-          ${sql.json(cleanUnits)},
-          ${lokasi},
-          ${catatan || null},
-          ${pelapor},
-          'WAITING_PICKUP',
-          NOW()
-        )
-        RETURNING *
-      `;
+      // Simpan ke tabel PmStaging & notifikasi dalam 1 transaksi atomik aman
+      const inserted = await withTransaction(async (tx) => {
+        const [row] = await tx<PmStagingItem[]>`
+          INSERT INTO "PmStaging" ("seksi", "units", "lokasi", "catatan", "pelapor", "status", "createdAt")
+          VALUES (
+            ${seksi},
+            ${tx.json(cleanUnits)},
+            ${lokasi},
+            ${catatan || null},
+            ${pelapor},
+            'WAITING_PICKUP',
+            NOW()
+          )
+          RETURNING *
+        `;
 
-      // Kirim notifikasi lonceng ke tim Workshop (ADMIN & OPERATOR)
-      const notifPesan = `Seksi ${seksi} telah menyiapkan ${cleanUnits.length} unit Daisha (${cleanUnits.join(', ')}) untuk pemeliharaan berkala (PM) di lokasi: ${lokasi}. Silakan tim Workshop mengambil unit.`;
+        // Kirim notifikasi lonceng ke tim Workshop (ADMIN & OPERATOR)
+        const notifPesan = `Seksi ${seksi} telah menyiapkan ${cleanUnits.length} unit Daisha (${cleanUnits.join(', ')}) untuk pemeliharaan berkala (PM) di lokasi: ${lokasi}. Silakan tim Workshop mengambil unit.`;
 
-      await sql`
-        INSERT INTO "SectionRequestNotification" 
-          ("targetRole", "tipe", "judul", "pesan", "link", "isRead", "waktu")
-        VALUES 
-          ('ADMIN', 'PM_PICKUP', ${'Unit PM Siap Dijemput — Seksi ' + seksi}, ${notifPesan}, '/maintenance', false, NOW()),
-          ('OPERATOR', 'PM_PICKUP', ${'Unit PM Siap Dijemput — Seksi ' + seksi}, ${notifPesan}, '/maintenance', false, NOW())
-      `;
+        await tx`
+          INSERT INTO "SectionRequestNotification" 
+            ("targetRole", "tipe", "judul", "pesan", "link", "isRead", "waktu")
+          VALUES 
+            ('ADMIN', 'PM_PICKUP', ${'Unit PM Siap Dijemput — Seksi ' + seksi}, ${notifPesan}, '/maintenance', false, NOW()),
+            ('OPERATOR', 'PM_PICKUP', ${'Unit PM Siap Dijemput — Seksi ' + seksi}, ${notifPesan}, '/maintenance', false, NOW())
+        `;
+
+        return row;
+      });
 
       return NextResponse.json({
         success: true,
@@ -184,37 +188,43 @@ export async function POST(request: Request) {
         );
       }
 
-      const [updated] = await sql<PmStagingItem[]>`
-        UPDATE "PmStaging"
-        SET 
-          "status" = ${newStatus},
-          "pickedUpAt" = CASE WHEN ${newStatus} = 'PICKED_UP' AND "pickedUpAt" IS NULL THEN NOW() ELSE "pickedUpAt" END,
-          "completedAt" = CASE WHEN ${newStatus} = 'COMPLETED' THEN NOW() ELSE "completedAt" END
-        WHERE "id" = ${id}
-        RETURNING *
-      `;
+      const updated = await withTransaction(async (tx) => {
+        const [row] = await tx<PmStagingItem[]>`
+          UPDATE "PmStaging"
+          SET 
+            "status" = ${newStatus},
+            "pickedUpAt" = CASE WHEN ${newStatus} = 'PICKED_UP' AND "pickedUpAt" IS NULL THEN NOW() ELSE "pickedUpAt" END,
+            "completedAt" = CASE WHEN ${newStatus} = 'COMPLETED' THEN NOW() ELSE "completedAt" END
+          WHERE "id" = ${id}
+          RETURNING *
+        `;
+
+        if (!row) return null;
+
+        // Kirim notifikasi balik ke Seksi jika status berubah
+        if (newStatus === 'PICKED_UP') {
+          const pesan = `Tim Workshop telah mengambil ${row.units.length} unit Daisha dari lokasi ${row.lokasi} dan saat ini sedang dilakukan pemeliharaan berkala (PM).`;
+          await tx`
+            INSERT INTO "SectionRequestNotification" 
+              ("targetRole", "tipe", "judul", "pesan", "link", "isRead", "waktu")
+            VALUES 
+              ('USER_SEKSI', 'PM_IN_PROGRESS', ${'Unit Daisha Sedang Di-PM di Workshop'}, ${pesan}, '/maintenance', false, NOW())
+          `;
+        } else if (newStatus === 'COMPLETED') {
+          const pesan = `Pemeliharaan berkala (PM) untuk ${row.units.length} unit Daisha (${row.units.join(', ')}) telah selesai dikerjakan oleh tim Workshop. Unit siap digunakan kembali.`;
+          await tx`
+            INSERT INTO "SectionRequestNotification" 
+              ("targetRole", "tipe", "judul", "pesan", "link", "isRead", "waktu")
+            VALUES 
+              ('USER_SEKSI', 'PM_COMPLETED', ${'PM Unit Daisha Selesai Diservis'}, ${pesan}, '/maintenance', false, NOW())
+          `;
+        }
+
+        return row;
+      });
 
       if (!updated) {
         return NextResponse.json({ error: 'Data penjemputan tidak ditemukan.' }, { status: 404 });
-      }
-
-      // Kirim notifikasi balik ke Seksi jika status berubah
-      if (newStatus === 'PICKED_UP') {
-        const pesan = `Tim Workshop telah mengambil ${updated.units.length} unit Daisha dari lokasi ${updated.lokasi} dan saat ini sedang dilakukan pemeliharaan berkala (PM).`;
-        await sql`
-          INSERT INTO "SectionRequestNotification" 
-            ("targetRole", "tipe", "judul", "pesan", "link", "isRead", "waktu")
-          VALUES 
-            ('USER_SEKSI', 'PM_IN_PROGRESS', ${'Unit Daisha Sedang Di-PM di Workshop'}, ${pesan}, '/maintenance', false, NOW())
-        `;
-      } else if (newStatus === 'COMPLETED') {
-        const pesan = `Pemeliharaan berkala (PM) untuk ${updated.units.length} unit Daisha (${updated.units.join(', ')}) telah selesai dikerjakan oleh tim Workshop. Unit siap digunakan kembali.`;
-        await sql`
-          INSERT INTO "SectionRequestNotification" 
-            ("targetRole", "tipe", "judul", "pesan", "link", "isRead", "waktu")
-          VALUES 
-            ('USER_SEKSI', 'PM_COMPLETED', ${'PM Unit Daisha Selesai Diservis'}, ${pesan}, '/maintenance', false, NOW())
-        `;
       }
 
       return NextResponse.json({

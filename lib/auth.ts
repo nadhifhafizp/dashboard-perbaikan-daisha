@@ -29,6 +29,13 @@ function generateHmacSignature(data: string, secret: string): string {
   return crypto.createHmac('sha256', secret).update(data).digest('hex');
 }
 
+// Evaluasi keberadaan SESSION_SECRET saat modul backend diinisialisasi (F0.5)
+if (typeof window === 'undefined' && process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  throw new Error(
+    '[Auth Fatal Security] SESSION_SECRET wajib dikonfigurasi di environment variables saat aplikasi start.'
+  );
+}
+
 /**
  * Mengambil secret key dari environment variable (`SESSION_SECRET`).
  * Jika belum dikonfigurasi, sistem melempar exception demi mencegah insecure fallback.

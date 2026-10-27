@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import sql from '@/lib/db';
+import sql, { withTransaction } from '@/lib/db';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { parseToTimestamp, formatDisplayDate } from '@/lib/date';
@@ -37,8 +37,34 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan data perbaikan.' }, { status: 429 });
   }
 
-  // 3. FAST CACHE HIT (< 2ms)
-  if (repairCache && Date.now() - repairCacheTimestamp < REPAIR_CACHE_TTL_MS) {
+  const { searchParams } = new URL(request.url);
+  const idParam = searchParams.get('id');
+  const fromParam = searchParams.get('from');
+  const toParam = searchParams.get('to');
+  const daysParam = searchParams.get('days');
+  const allParam = searchParams.get('all') === 'true';
+
+  let fromDate: Date | null = null;
+  let toDate: Date | null = null;
+
+  if (fromParam) {
+    const fTs = parseToTimestamp(fromParam);
+    if (fTs > 0) fromDate = new Date(fTs);
+  } else if (!allParam && !idParam) {
+    // Batasan waktu default (90 hari terakhir) untuk mencegah lag di browser mobile
+    const numDays = daysParam ? parseInt(daysParam, 10) || 90 : 90;
+    fromDate = new Date(Date.now() - numDays * 24 * 60 * 60 * 1000);
+  }
+
+  if (toParam) {
+    const tTs = parseToTimestamp(toParam);
+    if (tTs > 0) toDate = new Date(tTs);
+  }
+
+  const isFiltered = Boolean(idParam || fromParam || toParam || daysParam || allParam);
+
+  // 3. FAST CACHE HIT (< 2ms) hanya untuk query default tanpa filter kustom
+  if (!isFiltered && repairCache && Date.now() - repairCacheTimestamp < REPAIR_CACHE_TTL_MS) {
     return NextResponse.json(repairCache, {
       headers: {
         'X-Database': 'PostgreSQL-Native',
@@ -48,6 +74,9 @@ export async function GET(request: Request) {
   }
 
   try {
+    const fromIso = fromDate ? fromDate.toISOString() : null;
+    const toIso = toDate ? toDate.toISOString() : null;
+
     const tickets = await sql`
       SELECT 
         t."idTiket",
@@ -62,6 +91,9 @@ export async function GET(request: Request) {
         d."seksi"
       FROM "Ticket" t
       LEFT JOIN "Daisha" d ON UPPER(t."noDaisha") = UPPER(d."nomor_daisha")
+      WHERE (${idParam}::text IS NULL OR t."idTiket" = ${idParam} OR UPPER(t."noDaisha") = UPPER(${idParam}))
+        AND (${fromIso}::timestamptz IS NULL OR t."waktuMasuk" >= ${fromIso}::timestamptz)
+        AND (${toIso}::timestamptz IS NULL OR t."waktuMasuk" <= ${toIso}::timestamptz)
       ORDER BY t."waktuMasuk" DESC
     `;
 
@@ -97,13 +129,15 @@ export async function GET(request: Request) {
       };
     });
 
-    repairCache = formattedData;
-    repairCacheTimestamp = Date.now();
+    if (!isFiltered) {
+      repairCache = formattedData;
+      repairCacheTimestamp = Date.now();
+    }
 
     return NextResponse.json(formattedData, {
       headers: {
         'X-Database': 'PostgreSQL-Native',
-        'X-Cache': 'MISS',
+        'X-Cache': isFiltered ? 'FILTERED' : 'MISS',
       },
     });
   } catch (error: unknown) {
@@ -221,14 +255,6 @@ export async function POST(request: Request) {
       const ukuran = existingUnit?.ukuran || ukuranNorm;
       const jenisDefault = noDaisha.toUpperCase().includes('NF') || namaDaisha.toLowerCase().includes('nagara') ? 'NAGARA_FILTER' : 'VERTICAL';
       const jenis = existingUnit?.jenis || jenisDefault;
-      await sql`
-        INSERT INTO "Daisha" ("nomor_daisha", "nama_daisha", "ukuran", "seksi", "jenis", "last_condition")
-        VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi}, ${jenis}, 'RUSAK')
-        ON CONFLICT ("nomor_daisha") DO UPDATE 
-        SET "nama_daisha" = COALESCE(EXCLUDED."nama_daisha", "Daisha"."nama_daisha"), 
-            "seksi" = COALESCE(EXCLUDED."seksi", "Daisha"."seksi"),
-            "last_condition" = 'RUSAK'
-      `;
 
       // Parse waktu masuk secara konsisten
       let parsedDateMasuk = new Date();
@@ -274,25 +300,36 @@ export async function POST(request: Request) {
 
       const finalCatatan = catatanInput || '-';
 
-      // Buat Tiket dalam 1 query saja
-      await sql`
-        INSERT INTO "Ticket" ("idTiket", "noDaisha", "namaPelapor", "status", "waktuMasuk", "catatan", "items")
-        VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, ${targetStatus}, ${parsedDateMasuk}, ${finalCatatan}, ${JSON.stringify(itemsJson)}::jsonb)
-      `;
+      // Eksekusi mutasi multi-tabel dalam 1 transaksi atomik aman
+      await withTransaction(async (tx) => {
+        await tx`
+          INSERT INTO "Daisha" ("nomor_daisha", "nama_daisha", "ukuran", "seksi", "jenis", "last_condition")
+          VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi}, ${jenis}, 'RUSAK')
+          ON CONFLICT ("nomor_daisha") DO UPDATE 
+          SET "nama_daisha" = COALESCE(EXCLUDED."nama_daisha", "Daisha"."nama_daisha"), 
+              "seksi" = COALESCE(EXCLUDED."seksi", "Daisha"."seksi"),
+              "last_condition" = 'RUSAK'
+        `;
 
-      // Pengurangan stok otomatis untuk komponen Ganti Baru (Projek 3)
-      const gantiItems = itemsJson.filter((it) => it.tindakan === 'Ganti');
-      await Promise.allSettled(
-        gantiItems.map((it) =>
-          sql`
-            UPDATE "Sparepart"
-            SET "stokGudang" = "stokGudang" - ${it.qty || 1}
-            WHERE "namaKomponen" = ${it.komponen}
-          `.catch((e) => {
+        await tx`
+          INSERT INTO "Ticket" ("idTiket", "noDaisha", "namaPelapor", "status", "waktuMasuk", "catatan", "items")
+          VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, ${targetStatus}, ${parsedDateMasuk}, ${finalCatatan}, ${JSON.stringify(itemsJson)}::jsonb)
+        `;
+
+        // Pengurangan stok otomatis untuk komponen Ganti Baru (Projek 3)
+        const gantiItems = itemsJson.filter((it) => it.tindakan === 'Ganti');
+        for (const it of gantiItems) {
+          try {
+            await tx`
+              UPDATE "Sparepart"
+              SET "stokGudang" = "stokGudang" - ${it.qty || 1}
+              WHERE "namaKomponen" = ${it.komponen}
+            `;
+          } catch (e) {
             console.warn(`[Sparepart] Komponen '${it.komponen}' tidak ditemukan, skip pengurangan stok:`, e);
-          })
-        )
-      );
+          }
+        }
+      });
 
       recordAuditLog({
         action: 'TICKET_CREATE',
@@ -359,19 +396,19 @@ export async function POST(request: Request) {
         }
       }
 
-      await sql`
-        UPDATE "Ticket"
-        SET 
-          "status" = ${normalizedStatus},
-          "waktuSelesai" = ${parsedWaktuSelesai},
-          "catatan" = ${catatan && catatan !== '-' ? catatan : null}
-        WHERE "idTiket" = ${idTiket}
-      `;
+      await withTransaction(async (tx) => {
+        await tx`
+          UPDATE "Ticket"
+          SET 
+            "status" = ${normalizedStatus},
+            "waktuSelesai" = ${parsedWaktuSelesai},
+            "catatan" = ${catatan && catatan !== '-' ? catatan : null}
+          WHERE "idTiket" = ${idTiket}
+        `;
 
-      // PRD Modul Maintenance: Sinkronisasi perbaikan selesai -> terhitung riwayat servis & maintenance
-      if (normalizedStatus === 'Done') {
-        try {
-          const tRow = await sql`SELECT "noDaisha", "waktuMasuk" FROM "Ticket" WHERE "idTiket" = ${idTiket} LIMIT 1`;
+        // PRD Modul Maintenance: Sinkronisasi perbaikan selesai -> terhitung riwayat servis & maintenance
+        if (normalizedStatus === 'Done') {
+          const tRow = await tx`SELECT "noDaisha", "waktuMasuk" FROM "Ticket" WHERE "idTiket" = ${idTiket} LIMIT 1`;
           if (tRow.length > 0 && tRow[0].noDaisha) {
             const noD = tRow[0].noDaisha.trim();
             const completionDate = parsedWaktuSelesai || new Date();
@@ -379,14 +416,14 @@ export async function POST(request: Request) {
             const detailKerusakan = body.detail ? sanitizeText(body.detail, 1000) : 'Perbaikan kerusakan di bengkel';
             
             // Cari unit Daisha atau buat baru
-            const daishaMatch = await sql`
+            const daishaMatch = await tx`
               SELECT id FROM "Daisha" WHERE UPPER(nomor_daisha) = ${noD.toUpperCase()} LIMIT 1
             `;
 
             let dId: string;
             if (daishaMatch.length > 0) {
               dId = daishaMatch[0].id;
-              await sql`
+              await tx`
                 UPDATE "Daisha"
                 SET 
                   "last_maintenance_date" = ${completionDate},
@@ -401,7 +438,7 @@ export async function POST(request: Request) {
               const sInfo = detectDaishaSize(noD);
               const ukuranResolved = sInfo?.size === 'Small' ? 'SMALL' : sInfo?.size === 'Medium' ? 'MEDIUM' : sInfo?.size === 'Large' ? 'LARGE' : 'NONE';
               const jenisResolved = noD.toUpperCase().includes('NF') || noD.toUpperCase().includes('FIL') ? 'NAGARA_FILTER' : 'VERTICAL';
-              const inserted = await sql`
+              const inserted = await tx`
                 INSERT INTO "Daisha" (
                   "nomor_daisha", "jenis", "ukuran", "last_maintenance_date",
                   "last_repair_date", "last_waktu_masuk", "last_waktu_keluar", "last_condition"
@@ -416,7 +453,7 @@ export async function POST(request: Request) {
             }
 
             // Catat log pengerjaan repair terintegrasi
-            await sql`
+            await tx`
               INSERT INTO "MaintenanceLog" (
                 "daisha_id", "nomor_daisha", "jenis_pekerjaan", "kondisi",
                 "tanggal_pengerjaan", "waktu_masuk", "waktu_keluar", "detail_kerusakan",
@@ -427,12 +464,12 @@ export async function POST(request: Request) {
                 ${auth.user?.name || auth.user?.username || 'Admin'}, ${'Perbaikan selesai via tiket ' + idTiket}
               )
             `;
-
-            invalidateMaintenanceCache();
           }
-        } catch (syncErr) {
-          console.warn('[Sync Maintenance] Gagal sinkronisasi tiket Done ke modul Maintenance:', syncErr);
         }
+      });
+
+      if (normalizedStatus === 'Done') {
+        invalidateMaintenanceCache();
       }
 
       if (body.detail) {

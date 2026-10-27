@@ -5,8 +5,7 @@ import { Ticket } from '@/types/ticket';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { parseToTimestamp } from '@/lib/date';
-import { Clock, Wrench, CheckCircle2, ArrowRight, Printer, Search, Pencil } from 'lucide-react';
-import Link from 'next/link';
+import { Clock, Wrench, CheckCircle2, Printer, Search } from 'lucide-react';
 
 interface QueueKanbanBoardProps {
   tickets: Ticket[];

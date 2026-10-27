@@ -21,7 +21,6 @@ import {
   TrendingDown,
   Layers,
   ShieldAlert,
-  CheckCircle2,
 } from 'lucide-react';
 import { CHART, DONUT } from '@/lib/chart-colors';
 
@@ -353,13 +352,18 @@ export default function SparepartsAnalyticsDashboard({
           {/* Legend Items (Tanpa Nested Box) */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-3 border-t border-slate-100 text-xs">
             {metrics.categoryChartData.slice(0, 4).map((item) => (
-              <div key={item.name} className="flex items-center justify-between py-1 border-b border-slate-100/70">
+              <button
+                key={item.name}
+                type="button"
+                onClick={() => onFilterByCategory?.(item.name)}
+                className="flex items-center justify-between py-1 border-b border-slate-100/70 hover:bg-slate-50 text-left transition-colors cursor-pointer"
+              >
                 <div className="flex items-center gap-2 truncate">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                   <span className="text-slate-700 font-medium truncate text-xs">{item.name}</span>
                 </div>
                 <span className="font-bold text-slate-900 ml-1.5 tabular-nums">{item.value}</span>
-              </div>
+              </button>
             ))}
           </div>
         </div>

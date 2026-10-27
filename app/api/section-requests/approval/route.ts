@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import sql from '@/lib/db';
+import sql, { withTransaction } from '@/lib/db';
 import { sanitizeText, recordAuditLog, getClientIp } from '@/lib/security';
-import { createInAppNotification, buildAdminWorkshopEmailContent } from '@/lib/emailNotification';
+import { createInAppNotification, buildAdminWorkshopEmailContent, sendEmailAsync } from '@/lib/emailNotification';
 
 // GET: Verifikasi token dan kembalikan data request untuk Atasan Seksi
 export async function GET(request: Request) {
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [req] = await sql<Array<any>>`
+    const [req] = await sql<Array<Record<string, unknown>>>`
       SELECT 
         sr.*,
         COALESCE(sr."materials", '[]'::jsonb) as materials
@@ -83,43 +83,47 @@ export async function POST(request: Request) {
     const reviewerName = namaAtasan || current.namaAtasanSeksi || 'Atasan Seksi';
 
     if (action === 'APPROVE') {
-      // 1. Update status request
-      const [updated] = await sql<Array<{ nomorRequest: string }>>`
-        UPDATE "SectionRequest"
-        SET
-          "statusApprovalAtasanSeksi" = 'APPROVED',
-          "waktuApprovalAtasanSeksi" = NOW(),
-          "foreman" = ${reviewerName},
-          "namaAtasanSeksi" = ${reviewerName},
-          "catatanAtasanSeksi" = ${catatan || null},
-          status = 'Pending: Menunggu Evaluasi Workshop',
-          "flowStep" = 'STEP_3_DITERIMA_WORKSHOP',
-          "waktuUpdate" = NOW()
-        WHERE id = ${current.id}
-        RETURNING *
-      `;
+      // 1. Update status request & buat notifikasi dalam 1 transaksi atomik aman
+      const updated = await withTransaction(async (tx) => {
+        const [upd] = await tx<Array<{ nomorRequest: string }>>`
+          UPDATE "SectionRequest"
+          SET
+            "statusApprovalAtasanSeksi" = 'APPROVED',
+            "waktuApprovalAtasanSeksi" = NOW(),
+            "foreman" = ${reviewerName},
+            "namaAtasanSeksi" = ${reviewerName},
+            "catatanAtasanSeksi" = ${catatan || null},
+            status = 'Pending: Menunggu Evaluasi Workshop',
+            "flowStep" = 'STEP_3_DITERIMA_WORKSHOP',
+            "waktuUpdate" = NOW()
+          WHERE id = ${current.id}
+          RETURNING *
+        `;
 
-      // 2. Buat notifikasi otomatis untuk Admin & PIC Workshop (In-App)
-      await createInAppNotification({
-        requestId: current.id,
-        nomorRequest: current.nomorRequest,
-        targetRole: 'ADMIN',
-        tipe: 'ASSIGN_DITERIMA_WORKSHOP',
-        judul: `Request Baru Diterima: ${current.nomorRequest}`,
-        pesan: `Request permohonan "${current.perihal || current.namaBarang}" dari Seksi ${current.seksiPemohon} telah disetujui & ditandatangani oleh ${reviewerName}. Siap dilakukan evaluasi pekerjaan (Waktu, Men Power, Sparepart, Material).`,
-        link: `/request`,
-      });
+        // 2. Buat notifikasi otomatis untuk Admin & PIC Workshop (In-App)
+        await createInAppNotification({
+          requestId: current.id,
+          nomorRequest: current.nomorRequest,
+          targetRole: 'ADMIN',
+          tipe: 'ASSIGN_DITERIMA_WORKSHOP',
+          judul: `Request Baru Diterima: ${current.nomorRequest}`,
+          pesan: `Request permohonan "${current.perihal || current.namaBarang}" dari Seksi ${current.seksiPemohon} telah disetujui & ditandatangani oleh ${reviewerName}. Siap dilakukan evaluasi pekerjaan (Waktu, Men Power, Sparepart, Material).`,
+          link: `/request`,
+        }, tx);
 
-      // 3. Notifikasi juga untuk Seksi Pemohon
-      await createInAppNotification({
-        requestId: current.id,
-        nomorRequest: current.nomorRequest,
-        targetRole: 'USER_SEKSI',
-        targetUser: current.picPemohon,
-        tipe: 'APPROVAL_ATASAN_SEKSI',
-        judul: `Request ${current.nomorRequest} Disetujui Atasan`,
-        pesan: `Atasan Anda (${reviewerName}) telah menyetujui formulir request. Dokumen otomatis diteruskan ke Admin Workshop Produksi.`,
-        link: `/request`,
+        // 3. Notifikasi juga untuk Seksi Pemohon
+        await createInAppNotification({
+          requestId: current.id,
+          nomorRequest: current.nomorRequest,
+          targetRole: 'USER_SEKSI',
+          targetUser: current.picPemohon,
+          tipe: 'APPROVAL_ATASAN_SEKSI',
+          judul: `Request ${current.nomorRequest} Disetujui Atasan`,
+          pesan: `Atasan Anda (${reviewerName}) telah menyetujui formulir request. Dokumen otomatis diteruskan ke Admin Workshop Produksi.`,
+          link: `/request`,
+        }, tx);
+
+        return upd;
       });
 
       // 4. Siapkan template email notifikasi untuk Admin Workshop
@@ -131,6 +135,12 @@ export async function POST(request: Request) {
         picPemohon: current.picPemohon,
         namaAtasan: reviewerName,
         detailLink: `${origin}/request`,
+      });
+
+      // Kirim email notifikasi secara non-blocking (fire-and-forget) setelah transaksi berhasil di-commit
+      sendEmailAsync({
+        subject: adminEmailContent.subject,
+        bodyText: adminEmailContent.bodyText,
       });
 
       recordAuditLog({
@@ -150,28 +160,32 @@ export async function POST(request: Request) {
     }
 
     if (action === 'REJECT') {
-      const [updated] = await sql<Array<{ nomorRequest: string }>>`
-        UPDATE "SectionRequest"
-        SET
-          "statusApprovalAtasanSeksi" = 'REJECTED',
-          "waktuApprovalAtasanSeksi" = NOW(),
-          "alasanTolak" = ${alasanTolak || catatan || 'Ditolak oleh atasan seksi pemohon'},
-          status = 'Ditolak Atasan Seksi',
-          "flowStep" = 'STEP_5_DITOLAK',
-          "waktuUpdate" = NOW()
-        WHERE id = ${current.id}
-        RETURNING *
-      `;
+      const updated = await withTransaction(async (tx) => {
+        const [upd] = await tx<Array<{ nomorRequest: string }>>`
+          UPDATE "SectionRequest"
+          SET
+            "statusApprovalAtasanSeksi" = 'REJECTED',
+            "waktuApprovalAtasanSeksi" = NOW(),
+            "alasanTolak" = ${alasanTolak || catatan || 'Ditolak oleh atasan seksi pemohon'},
+            status = 'Ditolak Atasan Seksi',
+            "flowStep" = 'STEP_5_DITOLAK',
+            "waktuUpdate" = NOW()
+          WHERE id = ${current.id}
+          RETURNING *
+        `;
 
-      await createInAppNotification({
-        requestId: current.id,
-        nomorRequest: current.nomorRequest,
-        targetRole: 'USER_SEKSI',
-        targetUser: current.picPemohon,
-        tipe: 'INFO_TOLAK_SEKSI',
-        judul: `Request ${current.nomorRequest} Ditolak Atasan`,
-        pesan: `Permohonan request ditolak oleh ${reviewerName}. Alasan: ${alasanTolak || catatan || '-'}`,
-        link: `/request`,
+        await createInAppNotification({
+          requestId: current.id,
+          nomorRequest: current.nomorRequest,
+          targetRole: 'USER_SEKSI',
+          targetUser: current.picPemohon,
+          tipe: 'INFO_TOLAK_SEKSI',
+          judul: `Request ${current.nomorRequest} Ditolak Atasan`,
+          pesan: `Permohonan request ditolak oleh ${reviewerName}. Alasan: ${alasanTolak || catatan || '-'}`,
+          link: `/request`,
+        }, tx);
+
+        return upd;
       });
 
       recordAuditLog({

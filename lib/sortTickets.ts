@@ -81,8 +81,8 @@ export function sortTickets(tickets: Ticket[], sortBy: SortOption): Ticket[] {
       case 'daisha_desc': return (b.namaDaisha || '').trim().localeCompare((a.namaDaisha || '').trim(), undefined, { sensitivity: 'base' });
       case 'seksi_asc': return (a.seksi || '').trim().localeCompare((b.seksi || '').trim(), undefined, { sensitivity: 'base' });
       case 'seksi_desc': return (b.seksi || '').trim().localeCompare((a.seksi || '').trim(), undefined, { sensitivity: 'base' });
-      case 'pelapor_asc': return (a.pelapor || '').trim().localeCompare((b.pelapor || '').trim(), undefined, { sensitivity: 'base' });
-      case 'pelapor_desc': return (b.pelapor || '').trim().localeCompare((a.pelapor || '').trim(), undefined, { sensitivity: 'base' });
+      case 'pelapor_asc': return (a.pelapor || a.namaPelapor || '').trim().localeCompare((b.pelapor || b.namaPelapor || '').trim(), undefined, { sensitivity: 'base' });
+      case 'pelapor_desc': return (b.pelapor || b.namaPelapor || '').trim().localeCompare((a.pelapor || a.namaPelapor || '').trim(), undefined, { sensitivity: 'base' });
       default: return 0;
     }
   });

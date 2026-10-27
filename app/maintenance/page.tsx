@@ -277,10 +277,19 @@ function MaintenanceModuleContent() {
     return variantChartData.reduce((acc, v) => acc + v.dailyTarget, 0);
   }, [variantChartData]);
 
+  interface CachedMaintenanceData {
+    summary: MaintenanceSummaryState;
+    conditionStats?: ConditionStatsState;
+    breakdown: Record<string, BreakdownItem>;
+    dailyTrend: DailyTrendItem[];
+    units: FleetUnit[];
+    recentLogs?: MaintenanceLogRow[];
+  }
+
   // Ref untuk membatalkan fetch sebelumnya jika terjadi race condition
   const abortControllerRef = useRef<AbortController | null>(null);
   // Client-Side Stale-While-Revalidate Cache: simpan data per seksi agar saat ganti filter grafik langsung update dalam 0ms
-  const clientDataCacheRef = useRef<Map<string, any>>(new Map());
+  const clientDataCacheRef = useRef<Map<string, CachedMaintenanceData>>(new Map());
 
   // Fetch Data Function
   const fetchData = useCallback(async (isRefresh = false) => {

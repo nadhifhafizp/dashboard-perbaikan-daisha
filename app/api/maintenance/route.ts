@@ -19,8 +19,23 @@ interface CacheEntry {
   timestamp: number;
 }
 
+export interface DaishaRow {
+  id: number;
+  nomor_daisha: string;
+  jenis: string;
+  ukuran: string;
+  nama_daisha: string;
+  seksi: string;
+  last_maintenance_date: Date | string | null;
+  last_condition: string;
+  last_repair_date: Date | string | null;
+  last_waktu_masuk: Date | string | null;
+  last_waktu_keluar: Date | string | null;
+  updated_at: Date | string | null;
+}
+
 interface DaishaMasterCache {
-  data: any[];
+  data: DaishaRow[];
   timestamp: number;
 }
 
@@ -94,13 +109,13 @@ export async function GET(request: Request) {
       const remainingWorkDays = workDaysInfo.remainingWorkDays;
 
       // 1. Parallel fetch: Ambil master Daisha dari global memory cache jika ada (< 1ms), hanya query ke DB jika expired
-      let allDaisha: any[];
+      let allDaisha: DaishaRow[];
       const nowMs = Date.now();
       const cached = globalForMaint.cachedAllDaisha;
       if (cached && nowMs - cached.timestamp < ALL_DAISHA_TTL) {
         allDaisha = cached.data;
       } else {
-        allDaisha = await sql`
+        allDaisha = await sql<DaishaRow[]>`
           SELECT 
             d.id,
             d.nomor_daisha,

@@ -105,8 +105,6 @@ export default function SectionPopulationChart({
               dataKey="total"
               radius={[0, 4, 4, 0]}
               maxBarSize={20}
-              cursor="pointer"
-              onClick={(entry: any) => onSelectSeksi && onSelectSeksi(entry?.seksi || '')}
             >
               {chartData.map((entry, index) => {
                 const isPrimary = index === 0;
@@ -116,6 +114,8 @@ export default function SectionPopulationChart({
                   <Cell
                     key={entry.seksi}
                     fill={fill}
+                    cursor="pointer"
+                    onClick={() => onSelectSeksi && onSelectSeksi(entry.seksi)}
                   />
                 );
               })}

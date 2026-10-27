@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import sql from '@/lib/db';
+import sql, { withTransaction } from '@/lib/db';
 import {
   requireAuth,
   checkRateLimit,
@@ -10,7 +10,7 @@ import {
   validatePositiveInt,
   validatePositiveQuantity,
 } from '@/lib/security';
-import { createInAppNotification, buildAtasanSpecialProjectEmailContent } from '@/lib/emailNotification';
+import { createInAppNotification, buildAtasanSpecialProjectEmailContent, sendEmailAsync } from '@/lib/emailNotification';
 import { DEFAULT_ATASAN_SPROJECT_EMAIL } from '@/lib/workflowConstants';
 
 // Parse base64/URL image safely
@@ -23,6 +23,43 @@ function parseImageString(val: unknown): string | null {
     }
   }
   return null;
+}
+
+export interface SectionRequestRow {
+  id: number;
+  nomorRequest: string;
+  flowStep: string;
+  status: string;
+  seksiPemohon: string;
+  picPemohon: string;
+  perihal?: string;
+  namaBarang?: string;
+  alasanTolak?: string | null;
+  picBengkel?: string | null;
+  estimasi?: string | null;
+  catatanAdmin?: string | null;
+  biayaEstimate?: number | null;
+  biayaActual?: number | null;
+  orangJamEstimate?: number | null;
+  orangJamActual?: number | null;
+  waktuEstimate?: string | null;
+  waktuActual?: string | null;
+  kebutuhanSparepart?: string | null;
+  kebutuhanMaterial?: string | null;
+  tglPelaksanaanEstimate?: string | null;
+  tglPelaksanaanActual?: string | null;
+  komentarEstimate?: string | null;
+  komentarActual?: string | null;
+  keputusan?: string | null;
+  keputusan8210?: string | null;
+  keputusan820?: string | null;
+  hasilCheck?: string | null;
+  hasilCheckPemohon?: string | null;
+  schedulePlanning?: string | null;
+  scheduleActual?: string | null;
+  waktuSelesai?: Date | string | null;
+  materials?: unknown;
+  [key: string]: unknown;
 }
 
 // Helper untuk memastikan format data materials selalu array of object bersih
@@ -48,7 +85,7 @@ export function normalizeMaterials(raw: unknown): Array<{
     }
   }
   if (!Array.isArray(parsed)) return [];
-  const result: any[] = [];
+  const result: Record<string, unknown>[] = [];
   for (const item of parsed) {
     if (!item) continue;
     if (typeof item === 'string') {
@@ -134,6 +171,8 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
+    const idParam = searchParams.get('id');
+    const includeImage = searchParams.get('includeImage') === 'true' || Boolean(idParam);
     const status = searchParams.get('status');
     const seksi = searchParams.get('seksi');
 
@@ -141,6 +180,7 @@ export async function GET(request: Request) {
     const filterByUser = auth.user?.role === 'USER_SEKSI' ? auth.user.username : null;
     const filterStatus = status && status !== 'all' ? sanitizeText(status, 50) : null;
     const filterSeksi = seksi && seksi !== 'all' ? sanitizeText(seksi, 50) : null;
+    const filterId = idParam ? parseInt(idParam, 10) : null;
 
     const requests = await sql`
       SELECT 
@@ -172,9 +212,11 @@ export async function GET(request: Request) {
         sr.drafter,
         sr.foreman,
         sr."keadaanSekarang",
-        sr."fotoSebelum",
+        ${includeImage ? sql`sr."fotoSebelum"` : sql`NULL as "fotoSebelum"`},
+        CASE WHEN sr."fotoSebelum" IS NOT NULL AND length(sr."fotoSebelum") > 0 THEN TRUE ELSE FALSE END as "hasFotoSebelum",
         sr."rencanaTindakan",
-        sr."fotoSesudah",
+        ${includeImage ? sql`sr."fotoSesudah"` : sql`NULL as "fotoSesudah"`},
+        CASE WHEN sr."fotoSesudah" IS NOT NULL AND length(sr."fotoSesudah") > 0 THEN TRUE ELSE FALSE END as "hasFotoSesudah",
         sr."targetHasil",
         sr."penjelasanPelaksanaan",
         sr."biayaEstimate",
@@ -212,6 +254,7 @@ export async function GET(request: Request) {
       WHERE (${filterByUser}::text IS NULL OR sr."dibuatOleh" = ${filterByUser})
         AND (${filterStatus}::text IS NULL OR sr.status = ${filterStatus})
         AND (${filterSeksi}::text IS NULL OR sr."seksiPemohon" = ${filterSeksi})
+        AND (${filterId}::int IS NULL OR sr.id = ${filterId})
       ORDER BY sr."waktuDibuat" DESC
     `;
 
@@ -219,6 +262,10 @@ export async function GET(request: Request) {
       ...r,
       materials: normalizeMaterials(r.materials),
     }));
+
+    if (filterId && mappedRequests.length > 0) {
+      return NextResponse.json({ success: true, request: mappedRequests[0] });
+    }
 
     return NextResponse.json({ success: true, requests: mappedRequests });
   } catch (error) {
@@ -421,7 +468,7 @@ export async function POST(request: Request) {
       const schedulePlanning = sanitizeText(body.schedulePlanning, 1000);
       const scheduleActual = sanitizeText(body.scheduleActual, 1000);
 
-      const [current] = await sql<Array<any>>`
+      const [current] = await sql<SectionRequestRow[]>`
         SELECT * FROM "SectionRequest" WHERE id = ${id} LIMIT 1
       `;
 
@@ -467,7 +514,7 @@ export async function POST(request: Request) {
         atasanSProjectEmail = buildAtasanSpecialProjectEmailContent({
           action: 'REJECT',
           nomorRequest: current.nomorRequest,
-          perihal: current.perihal || current.namaBarang,
+          perihal: current.perihal || current.namaBarang || '-',
           seksiPemohon: current.seksiPemohon,
           picPemohon: current.picPemohon,
           alasanTolak: alasanTolak || komentarActual || 'Tidak memenuhi kriteria workshop',
@@ -507,7 +554,7 @@ export async function POST(request: Request) {
           atasanSProjectEmail = buildAtasanSpecialProjectEmailContent({
             action: 'GO',
             nomorRequest: current.nomorRequest,
-            perihal: current.perihal || current.namaBarang,
+            perihal: current.perihal || current.namaBarang || '-',
             seksiPemohon: current.seksiPemohon,
             picPemohon: current.picPemohon,
             waktuEstimate,
@@ -524,35 +571,35 @@ export async function POST(request: Request) {
         nextFlowStep = sanitizeText(body.flowStep, 50);
       }
 
-      const [updated] = await sql<Array<{ nomorRequest: string }>>`
+      const [updated] = await sql<SectionRequestRow[]>`
         UPDATE "SectionRequest"
         SET
           status = ${nextStatus},
           "flowStep" = ${nextFlowStep},
-          "alasanTolak" = ${alasanTolak !== undefined ? (alasanTolak || null) : current.alasanTolak},
-          "picBengkel" = ${picBengkel !== undefined ? (picBengkel || null) : current.picBengkel},
-          "estimasi" = ${estimasi !== undefined ? (estimasi || null) : current.estimasi},
-          "catatanAdmin" = ${catatanAdmin !== undefined ? (catatanAdmin || null) : current.catatanAdmin},
-          "biayaEstimate" = ${biayaEstimate !== undefined ? (biayaEstimate || null) : current.biayaEstimate},
-          "biayaActual" = ${biayaActual !== undefined ? (biayaActual || null) : current.biayaActual},
-          "orangJamEstimate" = ${orangJamEstimate !== undefined ? (orangJamEstimate || null) : current.orangJamEstimate},
-          "orangJamActual" = ${orangJamActual !== undefined ? (orangJamActual || null) : current.orangJamActual},
-          "waktuEstimate" = ${waktuEstimate !== undefined ? (waktuEstimate || null) : current.waktuEstimate},
-          "waktuActual" = ${waktuActual !== undefined ? (waktuActual || null) : current.waktuActual},
-          "kebutuhanSparepart" = ${kebutuhanSparepart !== undefined ? (kebutuhanSparepart || null) : current.kebutuhanSparepart},
-          "kebutuhanMaterial" = ${kebutuhanMaterial !== undefined ? (kebutuhanMaterial || null) : current.kebutuhanMaterial},
-          "tglPelaksanaanEstimate" = ${tglPelaksanaanEstimate !== undefined ? (tglPelaksanaanEstimate || null) : current.tglPelaksanaanEstimate},
-          "tglPelaksanaanActual" = ${tglPelaksanaanActual !== undefined ? (tglPelaksanaanActual || null) : current.tglPelaksanaanActual},
-          "komentarEstimate" = ${komentarEstimate !== undefined ? (komentarEstimate || null) : current.komentarEstimate},
-          "komentarActual" = ${komentarActual !== undefined ? (komentarActual || null) : current.komentarActual},
-          keputusan = ${keputusan !== undefined ? (keputusan || null) : current.keputusan},
-          "keputusan8210" = ${keputusan8210 !== undefined ? (keputusan8210 || null) : current.keputusan8210},
-          "keputusan820" = ${keputusan820 !== undefined ? (keputusan820 || null) : current.keputusan820},
-          "hasilCheck" = ${hasilCheck !== undefined ? (hasilCheck || null) : current.hasilCheck},
-          "hasilCheckPemohon" = ${hasilCheckPemohon !== undefined ? (hasilCheckPemohon || null) : current.hasilCheckPemohon},
-          "schedulePlanning" = ${schedulePlanning !== undefined ? (schedulePlanning || null) : current.schedulePlanning},
-          "scheduleActual" = ${scheduleActual !== undefined ? (scheduleActual || null) : current.scheduleActual},
-          "waktuSelesai" = ${nextStatus === 'Selesai' ? (current.waktuSelesai || new Date()) : current.waktuSelesai},
+          "alasanTolak" = ${alasanTolak !== undefined ? (alasanTolak || null) : (current.alasanTolak ?? null)},
+          "picBengkel" = ${picBengkel !== undefined ? (picBengkel || null) : (current.picBengkel ?? null)},
+          "estimasi" = ${estimasi !== undefined ? (estimasi || null) : (current.estimasi ?? null)},
+          "catatanAdmin" = ${catatanAdmin !== undefined ? (catatanAdmin || null) : (current.catatanAdmin ?? null)},
+          "biayaEstimate" = ${biayaEstimate !== undefined ? (biayaEstimate || null) : (current.biayaEstimate ?? null)},
+          "biayaActual" = ${biayaActual !== undefined ? (biayaActual || null) : (current.biayaActual ?? null)},
+          "orangJamEstimate" = ${orangJamEstimate !== undefined ? (orangJamEstimate || null) : (current.orangJamEstimate ?? null)},
+          "orangJamActual" = ${orangJamActual !== undefined ? (orangJamActual || null) : (current.orangJamActual ?? null)},
+          "waktuEstimate" = ${waktuEstimate !== undefined ? (waktuEstimate || null) : (current.waktuEstimate ?? null)},
+          "waktuActual" = ${waktuActual !== undefined ? (waktuActual || null) : (current.waktuActual ?? null)},
+          "kebutuhanSparepart" = ${kebutuhanSparepart !== undefined ? (kebutuhanSparepart || null) : (current.kebutuhanSparepart ?? null)},
+          "kebutuhanMaterial" = ${kebutuhanMaterial !== undefined ? (kebutuhanMaterial || null) : (current.kebutuhanMaterial ?? null)},
+          "tglPelaksanaanEstimate" = ${tglPelaksanaanEstimate !== undefined ? (tglPelaksanaanEstimate || null) : (current.tglPelaksanaanEstimate ?? null)},
+          "tglPelaksanaanActual" = ${tglPelaksanaanActual !== undefined ? (tglPelaksanaanActual || null) : (current.tglPelaksanaanActual ?? null)},
+          "komentarEstimate" = ${komentarEstimate !== undefined ? (komentarEstimate || null) : (current.komentarEstimate ?? null)},
+          "komentarActual" = ${komentarActual !== undefined ? (komentarActual || null) : (current.komentarActual ?? null)},
+          keputusan = ${keputusan !== undefined ? (keputusan || null) : (current.keputusan ?? null)},
+          "keputusan8210" = ${keputusan8210 !== undefined ? (keputusan8210 || null) : (current.keputusan8210 ?? null)},
+          "keputusan820" = ${keputusan820 !== undefined ? (keputusan820 || null) : (current.keputusan820 ?? null)},
+          "hasilCheck" = ${hasilCheck !== undefined ? (hasilCheck || null) : (current.hasilCheck ?? null)},
+          "hasilCheckPemohon" = ${hasilCheckPemohon !== undefined ? (hasilCheckPemohon || null) : (current.hasilCheckPemohon ?? null)},
+          "schedulePlanning" = ${schedulePlanning !== undefined ? (schedulePlanning || null) : (current.schedulePlanning ?? null)},
+          "scheduleActual" = ${scheduleActual !== undefined ? (scheduleActual || null) : (current.scheduleActual ?? null)},
+          "waktuSelesai" = ${nextStatus === 'Selesai' ? (current.waktuSelesai || new Date()) : (current.waktuSelesai ?? null)},
           "waktuUpdate" = NOW()
         WHERE id = ${id}
         RETURNING *
@@ -567,6 +614,14 @@ export async function POST(request: Request) {
         targetId: updated.nomorRequest,
         details: `Keputusan: ${keputusan || '-'}, FlowStep: ${nextFlowStep}`,
       });
+
+      if (atasanSProjectEmail) {
+        sendEmailAsync({
+          to: DEFAULT_ATASAN_SPROJECT_EMAIL,
+          subject: atasanSProjectEmail.subject,
+          bodyText: atasanSProjectEmail.bodyText,
+        });
+      }
 
       return NextResponse.json({
         success: true,
@@ -586,29 +641,33 @@ export async function POST(request: Request) {
       const hasilCheck = sanitizeText(body.hasilCheck, 2000);
       const hasilCheckPemohon = sanitizeText(body.hasilCheckPemohon, 100);
 
-      const [updated] = await sql<Array<any>>`
-        UPDATE "SectionRequest"
-        SET
-          status = 'Selesai',
-          "flowStep" = 'STEP_8_SELESAI',
-          "hasilCheck" = ${hasilCheck || null},
-          "hasilCheckPemohon" = ${hasilCheckPemohon || null},
-          "waktuSelesai" = NOW(),
-          "waktuUpdate" = NOW()
-        WHERE id = ${id}
-        RETURNING *
-      `;
+      const [updated] = await withTransaction(async (tx) => {
+        const [upd] = await tx<SectionRequestRow[]>`
+          UPDATE "SectionRequest"
+          SET
+            status = 'Selesai',
+            "flowStep" = 'STEP_8_SELESAI',
+            "hasilCheck" = ${hasilCheck || null},
+            "hasilCheckPemohon" = ${hasilCheckPemohon || null},
+            "waktuSelesai" = NOW(),
+            "waktuUpdate" = NOW()
+          WHERE id = ${id}
+          RETURNING *
+        `;
 
-      // Informasikan ke seksi terkait
-      await createInAppNotification({
-        requestId: updated.id,
-        nomorRequest: updated.nomorRequest,
-        targetRole: 'USER_SEKSI',
-        targetUser: updated.picPemohon,
-        tipe: 'INFO_SELESAI_SEKSI',
-        judul: `Pekerjaan Selesai: ${updated.nomorRequest}`,
-        pesan: `Pekerjaan "${updated.perihal || updated.namaBarang}" telah selesai dikerjakan oleh bengkel. Silakan cek dan lakukan serah terima barang.`,
-        link: `/request`,
+        // Informasikan ke seksi terkait
+        await createInAppNotification({
+          requestId: upd.id,
+          nomorRequest: upd.nomorRequest,
+          targetRole: 'USER_SEKSI',
+          targetUser: upd.picPemohon,
+          tipe: 'INFO_SELESAI_SEKSI',
+          judul: `Pekerjaan Selesai: ${upd.nomorRequest}`,
+          pesan: `Pekerjaan "${upd.perihal || upd.namaBarang}" telah selesai dikerjakan oleh bengkel. Silakan cek dan lakukan serah terima barang.`,
+          link: `/request`,
+        }, tx);
+
+        return [upd];
       });
 
       return NextResponse.json({
@@ -694,13 +753,13 @@ export async function POST(request: Request) {
         keterangan: keterangan || null,
       };
 
-      const [currentReq] = await sql<Array<{ materials: any }>>`
+      const [currentReq] = await sql<Array<{ materials: unknown }>>`
         SELECT COALESCE("materials", '[]'::jsonb) as materials FROM "SectionRequest" WHERE id = ${sectionRequestId} LIMIT 1
       `;
       const currentList = normalizeMaterials(currentReq?.materials);
       const updatedMaterials = [...currentList, newMat];
 
-      await sql.begin(async (tx) => {
+      await withTransaction(async (tx) => {
         await tx`
           UPDATE "SectionRequest"
           SET "materials" = ${sql.json(updatedMaterials)},
@@ -744,7 +803,7 @@ export async function POST(request: Request) {
       const materialId = body.materialId ? Number(body.materialId) : null;
       const namaKomponen = body.namaKomponen ? sanitizeText(body.namaKomponen, 100) : null;
 
-      const [current] = await sql<Array<{ id: number; nomorRequest: string; materials: any }>>`
+      const [current] = await sql<Array<{ id: number; nomorRequest: string; materials: unknown }>>`
         SELECT id, "nomorRequest", COALESCE("materials", '[]'::jsonb) as materials
         FROM "SectionRequest"
         WHERE id = ${sectionRequestId}
@@ -768,7 +827,7 @@ export async function POST(request: Request) {
       const targetMat = currentMats[targetMatIndex];
       const updatedMats = currentMats.filter((_, idx) => idx !== targetMatIndex);
 
-      await sql.begin(async (tx) => {
+      await withTransaction(async (tx) => {
         await tx`
           UPDATE "SectionRequest"
           SET "materials" = ${sql.json(updatedMats)},
@@ -811,7 +870,7 @@ export async function POST(request: Request) {
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
       const alasan = sanitizeText(body.alasan || 'Menunggu ketersediaan sparepart / material di gudang', 500);
 
-      const [updated] = await sql<Array<any>>`
+      const [updated] = await sql<SectionRequestRow[]>`
         UPDATE "SectionRequest"
         SET
           status = 'Pending: Material Habis',
@@ -827,7 +886,7 @@ export async function POST(request: Request) {
         user: auth.user?.username,
         role: auth.user?.role,
         status: 'SUCCESS',
-        targetId: updated.nomorRequest,
+        targetId: updated?.nomorRequest,
         details: `Status diubah ke Pending Material: ${alasan}`,
       });
 
@@ -846,7 +905,7 @@ export async function POST(request: Request) {
 
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
 
-      const [updated] = await sql<Array<any>>`
+      const [updated] = await sql<SectionRequestRow[]>`
         UPDATE "SectionRequest"
         SET
           status = 'Dikerjakan',

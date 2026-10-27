@@ -24,8 +24,15 @@ export default function NotificationBell() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
+  const lastFetchRef = useRef<number>(0);
+
   const fetchNotifications = async () => {
+    // Lewati fetch jika tab sedang di-minimize atau tidak aktif
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+      return;
+    }
     try {
+      lastFetchRef.current = Date.now();
       const res = await fetch('/api/section-requests/notifications');
       const data = await res.json();
       if (res.ok && data.success) {
@@ -39,8 +46,29 @@ export default function NotificationBell() {
 
   useEffect(() => {
     void fetchNotifications();
-    const interval = setInterval(fetchNotifications, 15000); // Polling setiap 15 detik
-    return () => clearInterval(interval);
+
+    // Polling interval minimal 60 detik (hanya berjalan saat tab aktif)
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void fetchNotifications();
+      }
+    }, 60_000);
+
+    // Fetch ulang saat tab kembali fokus dengan throttle 15 detik
+    const handleFocusOrVisible = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastFetchRef.current > 15_000) {
+        void fetchNotifications();
+      }
+    };
+
+    window.addEventListener('focus', handleFocusOrVisible);
+    document.addEventListener('visibilitychange', handleFocusOrVisible);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocusOrVisible);
+      document.removeEventListener('visibilitychange', handleFocusOrVisible);
+    };
   }, []);
 
   // Tutup dropdown jika klik di luar atau tekan Escape

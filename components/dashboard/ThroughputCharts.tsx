@@ -290,7 +290,7 @@ export default function ThroughputCharts({
                   <LabelList
                     dataKey="Masuk"
                     position="top"
-                    formatter={(val: any) => (Number(val) > 0 ? val : '')}
+                    formatter={(val: unknown) => (Number(val) > 0 ? String(val) : '')}
                     style={{ fontSize: 11, fontWeight: 700, fill: '#dc2626' }}
                   />
                 </Bar>
@@ -304,7 +304,7 @@ export default function ThroughputCharts({
                   <LabelList
                     dataKey="Selesai"
                     position="top"
-                    formatter={(val: any) => (Number(val) > 0 ? val : '')}
+                    formatter={(val: unknown) => (Number(val) > 0 ? String(val) : '')}
                     style={{ fontSize: 11, fontWeight: 700, fill: '#059669' }}
                   />
                 </Bar>

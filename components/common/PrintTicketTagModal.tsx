@@ -323,10 +323,10 @@ export default function PrintTicketTagModal({
       aria-labelledby="print-tag-dialog-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
     >
-      <div className="no-print w-full max-w-lg bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden transform transition-all animate-scale-up flex flex-col max-h-[94vh]">
+      <div className="w-full max-w-lg bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden transform transition-all animate-scale-up flex flex-col max-h-[94vh]">
 
         {/* Modal Header */}
-        <div className="p-4 px-6 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
+        <div className="p-4 px-6 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0 no-print">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-100 flex items-center justify-center">
               <Tag className="w-4 h-4" />
@@ -501,7 +501,7 @@ export default function PrintTicketTagModal({
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="p-4 px-6 border-t border-slate-200 bg-white flex justify-between items-center gap-3 shrink-0">
+        <div className="p-4 px-6 border-t border-slate-200 bg-white flex justify-between items-center gap-3 shrink-0 no-print">
           <p className="text-xs text-slate-500 font-medium hidden sm:flex items-center gap-1.5">
             <Lightbulb className="w-4 h-4 text-amber-600 shrink-0" />
             <span>Tips: Gunakan kertas A5/A6 atau printer thermal label.</span>

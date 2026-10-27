@@ -35,50 +35,6 @@ export interface UserAccount {
   updatedAt?: Date;
 }
 
-let isSeeded = false;
-
-/**
- * Menginisialisasi akun bawaan jika database masih kosong.
- * Akun default yang dibuat:
- * 1. Admin      : username dari ENV / 'admin'
- * 2. Operator   : username dari ENV / 'operator'
- * 3. User Seksi : 'seksi_welding'
- */
-export async function seedInitialUsers(): Promise<void> {
-  if (isSeeded) return;
-  try {
-    const [countResult] = await sql`SELECT COUNT(*)::int AS count FROM "User"`;
-    const count = countResult?.count ?? 0;
-    const initialAdminPassword = process.env.ADMIN_PASSWORD || 'admin123';
-    const initialOperatorPassword = process.env.OPERATOR_PASSWORD || 'operator123';
-
-    if (count === 0) {
-      const adminUser = (process.env.ADMIN_USERNAME || 'admin').trim().toLowerCase();
-      const opUser = (process.env.OPERATOR_USERNAME || 'operator').trim().toLowerCase();
-
-      await sql`
-        INSERT INTO "User" ("username", "password", "name", "role", "description", "createdAt", "updatedAt")
-        VALUES 
-          (${adminUser}, ${hashPassword(initialAdminPassword)}, 'Admin Maintenance & Rekap', 'ADMIN', 'Melihat rekapitulasi data, grafik statistik, ekspor Excel, kelola katalog, dan manajemen user.', NOW(), NOW()),
-          (${opUser}, ${hashPassword(initialOperatorPassword)}, 'Staff Input / Teknisi Lapangan', 'OPERATOR', 'Input data kerusakan Daisha baik di plant maupun bengkel maintenance.', NOW(), NOW()),
-          ('seksi_welding', ${hashPassword('seksi123')}, 'Seksi Welding & Stamping', 'USER_SEKSI', 'User perwakilan seksi untuk request pembuatan barang dan follow up.', NOW(), NOW())
-      `;
-      console.log('[Auth] Berhasil inisialisasi akun default (admin, operator, seksi_welding) ke database PostgreSQL.');
-    } else {
-      const [seksiCountResult] = await sql`SELECT COUNT(*)::int AS count FROM "User" WHERE "role" = 'USER_SEKSI'`;
-      if ((seksiCountResult?.count ?? 0) === 0) {
-        await sql`
-          INSERT INTO "User" ("username", "password", "name", "role", "seksi", "description", "createdAt", "updatedAt")
-          VALUES ('seksi_welding', ${hashPassword('seksi123')}, 'Seksi Welding & Stamping', 'USER_SEKSI', 'Welding', 'User perwakilan seksi untuk request pembuatan barang dan follow up.', NOW(), NOW())
-        `;
-      }
-    }
-    isSeeded = true;
-  } catch (err) {
-    console.error('[Auth] Error saat inisialisasi akun default:', err);
-  }
-}
-
 /**
  * Autentikasi pengguna berdasarkan kombinasi username dan password.
  * 
@@ -90,8 +46,6 @@ export async function findUserByCredentials(
   usernameInput: string,
   passwordInput: string
 ): Promise<UserAccount | null> {
-  await seedInitialUsers();
-
   const cleanUsername = usernameInput.trim().toLowerCase();
   const [user] = await sql`SELECT * FROM "User" WHERE "username" = ${cleanUsername} LIMIT 1`;
 
@@ -135,8 +89,6 @@ function resolveUserSeksi(user: Record<string, unknown>): string | null {
  * Mencari profil pengguna berdasarkan username (untuk verifikasi identitas internal).
  */
 export async function findUserByUsername(usernameInput: string): Promise<UserAccount | null> {
-  await seedInitialUsers();
-
   const cleanUsername = usernameInput.trim().toLowerCase();
   const [user] = await sql`SELECT * FROM "User" WHERE "username" = ${cleanUsername} LIMIT 1`;
 
@@ -161,8 +113,6 @@ export async function findUserByUsername(usernameInput: string): Promise<UserAcc
  * @returns Array data akun pengguna terdaftar
  */
 export async function getAllUsers(): Promise<UserAccount[]> {
-  await seedInitialUsers();
-
   const users = await sql<UserAccount[]>`
     SELECT "id", "username", "name", "role", "seksi", "description", "createdAt", "updatedAt"
     FROM "User"

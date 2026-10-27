@@ -140,10 +140,10 @@ export function getDaishaBySeksi(seksi?: string): string[] {
   return getSectionDaishaList(seksi);
 }
 
-export function getKomponenKerusakan(namaDaisha?: string): string[] {
+export function getKomponenKerusakan(_namaDaisha?: string): string[] {
   return DAFTAR_SEMUA_KOMPONEN;
 }
 
-export function getDetailKerusakan(namaDaisha?: string, komponen?: string): string[] {
+export function getDetailKerusakan(_namaDaisha?: string, _komponen?: string): string[] {
   return [];
 }
