@@ -204,6 +204,7 @@ export function useSectionRequests() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'CREATE',
           ...formData,
           drafter: formData.drafter,
           foreman: formData.foreman || formData.namaAtasanSeksi,

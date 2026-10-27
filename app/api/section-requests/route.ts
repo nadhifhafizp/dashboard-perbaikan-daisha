@@ -295,7 +295,8 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const action = sanitizeText(body.action, 40);
+    const actionRaw = sanitizeText(body.action, 50)?.toUpperCase();
+    const action = actionRaw || (!body.id && !body.sectionRequestId ? 'CREATE' : '');
 
     // 1. CREATE: PIC Seksi membuat request baru ke workshop
     if (action === 'CREATE') {
