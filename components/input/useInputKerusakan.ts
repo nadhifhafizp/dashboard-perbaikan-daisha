@@ -139,6 +139,25 @@ export function useInputKerusakan() {
     return null;
   }, [normalizedNoDaisha, tickets, catalog]);
 
+  // Otomatis terapkan Seksi dan Jenis Daisha begitu nomor unit dikenali (tanpa perlu klik manual)
+  useEffect(() => {
+    if (matchedUnitInfo?.jenisDaisha) {
+      setFormData((prev) => {
+        if (
+          prev.jenisDaisha === matchedUnitInfo.jenisDaisha &&
+          prev.seksi === (matchedUnitInfo.seksi || prev.seksi)
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          seksi: matchedUnitInfo.seksi || prev.seksi,
+          jenisDaisha: matchedUnitInfo.jenisDaisha,
+        };
+      });
+    }
+  }, [matchedUnitInfo]);
+
   const applyMatchedUnit = useCallback(() => {
     if (!matchedUnitInfo) return;
     setFormData((prev) => ({

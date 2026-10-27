@@ -92,11 +92,19 @@ export default function InputUnitSection({
           </button>
         </div>
 
-        {/* Suggestion / Auto-match prompt jika nomor unit dikenali */}
-        {matchedUnitInfo && (!formData.jenisDaisha || formData.jenisDaisha !== matchedUnitInfo.jenisDaisha) && (
+        {/* Indikator auto-match unit yang sudah otomatis diterapkan */}
+        {matchedUnitInfo && formData.jenisDaisha === matchedUnitInfo.jenisDaisha && (
+          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between gap-2 text-xs animate-fade-in">
+            <span className="text-emerald-900 font-medium">
+              ✓ Unit otomatis terdeteksi: <strong>{matchedUnitInfo.jenisDaisha}</strong>
+              {matchedUnitInfo.seksi ? ` · Seksi: ${matchedUnitInfo.seksi}` : ''}
+            </span>
+          </div>
+        )}
+        {matchedUnitInfo && formData.jenisDaisha !== matchedUnitInfo.jenisDaisha && (
           <div className="p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg flex items-center justify-between gap-2 text-xs animate-fade-in">
             <span className="text-blue-900">
-              Unit dikenali: <strong>{matchedUnitInfo.jenisDaisha}</strong>
+              Unit terdeteksi: <strong>{matchedUnitInfo.jenisDaisha}</strong>
               {matchedUnitInfo.seksi ? ` (${matchedUnitInfo.seksi})` : ''}
             </span>
             <button

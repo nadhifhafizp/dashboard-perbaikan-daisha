@@ -4,16 +4,11 @@ import React, { useState, useEffect } from 'react';
 import {
   Wrench,
   X,
-  Lock,
-  Ban,
   CheckCircle2,
   Trash2,
   Save,
-  Plus,
-  RefreshCw,
   Info,
   Layers,
-  FileText,
   AlertTriangle,
 } from 'lucide-react';
 import { Ticket } from '@/types/ticket';
@@ -22,6 +17,7 @@ import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { cleanInputDateTime, toDateTimeLocalValue } from '@/lib/date';
 import IndoDateTimeInput from '@/components/common/IndoDateTimeInput';
 import { detectDaishaSize } from '@/lib/daishaSize';
+import DamageCrosscheckSection from './DamageCrosscheckSection';
 
 interface AdminTicketFormProps {
   isOpen: boolean;
@@ -126,13 +122,6 @@ function AdminTicketFormDialog({
     return [{ komponen: 'Umum', gejala: 'Pemeriksaan / Servis Fisik', tindakan: 'Repair' as const, qty: 1 }];
   });
 
-  // State untuk tambah item part baru jika saat dibongkar ada part lain yang perlu diganti/repair
-  const [showAddPart, setShowAddPart] = useState(false);
-  const [newKomponen, setNewKomponen] = useState('');
-  const [newGejala, setNewGejala] = useState('');
-  const [newTindakan, setNewTindakan] = useState<'Repair' | 'Ganti'>('Ganti');
-  const [newQty, setNewQty] = useState(1);
-
   const handleSetItemTindakan = (index: number, tindakan: 'Repair' | 'Ganti') => {
     setItems((prev) =>
       prev.map((it, idx) => (idx === index ? { ...it, tindakan } : it))
@@ -151,23 +140,56 @@ function AdminTicketFormDialog({
     setItems((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  const handleAddPartSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newKomponen.trim()) return;
+  const handleToggleCatalogItem = (
+    komponen: string,
+    gejala: string,
+    tindakan: 'Repair' | 'Ganti'
+  ) => {
+    const targetComp = komponen.trim().toLowerCase();
+    const targetGejala = gejala.trim().toLowerCase();
+    const existingIdx = items.findIndex(
+      (it) =>
+        it.komponen.trim().toLowerCase() === targetComp &&
+        it.gejala.trim().toLowerCase() === targetGejala
+    );
+
+    if (existingIdx >= 0) {
+      const existing = items[existingIdx];
+      if (existing.tindakan === tindakan) {
+        setItems((prev) => prev.filter((_, idx) => idx !== existingIdx));
+      } else {
+        setItems((prev) =>
+          prev.map((it, idx) => (idx === existingIdx ? { ...it, tindakan } : it))
+        );
+      }
+    } else {
+      setItems((prev) => [
+        ...prev,
+        {
+          komponen: komponen.trim(),
+          gejala: gejala.trim(),
+          tindakan,
+          qty: 1,
+        },
+      ]);
+    }
+  };
+
+  const handleAddCustomItem = (
+    komponen: string,
+    gejala: string,
+    tindakan: 'Repair' | 'Ganti',
+    qty: number
+  ) => {
     setItems((prev) => [
       ...prev,
       {
-        komponen: newKomponen.trim(),
-        gejala: newGejala.trim() || newKomponen.trim(),
-        tindakan: newTindakan,
-        qty: Math.max(1, newQty),
+        komponen: komponen.trim(),
+        gejala: gejala.trim() || komponen.trim(),
+        tindakan,
+        qty: Math.max(1, qty),
       },
     ]);
-    setNewKomponen('');
-    setNewGejala('');
-    setNewTindakan('Ganti');
-    setNewQty(1);
-    setShowAddPart(false);
   };
 
   const hasGantiItem = items.some((it) => it.tindakan === 'Ganti');
@@ -211,7 +233,7 @@ function AdminTicketFormDialog({
       aria-labelledby="admin-dialog-title"
       className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in"
     >
-      <div className="bg-white rounded-xl shadow-xl border border-slate-200/80 w-full max-w-xl overflow-hidden my-auto animate-scale-up">
+      <div className="bg-white rounded-xl shadow-xl border border-slate-200/80 w-full max-w-2xl lg:max-w-3xl overflow-hidden my-auto animate-scale-up">
         {/* Header Modal */}
         <div className="px-5 py-3.5 border-b border-slate-100 flex justify-between items-center bg-slate-50/70">
           <div className="flex items-center gap-2.5">
@@ -269,153 +291,110 @@ function AdminTicketFormDialog({
               <label className="font-semibold text-slate-800 flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-slate-600" />
                 <span>Rincian Part Kerusakan & Tindakan</span>
+                <span className="text-xs font-normal text-slate-500 font-mono">
+                  ({items.length} part terdaftar)
+                </span>
               </label>
-              <button
-                type="button"
-                onClick={() => setShowAddPart(!showAddPart)}
-                className="text-xs font-medium text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3 h-3" />
-                <span>{showAddPart ? 'Tutup Input Part' : 'Tambah Part Lain'}</span>
-              </button>
             </div>
 
-            {/* List Item Part */}
+            {/* List Item Part yang Sudah Ada di Tiket */}
             <div className="space-y-2">
-              {items.map((it, idx) => (
-                <div
-                  key={idx}
-                  className={`p-2.5 rounded-lg border transition flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
-                    it.tindakan === 'Ganti'
-                      ? 'bg-blue-50/40 border-blue-200'
-                      : 'bg-white border-slate-200'
-                  }`}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-slate-900 flex items-center gap-1.5">
-                      <span className="text-red-600">[{it.komponen}]</span>
-                      <span className="truncate">{it.gejala}</span>
-                    </div>
-                  </div>
-
-                  {/* Toggle Tindakan (Repair vs Ganti) & Qty */}
-                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                    {/* Qty Counter */}
-                    <div className="flex items-center border border-slate-300 rounded-md bg-white">
-                      <button
-                        type="button"
-                        onClick={() => handleSetItemQty(idx, -1)}
-                        className="px-1.5 py-0.5 text-slate-500 hover:bg-slate-100 rounded-l transition cursor-pointer font-bold"
-                      >
-                        -
-                      </button>
-                      <span className="px-2 py-0.5 text-xs font-bold text-slate-800 tabular-nums">
-                        {it.qty} pcs
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleSetItemQty(idx, 1)}
-                        className="px-1.5 py-0.5 text-slate-500 hover:bg-slate-100 rounded-r transition cursor-pointer font-bold"
-                      >
-                        +
-                      </button>
+              {items.length === 0 ? (
+                <div className="p-3 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-center text-xs text-slate-500">
+                  Belum ada part terpilih. Pilih dari katalog crosscheck di bawah.
+                </div>
+              ) : (
+                items.map((it, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-2.5 rounded-lg border transition flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+                      it.tindakan === 'Ganti'
+                        ? 'bg-blue-50/40 border-blue-200'
+                        : 'bg-white border-slate-200'
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                        <span className="text-red-600">[{it.komponen}]</span>
+                        <span className="truncate">{it.gejala}</span>
+                      </div>
                     </div>
 
-                    {/* Toggle Button Repair vs Ganti */}
-                    <div className="flex items-center p-0.5 bg-slate-100 rounded-md border border-slate-200">
-                      <button
-                        type="button"
-                        onClick={() => handleSetItemTindakan(idx, 'Repair')}
-                        className={`px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${
-                          it.tindakan === 'Repair'
-                            ? 'bg-amber-500 text-white'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        Repair
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSetItemTindakan(idx, 'Ganti')}
-                        className={`px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${
-                          it.tindakan === 'Ganti'
-                            ? 'bg-blue-600 text-white'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        Ganti Baru
-                      </button>
-                    </div>
+                    {/* Toggle Tindakan (Repair vs Ganti) & Qty */}
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                      {/* Qty Counter */}
+                      <div className="flex items-center border border-slate-300 rounded-md bg-white">
+                        <button
+                          type="button"
+                          onClick={() => handleSetItemQty(idx, -1)}
+                          className="px-1.5 py-0.5 text-slate-500 hover:bg-slate-100 rounded-l transition cursor-pointer font-bold"
+                          title="Kurangi jumlah"
+                        >
+                          -
+                        </button>
+                        <span className="px-2 py-0.5 text-xs font-bold text-slate-800 tabular-nums">
+                          {it.qty} pcs
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleSetItemQty(idx, 1)}
+                          className="px-1.5 py-0.5 text-slate-500 hover:bg-slate-100 rounded-r transition cursor-pointer font-bold"
+                          title="Tambah jumlah"
+                        >
+                          +
+                        </button>
+                      </div>
 
-                    {items.length > 1 && (
+                      {/* Toggle Button Repair vs Ganti */}
+                      <div className="flex items-center p-0.5 bg-slate-100 rounded-md border border-slate-200">
+                        <button
+                          type="button"
+                          onClick={() => handleSetItemTindakan(idx, 'Repair')}
+                          className={`px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${
+                            it.tindakan === 'Repair'
+                              ? 'bg-amber-500 text-white'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          Repair
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSetItemTindakan(idx, 'Ganti')}
+                          className={`px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${
+                            it.tindakan === 'Ganti'
+                              ? 'bg-blue-600 text-white'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          Ganti Baru
+                        </button>
+                      </div>
+
+                      {/* Tombol Hapus Part */}
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(idx)}
                         className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
-                        title="Hapus part ini"
+                        title="Hapus part ini dari tiket"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
-            {/* Form Inline Tambah Part Lain */}
-            {showAddPart && (
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2 mt-2">
-                <div className="font-semibold text-slate-700 text-xs">
-                  Tambah Part / Kerusakan Lain yang Ditemukan di Bengkel:
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Nama Komponen (contoh: Bearing, Roda, Tiang)"
-                    value={newKomponen}
-                    onChange={(e) => setNewKomponen(e.target.value)}
-                    className="h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-red-600"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Gejala (contoh: Aus berat, Pecah, Miring)"
-                    value={newGejala}
-                    onChange={(e) => setNewGejala(e.target.value)}
-                    className="h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-red-600"
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-2 pt-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-600 text-xs">Tindakan:</span>
-                    <button
-                      type="button"
-                      onClick={() => setNewTindakan('Ganti')}
-                      className={`h-8 px-2.5 rounded-md text-xs font-semibold cursor-pointer ${
-                        newTindakan === 'Ganti' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'
-                      }`}
-                    >
-                      Ganti Baru
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setNewTindakan('Repair')}
-                      className={`h-8 px-2.5 rounded-md text-xs font-semibold cursor-pointer ${
-                        newTindakan === 'Repair' ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-700'
-                      }`}
-                    >
-                      Repair
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAddPartSubmit}
-                    className="h-10 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition cursor-pointer"
-                  >
-                    Tambah Part
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Komponen Crosscheck Kerusakan Daisha */}
+            <div className="pt-2">
+              <DamageCrosscheckSection
+                namaDaisha={ticket.namaDaisha}
+                items={items}
+                onToggleItem={handleToggleCatalogItem}
+                onAddCustomItem={handleAddCustomItem}
+              />
+            </div>
           </div>
 
           {/* 3. Catatan Teknisi / Alasan Penggantian Part */}
