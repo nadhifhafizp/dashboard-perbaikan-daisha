@@ -85,9 +85,20 @@ export default function RequestTable({
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <span className="font-mono font-bold text-slate-900 text-xs tabular-nums">
-                    {r.nomorRequest}
-                  </span>
+                  {r.nomorSurat ? (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-mono font-bold text-red-700 text-xs tabular-nums bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                        {r.nomorSurat}
+                      </span>
+                      <span className="font-mono text-[11px] text-slate-500 tabular-nums">
+                        ({r.nomorRequest})
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="font-mono font-bold text-slate-900 text-xs tabular-nums">
+                      {r.nomorRequest}
+                    </span>
+                  )}
                   <span className="text-xs text-slate-500 font-medium ml-1.5 tabular-nums">
                     • {formatDate(r.waktuDibuat)}
                   </span>
@@ -193,7 +204,7 @@ export default function RequestTable({
         <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
           <thead>
             <tr className="bg-slate-50/70 text-xs font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200/80 select-none">
-              <th scope="col" className="p-3.5">No. Request</th>
+              <th scope="col" className="p-3.5">No. Surat / Request</th>
               <th scope="col" className="p-3.5">Tanggal</th>
               <th scope="col" className="p-3.5">Seksi / PIC</th>
               <th scope="col" className="p-3.5">Perihal / Mesin</th>
@@ -238,8 +249,26 @@ export default function RequestTable({
             ) : (
               filtered.map((r) => (
                 <tr key={r.id} className="hover:bg-slate-50/70 transition">
-                  <td className="p-3.5 font-mono font-bold text-slate-800 tabular-nums">
-                    {r.nomorRequest}
+                  <td className="p-3.5 tabular-nums">
+                    {r.nomorSurat ? (
+                      <div>
+                        <span className="font-mono font-bold text-red-700 text-xs bg-red-50/80 px-2 py-0.5 rounded border border-red-200 block w-fit mb-0.5">
+                          {r.nomorSurat}
+                        </span>
+                        <span className="font-mono text-[11px] text-slate-400 block">
+                          {r.nomorRequest}
+                        </span>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="font-mono font-bold text-slate-800 text-xs block">
+                          {r.nomorRequest}
+                        </span>
+                        <span className="text-[10px] text-amber-700 font-medium block">
+                          Menunggu Approval
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="p-3.5 text-slate-500 tabular-nums">
                     {formatDate(r.waktuDibuat)}

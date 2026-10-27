@@ -7,6 +7,7 @@ import { X, Printer, Check, ArrowRight, ShieldCheck, FileText, Download } from '
 export interface SectionRequestFull {
   id: number;
   nomorRequest: string;
+  nomorSurat?: string | null;
   seksiPemohon: string;
   picPemohon: string;
   kontakPemohon?: string;
@@ -271,12 +272,19 @@ export default function BridgestoneRequestPrintModal({
     <!-- Routing / Seksi Box Header -->
     <table class="table-box" style="margin-top: 2px;">
       <tr>
-        <!-- Tanggal & Req No -->
+        <!-- Tanggal & Req No / Nomor Surat -->
         <td style="width: 32%; vertical-align: middle;">
-          <div style="font-size: 10.5px; margin-bottom: 4px;">
+          <div style="font-size: 10.5px; margin-bottom: 3px;">
             <strong>TANGGAL :</strong> ${formatDateIndo(requestData.waktuDibuat)}
           </div>
-          <div style="font-size: 10.5px;">
+          ${
+            requestData.nomorSurat
+              ? `<div style="font-size: 10.5px; margin-bottom: 3px;">
+                  <strong>NO. SURAT :</strong> <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #b91c1c; font-feature-settings: 'tnum';">${requestData.nomorSurat}</span>
+                </div>`
+              : ''
+          }
+          <div style="font-size: 10px; color: ${requestData.nomorSurat ? '#64748b' : '#000'};">
             <strong>REQ. NO. :</strong> <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: bold; font-feature-settings: 'tnum';">${requestData.nomorRequest}</span>
           </div>
         </td>

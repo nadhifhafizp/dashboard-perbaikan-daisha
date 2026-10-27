@@ -8,9 +8,11 @@ import {
   Shield,
   ArrowRight,
   Ban,
+  FileText,
 } from 'lucide-react';
 import { SectionRequestFull } from '../BridgestoneRequestPrintModal';
 import { EvaluationFormData } from './types';
+import { getSeksiCode } from '@/lib/nomorSurat';
 
 interface EvaluasiTabProps {
   requestData: SectionRequestFull;
@@ -49,6 +51,39 @@ export default function EvaluasiTab({
             {requestData.tujuan || 'Safety'} • {requestData.jumlah || 1} {requestData.satuan || 'Set'}
           </span>
         </div>
+      </div>
+
+      {/* Pengaturan Nomor Surat Resmi Workshop (Format: NO/Seksi/Romawi/Tahun) */}
+      <div className="p-3.5 bg-white rounded-xl border border-red-200/90 shadow-2xs space-y-2">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-red-600" />
+            <span className="text-xs font-bold text-slate-900">
+              Nomor Surat / Tiket Resmi (Format: NO/Seksi/Romawi/Tahun)
+            </span>
+          </div>
+          {formData.nomorSurat ? (
+            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+              ✓ Nomor Surat Aktif
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-100 text-amber-800 border border-amber-300">
+              Otomatis terbit saat disetujui
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={formData.nomorSurat}
+            onChange={(e) => setFormData((p) => ({ ...p, nomorSurat: e.target.value }))}
+            placeholder={`Contoh: 001/${getSeksiCode(requestData.seksiPemohon)}/X/2026 (Diterbitkan otomatis saat approve)`}
+            className="flex-1 h-10 px-3 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 placeholder:font-normal placeholder-slate-400 focus:bg-white focus:border-red-600 outline-none uppercase tracking-wide"
+          />
+        </div>
+        <p className="text-[11px] text-slate-500">
+          Penomoran terpusat 1 urutan global dari Workshop/Special Project. Diterbitkan otomatis begitu Anda menyetujui request ini, atau dapat disesuaikan manual.
+        </p>
       </div>
 
       {/* Form Input Evaluasi (Waktu, Man Power, Biaya) */}

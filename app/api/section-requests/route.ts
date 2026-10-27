@@ -12,6 +12,7 @@ import {
 } from '@/lib/security';
 import { createInAppNotification, buildAtasanSpecialProjectEmailContent, sendEmailAsync } from '@/lib/emailNotification';
 import { DEFAULT_ATASAN_SPROJECT_EMAIL } from '@/lib/workflowConstants';
+import { generateNextNomorSurat } from '@/lib/nomorSurat';
 
 // Parse base64/URL image safely
 function parseImageString(val: unknown): string | null {
@@ -28,6 +29,7 @@ function parseImageString(val: unknown): string | null {
 export interface SectionRequestRow {
   id: number;
   nomorRequest: string;
+  nomorSurat?: string | null;
   flowStep: string;
   status: string;
   seksiPemohon: string;
@@ -186,6 +188,7 @@ export async function GET(request: Request) {
       SELECT 
         sr.id,
         sr."nomorRequest",
+        sr."nomorSurat",
         sr."seksiPemohon",
         sr."picPemohon",
         sr."kontakPemohon",
@@ -356,7 +359,7 @@ export async function POST(request: Request) {
           "rencanaTindakan", "fotoSesudah", "targetHasil", "penjelasanPelaksanaan",
           "emailAtasanSeksi", "namaAtasanSeksi", "emailMentorWorkshop",
           "approvalToken", "statusApprovalAtasanSeksi", "flowStep",
-          status, "dibuatOleh", "waktuDibuat", "waktuUpdate"
+          status, "nomorSurat", "dibuatOleh", "waktuDibuat", "waktuUpdate"
         )
         VALUES (
           ${nomorRequest},
@@ -389,11 +392,12 @@ export async function POST(request: Request) {
           'PENDING',
           'STEP_2_WAITING_ATASAN_SEKSI',
           'Menunggu Assign Atasan Seksi',
+          ${body.nomorSurat ? sanitizeText(body.nomorSurat, 100) : null},
           ${auth.user!.username},
           NOW(),
           NOW()
         )
-        RETURNING id, "nomorRequest"
+        RETURNING id, "nomorRequest", "nomorSurat"
       `;
 
       // Buat notifikasi in-app
@@ -571,11 +575,27 @@ export async function POST(request: Request) {
         nextFlowStep = sanitizeText(body.flowStep, 50);
       }
 
+      // Generate nomor surat resmi jika disetujui (Opsi A: 1 urutan global per tahun) dan belum punya nomor surat
+      let finalNomorSurat = current.nomorSurat || null;
+      if (body.nomorSurat && typeof body.nomorSurat === 'string' && body.nomorSurat.trim().length > 0) {
+        finalNomorSurat = sanitizeText(body.nomorSurat, 100);
+      } else if (
+        !finalNomorSurat &&
+        (keputusan === 'GO' ||
+          body.assignAtasanSpecialProject ||
+          action === 'ASSIGN_ATASAN_SPROJECT' ||
+          nextStatus === 'Disetujui' ||
+          nextStatus === 'Dikerjakan')
+      ) {
+        finalNomorSurat = await generateNextNomorSurat(current.seksiPemohon, new Date());
+      }
+
       const [updated] = await sql<SectionRequestRow[]>`
         UPDATE "SectionRequest"
         SET
           status = ${nextStatus},
           "flowStep" = ${nextFlowStep},
+          "nomorSurat" = ${finalNomorSurat},
           "alasanTolak" = ${alasanTolak !== undefined ? (alasanTolak || null) : (current.alasanTolak ?? null)},
           "picBengkel" = ${picBengkel !== undefined ? (picBengkel || null) : (current.picBengkel ?? null)},
           "estimasi" = ${estimasi !== undefined ? (estimasi || null) : (current.estimasi ?? null)},

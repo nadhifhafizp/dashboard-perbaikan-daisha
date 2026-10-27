@@ -5,6 +5,7 @@ import { TabKey, EvaluationFormData } from './types';
 const initialFormData: EvaluationFormData = {
   status: 'Diajukan',
   flowStep: 'STEP_4_EVALUASI_WORKSHOP',
+  nomorSurat: '',
   alasanTolak: '',
   alasanPending: '',
   picBengkel: '',
@@ -55,6 +56,7 @@ export function useEvaluationForm(
       setFormData({
         status: requestData.status || 'Diajukan',
         flowStep: requestData.flowStep || 'STEP_4_EVALUASI_WORKSHOP',
+        nomorSurat: requestData.nomorSurat || '',
         alasanTolak: '',
         alasanPending: requestData.alasanPending || '',
         picBengkel: requestData.foreman || '',

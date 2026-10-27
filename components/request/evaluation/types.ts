@@ -15,6 +15,7 @@ export interface SparepartOption {
 export interface EvaluationFormData {
   status: string;
   flowStep: string;
+  nomorSurat: string;
   alasanTolak: string;
   alasanPending: string;
   picBengkel: string;
