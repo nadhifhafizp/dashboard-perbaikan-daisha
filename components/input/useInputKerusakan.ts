@@ -13,6 +13,7 @@ import { useTickets, broadcastTicketChange } from '@/hooks/useTickets';
 import {
   validateTicketInput,
   buildTicketDamagePayload,
+  isInvalidOperatorName,
 } from '@/lib/ticketUtils';
 
 const API_URL = '/api/repair';
@@ -37,14 +38,19 @@ export function useInputKerusakan() {
     catatanTambahan: '',
   });
 
-  // Auto-populate nama pelapor & seksi dari user login jika belum diisi
+  // Auto-populate nama pelapor & seksi dari user login (hanya jika user personil riil, bukan admin/placeholder)
   const [hasInitializedUser, setHasInitializedUser] = useState(false);
   if (!hasInitializedUser && currentUser) {
     setHasInitializedUser(true);
+    const isGenericOrAdmin =
+      currentUser.role === 'ADMIN' ||
+      isInvalidOperatorName(currentUser.name) ||
+      isInvalidOperatorName(currentUser.username);
+
     setFormData((prev) => ({
       ...prev,
-      namaPelapor: prev.namaPelapor || currentUser.name || currentUser.username || '',
-      seksi: prev.seksi || currentUser.seksi || '',
+      namaPelapor: prev.namaPelapor || (isGenericOrAdmin ? '' : (currentUser.name || currentUser.username || '')),
+      seksi: prev.seksi || (currentUser.role === 'ADMIN' ? '' : (currentUser.seksi || '')),
     }));
   }
 
