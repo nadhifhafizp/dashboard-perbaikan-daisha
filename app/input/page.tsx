@@ -67,93 +67,71 @@ export default function InputKerusakanPage() {
   const totalDamageCount = selectedKerusakan.length + customKerusakanList.length;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-24 md:pb-12">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-3xl mx-auto pb-24 md:pb-12">
       {/* Header Form dengan Breadcrumb & Quick Nav */}
       <InputHeader isAdmin={isAdmin} isOperator={isOperator} />
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Kolom Kiri: 1. Pelapor & Seksi, 2. Scan & Unit Daisha (5 Kolom) */}
-          <div className="lg:col-span-5 space-y-5">
-            {/* 1. PELAPOR SIAPA & SEKSI MANA */}
-            <InputPelaporSection
-              formData={formData}
-              setFormData={setFormData}
-              handleChange={handleChange}
-              seksiList={seksiList}
-            />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* 1. PELAPOR SIAPA & SEKSI MANA */}
+        <InputPelaporSection
+          formData={formData}
+          setFormData={setFormData}
+          handleChange={handleChange}
+          seksiList={seksiList}
+        />
 
-            {/* 2. SCAN BARCODE / NOMOR UNIT DAISHA */}
-            <InputUnitSection
-              formData={formData}
-              setFormData={setFormData}
-              handleChange={handleChange}
-              seksiList={seksiList}
-              pilihanDaishaTersedia={pilihanDaishaTersedia}
-              showAllDaisha={showAllDaisha}
-              detectedSize={detectedSize}
-              duplicateActiveTicket={duplicateActiveTicket}
-              normalizedNoDaisha={normalizedNoDaisha}
-              matchedUnitInfo={matchedUnitInfo}
-              applyMatchedUnit={applyMatchedUnit}
-              setDismissedDuplicateUnit={setDismissedDuplicateUnit}
-              setIsScanning={setIsScanning}
-              isAdmin={isAdmin}
-            />
+        {/* 2. SCAN BARCODE / NOMOR UNIT DAISHA */}
+        <InputUnitSection
+          formData={formData}
+          setFormData={setFormData}
+          handleChange={handleChange}
+          seksiList={seksiList}
+          pilihanDaishaTersedia={pilihanDaishaTersedia}
+          showAllDaisha={showAllDaisha}
+          detectedSize={detectedSize}
+          duplicateActiveTicket={duplicateActiveTicket}
+          normalizedNoDaisha={normalizedNoDaisha}
+          matchedUnitInfo={matchedUnitInfo}
+          applyMatchedUnit={applyMatchedUnit}
+          setDismissedDuplicateUnit={setDismissedDuplicateUnit}
+          setIsScanning={setIsScanning}
+          isAdmin={isAdmin}
+        />
 
-            {/* Desktop Action Buttons */}
-            <div className="hidden lg:block">
-              <InputSubmitActions
-                isDiagnosaBengkel={isDiagnosaBengkel}
-                isAdmin={isAdmin}
-                isOperator={isOperator}
-                loading={loading}
-                totalDamageCount={totalDamageCount}
-                noDaisha={formData.noDaisha}
-                onSubmit={handleSubmit}
-              />
-            </div>
-          </div>
+        {/* 3. KATALOG TITIK KERUSAKAN */}
+        <InputDamageSection
+          formData={formData}
+          setFormData={setFormData}
+          isDiagnosaBengkel={isDiagnosaBengkel}
+          setIsDiagnosaBengkel={setIsDiagnosaBengkel}
+          catatanGejala={catatanGejala}
+          setCatatanGejala={setCatatanGejala}
+          katalogKerusakan={katalogKerusakan}
+          selectedKerusakan={selectedKerusakan}
+          tindakanMap={tindakanMap}
+          qtyMap={qtyMap}
+          customKerusakanList={customKerusakanList}
+          customTindakanMap={customTindakanMap}
+          customQtyMap={customQtyMap}
+          toggleKerusakan={toggleKerusakan}
+          setItemTindakan={setItemTindakan}
+          setItemQty={setItemQty}
+          handleAddCustom={handleAddCustom}
+          handleRemoveCustom={handleRemoveCustom}
+          setCustomTindakan={setCustomTindakan}
+          setCustomItemQty={setCustomItemQty}
+        />
 
-          {/* Kolom Kanan: Mode Kerusakan & Katalog Titik Kerusakan (7 Kolom) */}
-          <div className="lg:col-span-7 space-y-5">
-            <InputDamageSection
-              formData={formData}
-              setFormData={setFormData}
-              isDiagnosaBengkel={isDiagnosaBengkel}
-              setIsDiagnosaBengkel={setIsDiagnosaBengkel}
-              catatanGejala={catatanGejala}
-              setCatatanGejala={setCatatanGejala}
-              katalogKerusakan={katalogKerusakan}
-              selectedKerusakan={selectedKerusakan}
-              tindakanMap={tindakanMap}
-              qtyMap={qtyMap}
-              customKerusakanList={customKerusakanList}
-              customTindakanMap={customTindakanMap}
-              customQtyMap={customQtyMap}
-              toggleKerusakan={toggleKerusakan}
-              setItemTindakan={setItemTindakan}
-              setItemQty={setItemQty}
-              handleAddCustom={handleAddCustom}
-              handleRemoveCustom={handleRemoveCustom}
-              setCustomTindakan={setCustomTindakan}
-              setCustomItemQty={setCustomItemQty}
-            />
-
-            {/* Mobile / Tablet Action Buttons */}
-            <div className="lg:hidden">
-              <InputSubmitActions
-                isDiagnosaBengkel={isDiagnosaBengkel}
-                isAdmin={isAdmin}
-                isOperator={isOperator}
-                loading={loading}
-                totalDamageCount={totalDamageCount}
-                noDaisha={formData.noDaisha}
-                onSubmit={handleSubmit}
-              />
-            </div>
-          </div>
-        </div>
+        {/* Action Buttons (Submit) */}
+        <InputSubmitActions
+          isDiagnosaBengkel={isDiagnosaBengkel}
+          isAdmin={isAdmin}
+          isOperator={isOperator}
+          loading={loading}
+          totalDamageCount={totalDamageCount}
+          noDaisha={formData.noDaisha}
+          onSubmit={handleSubmit}
+        />
       </form>
 
       {/* Camera QR/Barcode Scanner Modal */}

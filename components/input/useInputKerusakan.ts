@@ -38,21 +38,8 @@ export function useInputKerusakan() {
     catatanTambahan: '',
   });
 
-  // Auto-populate nama pelapor & seksi dari user login (hanya jika user personil riil, bukan admin/placeholder)
-  const [hasInitializedUser, setHasInitializedUser] = useState(false);
-  if (!hasInitializedUser && currentUser) {
-    setHasInitializedUser(true);
-    const isGenericOrAdmin =
-      currentUser.role === 'ADMIN' ||
-      isInvalidOperatorName(currentUser.name) ||
-      isInvalidOperatorName(currentUser.username);
-
-    setFormData((prev) => ({
-      ...prev,
-      namaPelapor: prev.namaPelapor || (isGenericOrAdmin ? '' : (currentUser.name || currentUser.username || '')),
-      seksi: prev.seksi || (currentUser.role === 'ADMIN' ? '' : (currentUser.seksi || '')),
-    }));
-  }
+  // Field form dimulai dalam kondisi bersih (kosong) agar pelapor dan seksi diisi sesuai fakta lapangan
+  // tanpa auto-fill akun sistem/admin yang membingungkan.
 
   // State Pilihan Kerusakan Multi-Select Cepat
   const [selectedKerusakan, setSelectedKerusakan] = useState<string[]>([]);
