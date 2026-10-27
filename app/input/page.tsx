@@ -8,8 +8,7 @@ import PrintTicketTagModal from '@/components/common/PrintTicketTagModal';
 
 import { useInputKerusakan } from '@/components/input/useInputKerusakan';
 import InputHeader from '@/components/input/InputHeader';
-import InputPelaporSection from '@/components/input/InputPelaporSection';
-import InputUnitSection from '@/components/input/InputUnitSection';
+import InputIdentifikasiSection from '@/components/input/InputIdentifikasiSection';
 import InputDamageSection from '@/components/input/InputDamageSection';
 import InputSubmitActions from '@/components/input/InputSubmitActions';
 
@@ -72,16 +71,8 @@ export default function InputKerusakanPage() {
       <InputHeader isAdmin={isAdmin} isOperator={isOperator} />
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* 1. PELAPOR SIAPA & SEKSI MANA */}
-        <InputPelaporSection
-          formData={formData}
-          setFormData={setFormData}
-          handleChange={handleChange}
-          seksiList={seksiList}
-        />
-
-        {/* 2. SCAN BARCODE / NOMOR UNIT DAISHA */}
-        <InputUnitSection
+        {/* 1. IDENTIFIKASI LAPORAN & UNIT DAISHA (NAMA | WAKTU, SEKSI | TIPE, NOMOR DAISHA) */}
+        <InputIdentifikasiSection
           formData={formData}
           setFormData={setFormData}
           handleChange={handleChange}
@@ -98,7 +89,7 @@ export default function InputKerusakanPage() {
           isAdmin={isAdmin}
         />
 
-        {/* 3. KATALOG TITIK KERUSAKAN */}
+        {/* 2. KATALOG TITIK KERUSAKAN */}
         <InputDamageSection
           formData={formData}
           setFormData={setFormData}

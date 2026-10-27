@@ -77,7 +77,7 @@ export default function DamageCatalogSelector({
         <div>
           <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-600" />
-            <span>3. Katalog Titik Kerusakan</span>
+            <span>2. Katalog Titik Kerusakan</span>
           </h2>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
             Pilih komponen rusak dan tentukan tindakan perbaikan (Repair atau Ganti).
