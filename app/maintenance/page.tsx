@@ -681,6 +681,37 @@ function MaintenanceModuleContent() {
           {/* PANEL 2: PENSIAPAN & PENJEMPUTAN PM KE BENGKEL */}
           {activeTab === 'STAGING' && (
             <div className="space-y-6">
+              {/* Jika Admin / Bengkel membuka seksi tertentu, tetap tampilkan antrean penjemputan unit seksi tersebut di atas form */}
+              {!isSeksi && activeSeksi && (
+                <WorkshopStagingAlert
+                  onRefreshData={() => fetchData(true)}
+                  units={units}
+                  recentLogs={recentLogs}
+                  seksiFilter={activeSeksi}
+                  onInputPm={(unitNo, seksiName) => {
+                    const found = units.find(
+                      (u) =>
+                        u.nomor_daisha.toLowerCase() === unitNo.toLowerCase() ||
+                        u.nomor_daisha.replace(/\D/g, '') === unitNo.replace(/\D/g, '')
+                    );
+                    if (found) {
+                      handleOpenInput(found);
+                    } else {
+                      const stubUnit: FleetUnit = {
+                        id: `staged-${unitNo}`,
+                        nomor_daisha: unitNo,
+                        jenis: 'Daisha',
+                        seksi: seksiName,
+                        is_maintained: false,
+                        last_maintenance_date: null,
+                        days_since_last: null,
+                      };
+                      handleOpenInput(stubUnit);
+                    }
+                  }}
+                />
+              )}
+
               {activeSeksi ? (
                 <SectionPmHandover
                   seksi={activeSeksi}
@@ -715,7 +746,32 @@ function MaintenanceModuleContent() {
                     </button>
                   </div>
 
-                  <WorkshopStagingAlert onRefreshData={() => fetchData(true)} />
+                  <WorkshopStagingAlert
+                    onRefreshData={() => fetchData(true)}
+                    units={units}
+                    recentLogs={recentLogs}
+                    onInputPm={(unitNo, seksiName) => {
+                      const found = units.find(
+                        (u) =>
+                          u.nomor_daisha.toLowerCase() === unitNo.toLowerCase() ||
+                          u.nomor_daisha.replace(/\D/g, '') === unitNo.replace(/\D/g, '')
+                      );
+                      if (found) {
+                        handleOpenInput(found);
+                      } else {
+                        const stubUnit: FleetUnit = {
+                          id: `staged-${unitNo}`,
+                          nomor_daisha: unitNo,
+                          jenis: 'Daisha',
+                          seksi: seksiName,
+                          is_maintained: false,
+                          last_maintenance_date: null,
+                          days_since_last: null,
+                        };
+                        handleOpenInput(stubUnit);
+                      }
+                    }}
+                  />
                 </div>
               )}
             </div>
