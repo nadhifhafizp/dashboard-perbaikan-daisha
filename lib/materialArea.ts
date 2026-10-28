@@ -1,5 +1,5 @@
-/**
- * lib/materialArea.ts — Utilitas Kalkulasi Dimensi, Luas Plat, dan Normalisasi Material
+﻿/**
+ * lib/materialArea.ts - Utilitas Kalkulasi Dimensi, Luas Plat, dan Normalisasi Material
  * 
  * Sesuai PRD WS3 (Pemecahan EvaluationModal):
  * Memisahkan logika kalkulasi luas dan normalisasi data material dari komponen UI.

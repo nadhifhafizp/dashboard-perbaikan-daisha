@@ -1,5 +1,5 @@
-/**
- * lib/ticketParser.ts — Normalisasi & Transformasi Data Tiket Perbaikan Daisha
+﻿/**
+ * lib/ticketParser.ts - Normalisasi & Transformasi Data Tiket Perbaikan Daisha
  * 
  * ============================================================================
  * FUNGSI UTAMA:

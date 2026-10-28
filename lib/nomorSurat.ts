@@ -1,5 +1,5 @@
-/**
- * lib/nomorSurat.ts — Format Standar Nomor Surat / Nomor Tiket Request Seksi Bridgestone
+﻿/**
+ * lib/nomorSurat.ts - Format Standar Nomor Surat / Nomor Tiket Request Seksi Bridgestone
  *
  * File ini berisi fungsi utilitas murni (bebas dependency database) yang aman digunakan
  * di client components maupun server side.

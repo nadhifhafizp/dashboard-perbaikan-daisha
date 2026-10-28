@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import {
   isWeekendOrHoliday,
   formatDateKey,
@@ -6,7 +6,7 @@ import {
   calculateDailyTarget,
 } from './maintenanceWorkdays';
 
-describe('lib/maintenanceWorkdays — Maintenance Workdays Calculator', () => {
+describe('lib/maintenanceWorkdays - Maintenance Workdays Calculator', () => {
   it('harus memformat tanggal ke format YYYY-MM-DD', () => {
     const d = new Date(2026, 9, 27); // 27 Oktober 2026
     expect(formatDateKey(d)).toBe('2026-10-27');

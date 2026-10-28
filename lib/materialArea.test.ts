@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { calculatePlateArea, formatPlateDimension, normalizeMaterialsClient } from './materialArea';
 
-describe('lib/materialArea — Plate Area & Material Utilities', () => {
+describe('lib/materialArea - Plate Area & Material Utilities', () => {
   it('harus menghitung luas plat dalam cm² dan m² secara akurat', () => {
     // 100 cm x 50 cm = 5000 cm² = 0.5 m²
     const result = calculatePlateArea('100', '50');

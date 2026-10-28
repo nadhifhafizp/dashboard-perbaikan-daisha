@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Send,
   Search,
@@ -10,8 +10,10 @@ import {
   MapPin,
   RefreshCw,
   BellRing,
+  Camera,
 } from 'lucide-react';
 import { FleetUnit } from '../FleetExplorer';
+import QrScannerModal from '@/components/input/QrScannerModal';
 
 interface HandoverBatchFormProps {
   seksi: string;
@@ -50,6 +52,8 @@ export default function HandoverBatchForm({
   onToggleUnit,
   onSubmit,
 }: HandoverBatchFormProps) {
+  const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+
   const quickLocations = [
     `Staging Area Line 1 ${seksi}`,
     `Staging Area Line 2 ${seksi}`,
@@ -135,15 +139,27 @@ export default function HandoverBatchForm({
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => onAddManualUnits()}
-            disabled={!manualInputText.trim()}
-            className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Tambah ke Daftar</span>
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsScannerOpen(true)}
+              className="h-10 px-3.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              title="Scan barcode atau QR Daisha menggunakan kamera perangkat"
+            >
+              <Camera className="w-4 h-4 text-emerald-400" />
+              <span>Scan Kamera</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onAddManualUnits()}
+              disabled={!manualInputText.trim()}
+              className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Tambah ke Daftar</span>
+            </button>
+          </div>
         </div>
 
         {/* Autocomplete Suggestions Pills saat mengetik */}
@@ -321,6 +337,22 @@ export default function HandoverBatchForm({
           </button>
         </div>
       </form>
+
+      {/* Modal Scanner Kamera Barcode / QR Daisha Fisik */}
+      <QrScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScanSuccess={(decodedText) => {
+          const clean = decodedText.trim();
+          if (clean) {
+            onAddManualUnits(clean);
+          }
+          setIsScannerOpen(false);
+        }}
+        onError={(err) => {
+          console.warn('[PM Staging Scanner Error]:', err);
+        }}
+      />
     </div>
   );
 }

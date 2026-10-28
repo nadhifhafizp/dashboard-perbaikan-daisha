@@ -76,10 +76,10 @@ export default function DaishaAccordionCard({
           <button
             type="button"
             onClick={() => onOpenAddComponent(daisha)}
-            className="h-7 px-2.5 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 rounded font-semibold text-xs transition flex items-center gap-1 cursor-pointer"
+            className="h-8 sm:h-9 px-3 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 rounded font-semibold text-xs transition flex items-center gap-1 cursor-pointer"
             title="Tambah komponen kerusakan baru"
           >
-            <Plus className="w-3 h-3" />
+            <Plus className="w-3.5 h-3.5" />
             <span>+ Komponen</span>
           </button>
 
@@ -95,7 +95,7 @@ export default function DaishaAccordionCard({
                 totalUnits: daisha.totalUnits || 0,
               })
             }
-            className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded cursor-pointer transition"
+            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded cursor-pointer transition"
             title="Edit nama, prefix, dan total unit Daisha"
             aria-label="Edit unit Daisha"
           >
@@ -112,7 +112,7 @@ export default function DaishaAccordionCard({
                 description: `Apakah Anda yakin ingin menghapus "${daisha.name}"? Semua ${daisha.components.length} komponen dan ${totalSymptoms} gejala di dalamnya akan ikut terhapus.`,
               })
             }
-            className="w-7 h-7 flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-50 rounded cursor-pointer transition"
+            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-50 rounded cursor-pointer transition"
             title="Hapus unit Daisha"
             aria-label="Hapus unit Daisha"
           >
@@ -122,7 +122,7 @@ export default function DaishaAccordionCard({
           <button
             type="button"
             onClick={() => onToggleAccordion(daisha.id)}
-            className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded cursor-pointer"
             aria-label="Buka/tutup detail"
           >
             {isExpanded ? (

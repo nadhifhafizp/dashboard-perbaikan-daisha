@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import {
   getRomanMonth,
   getSeksiCode,
@@ -6,7 +6,7 @@ import {
   SEKSI_CODE_MAP,
 } from './nomorSurat';
 
-describe('lib/nomorSurat — Format Nomor Surat & Singkatan Seksi', () => {
+describe('lib/nomorSurat - Format Nomor Surat & Singkatan Seksi', () => {
   it('harus mengonversi bulan ke angka Romawi secara tepat', () => {
     expect(getRomanMonth(1)).toBe('I');
     expect(getRomanMonth(2)).toBe('II');

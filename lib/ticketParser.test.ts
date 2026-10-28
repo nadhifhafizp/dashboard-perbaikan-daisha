@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { normalizeStatus, getValue, extractRawTicketArray } from './ticketParser';
 
-describe('lib/ticketParser — Ticket Normalizer and Extractor', () => {
+describe('lib/ticketParser - Ticket Normalizer and Extractor', () => {
   describe('normalizeStatus', () => {
     it('harus menormalkan variasi status ke enum standar', () => {
       expect(normalizeStatus('dalam proses')).toBe('Progress');

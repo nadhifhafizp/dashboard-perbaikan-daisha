@@ -439,9 +439,9 @@ export default function SparepartsAnalyticsDashboard({
                           <button
                             type="button"
                             onClick={() => onOpenRestock(part)}
-                            className="h-7 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer"
+                            className="h-8 sm:h-9 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer"
                           >
-                            <ArrowDownToLine className="w-3 h-3 text-emerald-600" />
+                            <ArrowDownToLine className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Restock</span>
                           </button>
                         )}

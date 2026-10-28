@@ -1,5 +1,5 @@
-/**
- * lib/passwords.ts — Modul Keamanan Kriptografi Password Pengguna
+﻿/**
+ * lib/passwords.ts - Modul Keamanan Kriptografi Password Pengguna
  * 
  * ============================================================================
  * SPESIFIKASI KEAMANAN:

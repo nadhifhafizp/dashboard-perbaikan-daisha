@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { parseTicketDamageDetail } from './damageParser';
 
-describe('lib/damageParser — Damage Detail Parser', () => {
+describe('lib/damageParser - Damage Detail Parser', () => {
   it('harus mengurai string rincian kerusakan multi-item dengan benar', () => {
     const raw = '1. [Roda Putar] Roda aus (Qty: 2, Tindakan: Ganti) | 2. [Body daisha] Tiang bengkok (Qty: 1, Tindakan: Repair)';
     const result = parseTicketDamageDetail(raw);

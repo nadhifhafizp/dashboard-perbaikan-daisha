@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll } from 'vitest';
 import { createSessionToken, parseAndVerifySession, SessionPayload } from './auth';
 import { parseAndVerifySessionEdge } from './authEdge';
 
-describe('lib/auth & lib/authEdge — Cryptographic Session Token Module', () => {
+describe('lib/auth & lib/authEdge - Cryptographic Session Token Module', () => {
   beforeAll(() => {
     process.env.SESSION_SECRET = 'test-secret-key-bridgestone-daisha-security-2026';
   });

@@ -1,15 +1,13 @@
 /**
- * lib/security.ts — Modul Keamanan Terpadu (Security Engine)
+ * lib/security.ts - Modul Keamanan Terpadu (Security Engine)
  * 
- * ============================================================================
- * CAKUPAN PERTAHANAN (6 PILAR KEAMANAN):
+ * Cakupan pertahanan:
  * 1. Authentication : Helper verifikasi token sesi di level API Route.
  * 2. Authorization  : Penegakan RBAC (Admin, Operator, User Seksi) ketat per endpoint.
  * 3. Validation     : Validasi tipe, panjang karakter, pola regex, dan sanitasi XSS.
  * 4. Rate Limiting  : Pembatas frekuensi request berbasis sliding window per IP/User.
  * 5. File/Body Limit: Pembatasan ukuran payload request (mencegah DoS memory exhaustion).
  * 6. Audit Logging  : Pencatatan jejak audit (audit trail) terstruktur untuk forensik.
- * ============================================================================
  */
 
 import { NextResponse } from 'next/server';
@@ -76,7 +74,7 @@ export function resetRateLimit(key: string): void {
 
 // 2. Payload size limit
 
-// Default limit: 1 MB (1.048.576 bytes) — sangat aman untuk JSON dan metadata workshop
+// Default limit: 1 MB (1.048.576 bytes) - sangat aman untuk JSON dan metadata workshop
 export const DEFAULT_MAX_PAYLOAD_BYTES = 1024 * 1024; 
 
 /**

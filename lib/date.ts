@@ -1,5 +1,5 @@
-/**
- * lib/date.ts — Utilitas Parsing & Format Tanggal / Waktu Workshop Terstandarisasi WIB (Asia/Jakarta)
+﻿/**
+ * lib/date.ts - Utilitas Parsing & Format Tanggal / Waktu Workshop Terstandarisasi WIB (Asia/Jakarta)
  * 
  * ============================================================================
  * FUNGSI UTAMA:

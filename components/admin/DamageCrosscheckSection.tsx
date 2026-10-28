@@ -151,11 +151,11 @@ export default function DamageCrosscheckSection({
           <div>
             <div className="font-bold text-xs text-slate-900 flex items-center gap-2">
               <span>Crosscheck Kerusakan Daisha ({namaDaisha})</span>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                 {totalSelectedCatalogSymptoms} / {totalCatalogSymptoms} Part Terpilih
               </span>
             </div>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-xs text-slate-500">
               Periksa kondisi fisik unit di bengkel. Klik item untuk menambah / membatalkan tindakan.
             </p>
           </div>
@@ -201,7 +201,7 @@ export default function DamageCrosscheckSection({
               <button
                 type="button"
                 onClick={() => setCustomTindakan('Ganti')}
-                className={`h-7 px-2.5 rounded-md text-xs font-semibold cursor-pointer ${
+                className={`h-8 sm:h-9 px-3 rounded-md text-xs font-semibold cursor-pointer ${
                   customTindakan === 'Ganti' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
                 }`}
               >
@@ -210,7 +210,7 @@ export default function DamageCrosscheckSection({
               <button
                 type="button"
                 onClick={() => setCustomTindakan('Repair')}
-                className={`h-7 px-2.5 rounded-md text-xs font-semibold cursor-pointer ${
+                className={`h-8 sm:h-9 px-3 rounded-md text-xs font-semibold cursor-pointer ${
                   customTindakan === 'Repair' ? 'bg-amber-500 text-white' : 'bg-white border border-slate-300 text-slate-700'
                 }`}
               >
@@ -306,13 +306,13 @@ export default function DamageCrosscheckSection({
                     <span className="font-bold text-xs text-slate-800 truncate">
                       {item.komponen}
                     </span>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-xs text-slate-400">
                       ({item.symptoms.length} gejala)
                     </span>
                   </div>
 
                   {item.selectedCount > 0 && (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
                       <Check className="w-3 h-3" />
                       <span>{item.selectedCount} aktif</span>
                     </span>
@@ -384,7 +384,7 @@ export default function DamageCrosscheckSection({
                             {isSelected ? (
                               <div className="flex items-center gap-1">
                                 <span
-                                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                  className={`text-xs font-bold px-1.5 py-0.5 rounded ${
                                     activeItem?.tindakan === 'Ganti'
                                       ? 'bg-blue-600 text-white'
                                       : 'bg-amber-500 text-white'
@@ -401,7 +401,7 @@ export default function DamageCrosscheckSection({
                                       activeItem?.tindakan === 'Ganti' ? 'Repair' : 'Ganti'
                                     )
                                   }
-                                  className="text-[10px] text-slate-500 hover:text-slate-800 underline cursor-pointer px-1"
+                                  className="text-xs text-slate-500 hover:text-slate-800 underline cursor-pointer px-1"
                                   title="Ganti mode tindakan"
                                 >
                                   Ubah
@@ -412,7 +412,7 @@ export default function DamageCrosscheckSection({
                                 <button
                                   type="button"
                                   onClick={() => onToggleItem(item.komponen, symptom, 'Repair')}
-                                  className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-slate-100 hover:bg-amber-500 hover:text-white text-slate-600 transition cursor-pointer"
+                                  className="px-1.5 py-0.5 text-xs font-semibold rounded bg-slate-100 hover:bg-amber-500 hover:text-white text-slate-600 transition cursor-pointer"
                                   title="Tambah sebagai Repair"
                                 >
                                   + Repair
@@ -420,7 +420,7 @@ export default function DamageCrosscheckSection({
                                 <button
                                   type="button"
                                   onClick={() => onToggleItem(item.komponen, symptom, 'Ganti')}
-                                  className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-600 transition cursor-pointer"
+                                  className="px-1.5 py-0.5 text-xs font-semibold rounded bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-600 transition cursor-pointer"
                                   title="Tambah sebagai Ganti Baru"
                                 >
                                   + Ganti

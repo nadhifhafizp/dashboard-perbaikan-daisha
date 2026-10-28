@@ -1,5 +1,5 @@
-/**
- * lib/sortTickets.ts — Utilitas Pengurutan Data Tiket Perbaikan Daisha
+﻿/**
+ * lib/sortTickets.ts - Utilitas Pengurutan Data Tiket Perbaikan Daisha
  * 
  * ============================================================================
  * FUNGSI UTAMA:

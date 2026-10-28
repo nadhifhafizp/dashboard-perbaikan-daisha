@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { hashPassword, verifyPassword } from './passwords';
 
-describe('lib/passwords — PBKDF2 SHA-512 Security Module', () => {
+describe('lib/passwords - PBKDF2 SHA-512 Security Module', () => {
   it('harus menghasilkan string hash dengan format salt:hash', () => {
     const plain = 'SecretPassword123!';
     const hash = hashPassword(plain);

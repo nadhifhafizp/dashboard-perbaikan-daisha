@@ -1,5 +1,5 @@
-/**
- * lib/api/defineRoute.ts — API Route Handler Wrapper Terpadu (WS4.F4.1 & F4.5)
+﻿/**
+ * lib/api/defineRoute.ts - API Route Handler Wrapper Terpadu (WS4.F4.1 & F4.5)
  * 
  * ============================================================================
  * FUNGSI UTAMA:

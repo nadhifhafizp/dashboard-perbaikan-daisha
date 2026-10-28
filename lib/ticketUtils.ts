@@ -1,5 +1,5 @@
-/**
- * lib/ticketUtils.ts — Utilitas Terpusat Validasi & Perakitan Payload Tiket Daisha
+﻿/**
+ * lib/ticketUtils.ts - Utilitas Terpusat Validasi & Perakitan Payload Tiket Daisha
  *
  * Menggabungkan seluruh logika validasi input, sanitasi nama pelapor,
  * dan perakitan string format kerusakan standar (Qty & Tindakan)

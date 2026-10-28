@@ -162,8 +162,8 @@ export async function POST(request: Request) {
           INSERT INTO "SectionRequestNotification" 
             ("targetRole", "tipe", "judul", "pesan", "link", "isRead", "waktu")
           VALUES 
-            ('ADMIN', 'PM_PICKUP', ${'Unit PM Siap Dijemput — Seksi ' + seksi}, ${notifPesan}, '/maintenance', false, NOW()),
-            ('OPERATOR', 'PM_PICKUP', ${'Unit PM Siap Dijemput — Seksi ' + seksi}, ${notifPesan}, '/maintenance', false, NOW())
+            ('ADMIN', 'PM_PICKUP', ${'Unit PM Siap Dijemput - Seksi ' + seksi}, ${notifPesan}, '/maintenance', false, NOW()),
+            ('OPERATOR', 'PM_PICKUP', ${'Unit PM Siap Dijemput - Seksi ' + seksi}, ${notifPesan}, '/maintenance', false, NOW())
         `;
 
         return row;

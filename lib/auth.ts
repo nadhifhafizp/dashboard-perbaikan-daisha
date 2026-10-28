@@ -1,5 +1,5 @@
-/**
- * lib/auth.ts — Modul Keamanan Sesi & Kriptografi Token
+﻿/**
+ * lib/auth.ts - Modul Keamanan Sesi & Kriptografi Token
  * 
  * ============================================================================
  * FUNGSI UTAMA:

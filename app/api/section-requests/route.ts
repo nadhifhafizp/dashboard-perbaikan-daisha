@@ -161,11 +161,11 @@ async function generateRequestNumber(): Promise<string> {
 
 // GET: Ambil daftar request (Admin: semua, USER_SEKSI: hanya milik seksinya)
 export async function GET(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION
+  // Verifikasi otorisasi sesi
   const auth = await requireAuth(request, ['ADMIN', 'USER_SEKSI', 'OPERATOR']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. RATE LIMITING (60 req/menit)
+  // Pembatasan laju permintaan (rate limiting 60 req/menit)
   const rateLimit = checkRateLimit(`requests_get:${auth.ip}`, 60, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan data request.' }, { status: 429 });
@@ -279,15 +279,15 @@ export async function GET(request: Request) {
 
 // POST: Buat request baru atau update status/material/evaluasi
 export async function POST(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION
+  // Verifikasi otorisasi sesi
   const auth = await requireAuth(request, ['ADMIN', 'USER_SEKSI', 'OPERATOR']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. FILE & PAYLOAD LIMIT (Maksimal 10MB untuk menampung gambar terkompresi)
+  // Validasi ukuran payload maksimum 10MB
   const sizeCheck = validatePayloadSize(request, 10 * 1024 * 1024);
   if (!sizeCheck.ok) return sizeCheck.errorResponse!;
 
-  // 3. RATE LIMITING (30 mutasi/menit)
+  // Pembatasan laju permintaan (rate limiting 30 mutasi/menit)
   const rateLimit = checkRateLimit(`requests_post:${auth.ip}`, 30, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan mutasi request.' }, { status: 429 });

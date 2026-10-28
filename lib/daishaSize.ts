@@ -1,5 +1,5 @@
-/**
- * lib/daishaSize.ts — Algoritma Deteksi Ukuran & Susunan Fisik Daisha
+﻿/**
+ * lib/daishaSize.ts - Algoritma Deteksi Ukuran & Susunan Fisik Daisha
  * 
  * ============================================================================
  * FUNGSI UTAMA:

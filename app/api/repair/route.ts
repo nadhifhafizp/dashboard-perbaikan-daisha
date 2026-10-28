@@ -25,9 +25,9 @@ export function invalidateRepairCache(): void {
   repairCacheTimestamp = 0;
 }
 
-// 1. FUNGSI GET: Membaca data langsung dari PostgreSQL (ADMIN, OPERATOR, & USER_SEKSI)
+// Baca data perbaikan dari PostgreSQL (admin, operator, dan user seksi)
 export async function GET(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION (Admin, Operator, dan User Seksi)
+  // Autentikasi dan otorisasi sesi pengguna
   const auth = await requireAuth(request, ['ADMIN', 'OPERATOR', 'USER_SEKSI']);
   if (!auth.authorized) return auth.errorResponse!;
 
@@ -149,17 +149,17 @@ export async function GET(request: Request) {
   }
 }
 
-// 2. FUNGSI POST: Create, Update, Delete tiket langsung via postgres.js
+// Mutasi data tiket (create, update, delete)
 export async function POST(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION (Admin, Operator, dan User Seksi)
+  // Autentikasi dan otorisasi sesi pengguna
   const auth = await requireAuth(request, ['ADMIN', 'OPERATOR', 'USER_SEKSI']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. FILE & PAYLOAD LIMIT (Maksimal 512KB)
+  // Validasi ukuran payload maksimum 512KB
   const sizeCheck = validatePayloadSize(request, 512 * 1024);
   if (!sizeCheck.ok) return sizeCheck.errorResponse!;
 
-  // 3. RATE LIMITING (60 mutasi/menit)
+  // Pembatasan laju permintaan (rate limiting 60 mutasi/menit)
   const rateLimit = checkRateLimit(`repair_post:${auth.ip}`, 60, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan mutasi tiket. Coba sesaat lagi.' }, { status: 429 });
@@ -505,7 +505,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // 2.3 DELETE / BATALKAN TIKET (KHUSUS ROLE ADMIN — operasi destruktif)
+    // Hapus atau batalkan tiket (khusus role admin - operasi destruktif)
     else if (action === 'DELETE') {
       if (auth.user?.role !== 'ADMIN') {
         recordAuditLog({
@@ -565,7 +565,7 @@ export async function POST(request: Request) {
       }
       const noDaisha = noDaishaValidation.value;
 
-      // Update Daisha — pertahankan jenis & ukuran yang sudah ada di DB
+      // Update Daisha - pertahankan jenis & ukuran yang sudah ada di DB
       const [editExisting] = await sql`
         SELECT "jenis", "ukuran" FROM "Daisha"
         WHERE UPPER("nomor_daisha") = UPPER(${noDaisha}) LIMIT 1

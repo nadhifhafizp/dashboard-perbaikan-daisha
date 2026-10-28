@@ -132,7 +132,7 @@ export default function InputIdentifikasiSection({
                 Tipe / Jenis Daisha *
               </label>
               {formData.seksi && (
-                <span className="text-[11px] text-slate-500">
+                <span className="text-xs text-slate-500">
                   Filter: <strong className="text-slate-800">{formData.seksi}</strong>
                 </span>
               )}
@@ -163,7 +163,7 @@ export default function InputIdentifikasiSection({
               />
               <label
                 htmlFor="showAll"
-                className="text-[11px] text-slate-500 cursor-pointer select-none"
+                className="text-xs text-slate-500 cursor-pointer select-none"
               >
                 Tampilkan seluruh tipe (tanpa dibatasi Seksi)
               </label>

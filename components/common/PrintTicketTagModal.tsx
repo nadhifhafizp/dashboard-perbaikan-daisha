@@ -371,8 +371,8 @@ export default function PrintTicketTagModal({
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-white font-bold text-[8px] leading-tight opacity-80 tabular-nums">{ticket.idTiket}</p>
-                <p className="text-red-200 print:text-white font-semibold text-[8px] leading-tight tabular-nums">{ticket.waktuMasuk}</p>
+                <p className="text-white font-bold text-xs print:text-[8px] leading-tight opacity-80 tabular-nums">{ticket.idTiket}</p>
+                <p className="text-red-200 print:text-white font-semibold text-xs print:text-[8px] leading-tight tabular-nums">{ticket.waktuMasuk}</p>
               </div>
             </div>
 
@@ -433,7 +433,7 @@ export default function PrintTicketTagModal({
                       {/* Label */}
                       <div className="flex-1 min-w-0">
                         {item.komponen && item.komponen !== 'Umum' && item.komponen !== 'Others' && (
-                          <span className="text-[8px] font-bold uppercase tracking-wide text-slate-400 print:text-slate-600 block leading-tight">{item.komponen}</span>
+                          <span className="text-xs print:text-[8px] font-bold uppercase tracking-wide text-slate-400 print:text-slate-600 block leading-tight">{item.komponen}</span>
                         )}
                         <span className="text-xs font-extrabold text-slate-900 leading-tight block">
                           {item.gejala}
@@ -478,10 +478,10 @@ export default function PrintTicketTagModal({
                   { label: '3. QC Check', sub: 'Status OK' },
                 ].map(({ label, sub }) => (
                   <div key={label} className="border-2 border-black rounded p-2 flex flex-col gap-1 min-h-[56px]">
-                    <span className="text-[8px] font-black uppercase tracking-wide block">{label}</span>
+                    <span className="text-xs print:text-[8px] font-black uppercase tracking-wide block">{label}</span>
                     <div className="flex-1" />
                     <div className="border-t border-dashed border-black/60 pt-1">
-                      <span className="text-[8px] font-semibold text-slate-400 print:text-slate-600 truncate block">{sub}</span>
+                      <span className="text-xs print:text-[8px] font-semibold text-slate-400 print:text-slate-600 truncate block">{sub}</span>
                     </div>
                   </div>
                 ))}
@@ -489,7 +489,7 @@ export default function PrintTicketTagModal({
             </div>
 
             {/* 6. FOOTER / HOLE PUNCH */}
-            <div className="mx-4 mb-3 pt-2 border-t-2 border-dashed border-slate-400 print:border-black flex items-center justify-between text-[8px] text-slate-400 print:text-black">
+            <div className="mx-4 mb-3 pt-2 border-t-2 border-dashed border-slate-400 print:border-black flex items-center justify-between text-xs print:text-[8px] text-slate-400 print:text-black">
               <div className="flex items-center gap-1.5">
                 <div className="w-5 h-5 rounded-full border-2 border-slate-400 print:border-black bg-white" />
                 <span className="font-semibold">Lubang Gantungan</span>

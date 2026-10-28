@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
-import { Search } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Camera } from 'lucide-react';
 import { FlowchartFilter } from './types';
+import QrScannerModal from '@/components/input/QrScannerModal';
 
 interface RequestFilterBarProps {
   filterFlow: FlowchartFilter;
@@ -27,6 +28,8 @@ export default function RequestFilterBar({
   search,
   setSearch,
 }: RequestFilterBarProps) {
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+
   return (
     <div className="p-3.5 sm:p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-2.5 items-start sm:items-center justify-between">
       <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
@@ -48,16 +51,43 @@ export default function RequestFilterBar({
           );
         })}
       </div>
-      <div className="relative w-full sm:w-72">
-        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Cari nomor, perihal, mesin, seksi..."
-          className="w-full h-10 pl-8 pr-3 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-red-600 outline-none text-slate-900 placeholder:text-slate-400"
-        />
+      <div className="relative w-full sm:w-80 flex items-center gap-1.5">
+        <div className="relative flex-1">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cari nomor, perihal, mesin, seksi..."
+            className="w-full h-10 pl-8 pr-3 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-red-600 outline-none text-slate-900 placeholder:text-slate-400"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsScannerOpen(true)}
+          className="h-10 px-3 bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
+          title="Scan barcode atau QR Daisha untuk pencarian"
+        >
+          <Camera className="w-3.5 h-3.5 text-red-400" />
+          <span className="hidden sm:inline">Scan</span>
+        </button>
       </div>
+
+      {/* Modal Scanner Barcode / QR Daisha Fisik */}
+      <QrScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScanSuccess={(decodedText) => {
+          const clean = decodedText.trim();
+          if (clean) {
+            setSearch(clean.toUpperCase());
+          }
+          setIsScannerOpen(false);
+        }}
+        onError={(err) => {
+          console.warn('[Request Search Scanner Error]:', err);
+        }}
+      />
     </div>
   );
 }

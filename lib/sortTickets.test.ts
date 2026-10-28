@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { sortTickets } from './sortTickets';
 import { Ticket } from '@/types/ticket';
 
-describe('lib/sortTickets — Ticket Sorting Engine', () => {
+describe('lib/sortTickets - Ticket Sorting Engine', () => {
   const dummyTickets: Ticket[] = [
     {
       id: '1',

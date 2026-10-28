@@ -56,7 +56,7 @@ export default function PaginationControl({
                 onPageChange(1);
               }}
               aria-label="Jumlah baris data per halaman"
-              className="bg-white hover:bg-slate-50 border border-slate-300 rounded-md px-2 py-1 h-7 text-xs font-medium text-slate-800 cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition"
+              className="bg-white hover:bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 h-8 sm:h-9 text-xs font-medium text-slate-800 cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -71,16 +71,16 @@ export default function PaginationControl({
 
       {/* Right: Page Navigation Buttons */}
       {itemsPerPage !== -1 && totalPages > 1 && (
-        <div className="flex items-center gap-1 flex-wrap justify-center">
+        <div className="flex items-center gap-1.5 flex-wrap justify-center">
           <button
             type="button"
             disabled={currentPage === 1}
             onClick={() => onPageChange(1)}
             aria-label="Ke halaman pertama"
             title="Halaman Pertama"
-            className="h-7 w-7 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer transition flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-red-500"
+            className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer transition flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-red-500 shadow-2xs"
           >
-            <ChevronsLeft className="w-3.5 h-3.5" />
+            <ChevronsLeft className="w-4 h-4" />
           </button>
           <button
             type="button"
@@ -88,13 +88,13 @@ export default function PaginationControl({
             onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
             aria-label="Ke halaman sebelumnya"
             title="Halaman Sebelumnya"
-            className="h-7 px-2 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer transition text-xs flex items-center gap-1 focus:outline-none focus:ring-1 focus:ring-red-500"
+            className="h-8 px-2.5 sm:h-9 sm:px-3 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer transition text-xs font-medium flex items-center gap-1.5 focus:outline-none focus:ring-1 focus:ring-red-500 shadow-2xs"
           >
-            <ChevronLeft className="w-3.5 h-3.5" />
+            <ChevronLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Sebelumnya</span>
           </button>
 
-          <span aria-current="page" className="h-7 flex items-center justify-center px-2.5 bg-slate-100 border border-slate-200 rounded-md font-medium text-slate-800 text-xs">
+          <span aria-current="page" className="h-8 sm:h-9 flex items-center justify-center px-3 bg-slate-100 border border-slate-200 rounded-lg font-semibold text-slate-800 text-xs tabular-nums">
             {currentPage} / {totalPages}
           </span>
 
@@ -104,10 +104,10 @@ export default function PaginationControl({
             onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
             aria-label="Ke halaman selanjutnya"
             title="Halaman Selanjutnya"
-            className="h-7 px-2 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer transition text-xs flex items-center gap-1 focus:outline-none focus:ring-1 focus:ring-red-500"
+            className="h-8 px-2.5 sm:h-9 sm:px-3 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer transition text-xs font-medium flex items-center gap-1.5 focus:outline-none focus:ring-1 focus:ring-red-500 shadow-2xs"
           >
             <span className="hidden sm:inline">Selanjutnya</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-4 h-4" />
           </button>
           <button
             type="button"
@@ -115,9 +115,9 @@ export default function PaginationControl({
             onClick={() => onPageChange(totalPages)}
             aria-label="Ke halaman terakhir"
             title="Halaman Terakhir"
-            className="h-7 w-7 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer transition flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-red-500"
+            className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer transition flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-red-500 shadow-2xs"
           >
-            <ChevronsRight className="w-3.5 h-3.5" />
+            <ChevronsRight className="w-4 h-4" />
           </button>
         </div>
       )}

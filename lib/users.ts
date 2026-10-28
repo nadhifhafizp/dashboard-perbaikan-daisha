@@ -1,5 +1,5 @@
-/**
- * lib/users.ts — Manajemen Akun Pengguna & Otorisasi RBAC
+﻿/**
+ * lib/users.ts - Manajemen Akun Pengguna & Otorisasi RBAC
  * 
  * ============================================================================
  * FUNGSI UTAMA:

@@ -37,7 +37,7 @@ export default function FleetMasterOverview({
             <div>
               <h3 className="t-section text-slate-900 tracking-tight">
                 {currentSeksi && currentSeksi !== 'all'
-                  ? `KPI Jumlah Daisha — Seksi ${currentSeksi}`
+                  ? `KPI Jumlah Daisha - Seksi ${currentSeksi}`
                   : 'KPI Jumlah Seluruh Daisha di Bridgestone'}
               </h3>
               <p className="t-caption text-slate-500">

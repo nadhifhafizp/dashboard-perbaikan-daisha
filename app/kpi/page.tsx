@@ -104,9 +104,7 @@ function KpiDashboardContent() {
     window.history.replaceState(null, '', url.pathname + url.search);
   };
 
-  // --------------------------------------------------------------------------
-  // 1. DATA: PERBAIKAN DAISHA
-  // --------------------------------------------------------------------------
+  // Data perbaikan daisha
   const {
     tickets: dataRaw,
     loading: loadingTickets,
@@ -166,9 +164,7 @@ function KpiDashboardContent() {
     exportTicketsToExcel(filteredData, 'KPI_Perbaikan_Daisha');
   };
 
-  // --------------------------------------------------------------------------
-  // 2. DATA: PREVENTIVE MAINTENANCE (PM)
-  // --------------------------------------------------------------------------
+  // Data preventive maintenance (PM)
   const [pmYear, setPmYear] = useState<number>(new Date().getFullYear());
   const [loadingPm, setLoadingPm] = useState(false);
   const [pmSummary, setPmSummary] = useState({
@@ -212,9 +208,7 @@ function KpiDashboardContent() {
     }
   }, [pmYear]);
 
-  // --------------------------------------------------------------------------
-  // 3. DATA: REQUEST SEKSI
-  // --------------------------------------------------------------------------
+  // Data request seksi
   const [requests, setRequests] = useState<SectionRequestFull[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
 
@@ -233,9 +227,7 @@ function KpiDashboardContent() {
     }
   }, []);
 
-  // --------------------------------------------------------------------------
-  // 4. DATA: STOK SPAREPART
-  // --------------------------------------------------------------------------
+  // Data stok sparepart
   const [spareparts, setSpareparts] = useState<SparepartItem[]>([]);
   const [loadingSpareparts, setLoadingSpareparts] = useState(false);
 

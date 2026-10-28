@@ -286,7 +286,7 @@ export default function WorkshopStagingAlert({
                                         ? `PM unit ${unitNo} telah dicatat. Klik untuk tinjau/catat ulang.`
                                         : `Catat lembar hasil inspeksi 9 komponen PM unit ${unitNo}`
                                     }
-                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold transition cursor-pointer ${
+                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold transition cursor-pointer ${
                                       isRecorded
                                         ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
                                         : 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold'

@@ -289,9 +289,9 @@ export default function FleetExplorer({
               <button
                 type="button"
                 onClick={() => setViewMode('TABLE')}
-                className={`h-7 px-3 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
+                className={`h-8 sm:h-9 px-3 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
                   viewMode === 'TABLE'
-                    ? 'bg-white text-slate-900'
+                    ? 'bg-white text-slate-900 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -301,9 +301,9 @@ export default function FleetExplorer({
               <button
                 type="button"
                 onClick={() => setViewMode('GRID')}
-                className={`h-7 px-3 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
+                className={`h-8 sm:h-9 px-3 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
                   viewMode === 'GRID'
-                    ? 'bg-white text-slate-900'
+                    ? 'bg-white text-slate-900 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >

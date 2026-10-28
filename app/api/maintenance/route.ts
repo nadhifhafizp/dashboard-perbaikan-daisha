@@ -108,7 +108,7 @@ export async function GET(request: Request) {
       const workDaysInfo = calculateRemainingWorkDaysInYear(now, true);
       const remainingWorkDays = workDaysInfo.remainingWorkDays;
 
-      // 1. Parallel fetch: Ambil master Daisha dari global memory cache jika ada (< 1ms), hanya query ke DB jika expired
+      // Ambil master daisha dari cache memori jika valid, fallback query database
       let allDaisha: DaishaRow[];
       const nowMs = Date.now();
       const cached = globalForMaint.cachedAllDaisha;
@@ -505,7 +505,7 @@ export async function POST(request: Request) {
     const waktuMasuk = waktuMasukStr ? new Date(waktuMasukStr) : tanggalPengerjaan;
     const waktuKeluar = waktuKeluarStr ? new Date(waktuKeluarStr) : tanggalPengerjaan;
 
-    // 1. Cari Daisha di database (atau buat baru jika nomor belum ada di tabel master)
+    // Cari daisha di database atau register otomatis bila belum tercatat
     const daisha = await sql`
       SELECT id, nomor_daisha, jenis, ukuran, last_maintenance_date
       FROM "Daisha"

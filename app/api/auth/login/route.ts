@@ -13,11 +13,11 @@ import {
 export async function POST(request: Request) {
   const ip = getClientIp(request);
 
-  // 1. FILE & PAYLOAD LIMIT (Maksimal 64KB untuk login payload)
+  // Validasi ukuran payload maksimum 64KB
   const sizeCheck = validatePayloadSize(request, 64 * 1024);
   if (!sizeCheck.ok) return sizeCheck.errorResponse!;
 
-  // 2. RATE LIMITING (5 kali percobaan di production, 50 di development)
+  // Pembatasan laju login (5 kali percobaan di production, 50 di development)
   const maxAttempts = process.env.NODE_ENV === 'production' ? 5 : 50;
   const rateLimit = checkRateLimit(`login:${ip}`, maxAttempts, 5 * 60 * 1000);
   if (!rateLimit.allowed) {

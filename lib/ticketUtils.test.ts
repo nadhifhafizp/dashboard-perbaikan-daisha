@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { validateTicketInput, buildTicketDamagePayload, isInvalidOperatorName } from './ticketUtils';
 
-describe('lib/ticketUtils — Ticket Validation and Payload Builder', () => {
+describe('lib/ticketUtils - Ticket Validation and Payload Builder', () => {
   describe('isInvalidOperatorName', () => {
     it('harus menolak nama operator placeholder atau kata default', () => {
       expect(isInvalidOperatorName('operator')).toBe(true);

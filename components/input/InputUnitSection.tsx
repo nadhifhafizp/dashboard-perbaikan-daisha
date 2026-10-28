@@ -67,7 +67,7 @@ export default function InputUnitSection({
             Tipe / Jenis Daisha *
           </label>
           {formData.seksi && (
-            <span className="text-[11px] text-slate-500">
+            <span className="text-xs text-slate-500">
               Seksi: <strong className="text-slate-800">{formData.seksi}</strong>
             </span>
           )}

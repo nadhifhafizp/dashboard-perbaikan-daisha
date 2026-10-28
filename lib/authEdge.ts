@@ -1,5 +1,5 @@
-/**
- * lib/authEdge.ts — Verifikasi Sesi Stateless Kompatibel Edge Runtime (Next.js Middleware)
+﻿/**
+ * lib/authEdge.ts - Verifikasi Sesi Stateless Kompatibel Edge Runtime (Next.js Middleware)
  *
  * Menggunakan Web Crypto API standar (crypto.subtle) dan TextDecoder
  * tanpa ketergantungan pada modul Node.js (crypto/Buffer), sehingga

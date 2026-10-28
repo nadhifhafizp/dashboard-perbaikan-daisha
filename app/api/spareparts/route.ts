@@ -11,11 +11,11 @@ import {
 
 // GET: Ambil daftar sparepart beserta log mutasi terakhir (Khusus ADMIN)
 export async function GET(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION
+  // Verifikasi otorisasi admin
   const auth = await requireAuth(request, ['ADMIN']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. RATE LIMITING (60 req/menit)
+  // Pembatasan laju permintaan (rate limiting 60 req/menit)
   const rateLimit = checkRateLimit(`spareparts_get:${auth.ip}`, 60, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan inventaris.' }, { status: 429 });
@@ -64,15 +64,15 @@ export async function GET(request: Request) {
 
 // POST: CRUD spareparts & mutasi stok (Khusus ADMIN)
 export async function POST(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION
+  // Verifikasi otorisasi admin
   const auth = await requireAuth(request, ['ADMIN']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. FILE & PAYLOAD SIZE LIMIT (Maksimal 128KB)
+  // Validasi ukuran payload maksimum 128KB
   const sizeCheck = validatePayloadSize(request, 128 * 1024);
   if (!sizeCheck.ok) return sizeCheck.errorResponse!;
 
-  // 3. RATE LIMITING (40 req/menit)
+  // Pembatasan laju permintaan (rate limiting 40 req/menit)
   const rateLimit = checkRateLimit(`spareparts_post:${auth.ip}`, 40, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak transaksi suku cadang.' }, { status: 429 });

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import {
   formatDisplayDate,
   parseToTimestamp,
@@ -7,7 +7,7 @@ import {
   matchesAgingFilter,
 } from './date';
 
-describe('lib/date — Asia/Jakarta (WIB) Date Utility', () => {
+describe('lib/date - Asia/Jakarta (WIB) Date Utility', () => {
   it('harus memformat Date menjadi string DD/MM/YYYY HH:mm standar WIB', () => {
     // 2026-10-27 10:30 UTC = 17:30 WIB
     const d = new Date('2026-10-27T10:30:00Z');

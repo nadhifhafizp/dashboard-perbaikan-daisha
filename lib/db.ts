@@ -1,9 +1,9 @@
-/**
- * lib/db.ts — Koneksi Database PostgreSQL Terpusat (Singleton Pool)
+﻿/**
+ * lib/db.ts - Koneksi Database PostgreSQL Terpusat (Singleton Pool)
  * 
  * ============================================================================
  * SPESIFIKASI ARSITEKTUR & KEAMANAN:
- * 1. Library: `postgres` (postgres.js) — driver tercepat & paling hemat memori di ekosistem Node.js.
+ * 1. Library: `postgres` (postgres.js) - driver tercepat & paling hemat memori di ekosistem Node.js.
  * 2. SQL Injection Defense: 
  *    Template literal `sql\`SELECT * FROM "User" WHERE id = ${id}\`` BUKAN string concatenation.
  *    postgres.js secara otomatis mengonversi variabel `${...}` menjadi Parameterized Queries

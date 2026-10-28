@@ -1,5 +1,5 @@
-/**
- * lib/logger.ts — Structured Server Logger (WS8.F8.1 & F8.2)
+﻿/**
+ * lib/logger.ts - Structured Server Logger (WS8.F8.1 & F8.2)
  * 
  * Logging terstruktur dengan level (INFO, WARN, ERROR), timestamp ISO,
  * tracing requestId, dan konteks modul/metadata.

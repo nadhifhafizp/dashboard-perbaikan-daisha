@@ -20,11 +20,11 @@ import {
  * GET /api/users - Mengambil daftar seluruh pengguna (Khusus role ADMIN)
  */
 export async function GET(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION (Khusus ADMIN)
+  // Verifikasi otorisasi admin
   const auth = await requireAuth(request, ['ADMIN']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. RATE LIMITING (60 req/menit)
+  // Pembatasan laju permintaan (rate limiting 60 req/menit)
   const rateLimit = checkRateLimit(`users_get:${auth.ip}`, 60, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan data pengguna.' }, { status: 429 });
@@ -43,15 +43,15 @@ export async function GET(request: Request) {
  * POST /api/users - Tambah akun baru ATAU Reset/Ubah Password (Khusus role ADMIN)
  */
 export async function POST(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION (Khusus ADMIN)
+  // Verifikasi otorisasi admin
   const auth = await requireAuth(request, ['ADMIN']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. FILE & PAYLOAD SIZE LIMIT (Maksimal 64KB)
+  // Validasi ukuran payload maksimum 64KB
   const sizeCheck = validatePayloadSize(request, 64 * 1024);
   if (!sizeCheck.ok) return sizeCheck.errorResponse!;
 
-  // 3. RATE LIMITING (20 req/menit)
+  // Pembatasan laju permintaan (rate limiting 20 req/menit)
   const rateLimit = checkRateLimit(`users_post:${auth.ip}`, 20, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak operasi pengguna.' }, { status: 429 });
@@ -163,15 +163,15 @@ export async function POST(request: Request) {
  * PUT /api/users - Edit informasi pengguna (nama, username, role, deskripsi)
  */
 export async function PUT(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION (Khusus ADMIN)
+  // Verifikasi otorisasi admin
   const auth = await requireAuth(request, ['ADMIN']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. FILE & PAYLOAD SIZE LIMIT (Maksimal 64KB)
+  // Validasi ukuran payload maksimum 64KB
   const sizeCheck = validatePayloadSize(request, 64 * 1024);
   if (!sizeCheck.ok) return sizeCheck.errorResponse!;
 
-  // 3. RATE LIMITING (30 req/menit)
+  // Pembatasan laju permintaan (rate limiting 30 req/menit)
   const rateLimit = checkRateLimit(`users_put:${auth.ip}`, 30, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan update.' }, { status: 429 });
@@ -238,11 +238,11 @@ export async function PUT(request: Request) {
  * DELETE /api/users?id=xxx - Hapus akun pengguna (Khusus role ADMIN)
  */
 export async function DELETE(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION (Khusus ADMIN)
+  // Verifikasi otorisasi admin
   const auth = await requireAuth(request, ['ADMIN']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. RATE LIMITING (20 req/menit)
+  // Pembatasan laju permintaan (rate limiting 20 req/menit)
   const rateLimit = checkRateLimit(`users_delete:${auth.ip}`, 20, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan penghapusan.' }, { status: 429 });

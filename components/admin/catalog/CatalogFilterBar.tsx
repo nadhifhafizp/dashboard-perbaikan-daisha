@@ -36,7 +36,7 @@ export default function CatalogFilterBar({
         <button
           type="button"
           onClick={() => setSelectedSeksi('all')}
-          className={`h-7 px-2.5 rounded text-xs font-semibold transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
+          className={`h-8 sm:h-9 px-3 rounded text-xs font-semibold transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
             selectedSeksi === 'all'
               ? 'bg-[#E60012] text-white'
               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -62,7 +62,7 @@ export default function CatalogFilterBar({
               key={s}
               type="button"
               onClick={() => setSelectedSeksi(s)}
-              className={`h-7 px-2.5 rounded text-xs font-semibold transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
+              className={`h-8 sm:h-9 px-3 rounded text-xs font-semibold transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
                 isSelected
                   ? 'bg-[#E60012] text-white'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'

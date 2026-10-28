@@ -306,7 +306,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const action = sanitizeText(body.action, 50);
 
-    // 1. Tambah Jenis Daisha Baru
+    // Tambah jenis daisha baru
     if (action === 'ADD_DAISHA') {
       const name = sanitizeText(body.name, 100);
       const seksi = sanitizeText(body.seksi, 50) || 'All seksi';
@@ -650,7 +650,7 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const action = sanitizeText(body.action, 50);
 
-    // 1. Edit Daisha
+    // Perbarui metadata daisha
     if (action === 'EDIT_DAISHA' || action === 'UPDATE_DAISHA') {
       const id = validatePositiveInt(body.id, 'ID Daisha', 1).value;
       const name = sanitizeText(body.name, 100);
@@ -948,7 +948,7 @@ export async function DELETE(request: Request) {
 
     const id = validatePositiveInt(idParam, 'ID', 1).value;
 
-    // 1. Hapus Jenis Daisha
+    // Hapus jenis daisha
     if (type === 'daisha') {
       const [deleted] = await sql`DELETE FROM "DaishaCatalog" WHERE id = ${id} RETURNING id, name`;
       if (!deleted) {

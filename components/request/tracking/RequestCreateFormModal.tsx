@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useRef } from 'react';
-import { X, Send, Upload, Trash2, User, Mail } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { X, Send, Upload, Trash2, User, Mail, Camera } from 'lucide-react';
 import { compressImageFile } from '@/lib/imageCompressor';
 import { RequestFormData, DAFTAR_SEKSI_REQUEST, DAFTAR_TUJUAN } from './types';
 import { SessionPayload } from '@/lib/auth';
+import QrScannerModal from '@/components/input/QrScannerModal';
 
 interface RequestCreateFormModalProps {
   formData: RequestFormData;
@@ -27,6 +28,7 @@ export default function RequestCreateFormModal({
 }: RequestCreateFormModalProps) {
   const fileInputSebelumRef = useRef<HTMLInputElement>(null);
   const fileInputSesudahRef = useRef<HTMLInputElement>(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const handlePhotoUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -222,17 +224,28 @@ export default function RequestCreateFormModal({
 
           <div className="sm:col-span-4">
             <label className="block text-xs font-medium text-slate-700 mb-1">
-              Nama Machine / No. Mesin
+              No. Daisha / Nama Machine
             </label>
-            <input
-              type="text"
-              value={formData.namaMachine}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, namaMachine: e.target.value }))
-              }
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
-              placeholder="Mis: CALENDER-02 / B-01"
-            />
+            <div className="flex gap-1.5">
+              <input
+                type="text"
+                value={formData.namaMachine}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, namaMachine: e.target.value }))
+                }
+                className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none uppercase font-bold"
+                placeholder="Mis: S-045, CALENDER-02..."
+              />
+              <button
+                type="button"
+                onClick={() => setIsScannerOpen(true)}
+                className="h-9 px-2.5 bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
+                title="Scan barcode atau QR fisik Daisha menggunakan kamera"
+              >
+                <Camera className="w-3.5 h-3.5 text-red-400" />
+                <span className="hidden sm:inline">Scan</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -442,6 +455,26 @@ export default function RequestCreateFormModal({
           </span>
         </button>
       </div>
+
+      {/* Modal Scanner Barcode / QR Daisha Fisik */}
+      <QrScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScanSuccess={(decodedText) => {
+          const clean = decodedText.trim();
+          if (clean) {
+            setFormData((p) => ({
+              ...p,
+              namaMachine: clean.toUpperCase(),
+              perihal: p.perihal || `Perbaikan Daisha ${clean.toUpperCase()}`,
+            }));
+          }
+          setIsScannerOpen(false);
+        }}
+        onError={(err) => {
+          console.warn('[Request Daisha Scanner Error]:', err);
+        }}
+      />
     </form>
   );
 }

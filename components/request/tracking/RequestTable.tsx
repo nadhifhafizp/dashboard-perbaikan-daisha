@@ -90,7 +90,7 @@ export default function RequestTable({
                       <span className="font-mono font-bold text-red-700 text-xs tabular-nums bg-red-50 px-2 py-0.5 rounded border border-red-200">
                         {r.nomorSurat}
                       </span>
-                      <span className="font-mono text-[11px] text-slate-500 tabular-nums">
+                      <span className="font-mono text-xs text-slate-500 tabular-nums">
                         ({r.nomorRequest})
                       </span>
                     </div>
@@ -255,7 +255,7 @@ export default function RequestTable({
                         <span className="font-mono font-bold text-red-700 text-xs bg-red-50/80 px-2 py-0.5 rounded border border-red-200 block w-fit mb-0.5">
                           {r.nomorSurat}
                         </span>
-                        <span className="font-mono text-[11px] text-slate-400 block">
+                        <span className="font-mono text-xs text-slate-400 block">
                           {r.nomorRequest}
                         </span>
                       </div>
@@ -264,7 +264,7 @@ export default function RequestTable({
                         <span className="font-mono font-bold text-slate-800 text-xs block">
                           {r.nomorRequest}
                         </span>
-                        <span className="text-[10px] text-amber-700 font-medium block">
+                        <span className="text-xs text-amber-700 font-medium block">
                           Menunggu Approval
                         </span>
                       </div>

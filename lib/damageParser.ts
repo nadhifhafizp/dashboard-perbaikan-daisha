@@ -1,5 +1,5 @@
-/**
- * lib/damageParser.ts — Parser Kerusakan & Tindakan Perbaikan Daisha
+﻿/**
+ * lib/damageParser.ts - Parser Kerusakan & Tindakan Perbaikan Daisha
  * 
  * ============================================================================
  * FUNGSI UTAMA:

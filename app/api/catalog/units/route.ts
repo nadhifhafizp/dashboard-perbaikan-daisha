@@ -35,11 +35,11 @@ export function invalidateSectionUnitsCache(seksi?: string) {
  * Mengambil daftar unit Daisha yang hanya dimiliki oleh seksi terkait
  */
 export async function GET(request: Request) {
-  // 1. AUTHENTICATION & AUTHORIZATION
+  // Verifikasi otorisasi sesi
   const auth = await requireAuth(request);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // 2. RATE LIMITING (120 req/menit)
+  // Pembatasan laju permintaan (rate limiting 120 req/menit)
   const rateLimit = checkRateLimit(`units_get:${auth.ip}`, 120, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json(
