@@ -200,7 +200,7 @@ function SidebarInner({
         },
         {
           id: 'FLEET',
-          title: 'PM Armada',
+          title: 'PM Daisha',
           badge: 'Pemeliharaan',
           icon: Target,
           items: [

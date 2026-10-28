@@ -69,18 +69,13 @@ export async function middleware(request: NextRequest) {
     return makeResponse();
   }
 
-  // 5. Proteksi Rute Workshop Maintenance (/maintenance)
-  // Hanya ADMIN dan OPERATOR yang dapat mengelola staging & PM unit Daisha
+  // 5. Proteksi Rute Workshop & Penyiapan PM Daisha (/maintenance)
+  // Seluruh role terautentikasi (ADMIN, OPERATOR, USER_SEKSI) berhak mengakses modul maintenance
   if (pathname.startsWith('/maintenance')) {
     if (!isAuthenticated) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('from', pathname);
       return makeResponse(NextResponse.redirect(loginUrl));
-    }
-
-    if (userRole === 'USER_SEKSI') {
-      // User seksi plant diarahkan ke halaman pelaporan atau pelacakan
-      return makeResponse(NextResponse.redirect(new URL('/riwayat', request.url)));
     }
 
     return makeResponse();
