@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Filter,
@@ -71,10 +71,16 @@ export default function FleetExplorer({
 }: FleetExplorerProps) {
   // Filter States
   const [search, setSearch] = useState<string>('');
-  const [filterSeksi, setFilterSeksi] = useState<string>('ALL');
+  const [filterSeksi, setFilterSeksi] = useState<string>(() => (isSeksiUser && seksi) ? seksi : (seksi || 'ALL'));
   const [filterJenis, setFilterJenis] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'MAINTAINED' | 'UNMAINTAINED'>('ALL');
   const [viewMode, setViewMode] = useState<'GRID' | 'TABLE'>('TABLE');
+
+  useEffect(() => {
+    if (isSeksiUser && seksi) {
+      setFilterSeksi(seksi);
+    }
+  }, [isSeksiUser, seksi]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -116,9 +122,14 @@ export default function FleetExplorer({
 
   // Filtered Units
   const filteredUnits = useMemo(() => {
+    const activeSection = (isSeksiUser && seksi) ? seksi : (filterSeksi !== 'ALL' ? filterSeksi : null);
     return units.filter((u) => {
-      // Filter Seksi
-      if (filterSeksi !== 'ALL' && (u.seksi || 'All seksi') !== filterSeksi) return false;
+      // Filter Seksi (Strict isolation untuk user seksi)
+      if (activeSection && activeSection.toLowerCase() !== 'all seksi' && activeSection !== 'ALL') {
+        if ((u.seksi || '').toLowerCase() !== activeSection.toLowerCase()) return false;
+      } else if (filterSeksi !== 'ALL' && (u.seksi || 'All seksi') !== filterSeksi) {
+        return false;
+      }
 
       // Filter Jenis (normalized comparison so "GT Ring" matches "GT_RING", "Vertical" matches "VERTICAL", etc.)
       if (filterJenis !== 'ALL') {

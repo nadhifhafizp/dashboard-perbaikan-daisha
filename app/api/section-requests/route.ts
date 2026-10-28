@@ -179,6 +179,7 @@ export async function GET(request: Request) {
     const seksi = searchParams.get('seksi');
 
     // ISOLASI DATA PENGGUNA: User Seksi HANYA dapat melihat request milik seksinya sendiri
+    const userSeksi = auth.user?.role === 'USER_SEKSI' ? (auth.user.seksi || null) : null;
     const filterByUser = auth.user?.role === 'USER_SEKSI' ? auth.user.username : null;
     const filterStatus = status && status !== 'all' ? sanitizeText(status, 50) : null;
     const filterSeksi = seksi && seksi !== 'all' ? sanitizeText(seksi, 50) : null;
@@ -254,9 +255,9 @@ export async function GET(request: Request) {
         sr."alasanPending",
         COALESCE(sr."materials", '[]'::jsonb) as materials
       FROM "SectionRequest" sr
-      WHERE (${filterByUser}::text IS NULL OR sr."dibuatOleh" = ${filterByUser})
+      WHERE (${filterByUser}::text IS NULL OR sr."dibuatOleh" = ${filterByUser} OR (${userSeksi}::text IS NOT NULL AND LOWER(sr."seksiPemohon") = LOWER(${userSeksi})))
         AND (${filterStatus}::text IS NULL OR sr.status = ${filterStatus})
-        AND (${filterSeksi}::text IS NULL OR sr."seksiPemohon" = ${filterSeksi})
+        AND (${filterSeksi}::text IS NULL OR LOWER(sr."seksiPemohon") = LOWER(${filterSeksi}))
         AND (${filterId}::int IS NULL OR sr.id = ${filterId})
       ORDER BY sr."waktuDibuat" DESC
     `;

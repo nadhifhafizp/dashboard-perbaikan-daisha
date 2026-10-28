@@ -12,7 +12,6 @@ import {
   MessageSquare,
   Clock,
   User,
-  Tag,
   Pencil,
   Trash2,
 } from 'lucide-react';
@@ -22,7 +21,6 @@ interface RiwayatTicketCardProps {
   onViewDetail: (ticket: Ticket) => void;
   onEdit?: (ticket: Ticket) => void;
   onCancel?: (ticket: Ticket) => void;
-  onPrintTag?: (ticket: Ticket) => void;
 }
 
 function RiwayatTicketCardComponent({
@@ -30,7 +28,6 @@ function RiwayatTicketCardComponent({
   onViewDetail,
   onEdit,
   onCancel,
-  onPrintTag,
 }: RiwayatTicketCardProps) {
   const isOpen = ticket.status === 'Open';
 
@@ -209,18 +206,6 @@ function RiwayatTicketCardComponent({
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {onPrintTag && (
-            <button
-              type="button"
-              onClick={() => onPrintTag(ticket)}
-              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1"
-              title="Cetak Tag Fisik Daisha untuk digantungkan di unit"
-            >
-              <Tag className="w-3.5 h-3.5" />
-              <span>Cetak Tag</span>
-            </button>
-          )}
-
           <button
             type="button"
             onClick={() => onViewDetail(ticket)}

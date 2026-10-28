@@ -10,7 +10,6 @@ import ConfirmModal from '@/components/ConfirmModal';
 import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
 import AdminTicketForm from '@/components/admin/AdminTicketForm';
 import EditTicketModal from '@/components/riwayat/EditTicketModal';
-import PrintTicketTagModal from '@/components/common/PrintTicketTagModal';
 import AdminTicketTable from '@/components/admin/AdminTicketTable';
 import AdminKpiStats from '@/components/admin/AdminKpiStats';
 import {
@@ -36,9 +35,6 @@ export default function AdminPage() {
   // Diagnosa / Edit Ticket State
   const [ticketToEdit, setTicketToEdit] = useState<Ticket | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
-
-  // Modal Cetak Tag Fisik Daisha
-  const [ticketForTag, setTicketForTag] = useState<Ticket | null>(null);
 
   // Modal Delete State
   const [ticketToDelete, setTicketToDelete] = useState<Ticket | null>(null);
@@ -312,7 +308,6 @@ export default function AdminPage() {
           filterTab={filterTab}
           onSelectTicket={setSelectedTicket}
           onEditTicket={setTicketToEdit}
-          onTagTicket={setTicketForTag}
           onDeleteTicket={setTicketToDelete}
           isProcessing={isProcessing}
         />
@@ -328,27 +323,6 @@ export default function AdminPage() {
           onCancel={() => setSelectedTicket(null)}
         />
       )}
-
-      {/* Modal Cetak Tag Fisik Daisha */}
-      <PrintTicketTagModal
-        isOpen={!!ticketForTag}
-        ticket={
-          ticketForTag
-            ? {
-                idTiket: ticketForTag.noTiket || ticketForTag.idTiketAsli,
-                noDaisha: ticketForTag.noDaisha,
-                namaDaisha: ticketForTag.namaDaisha,
-                seksi: ticketForTag.seksi,
-                namaPelapor: ticketForTag.pelapor,
-                waktuMasuk: ticketForTag.tglMasuk,
-                detail: ticketForTag.detail,
-                catatanTeknisi: ticketForTag.reason,
-                status: ticketForTag.status,
-              }
-            : null
-        }
-        onClose={() => setTicketForTag(null)}
-      />
 
       {/* Confirm Delete Modal */}
       <ConfirmModal

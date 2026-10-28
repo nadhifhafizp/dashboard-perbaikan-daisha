@@ -19,7 +19,6 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Tag,
   Trash2,
   ScanLine,
   Clock,
@@ -33,7 +32,6 @@ interface AdminTicketTableProps {
   filterTab: 'all' | 'Open' | 'Progress' | 'Done' | 'Scrap';
   onSelectTicket: (ticket: Ticket) => void;
   onEditTicket: (ticket: Ticket) => void;
-  onTagTicket: (ticket: Ticket) => void;
   onDeleteTicket: (ticket: Ticket) => void;
   isProcessing: boolean;
 }
@@ -44,7 +42,6 @@ function AdminTicketTableComponent({
   filterTab,
   onSelectTicket,
   onEditTicket,
-  onTagTicket,
   onDeleteTicket,
   isProcessing,
 }: AdminTicketTableProps) {
@@ -564,14 +561,6 @@ function AdminTicketTableComponent({
                     <span>Proses</span>
                   </button>
                   <button
-                    onClick={() => onTagTicket(t)}
-                    className="h-11 sm:h-10 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1"
-                    title="Cetak Tag Fisik Daisha"
-                  >
-                    <Tag className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Tag</span>
-                  </button>
-                  <button
                     type="button"
                     onClick={() => onDeleteTicket(t)}
                     disabled={isProcessing}
@@ -793,15 +782,6 @@ function AdminTicketTableComponent({
                         >
                           <Edit3 className="w-3.5 h-3.5 text-slate-500" />
                           <span>Edit</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onTagTicket(t)}
-                          className="h-9 sm:h-10 px-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5"
-                          title="Cetak Tag Fisik Daisha"
-                        >
-                          <Tag className="w-3.5 h-3.5 text-slate-500" />
-                          <span>Tag</span>
                         </button>
                         <button
                           type="button"

@@ -10,7 +10,6 @@ import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 import { useTickets, broadcastTicketChange } from '@/hooks/useTickets';
 import { useSectionDaishaUnits } from '@/hooks/useSectionDaishaUnits';
 import QrScannerModal from '@/components/input/QrScannerModal';
-import PrintTicketTagModal, { PrintableTicketData } from '@/components/common/PrintTicketTagModal';
 import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
 import {
   AlertTriangle,
@@ -65,8 +64,6 @@ export default function LaporRusakSeksiPage() {
   // Scanner & Modal State
   const [isScanning, setIsScanning] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isPrintTagOpen, setIsPrintTagOpen] = useState(false);
-  const [createdTicketData, setCreatedTicketData] = useState<PrintableTicketData | null>(null);
 
   // Feedback Modal
   const [feedback, setFeedback] = useState<{
@@ -212,18 +209,6 @@ export default function LaporRusakSeksiPage() {
       if (res.ok) {
         broadcastTicketChange();
         void refresh(true, true);
-
-        const printable: PrintableTicketData = {
-          idTiket: cleanIdTiket,
-          noDaisha: cleanNoDaisha,
-          namaDaisha: finalNamaDaisha,
-          seksi: activeSeksi,
-          namaPelapor: namaPelapor.trim(),
-          waktuMasuk: cleanWaktu,
-          status: 'Open',
-          detail: payload.detail,
-        };
-        setCreatedTicketData(printable);
 
         setFeedback({
           isOpen: true,
@@ -635,15 +620,6 @@ export default function LaporRusakSeksiPage() {
           isOpen={isScanning}
           onClose={() => setIsScanning(false)}
           onScanSuccess={handleScanSuccess}
-        />
-      )}
-
-      {/* Modal Cetak Tag Daisha jika ingin langsung ditempel di unit fisik */}
-      {createdTicketData && (
-        <PrintTicketTagModal
-          isOpen={isPrintTagOpen}
-          ticket={createdTicketData}
-          onClose={() => setIsPrintTagOpen(false)}
         />
       )}
 

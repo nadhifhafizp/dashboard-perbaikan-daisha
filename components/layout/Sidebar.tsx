@@ -129,7 +129,7 @@ function SidebarInner({
         ...(isAdmin ? [{ href: '/admin', label: 'Panel Tindakan', icon: Settings }] : []),
         { href: '/input', label: 'Input Kerusakan', icon: PenSquare },
         ...(!isAdmin ? [{ href: '/lapor-rusak', label: 'Lapor Rusak Seksi', icon: AlertTriangle }] : []),
-        ...(!isAdmin ? [{ href: '/riwayat', label: 'Antrean Unit', icon: ScanLine }] : []),
+        ...(!isAdmin ? [{ href: '/riwayat', label: isOperator ? 'Tindakan Bengkel' : 'Antrean Unit', icon: ScanLine }] : []),
       ],
     },
     {
@@ -220,7 +220,7 @@ function SidebarInner({
           icon: Wrench,
           items: [
             { href: '/input', label: 'Input Kerusakan', icon: PenSquare },
-            { href: '/riwayat', label: 'Antrean Unit', icon: ScanLine },
+            { href: '/riwayat', label: 'Tindakan Bengkel', icon: ScanLine },
           ],
         },
         ...allModules.filter((m) => m.id === 'FLEET'),

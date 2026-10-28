@@ -48,8 +48,8 @@ export default function WorkshopPortalPage() {
     );
   }, [tickets, currentUser?.seksi]);
 
-  const activeRepairCount = seksiTickets.filter((t) => t.status !== 'SELESAI').length;
-  const completedRepairCount = seksiTickets.filter((t) => t.status === 'SELESAI').length;
+  const activeRepairCount = seksiTickets.filter((t) => t.status !== 'Done' && t.status !== 'Scrap').length;
+  const completedRepairCount = seksiTickets.filter((t) => t.status === 'Done').length;
 
   if (authLoading || isOperator) {
     return (
@@ -379,7 +379,7 @@ export default function WorkshopPortalPage() {
                 href="/riwayat"
                 className="t-caption text-slate-500 hover:text-slate-900 inline-flex items-center gap-1 transition"
               >
-                <span>Antrean Unit</span>
+                <span>{isOperator ? 'Tindakan Bengkel' : 'Antrean Unit'}</span>
               </Link>
             </div>
           </div>

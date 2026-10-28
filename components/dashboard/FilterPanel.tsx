@@ -24,6 +24,7 @@ interface FilterPanelProps {
   handleResetFilter: () => void;
   filteredCount: number;
   totalCount: number;
+  isSeksiLocked?: boolean;
 }
 
 export default function FilterPanel({
@@ -46,6 +47,7 @@ export default function FilterPanel({
   handleResetFilter,
   filteredCount,
   totalCount,
+  isSeksiLocked = false,
 }: FilterPanelProps) {
   const [isMobileExpanded, setIsMobileExpanded] = React.useState(false);
 
@@ -168,18 +170,31 @@ export default function FilterPanel({
           <label htmlFor="filter-seksi" className="block text-xs font-medium text-slate-700 mb-1">
             Seksi Asal
           </label>
-          <select
-            id="filter-seksi"
-            value={filterSeksi}
-            onChange={(e) => {
-              setFilterSeksi(e.target.value);
-              setFilterDaisha('');
-            }}
-            className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
-          >
-            <option value="">Semua Seksi</option>
-            {DAFTAR_SEKSI.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+          {isSeksiLocked ? (
+            <div className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 flex items-center justify-between select-none">
+              <span className="truncate">Seksi {filterSeksi || 'Anda'}</span>
+              <span className="text-2xs font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
+                Terkunci
+              </span>
+            </div>
+          ) : (
+            <select
+              id="filter-seksi"
+              value={filterSeksi}
+              onChange={(e) => {
+                setFilterSeksi(e.target.value);
+                setFilterDaisha('');
+              }}
+              className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
+            >
+              <option value="">Semua Seksi</option>
+              {DAFTAR_SEKSI.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* 3. Jenis Daisha Filter */}

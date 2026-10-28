@@ -8,7 +8,6 @@ import { useTickets } from '@/hooks/useTickets';
 import DetailTicketModal from '@/components/riwayat/DetailTicketModal';
 import RiwayatTicketCard from '@/components/riwayat/RiwayatTicketCard';
 import QueueKanbanBoard from '@/components/riwayat/QueueKanbanBoard';
-import PrintTicketTagModal from '@/components/common/PrintTicketTagModal';
 import PaginationControl from '@/components/common/PaginationControl';
 import { useAuth } from '@/context/AuthContext';
 import { detectDaishaSize } from '@/lib/daishaSize';
@@ -41,7 +40,7 @@ import {
 
 export default function RiwayatLaporanPage() {
   const router = useRouter();
-  const { isAdmin, isSeksi, currentUser, isLoading: authLoading } = useAuth();
+  const { isAdmin, isSeksi, isOperator, currentUser, isLoading: authLoading } = useAuth();
   const { tickets, loading, error, refresh, setTickets } = useTickets();
 
   useEffect(() => {
@@ -53,12 +52,21 @@ export default function RiwayatLaporanPage() {
   // View Mode: 'kanban' (default) atau 'list'
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
+  // Seksi terkunci untuk user role seksi
+  const userSeksi = isSeksi && currentUser?.seksi ? currentUser.seksi : null;
+
   // Filter States
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'Open' | 'Progress' | 'Done' | 'Scrap'>('all');
-  const [selectedSeksi, setSelectedSeksi] = useState<string>('all');
+  const [selectedSeksi, setSelectedSeksi] = useState<string>(() => userSeksi || 'all');
   const [selectedDaisha, setSelectedDaisha] = useState<string>('all');
   const [selectedAging, setSelectedAging] = useState<string>('all');
+
+  useEffect(() => {
+    if (userSeksi) {
+      setSelectedSeksi(userSeksi);
+    }
+  }, [userSeksi]);
 
   // Sorting State (Default: Input Terbaru)
   const [sortBy, setSortBy] = useState<SortOption>('input_desc');
@@ -70,32 +78,31 @@ export default function RiwayatLaporanPage() {
   // Modal Detail State (Cross-check)
   const [ticketForDetail, setTicketForDetail] = useState<Ticket | null>(null);
 
-  // Modal Cetak Tag Fisik Langsung
-  const [ticketForTag, setTicketForTag] = useState<Ticket | null>(null);
-
   // Daftar Seksi yang tersedia (Master data + Tiket)
   const seksiList = useMemo(() => {
+    if (userSeksi) return [userSeksi];
     const fromMaster = DAFTAR_SEKSI.filter((s) => s.toLowerCase() !== 'all seksi');
     const fromTickets = tickets.map((t) => t.seksi).filter(Boolean);
     return Array.from(new Set([...fromMaster, ...fromTickets])).sort();
-  }, [tickets]);
+  }, [tickets, userSeksi]);
 
   // Daftar Jenis Daisha yang tersedia (dinamis menyesuaikan jika Seksi dipilih)
   const daishaList = useMemo(() => {
-    if (selectedSeksi !== 'all') {
-      const bySeksi = getDaishaBySeksi(selectedSeksi);
+    const activeSection = userSeksi || (selectedSeksi !== 'all' ? selectedSeksi : null);
+    if (activeSection) {
+      const bySeksi = getDaishaBySeksi(activeSection);
       const fromTickets = tickets
-        .filter((t) => t.seksi?.toLowerCase() === selectedSeksi.toLowerCase())
+        .filter((t) => t.seksi?.toLowerCase() === activeSection.toLowerCase())
         .map((t) => t.namaDaisha)
         .filter(Boolean);
       return Array.from(new Set([...bySeksi, ...fromTickets])).sort();
     }
     const fromTickets = tickets.map((t) => t.namaDaisha).filter(Boolean);
     return Array.from(new Set([...DAFTAR_SEMUA_DAISHA, ...fromTickets])).sort();
-  }, [selectedSeksi, tickets]);
+  }, [selectedSeksi, userSeksi, tickets]);
 
   const hasActiveFilters =
-    selectedSeksi !== 'all' ||
+    (!userSeksi && selectedSeksi !== 'all') ||
     selectedDaisha !== 'all' ||
     selectedAging !== 'all' ||
     statusFilter !== 'all' ||
@@ -103,7 +110,7 @@ export default function RiwayatLaporanPage() {
     Boolean(search.trim());
 
   const resetAllFilters = () => {
-    setSelectedSeksi('all');
+    setSelectedSeksi(userSeksi || 'all');
     setSelectedDaisha('all');
     setSelectedAging('all');
     setStatusFilter('all');
@@ -226,13 +233,17 @@ export default function RiwayatLaporanPage() {
                 <span>{isSeksi ? 'Lapor Rusak' : 'Input Teknisi'}</span>
               </Link>
               <span className="text-slate-300">/</span>
-              <span className="font-semibold text-slate-900">Antrean</span>
+              <span className="font-semibold text-slate-900">
+                {isOperator ? 'Tindakan Bengkel' : 'Antrean'}
+              </span>
             </nav>
             <h1 className="t-title text-slate-900 tracking-tight">
-              Antrean Perbaikan
+              {isOperator ? 'Tindakan Bengkel' : 'Antrean Perbaikan'}
             </h1>
             <p className="t-caption text-slate-500">
-              Status pengerjaan di bengkel
+              {isOperator
+                ? 'Status pengerjaan servis, tindakan perbaikan, dan progres daisha di bengkel'
+                : 'Status pengerjaan di bengkel'}
             </p>
           </div>
 
@@ -366,24 +377,33 @@ export default function RiwayatLaporanPage() {
               <label className="block text-xs font-medium text-slate-700 mb-1">
                 Seksi
               </label>
-              <select
-                value={selectedSeksi}
-                onChange={(e) => {
-                  setSelectedSeksi(e.target.value);
-                  setSelectedDaisha('all');
-                }}
-                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none cursor-pointer transition"
-              >
-                <option value="all">Semua Seksi ({tickets.length})</option>
-                {seksiList.map((s) => {
-                  const count = tickets.filter((t) => t.seksi?.toLowerCase() === s.toLowerCase()).length;
-                  return (
-                    <option key={s} value={s}>
-                      {s} ({count})
-                    </option>
-                  );
-                })}
-              </select>
+              {userSeksi ? (
+                <div className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 flex items-center justify-between select-none">
+                  <span className="truncate">Seksi {userSeksi}</span>
+                  <span className="text-2xs font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
+                    Terkunci
+                  </span>
+                </div>
+              ) : (
+                <select
+                  value={selectedSeksi}
+                  onChange={(e) => {
+                    setSelectedSeksi(e.target.value);
+                    setSelectedDaisha('all');
+                  }}
+                  className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none cursor-pointer transition"
+                >
+                  <option value="all">Semua Seksi ({tickets.length})</option>
+                  {seksiList.map((s) => {
+                    const count = tickets.filter((t) => t.seksi?.toLowerCase() === s.toLowerCase()).length;
+                    return (
+                      <option key={s} value={s}>
+                        {s} ({count})
+                      </option>
+                    );
+                  })}
+                </select>
+              )}
             </div>
 
             {/* Filter Jenis Daisha */}
@@ -605,7 +625,6 @@ export default function RiwayatLaporanPage() {
                     key={ticket.idTiketAsli}
                     ticket={ticket}
                     onViewDetail={(t) => setTicketForDetail(t)}
-                    onPrintTag={(t) => setTicketForTag(t)}
                   />
                 ))}
               </div>
@@ -628,7 +647,6 @@ export default function RiwayatLaporanPage() {
                 <QueueKanbanBoard
                   tickets={filteredTickets}
                   onViewDetail={(t) => setTicketForDetail(t)}
-                  onPrintTag={(t) => setTicketForTag(t)}
                 />
               ) : (
                 <div className="space-y-4">
@@ -638,7 +656,6 @@ export default function RiwayatLaporanPage() {
                         key={ticket.idTiketAsli}
                         ticket={ticket}
                         onViewDetail={(t) => setTicketForDetail(t)}
-                        onPrintTag={(t) => setTicketForTag(t)}
                       />
                     ))}
                   </div>
@@ -665,27 +682,6 @@ export default function RiwayatLaporanPage() {
         isOpen={!!ticketForDetail}
         ticket={ticketForDetail}
         onClose={() => setTicketForDetail(null)}
-      />
-
-      {/* Modal Cetak Tag Fisik Daisha */}
-      <PrintTicketTagModal
-        isOpen={!!ticketForTag}
-        ticket={
-          ticketForTag
-            ? {
-                idTiket: String(ticketForTag.idTiketAsli || ticketForTag.noTiket || ticketForTag.id),
-                noDaisha: ticketForTag.noDaisha,
-                namaDaisha: ticketForTag.namaDaisha,
-                seksi: ticketForTag.seksi,
-                namaPelapor: ticketForTag.pelapor,
-                waktuMasuk: ticketForTag.tglMasuk,
-                status: ticketForTag.status,
-                detail: ticketForTag.detail,
-                catatanTeknisi: ticketForTag.reason,
-              }
-            : null
-        }
-        onClose={() => setTicketForTag(null)}
       />
     </div>
   );

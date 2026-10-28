@@ -13,13 +13,11 @@ import {
   User,
   Clock,
   MessageSquare,
-  Tag,
   Edit3,
 } from 'lucide-react';
 import { Ticket } from '@/types/ticket';
 import StatusBadge from '@/components/common/StatusBadge';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
-import PrintTicketTagModal from '@/components/common/PrintTicketTagModal';
 import { detectDaishaSize } from '@/lib/daishaSize';
 
 interface DetailTicketModalProps {
@@ -35,8 +33,6 @@ export default function DetailTicketModal({
   onClose,
   onEdit,
 }: DetailTicketModalProps) {
-  const [isPrintTagOpen, setIsPrintTagOpen] = useState(false);
-
   React.useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -396,18 +392,9 @@ export default function DetailTicketModal({
           <button
             type="button"
             onClick={onClose}
-            className="order-3 sm:order-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer text-center"
+            className="order-2 sm:order-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer text-center"
           >
             Tutup
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsPrintTagOpen(true)}
-            className="order-2 sm:order-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            <Tag className="w-3.5 h-3.5" />
-            <span>Cetak Tag Fisik</span>
           </button>
 
           {isOpenStatus && onEdit && (
@@ -417,7 +404,7 @@ export default function DetailTicketModal({
                 onClose();
                 onEdit(ticket);
               }}
-              className="order-1 sm:order-3 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
+              className="order-1 sm:order-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>Koreksi / Edit Tiket</span>
@@ -425,27 +412,6 @@ export default function DetailTicketModal({
           )}
         </div>
       </div>
-
-      {/* Modal Cetak Tag Fisik Daisha */}
-      <PrintTicketTagModal
-        isOpen={isPrintTagOpen}
-        ticket={
-          ticket
-            ? {
-                idTiket: String(ticket.idTiketAsli || ticket.noTiket || ticket.id),
-                noDaisha: ticket.noDaisha,
-                namaDaisha: ticket.namaDaisha,
-                seksi: ticket.seksi,
-                namaPelapor: ticket.pelapor,
-                waktuMasuk: ticket.tglMasuk,
-                status: ticket.status,
-                detail: ticket.detail,
-                catatanTeknisi: ticket.reason,
-              }
-            : null
-        }
-        onClose={() => setIsPrintTagOpen(false)}
-      />
     </div>
   );
 }

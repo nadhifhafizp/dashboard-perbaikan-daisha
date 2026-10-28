@@ -286,28 +286,7 @@ body {
     display: none !important;
   }
 
-  /* 1. Cetak Tag Fisik Daisha */
-  body:has(.printable-tag-area) * {
-    visibility: hidden;
-  }
-  body:has(.printable-tag-area) .printable-tag-area,
-  body:has(.printable-tag-area) .printable-tag-area * {
-    visibility: visible !important;
-  }
-  body:has(.printable-tag-area) .printable-tag-area {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 8mm !important;
-    border: 2px solid #000000 !important;
-    box-shadow: none !important;
-    background: #ffffff !important;
-  }
-
-  /* 2. Cetak Dokumen Resmi Permohonan Seksi ENG-KP-011 */
+  /* Cetak Dokumen Resmi Permohonan Seksi ENG-KP-011 */
   body:has(.printable-request-area) * {
     visibility: hidden;
   }

@@ -18,6 +18,7 @@ interface FleetMasterOverviewProps {
     totalJenis: number;
     recurringUnitsCount: number;
   };
+  isSeksiLocked?: boolean;
 }
 
 export default function FleetMasterOverview({
@@ -25,6 +26,7 @@ export default function FleetMasterOverview({
   onClearSeksi,
   globalDonutData,
   globalStats,
+  isSeksiLocked = false,
 }: FleetMasterOverviewProps) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
@@ -53,14 +55,16 @@ export default function FleetMasterOverview({
               <span>
                 Seksi: <strong>{currentSeksi}</strong>
               </span>
-              <button
-                type="button"
-                onClick={onClearSeksi}
-                className="text-amber-700 hover:text-amber-900 cursor-pointer p-0.5 rounded hover:bg-amber-100"
-                title="Kembali ke semua seksi"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+              {!isSeksiLocked && (
+                <button
+                  type="button"
+                  onClick={onClearSeksi}
+                  className="text-amber-700 hover:text-amber-900 cursor-pointer p-0.5 rounded hover:bg-amber-100"
+                  title="Kembali ke semua seksi"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </span>
           </div>
         )}

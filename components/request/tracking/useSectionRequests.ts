@@ -297,6 +297,16 @@ export function useSectionRequests() {
   // Filter List Requests
   const filtered = useMemo(() => {
     return requests.filter((r) => {
+      // 0. User role seksi filter: strictly only show requests from their own section
+      if (!isAdmin && currentUser?.role === 'USER_SEKSI' && currentUser?.seksi) {
+        const userSeksi = currentUser.seksi.toLowerCase();
+        const requestSeksi = (r.seksiPemohon || '').toLowerCase();
+        const isOwner = r.dibuatOleh?.toLowerCase() === currentUser.username.toLowerCase();
+        if (requestSeksi !== userSeksi && !isOwner) {
+          return false;
+        }
+      }
+
       // 1. Flowchart filter tab
       if (filterFlow === 'waiting_atasan') {
         if (
@@ -350,7 +360,7 @@ export function useSectionRequests() {
 
       return true;
     });
-  }, [requests, filterFlow, search]);
+  }, [requests, filterFlow, search, isAdmin, currentUser]);
 
   return {
     isAdmin,

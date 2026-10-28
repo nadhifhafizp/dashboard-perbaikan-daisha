@@ -6,7 +6,6 @@ import { CreateTicketPayload, Ticket, TicketStatus } from '@/types/ticket';
 import { getInitialDateTime, cleanInputDateTime } from '@/lib/date';
 import { FeedbackType } from '@/components/FeedbackModal';
 import { TindakanType } from '@/components/input/DamageCatalogSelector';
-import { PrintableTicketData } from '@/components/common/PrintTicketTagModal';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 import { useTickets, broadcastTicketChange } from '@/hooks/useTickets';
@@ -76,10 +75,6 @@ export function useInputKerusakan() {
 
   const { tickets, refresh, setTickets } = useTickets({ autoRefreshIntervalMs: 0 });
   const { catalog, seksiList, daishaList, getDaishaBySeksi } = useDaishaCatalog();
-
-  // State untuk Cetak Tag Fisik Daisha setelah submit
-  const [createdTicketForTag, setCreatedTicketForTag] = useState<PrintableTicketData | null>(null);
-  const [isPrintTagOpen, setIsPrintTagOpen] = useState(false);
 
   // State untuk dismiss peringatan duplikat
   const [dismissedDuplicateUnit, setDismissedDuplicateUnit] = useState<string | null>(null);
@@ -380,18 +375,6 @@ export function useInputKerusakan() {
       if (response.ok) {
         setIsReviewModalOpen(false);
 
-        const printable: PrintableTicketData = {
-          idTiket: pendingPayload.idTiket,
-          noDaisha: pendingPayload.noDaisha,
-          namaDaisha: pendingPayload.namaDaisha,
-          seksi: pendingPayload.seksi,
-          namaPelapor: pendingPayload.namaPelapor,
-          waktuMasuk: pendingPayload.waktuMasuk,
-          status: pendingPayload.status,
-          detail: pendingPayload.detail,
-        };
-        setCreatedTicketForTag(printable);
-
         // Optimistic Update
         const optimisticTicket: Ticket = {
           id: pendingPayload.idTiket,
@@ -429,14 +412,9 @@ export function useInputKerusakan() {
         showFeedback(
           'success',
           'Laporan Berhasil Disimpan',
-          `Laporan unit ${pendingPayload.noDaisha} (${pendingPayload.namaDaisha}) berhasil disimpan ${statusLabelDesc}. Anda dapat mencetak Tag Fisik Unit sekarang untuk digantungkan pada Daisha.`,
+          `Laporan unit ${pendingPayload.noDaisha} (${pendingPayload.namaDaisha}) berhasil disimpan ${statusLabelDesc}.`,
           `Seksi: ${pendingPayload.seksi} | Status: ${pendingPayload.status} | Komponen: ${pendingPayload.kategori}`,
-          'Tutup',
-          'Cetak Tag Fisik Unit',
-          () => {
-            setFeedback((prev) => ({ ...prev, isOpen: false }));
-            setIsPrintTagOpen(true);
-          }
+          'Tutup'
         );
 
         setFormData({
@@ -522,9 +500,5 @@ export function useInputKerusakan() {
     feedback,
     setFeedback,
     showFeedback,
-    isPrintTagOpen,
-    setIsPrintTagOpen,
-    createdTicketForTag,
-    setCreatedTicketForTag,
   };
 }

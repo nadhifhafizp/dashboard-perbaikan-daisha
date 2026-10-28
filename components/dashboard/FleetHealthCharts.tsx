@@ -15,6 +15,7 @@ interface FleetHealthChartsProps {
   tickets: Ticket[];
   selectedSeksi?: string;
   onSelectSeksi?: (seksi: string) => void;
+  isSeksiLocked?: boolean;
 }
 
 export default function FleetHealthCharts({
@@ -22,6 +23,7 @@ export default function FleetHealthCharts({
   tickets,
   selectedSeksi = '',
   onSelectSeksi,
+  isSeksiLocked = false,
 }: FleetHealthChartsProps) {
   const {
     currentSeksi,
@@ -53,20 +55,23 @@ export default function FleetHealthCharts({
 
   return (
     <div className="space-y-4">
-      {/* 0. Filter Bar Seksi */}
-      <FleetSeksiFilterBar
-        currentSeksi={currentSeksi}
-        totalUnitsCount={units.length}
-        availableSeksiList={availableSeksiList}
-        onSelectSeksi={handleSeksiChange}
-      />
+      {/* 0. Filter Bar Seksi (Hanya tampil jika tidak dikunci untuk seksi tertentu) */}
+      {!isSeksiLocked && (
+        <FleetSeksiFilterBar
+          currentSeksi={currentSeksi}
+          totalUnitsCount={units.length}
+          availableSeksiList={availableSeksiList}
+          onSelectSeksi={handleSeksiChange}
+        />
+      )}
 
       {/* 1. Master Donut & 2 Poin Utama (OKE vs NG) */}
       <FleetMasterOverview
         currentSeksi={currentSeksi}
-        onClearSeksi={() => handleSeksiChange('')}
+        onClearSeksi={() => !isSeksiLocked && handleSeksiChange('')}
         globalDonutData={globalDonutData}
         globalStats={globalStats}
+        isSeksiLocked={isSeksiLocked}
       />
 
       {/* 2. Breakdown KPI Daisha dari Setiap Seksi (Stacked Bar & Tabel) */}

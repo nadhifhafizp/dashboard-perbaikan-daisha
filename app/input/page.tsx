@@ -4,7 +4,6 @@ import React from 'react';
 import FeedbackModal from '@/components/FeedbackModal';
 import QrScannerModal from '@/components/input/QrScannerModal';
 import ReviewTicketModal from '@/components/input/ReviewTicketModal';
-import PrintTicketTagModal from '@/components/common/PrintTicketTagModal';
 
 import { useInputKerusakan } from '@/components/input/useInputKerusakan';
 import InputHeader from '@/components/input/InputHeader';
@@ -57,10 +56,6 @@ export default function InputKerusakanPage() {
     feedback,
     setFeedback,
     showFeedback,
-    isPrintTagOpen,
-    setIsPrintTagOpen,
-    createdTicketForTag,
-    setCreatedTicketForTag,
   } = useInputKerusakan();
 
   const totalDamageCount = selectedKerusakan.length + customKerusakanList.length;
@@ -168,18 +163,6 @@ export default function InputKerusakanPage() {
         onClose={() => setFeedback((prev) => ({ ...prev, isOpen: false }))}
         onSecondaryClick={feedback.onSecondaryClick}
       />
-
-      {/* Modal Cetak Tag Fisik Daisha setelah Submit Berhasil */}
-      {createdTicketForTag && (
-        <PrintTicketTagModal
-          isOpen={isPrintTagOpen}
-          ticket={createdTicketForTag}
-          onClose={() => {
-            setIsPrintTagOpen(false);
-            setCreatedTicketForTag(null);
-          }}
-        />
-      )}
     </div>
   );
 }

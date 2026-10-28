@@ -71,7 +71,7 @@ export default function InputHeader({ isAdmin, isOperator }: InputHeaderProps) {
               className="h-10 px-4 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200"
             >
               <ClipboardList className="w-4 h-4 text-slate-500" />
-              <span>Lihat Antrean Tiket</span>
+              <span>{isOperator ? 'Tindakan Bengkel' : 'Lihat Antrean Tiket'}</span>
             </Link>
           )}
         </div>

@@ -5,12 +5,11 @@ import { Ticket } from '@/types/ticket';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { parseToTimestamp } from '@/lib/date';
-import { Clock, Wrench, CheckCircle2, Printer, Search } from 'lucide-react';
+import { Clock, Wrench, CheckCircle2, Search } from 'lucide-react';
 
 interface QueueKanbanBoardProps {
   tickets: Ticket[];
   onViewDetail: (ticket: Ticket) => void;
-  onPrintTag?: (ticket: Ticket) => void;
 }
 
 function formatElapsedTime(dateStr: string): string {
@@ -30,7 +29,6 @@ function formatElapsedTime(dateStr: string): string {
 export default function QueueKanbanBoard({
   tickets,
   onViewDetail,
-  onPrintTag,
 }: QueueKanbanBoardProps) {
   // State untuk toggle batas tampilan unit selesai di kolom 3
   const [showAllDone, setShowAllDone] = React.useState(false);
@@ -383,20 +381,6 @@ export default function QueueKanbanBoard({
                       >
                         Detail
                       </button>
-
-                      {onPrintTag && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onPrintTag(ticket);
-                          }}
-                          className="px-2 py-0.5 rounded text-xs font-medium text-emerald-700 hover:bg-emerald-50 border border-emerald-200 transition flex items-center gap-0.5 cursor-pointer"
-                        >
-                          <Printer className="w-3 h-3" />
-                          <span>Tag</span>
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>

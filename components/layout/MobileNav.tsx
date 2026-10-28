@@ -83,7 +83,7 @@ export default function MobileNav({
   } else if (isOperator) {
     navItems.push(
       { href: '/input', icon: PenSquare, label: 'Lapor' },
-      { href: '/riwayat', icon: ClipboardList, label: 'Status' },
+      { href: '/riwayat', icon: ClipboardList, label: 'Tindakan' },
     );
   } else if (isSeksi) {
     navItems.push(
