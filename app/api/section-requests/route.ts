@@ -12,7 +12,7 @@ import {
 } from '@/lib/security';
 import { createInAppNotification, buildAtasanSpecialProjectEmailContent, sendEmailAsync } from '@/lib/emailNotification';
 import { DEFAULT_ATASAN_SPROJECT_EMAIL } from '@/lib/workflowConstants';
-import { generateNextNomorSurat } from '@/lib/nomorSurat';
+import { generateNextNomorSurat } from '@/lib/nomorSuratServer';
 
 // Parse base64/URL image safely
 function parseImageString(val: unknown): string | null {

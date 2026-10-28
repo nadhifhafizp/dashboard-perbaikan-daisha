@@ -1,6 +1,9 @@
 /**
  * lib/nomorSurat.ts — Format Standar Nomor Surat / Nomor Tiket Request Seksi Bridgestone
  *
+ * File ini berisi fungsi utilitas murni (bebas dependency database) yang aman digunakan
+ * di client components maupun server side.
+ *
  * Format Baku: NO/Seksi/Romawi/Tahun
  * Contoh: 001/BEAD/X/2026, 002/EXTD/X/2026
  *
@@ -8,8 +11,6 @@
  * Urutan nomor (NO) bersifat satu kesatuan global dari Workshop / Special Project
  * dan di-reset setiap pergantian tahun kalender.
  */
-
-import sql from '@/lib/db';
 
 export const SEKSI_CODE_MAP: Record<string, string> = {
   HRGA: 'HRGA',
@@ -94,41 +95,4 @@ export function formatNomorSurat(seq: number, seksiName: string, date: Date = ne
   const year = date.getFullYear();
 
   return `${noStr}/${code}/${romanMonth}/${year}`;
-}
-
-/**
- * Generate nomor surat resmi berikutnya dari database (Opsi A - Global Sequence per Tahun).
- */
-export async function generateNextNomorSurat(
-  seksiPemohon: string,
-  approvalDate: Date = new Date(),
-  customDb?: typeof sql
-): Promise<string> {
-  const db = customDb || sql;
-  const year = approvalDate.getFullYear();
-  const yearPattern = `%/${year}`;
-
-  // Ambil seluruh nomor surat pada tahun yang sama
-  const existingRecords = await db<Array<{ nomorSurat: string }>>`
-    SELECT "nomorSurat"
-    FROM "SectionRequest"
-    WHERE "nomorSurat" IS NOT NULL
-      AND "nomorSurat" LIKE ${yearPattern}
-  `;
-
-  let maxSeq = 0;
-  for (const row of existingRecords) {
-    if (!row.nomorSurat) continue;
-    // Format: NO/Seksi/Romawi/Tahun -> ambil bagian NO paling depan
-    const parts = row.nomorSurat.split('/');
-    if (parts.length >= 4) {
-      const parsedSeq = parseInt(parts[0], 10);
-      if (!isNaN(parsedSeq) && parsedSeq > maxSeq) {
-        maxSeq = parsedSeq;
-      }
-    }
-  }
-
-  const nextSeq = maxSeq + 1;
-  return formatNomorSurat(nextSeq, seksiPemohon, approvalDate);
 }
