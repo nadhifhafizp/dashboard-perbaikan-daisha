@@ -90,7 +90,8 @@ export async function GET(request: Request) {
         d."nama_daisha" AS "namaDaisha",
         d."seksi"
       FROM "Ticket" t
-      LEFT JOIN "Daisha" d ON UPPER(t."noDaisha") = UPPER(d."nomor_daisha")
+      LEFT JOIN "Daisha" d ON UPPER(TRIM(t."noDaisha")) = UPPER(TRIM(d."nomor_daisha"))
+                           OR REPLACE(UPPER(t."noDaisha"), ' ', '') = REPLACE(UPPER(d."nomor_daisha"), ' ', '')
       WHERE (${idParam}::text IS NULL OR t."idTiket" = ${idParam} OR UPPER(t."noDaisha") = UPPER(${idParam}))
         AND (${fromIso}::timestamptz IS NULL OR t."waktuMasuk" >= ${fromIso}::timestamptz)
         AND (${toIso}::timestamptz IS NULL OR t."waktuMasuk" <= ${toIso}::timestamptz)

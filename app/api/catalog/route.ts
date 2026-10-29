@@ -10,6 +10,7 @@ import {
   sanitizeText,
   validatePositiveInt,
 } from '@/lib/security';
+import { syncDaishaMasterFromCatalog } from '@/lib/daishaCatalogSync';
 
 interface SymptomObj {
   id: number;
@@ -356,6 +357,9 @@ export async function POST(request: Request) {
         details: `Nama: ${newDaisha.name}, Seksi: ${newDaisha.seksi}`,
       });
 
+      // Sinkronkan tabel master unit Daisha seketika
+      await syncDaishaMasterFromCatalog().catch((err) => console.error('Sync catalog error:', err));
+
       return NextResponse.json({
         success: true,
         message: `Jenis Daisha "${newDaisha.name}" berhasil ditambahkan.`,
@@ -565,6 +569,9 @@ export async function POST(request: Request) {
         details: `Varian: ${name}, Daisha: ${daisha.name}`,
       });
 
+      // Sinkronkan tabel master unit Daisha seketika
+      await syncDaishaMasterFromCatalog().catch((err) => console.error('Sync catalog error:', err));
+
       return NextResponse.json({
         success: true,
         message: `Varian "${name}" berhasil ditambahkan.`,
@@ -686,6 +693,9 @@ export async function PUT(request: Request) {
         targetId: id,
         details: `Nama: ${updated.name}`,
       });
+
+      // Sinkronkan tabel master unit Daisha seketika
+      await syncDaishaMasterFromCatalog().catch((err) => console.error('Sync catalog error:', err));
 
       return NextResponse.json({
         success: true,
@@ -886,6 +896,9 @@ export async function PUT(request: Request) {
         details: `Varian: ${name}, Daisha: ${daisha.name}`,
       });
 
+      // Sinkronkan tabel master unit Daisha seketika
+      await syncDaishaMasterFromCatalog().catch((err) => console.error('Sync catalog error:', err));
+
       return NextResponse.json({
         success: true,
         message: `Varian berhasil diperbarui menjadi "${name}".`,
@@ -964,6 +977,9 @@ export async function DELETE(request: Request) {
         targetId: id,
         details: `Nama: ${deleted.name}`,
       });
+
+      // Sinkronkan tabel master unit Daisha seketika
+      await syncDaishaMasterFromCatalog().catch((err) => console.error('Sync catalog error:', err));
 
       return NextResponse.json({ success: true, message: `Jenis Daisha "${deleted.name}" beserta komponennya berhasil dihapus.` });
     }
@@ -1088,6 +1104,9 @@ export async function DELETE(request: Request) {
         targetId: id,
         details: `Daisha: ${daisha.name}`,
       });
+
+      // Sinkronkan tabel master unit Daisha seketika
+      await syncDaishaMasterFromCatalog().catch((err) => console.error('Sync catalog error:', err));
 
       return NextResponse.json({ success: true, message: 'Varian Daisha berhasil dihapus dari database.' });
     }

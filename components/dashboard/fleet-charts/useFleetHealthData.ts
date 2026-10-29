@@ -151,7 +151,7 @@ export function useFleetHealthData({
 
     const map: Record<string, { label: string; jenis: string; total: number; oke: number; ng: number }> = {};
     targetUnits.forEach((u) => {
-      const j = u.jenis && u.jenis.trim() ? u.jenis.trim() : 'LAINNYA';
+      const j = (u.nama_daisha || u.jenis || 'LAINNYA').trim();
       if (!map[j]) {
         map[j] = { label: j, jenis: j, total: 0, oke: 0, ng: 0 };
       }
@@ -195,7 +195,7 @@ export function useFleetHealthData({
     > = {};
 
     targetUnits.forEach((u) => {
-      const j = u.jenis ? u.jenis.trim() : 'LAINNYA';
+      const j = (u.nama_daisha || u.jenis || 'LAINNYA').trim();
       if (!map[j]) {
         map[j] = { nama: j, total: 0, ready: 0, broken: 0, seksiSet: new Set() };
       }
