@@ -9,6 +9,7 @@ import {
   requireAuth,
   sanitizeText,
 } from '@/lib/security';
+import { DAFTAR_SEKSI, DAFTAR_SEMUA_DAISHA } from '@/lib/masterData';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -137,8 +138,8 @@ export async function GET(request: Request) {
         };
       }
 
-      // Query tabel log yang dinamis dan berukuran kecil (< 100 rows, sangat cepat ~30ms)
-      const [todayLogs, recentLogs, trendLogRows, conditionRows] = await Promise.all([
+      // Query tabel log dan master katalog secara paralel (Sangat cepat < 35ms)
+      const [todayLogs, recentLogs, trendLogRows, conditionRows, catalogRows] = await Promise.all([
         sql`
           SELECT 
             l.id,
@@ -196,7 +197,31 @@ export async function GET(request: Request) {
           WHERE tanggal_pengerjaan >= ${startOfYear} AND tanggal_pengerjaan <= ${endOfYear}
           GROUP BY COALESCE(kondisi, 'OK')
         `,
+        sql<Array<{ id: number; name: string; seksi: string; totalUnits: number | null; variants: unknown }>>`
+          SELECT 
+            id, 
+            name, 
+            seksi, 
+            COALESCE("totalUnits", 0)::int as "totalUnits", 
+            variants
+          FROM "DaishaCatalog"
+        `,
       ]);
+
+      // Agregasi statistik resmi dari DaishaCatalog (Registri Daisha)
+      const catalogSeksiMap = new Map<string, number>();
+      const catalogJenisSet = new Set<string>();
+      let catalogTotalAllUnits = 0;
+
+      for (const cat of catalogRows) {
+        const s = (cat.seksi && cat.seksi.trim()) ? cat.seksi.trim() : 'Building';
+        const units = Number(cat.totalUnits) || 0;
+        catalogSeksiMap.set(s, (catalogSeksiMap.get(s) || 0) + units);
+        catalogTotalAllUnits += units;
+        if (cat.name && cat.name.trim()) {
+          catalogJenisSet.add(cat.name.trim());
+        }
+      }
 
       // Saring armada Daisha jika ada filter seksi spesifik
       const isAllSeksi =
@@ -217,9 +242,22 @@ export async function GET(request: Request) {
         ? todayLogs.filter((l) => targetUnitIds.has(l.daisha_id) || targetUnitNos.has((l.nomor_daisha || '').toUpperCase()))
         : todayLogs;
 
+      // Tentukan angka total populasi resmi yang mengacu 100% ke DaishaCatalog
+      let officialTotalUnits = targetDaisha.length;
+      if (isAllSeksi) {
+        officialTotalUnits = catalogTotalAllUnits > 0 ? catalogTotalAllUnits : targetDaisha.length;
+      } else {
+        const matchedKey = Array.from(catalogSeksiMap.keys()).find(
+          (k) => k.toLowerCase() === filterSeksi.trim().toLowerCase()
+        );
+        if (matchedKey && catalogSeksiMap.has(matchedKey)) {
+          officialTotalUnits = catalogSeksiMap.get(matchedKey)!;
+        }
+      }
+
       // 2. Hitung agregasi per kategori
       const summary = {
-        totalUnits: targetDaisha.length,
+        totalUnits: officialTotalUnits,
         maintainedUnits: 0,
         unmaintainedUnits: 0,
         percentage: 0,
@@ -332,13 +370,29 @@ export async function GET(request: Request) {
         if (j) globalJenisSet.add(j);
       }
 
-      const seksiSummaries = Array.from(seksiMap.entries())
-        .map(([seksi, counts]) => ({ seksi, ...counts }))
+      const officialSeksiList = [...DAFTAR_SEKSI];
+      const seksiSummaries = officialSeksiList
+        .map((seksiName) => {
+          const counts = seksiMap.get(seksiName) || { total: 0, maintained: 0, unmaintained: 0, rusak: 0 };
+          const officialTotal = catalogSeksiMap.get(seksiName) ?? counts.total;
+          return {
+            seksi: seksiName,
+            total: officialTotal,
+            maintained: counts.maintained,
+            unmaintained: Math.max(0, officialTotal - counts.maintained),
+            rusak: counts.rusak,
+          };
+        })
         .sort((a, b) => b.total - a.total);
-      const seksiList = seksiSummaries.map((s) => s.seksi).sort((a, b) => a.localeCompare(b));
-      const globalJenisList = Array.from(globalJenisSet).sort((a, b) => a.localeCompare(b));
+
+      const seksiList = officialSeksiList.slice();
+      const globalJenisList =
+        catalogJenisSet.size > 0
+          ? Array.from(catalogJenisSet).sort((a, b) => a.localeCompare(b))
+          : DAFTAR_SEMUA_DAISHA.slice().sort();
 
       // Hitung persentase & target harian untuk summary
+      summary.unmaintainedUnits = Math.max(0, summary.totalUnits - summary.maintainedUnits);
       summary.percentage = summary.totalUnits > 0 ? Math.round((summary.maintainedUnits / summary.totalUnits) * 100) : 0;
       summary.dailyTarget = calculateDailyTarget(summary.unmaintainedUnits, remainingWorkDays);
 
@@ -428,9 +482,13 @@ export async function GET(request: Request) {
         conditionStats,
         breakdown,
         dailyTrend,
-        jenisList: globalJenisList.length > 0 ? globalJenisList : Array.from(jenisSet).sort(),
+        jenisList: globalJenisList,
         seksiList,
         seksiSummaries,
+        catalogStats: {
+          totalAllUnits: catalogTotalAllUnits,
+          bySeksi: Object.fromEntries(catalogSeksiMap),
+        },
         units: filteredUnits,
         recentLogs: finalRecentLogs,
       };

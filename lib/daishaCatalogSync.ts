@@ -26,11 +26,15 @@ export function formatVariantUnitNumber(prefix: string, num: number, rangeFormat
     return `UNIT-${String(num).padStart(3, '0')}`;
   }
 
-  // Tentukan panjang padding berdasarkan format atau prefix
-  let padLen = customPad && customPad > 0 ? customPad : 4;
+  // Khusus Building Vertical (S00, M00, L00) & GT Ring (S30, S40, M30, L30): panjang total 6 karakter!
   if (p.startsWith('S0') || p.startsWith('M0') || p.startsWith('L0') || p.startsWith('S3') || p.startsWith('S4') || p.startsWith('M3') || p.startsWith('L3')) {
-    padLen = 5;
-  } else if (p.startsWith('OHA-')) {
+    const numStr = String(num);
+    const prefixClean = p.slice(0, 6 - numStr.length);
+    return `${prefixClean}${numStr}`;
+  }
+
+  let padLen = customPad && customPad > 0 ? customPad : 4;
+  if (p.startsWith('OHA-')) {
     padLen = 3;
   } else if (rangeFormat && rangeFormat.includes('s/d')) {
     const match = rangeFormat.match(/(\d+)\s*$/);

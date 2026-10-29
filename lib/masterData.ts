@@ -9,51 +9,46 @@ export interface DaishaMasterInfo {
 }
 
 export const DAFTAR_SEKSI = [
-  'All seksi',
-  'Bead',
   'Building',
-  'Banbury',
   'Cutt/Cal',
+  'Banbury',
   'Extruding',
+  'Bead',
   'Poly Film',
 ] as const;
 
 export const DAFTAR_SEMUA_DAISHA: string[] = [
+  'A-Truck Nagara Filler',
   'Battery car',
   'Bead Preset',
-  'Bladder',
-  'Box Roll Slide',
-  'Box Roll Top',
+  'Box roll side',
+  'Box roll top',
   'Can Auto Pigmen',
   'Can Chemical Omny',
   'Covering',
-  'Daisha Auto Pigmen',
-  'Daisha Comp\' Kiriage',
-  'Daisha Polyfilm',
-  'Filter Nagara',
-  'Filter Reel',
-  'Flat Bed',
+  'Daisha auto pigmen',
+  "Daisha Comp' Kiriage",
+  'Daisha chip polyfilm',
   'GT Ring',
-  'Green Tire PSR',
-  'Green Tire TBR',
   'Inner Liner',
-  'KB Drum / Jikogu',
+  'KB drum / Jikogu',
   'Layer',
   'Monowire',
   'Ohaba Chaffer',
-  'Ohaba Layer',
-  'Omakitan A-truck',
-  'Omakitan B-truck',
+  'Ohaba layer',
+  'Omakitan (A-truck)',
+  'Omakitan (B-truck)',
   'Palet B/B',
   'Ply',
   'RTB',
   'Reel Belt',
+  'Reel Filler',
+  'Reel Side',
   'Reel Top',
-  'Slide B-truck',
-  'Slide Reel',
-  'Transfer Box Roll',
-  'Transfer Reel Belt',
-  'Transfer Reproses',
+  'Slide B-Truck',
+  'Transfer box roll',
+  'Transfer reel belt',
+  'Transfer reproses',
   'Vertical',
 ];
 
@@ -73,12 +68,36 @@ export const DAFTAR_SEMUA_KOMPONEN: string[] = [
 // Pemetaan Resmi Jenis Daisha per Seksi (Sesuai Katalog Master & Form Input Kerusakan)
 export const SECTION_DAISHA_MAP: Record<string, string[]> = {
   'Building': [
-    'Battery car',
+    'Vertical',
     'GT Ring',
+    'Battery car',
     'KB drum / Jikogu',
     'Transfer reel belt',
     'Transfer reproses',
-    'Vertical',
+  ],
+  'Extruding': [
+    'A-Truck Nagara Filler',
+    'Box roll side',
+    'Box roll top',
+    "Daisha Comp' Kiriage",
+    'Reel Filler',
+    'Reel Side',
+    'Reel Top',
+    'Slide B-Truck',
+    'Transfer box roll',
+  ],
+  'Cutt/Cal': [
+    'Inner Liner',
+    'Omakitan (A-truck)',
+    'Omakitan (B-truck)',
+    'Ply',
+    'Reel Belt',
+  ],
+  'Banbury': [
+    'Palet B/B',
+    'Can Auto Pigmen',
+    'Can Chemical Omny',
+    'Daisha auto pigmen',
   ],
   'Bead': [
     'Bead Preset',
@@ -88,43 +107,17 @@ export const SECTION_DAISHA_MAP: Record<string, string[]> = {
     'Ohaba Chaffer',
     'Ohaba layer',
     'RTB',
-    'Battery car',
-  ],
-  'Banbury': [
-    'Can Auto Pigmen',
-    'Can Chemical Omny',
-    'Daisha auto pigmen',
-    'Palet B/B',
-    'Battery car',
-  ],
-  'Cutt/Cal': [
-    'Inner Liner',
-    'Omakitan (A-truck)',
-    'Omakitan (B-truck)',
-    'Ply',
-    'Reel Belt',
-    'Battery car',
-  ],
-  'Extruding': [
-    'Box roll side',
-    'Box roll top',
-    "Daisha Comp' Kiriage",
-    'Nagara Filler',
-    'Reel Filler',
-    'Reel Side',
-    'Reel Top',
-    'Slide B-Truck',
-    'Transfer box roll',
-    'Battery car',
   ],
   'Poly Film': [
     'Daisha chip polyfilm',
+  ],
+  'All seksi': [
     'Battery car',
   ],
 };
 
 export function getSectionDaishaList(seksi?: string): string[] {
-  if (!seksi || seksi.toLowerCase() === 'all seksi') {
+  if (!seksi || seksi.toLowerCase() === 'all seksi' || seksi.toLowerCase() === 'semua seksi' || seksi === '') {
     return DAFTAR_SEMUA_DAISHA;
   }
   const clean = Object.keys(SECTION_DAISHA_MAP).find(

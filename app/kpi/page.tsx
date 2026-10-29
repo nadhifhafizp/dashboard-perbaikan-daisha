@@ -222,6 +222,10 @@ function KpiDashboardContent() {
   const [pmBreakdown, setPmBreakdown] = useState<Record<string, BreakdownItem>>({});
   const [pmDailyTrend, setPmDailyTrend] = useState<DailyTrendItem[]>([]);
   const [pmUnits, setPmUnits] = useState<FleetUnit[]>([]);
+  const [catalogStats, setCatalogStats] = useState<{
+    totalAllUnits: number;
+    bySeksi: Record<string, number>;
+  } | null>(null);
 
   const fetchPmData = useCallback(async () => {
     try {
@@ -235,6 +239,9 @@ function KpiDashboardContent() {
         setPmBreakdown(json.breakdown || {});
         setPmDailyTrend(json.dailyTrend || []);
         setPmUnits(json.units || []);
+        if (json.catalogStats) {
+          setCatalogStats(json.catalogStats);
+        }
       }
     } catch (err) {
       console.error('Fetch PM KPI error:', err);
@@ -430,9 +437,11 @@ function KpiDashboardContent() {
             <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
               {pmSummary.totalUnits > 0
                 ? `${pmSummary.totalUnits.toLocaleString('id-ID')} Unit`
+                : catalogStats?.totalAllUnits
+                ? `${catalogStats.totalAllUnits.toLocaleString('id-ID')} Unit`
                 : userSeksi
                 ? 'Memuat...'
-                : '8.773 Unit'}
+                : '7.906 Unit'}
             </span>
           </button>
 
@@ -592,6 +601,7 @@ function KpiDashboardContent() {
               selectedSeksi={userSeksi || filterSeksi}
               onSelectSeksi={isSeksi ? undefined : (s) => setFilterSeksi(s)}
               isSeksiLocked={isSeksi}
+              catalogStats={catalogStats || undefined}
             />
           </div>
         )}

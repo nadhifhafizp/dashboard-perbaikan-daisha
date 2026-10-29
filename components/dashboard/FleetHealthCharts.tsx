@@ -16,6 +16,10 @@ interface FleetHealthChartsProps {
   selectedSeksi?: string;
   onSelectSeksi?: (seksi: string) => void;
   isSeksiLocked?: boolean;
+  catalogStats?: {
+    totalAllUnits: number;
+    bySeksi: Record<string, number>;
+  };
 }
 
 export default function FleetHealthCharts({
@@ -24,6 +28,7 @@ export default function FleetHealthCharts({
   selectedSeksi = '',
   onSelectSeksi,
   isSeksiLocked = false,
+  catalogStats,
 }: FleetHealthChartsProps) {
   const {
     currentSeksi,
@@ -51,7 +56,10 @@ export default function FleetHealthCharts({
     tickets,
     selectedSeksi,
     onSelectSeksi,
+    catalogStats,
   });
+
+  const totalAllUnitsCount = catalogStats?.totalAllUnits ?? units.length;
 
   return (
     <div className="space-y-4">
@@ -59,7 +67,7 @@ export default function FleetHealthCharts({
       {!isSeksiLocked && (
         <FleetSeksiFilterBar
           currentSeksi={currentSeksi}
-          totalUnitsCount={units.length}
+          totalUnitsCount={totalAllUnitsCount}
           availableSeksiList={availableSeksiList}
           onSelectSeksi={handleSeksiChange}
         />

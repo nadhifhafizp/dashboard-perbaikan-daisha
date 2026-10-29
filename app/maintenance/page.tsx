@@ -324,18 +324,13 @@ function MaintenanceModuleContent() {
         setBreakdown(data.breakdown);
         setDailyTrend(data.dailyTrend);
         if (data.jenisList && data.jenisList.length > 0) {
-          setJenisList((prev) => Array.from(new Set([...prev, ...data.jenisList])).sort((a, b) => a.localeCompare(b)));
+          setJenisList(data.jenisList);
         }
         if (data.seksiList && data.seksiList.length > 0) {
-          setSeksiList((prev) => Array.from(new Set([...prev, ...data.seksiList])).sort((a, b) => a.localeCompare(b)));
+          setSeksiList(data.seksiList);
         }
         if (data.seksiSummaries && data.seksiSummaries.length > 0) {
-          setSeksiSummaries((prev) => {
-            if (prev.length > data.seksiSummaries.length) {
-              return prev;
-            }
-            return data.seksiSummaries;
-          });
+          setSeksiSummaries(data.seksiSummaries);
         }
         setUnits(data.units);
         setRecentLogs(data.recentLogs || []);

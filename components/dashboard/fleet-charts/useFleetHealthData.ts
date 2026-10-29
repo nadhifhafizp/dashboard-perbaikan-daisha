@@ -1,15 +1,18 @@
-'use client';
-
 import { useState, useMemo, useEffect } from 'react';
 import { FleetUnit } from '@/components/maintenance/FleetExplorer';
 import { Ticket } from '@/types/ticket';
 import { JenisHealthItem, BreakdownItem, RecurringUnitItem } from './types';
+import { DAFTAR_SEKSI } from '@/lib/masterData';
 
 interface UseFleetHealthDataProps {
   units: FleetUnit[];
   tickets: Ticket[];
   selectedSeksi?: string;
   onSelectSeksi?: (seksi: string) => void;
+  catalogStats?: {
+    totalAllUnits: number;
+    bySeksi: Record<string, number>;
+  };
 }
 
 export function useFleetHealthData({
@@ -17,6 +20,7 @@ export function useFleetHealthData({
   tickets,
   selectedSeksi = '',
   onSelectSeksi,
+  catalogStats,
 }: UseFleetHealthDataProps) {
   const [currentSeksi, setCurrentSeksi] = useState<string>(selectedSeksi || '');
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,18 +38,24 @@ export function useFleetHealthData({
     }
   };
 
-  // Daftar seksi yang tersedia dengan jumlah unit armada
+  // Daftar seksi yang tersedia dengan jumlah unit armada resmi katalog
   const availableSeksiList = useMemo(() => {
+    if (catalogStats?.bySeksi) {
+      return DAFTAR_SEKSI.map((name) => ({
+        name,
+        count: catalogStats.bySeksi[name] ?? 0,
+      })).sort((a, b) => b.count - a.count);
+    }
     const map: Record<string, number> = {};
     units.forEach((u) => {
-      if (u.seksi) {
+      if (u.seksi && u.seksi.toLowerCase() !== 'all seksi') {
         map[u.seksi] = (map[u.seksi] || 0) + 1;
       }
     });
     return Object.entries(map)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
-  }, [units]);
+  }, [units, catalogStats]);
 
   // Set nomor daisha yang saat ini SEDANG dalam antrean servis / perbaikan bengkel (tiket Open / Progress / Pending)
   const activeRepairNoDaishaSet = useMemo(() => {
@@ -68,8 +78,6 @@ export function useFleetHealthData({
 
   // 1. STATISTIK KESEHATAN ARMADA (2 POIN UTAMA: OKE VS NG)
   const globalStats = useMemo(() => {
-    const total = targetUnits.length;
-    let ready = 0;
     let broken = 0;
     const seksiSet = new Set<string>();
     const jenisSet = new Set<string>();
@@ -84,11 +92,24 @@ export function useFleetHealthData({
 
       if (isNG) {
         broken++;
-      } else {
-        ready++;
       }
     });
 
+    let total = targetUnits.length;
+    if (catalogStats) {
+      if (!currentSeksi || currentSeksi === 'all') {
+        total = catalogStats.totalAllUnits > 0 ? catalogStats.totalAllUnits : targetUnits.length;
+      } else {
+        const matchedKey = Object.keys(catalogStats.bySeksi).find(
+          (k) => k.toLowerCase() === currentSeksi.toLowerCase()
+        );
+        if (matchedKey && catalogStats.bySeksi[matchedKey] !== undefined) {
+          total = catalogStats.bySeksi[matchedKey];
+        }
+      }
+    }
+
+    const ready = Math.max(0, total - broken);
     const pctReady = total > 0 ? (ready / total) * 100 : 100;
     const pctBroken = total > 0 ? (broken / total) * 100 : 0;
 
@@ -115,35 +136,46 @@ export function useFleetHealthData({
       totalJenis: jenisSet.size,
       recurringUnitsCount,
     };
-  }, [targetUnits, tickets, activeRepairNoDaishaSet, currentSeksi]);
+  }, [targetUnits, tickets, activeRepairNoDaishaSet, currentSeksi, catalogStats]);
 
   // Breakdown KPI Jumlah Daisha dari Setiap Seksi (Total, OKE, NG)
   const seksiBreakdownList = useMemo<BreakdownItem[]>(() => {
     const map: Record<string, { label: string; seksi: string; total: number; oke: number; ng: number }> = {};
+    
+    // Inisialisasi dari 6 seksi resmi
+    DAFTAR_SEKSI.forEach((s) => {
+      const offTotal = catalogStats?.bySeksi[s] ?? 0;
+      map[s] = { label: s, seksi: s, total: offTotal, oke: 0, ng: 0 };
+    });
+
     units.forEach((u) => {
-      const s = u.seksi && u.seksi.trim() ? u.seksi.trim() : 'Lainnya';
+      const s = u.seksi && u.seksi.trim() ? u.seksi.trim() : '';
+      if (!s || s.toLowerCase() === 'all seksi') return;
       if (!map[s]) {
-        map[s] = { label: s, seksi: s, total: 0, oke: 0, ng: 0 };
+        map[s] = { label: s, seksi: s, total: catalogStats?.bySeksi[s] ?? 0, oke: 0, ng: 0 };
       }
-      map[s].total++;
       const isNG =
         activeRepairNoDaishaSet.has((u.nomor_daisha || '').trim().toUpperCase()) ||
         u.last_condition === 'RUSAK';
       if (isNG) {
         map[s].ng++;
-      } else {
-        map[s].oke++;
       }
     });
 
     return Object.values(map)
-      .map((item) => ({
-        ...item,
-        pctOke: item.total > 0 ? (item.oke / item.total) * 100 : 100,
-        pctNg: item.total > 0 ? (item.ng / item.total) * 100 : 0,
-      }))
+      .map((item) => {
+        const finalTotal = catalogStats?.bySeksi[item.seksi] ?? item.total;
+        const finalOke = Math.max(0, finalTotal - item.ng);
+        return {
+          ...item,
+          total: finalTotal,
+          oke: finalOke,
+          pctOke: finalTotal > 0 ? (finalOke / finalTotal) * 100 : 100,
+          pctNg: finalTotal > 0 ? (item.ng / finalTotal) * 100 : 0,
+        };
+      })
       .sort((a, b) => b.total - a.total);
-  }, [units, activeRepairNoDaishaSet]);
+  }, [units, activeRepairNoDaishaSet, catalogStats]);
 
   // Breakdown saat seksi difilter
   const jenisInSeksiBreakdownList = useMemo<BreakdownItem[]>(() => {
