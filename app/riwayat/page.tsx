@@ -14,6 +14,12 @@ import { detectDaishaSize } from '@/lib/daishaSize';
 import { matchesAgingFilter } from '@/lib/date';
 import { DAFTAR_SEKSI, getDaishaBySeksi, DAFTAR_SEMUA_DAISHA } from '@/lib/masterData';
 import { SortOption, SORT_OPTIONS, sortTickets } from '@/lib/sortTickets';
+import { broadcastTicketChange } from '@/hooks/useTickets';
+import { TicketStatus, UpdateTicketPayload } from '@/types/ticket';
+import AdminTicketForm from '@/components/admin/AdminTicketForm';
+import EditTicketModal from '@/components/riwayat/EditTicketModal';
+import FeedbackModal, { FeedbackType } from '@/components/FeedbackModal';
+import QrScannerModal from '@/components/input/QrScannerModal';
 import { 
   ArrowLeft, 
   LayoutDashboard, 
@@ -36,6 +42,8 @@ import {
   FileText,
   Clock,
   AlertTriangle,
+  ScanLine,
+  Play,
 } from 'lucide-react';
 
 export default function RiwayatLaporanPage() {
@@ -52,6 +60,38 @@ export default function RiwayatLaporanPage() {
   // View Mode: 'kanban' (default) atau 'list'
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
+  // Hak akses tindakan bengkel: Operator dan Admin
+  const canTakeAction = isOperator || isAdmin;
+
+  // State Tindakan Bengkel (AdminTicketForm)
+  const [selectedTicketForAction, setSelectedTicketForAction] = useState<Ticket | null>(null);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+
+  // State Diagnosa Kerusakan (EditTicketModal)
+  const [ticketToEdit, setTicketToEdit] = useState<Ticket | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // State Scanner Barcode / QR
+  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
+
+  // Feedback State
+  const [feedback, setFeedback] = useState<{
+    isOpen: boolean;
+    type: FeedbackType;
+    title: string;
+    message: string;
+    detail?: string;
+  }>({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: '',
+  });
+
+  const showFeedback = (type: FeedbackType, title: string, message: string, detail?: string) => {
+    setFeedback({ isOpen: true, type, title, message, detail });
+  };
+
   // Seksi terkunci untuk user role seksi
   const userSeksi = isSeksi && currentUser?.seksi ? currentUser.seksi : null;
 
@@ -61,6 +101,221 @@ export default function RiwayatLaporanPage() {
   const [selectedSeksi, setSelectedSeksi] = useState<string>(() => userSeksi || 'all');
   const [selectedDaisha, setSelectedDaisha] = useState<string>('all');
   const [selectedAging, setSelectedAging] = useState<string>('all');
+
+  // Handlers Tindakan Bengkel:
+  // 1. Update Status & Tindakan Pengerjaan (Progress / Done / Scrap / Part Replace)
+  const handleUpdateTicket = async (data: {
+    status: string;
+    waktuKeluar: string;
+    catatan: string;
+    detail?: string;
+  }) => {
+    if (!selectedTicketForAction) return;
+
+    if (data.status === 'Open') {
+      showFeedback(
+        'error',
+        'Aksi Tidak Diizinkan',
+        'Tiket yang sedang atau sudah diproses tidak dapat dikembalikan ke antrean Open.'
+      );
+      return;
+    }
+
+    setIsProcessingAction(true);
+
+    const payload: UpdateTicketPayload = {
+      action: 'UPDATE',
+      idTiket: selectedTicketForAction.idTiketAsli,
+      status: data.status,
+      waktuKeluar: data.waktuKeluar,
+      catatan: data.catatan,
+      detail: data.detail,
+    };
+
+    try {
+      const response = await fetch('/api/repair', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const resData = await response.json();
+
+      if (response.ok) {
+        setTickets((prev) =>
+          prev.map((t) =>
+            t.idTiketAsli === selectedTicketForAction.idTiketAsli
+              ? {
+                  ...t,
+                  status: data.status as TicketStatus,
+                  tglKeluar: data.waktuKeluar,
+                  reason: data.catatan,
+                  ...(data.detail ? { detail: data.detail } : {}),
+                }
+              : t
+          )
+        );
+        broadcastTicketChange();
+        showFeedback(
+          'success',
+          'Tindakan Bengkel Berhasil',
+          `Status unit ${selectedTicketForAction.noDaisha} berhasil diperbarui menjadi ${data.status}.`
+        );
+        setSelectedTicketForAction(null);
+      } else {
+        showFeedback(
+          'error',
+          'Gagal Memperbarui Tiket',
+          resData.error || 'Terjadi kesalahan saat memproses data ke server.'
+        );
+      }
+    } catch (err: unknown) {
+      showFeedback(
+        'error',
+        'Kesalahan Koneksi',
+        err instanceof Error ? err.message : 'Koneksi terputus saat memperbarui data.'
+      );
+    } finally {
+      setIsProcessingAction(false);
+    }
+  };
+
+  // 2. Mulai Kerjakan Cepat (Open -> Progress)
+  const handleQuickStart = async (ticket: Ticket) => {
+    setIsProcessingAction(true);
+    const payload: UpdateTicketPayload = {
+      action: 'UPDATE',
+      idTiket: ticket.idTiketAsli,
+      status: 'Progress',
+      waktuKeluar: '',
+      catatan: ticket.reason && ticket.reason !== '-' ? ticket.reason : 'Mulai pengerjaan oleh teknisi bengkel',
+    };
+
+    try {
+      const response = await fetch('/api/repair', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const resData = await response.json();
+      if (response.ok) {
+        setTickets((prev) =>
+          prev.map((t) =>
+            t.idTiketAsli === ticket.idTiketAsli
+              ? { ...t, status: 'Progress' as TicketStatus, reason: payload.catatan }
+              : t
+          )
+        );
+        broadcastTicketChange();
+        showFeedback(
+          'success',
+          'Pengerjaan Dimulai',
+          `Unit ${ticket.noDaisha} kini berstatus Diproses (Progress).`
+        );
+      } else {
+        showFeedback('error', 'Gagal Memulai Pengerjaan', resData.error || 'Gagal mengubah status.');
+      }
+    } catch (err: unknown) {
+      showFeedback('error', 'Kesalahan Jaringan', err instanceof Error ? err.message : 'Gagal menghubungi server.');
+    } finally {
+      setIsProcessingAction(false);
+    }
+  };
+
+  // 3. Selesaikan Perbaikan (Buka form tindakan dengan fokus selesai)
+  const handleQuickFinish = (ticket: Ticket) => {
+    setSelectedTicketForAction(ticket);
+  };
+
+  // 4. Simpan Hasil Diagnosa Kerusakan
+  const handleSaveEdit = async (data: {
+    waktuMasuk: string;
+    noDaisha: string;
+    namaPelapor?: string;
+    seksi: string;
+    namaDaisha: string;
+    jenisKerusakan: string;
+    detail: string;
+  }) => {
+    if (!ticketToEdit) return;
+
+    setIsSavingEdit(true);
+    try {
+      const response = await fetch('/api/repair', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'EDIT_TICKET',
+          idTiket: ticketToEdit.idTiketAsli || ticketToEdit.noTiket,
+          ...data,
+        }),
+      });
+
+      const resData = await response.json();
+
+      if (response.ok) {
+        setTickets((prev) =>
+          prev.map((t) =>
+            t.idTiketAsli === ticketToEdit.idTiketAsli
+              ? {
+                  ...t,
+                  noDaisha: data.noDaisha,
+                  seksi: data.seksi,
+                  namaDaisha: data.namaDaisha,
+                  tglMasuk: data.waktuMasuk,
+                  detail: data.detail,
+                  jenisKerusakan: data.jenisKerusakan,
+                  pelapor: data.namaPelapor || t.pelapor,
+                }
+              : t
+          )
+        );
+        broadcastTicketChange();
+        showFeedback(
+          'success',
+          'Diagnosa Berhasil Disimpan',
+          `Titik kerusakan untuk unit ${ticketToEdit.noDaisha} berhasil diperbarui.`
+        );
+        setTicketToEdit(null);
+      } else {
+        showFeedback(
+          'error',
+          'Gagal Menyimpan Diagnosa',
+          resData.error || 'Terjadi kesalahan pada sistem.'
+        );
+      }
+    } catch (err: unknown) {
+      showFeedback(
+        'error',
+        'Kesalahan Sistem',
+        err instanceof Error ? err.message : 'Gagal menghubungi database.'
+      );
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  // 5. Scan Barcode Daisha untuk Tindakan Cepat
+  const handleScanSuccess = (decoded: string) => {
+    setIsQrScannerOpen(false);
+    const cleaned = decoded.trim().toUpperCase();
+    setSearch(cleaned);
+    setCurrentPage(1);
+
+    const matchedTicket = tickets.find(
+      (t) =>
+        (t.noDaisha?.toUpperCase() === cleaned ||
+          t.idTiketAsli?.toUpperCase() === cleaned ||
+          t.noTiket?.toUpperCase() === cleaned) &&
+        t.status !== 'Done' &&
+        t.status !== 'Scrap'
+    );
+
+    if (matchedTicket && canTakeAction) {
+      setSelectedTicketForAction(matchedTicket);
+    }
+  };
 
   useEffect(() => {
     if (userSeksi) {
@@ -277,6 +532,19 @@ export default function RiwayatLaporanPage() {
                 <span>Tabel</span>
               </button>
             </div>
+
+            {/* Scan Barcode Khusus Teknisi Workshop */}
+            {canTakeAction && (
+              <button
+                type="button"
+                onClick={() => setIsQrScannerOpen(true)}
+                className="h-11 sm:h-10 px-3.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                title="Pindai QR / Barcode unit daisha fisik untuk langsung ambil tindakan"
+              >
+                <ScanLine className="w-4 h-4 text-amber-400" />
+                <span>Scan Unit</span>
+              </button>
+            )}
 
             <Link
               href={isSeksi ? '/lapor-rusak' : '/input'}
@@ -625,6 +893,11 @@ export default function RiwayatLaporanPage() {
                     key={ticket.idTiketAsli}
                     ticket={ticket}
                     onViewDetail={(t) => setTicketForDetail(t)}
+                    canTakeAction={canTakeAction}
+                    onAction={(t) => setSelectedTicketForAction(t)}
+                    onQuickStart={handleQuickStart}
+                    onQuickFinish={handleQuickFinish}
+                    onEdit={(t) => setTicketToEdit(t)}
                   />
                 ))}
               </div>
@@ -647,6 +920,11 @@ export default function RiwayatLaporanPage() {
                 <QueueKanbanBoard
                   tickets={filteredTickets}
                   onViewDetail={(t) => setTicketForDetail(t)}
+                  canTakeAction={canTakeAction}
+                  onAction={(t) => setSelectedTicketForAction(t)}
+                  onQuickStart={handleQuickStart}
+                  onQuickFinish={handleQuickFinish}
+                  onDiagnose={(t) => setTicketToEdit(t)}
                 />
               ) : (
                 <div className="space-y-4">
@@ -656,6 +934,11 @@ export default function RiwayatLaporanPage() {
                         key={ticket.idTiketAsli}
                         ticket={ticket}
                         onViewDetail={(t) => setTicketForDetail(t)}
+                        canTakeAction={canTakeAction}
+                        onAction={(t) => setSelectedTicketForAction(t)}
+                        onQuickStart={handleQuickStart}
+                        onQuickFinish={handleQuickFinish}
+                        onEdit={(t) => setTicketToEdit(t)}
                       />
                     ))}
                   </div>
@@ -677,11 +960,61 @@ export default function RiwayatLaporanPage() {
         )}
       </div>
 
-      {/* Modal Detail Tiket (Tampilan Baca-Saja & Log Pemeriksaan) */}
+      {/* Modal Detail Tiket (Tampilan Baca-Saja & Aksi Cepat) */}
       <DetailTicketModal
         isOpen={!!ticketForDetail}
         ticket={ticketForDetail}
         onClose={() => setTicketForDetail(null)}
+        canTakeAction={canTakeAction}
+        onAction={(t) => {
+          setTicketForDetail(null);
+          setSelectedTicketForAction(t);
+        }}
+        onQuickStart={handleQuickStart}
+        onQuickFinish={handleQuickFinish}
+        onEdit={(t) => {
+          setTicketForDetail(null);
+          setTicketToEdit(t);
+        }}
+      />
+
+      {/* Modal Eksekusi Tindakan Bengkel (Status, Part, Alasan, Waktu Keluar) */}
+      {selectedTicketForAction && (
+        <AdminTicketForm
+          isOpen={!!selectedTicketForAction}
+          selectedTicket={selectedTicketForAction}
+          isProcessing={isProcessingAction}
+          onSubmit={handleUpdateTicket}
+          onCancel={() => setSelectedTicketForAction(null)}
+        />
+      )}
+
+      {/* Modal Diagnosa / Koreksi Data Titik Kerusakan */}
+      <EditTicketModal
+        isOpen={!!ticketToEdit}
+        ticket={ticketToEdit}
+        isLoading={isSavingEdit}
+        onSave={handleSaveEdit}
+        onClose={() => setTicketToEdit(null)}
+      />
+
+      {/* Modal Scanner QR / Barcode Unit Daisha */}
+      {isQrScannerOpen && (
+        <QrScannerModal
+          isOpen={isQrScannerOpen}
+          onScanSuccess={handleScanSuccess}
+          onClose={() => setIsQrScannerOpen(false)}
+        />
+      )}
+
+      {/* Modal Feedback Interaktif */}
+      <FeedbackModal
+        isOpen={feedback.isOpen}
+        type={feedback.type}
+        title={feedback.title}
+        message={feedback.message}
+        detail={feedback.detail}
+        onClose={() => setFeedback((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

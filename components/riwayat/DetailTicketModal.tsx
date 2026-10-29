@@ -14,6 +14,8 @@ import {
   Clock,
   MessageSquare,
   Edit3,
+  Play,
+  CheckCircle2,
 } from 'lucide-react';
 import { Ticket } from '@/types/ticket';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -25,6 +27,10 @@ interface DetailTicketModalProps {
   ticket: Ticket | null;
   onClose: () => void;
   onEdit?: (ticket: Ticket) => void;
+  canTakeAction?: boolean;
+  onAction?: (ticket: Ticket) => void;
+  onQuickStart?: (ticket: Ticket) => void;
+  onQuickFinish?: (ticket: Ticket) => void;
 }
 
 export default function DetailTicketModal({
@@ -32,6 +38,10 @@ export default function DetailTicketModal({
   ticket,
   onClose,
   onEdit,
+  canTakeAction = false,
+  onAction,
+  onQuickStart,
+  onQuickFinish,
 }: DetailTicketModalProps) {
   React.useEffect(() => {
     if (!isOpen) return;
@@ -388,16 +398,59 @@ export default function DetailTicketModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-3 sm:p-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-2.5 bg-slate-50/70 shrink-0">
+        <div className="p-3 sm:p-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-2.5 bg-slate-50/70 shrink-0 flex-wrap">
           <button
             type="button"
             onClick={onClose}
-            className="order-2 sm:order-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer text-center"
+            className="order-last sm:order-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer text-center"
           >
             Tutup
           </button>
 
-          {isOpenStatus && onEdit && (
+          {/* Quick Action untuk Operator Workshop */}
+          {canTakeAction && ticket.status === 'Open' && onQuickStart && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onQuickStart(ticket);
+              }}
+              className="order-1 sm:order-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>Mulai Kerjakan</span>
+            </button>
+          )}
+
+          {canTakeAction && (ticket.status === 'Progress' || ticket.status === 'Pending') && onQuickFinish && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onQuickFinish(ticket);
+              }}
+              className="order-1 sm:order-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Selesaikan Perbaikan</span>
+            </button>
+          )}
+
+          {canTakeAction && onAction && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onAction(ticket);
+              }}
+              className="order-1 sm:order-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <Wrench className="w-3.5 h-3.5 text-slate-500" />
+              <span>Tindakan Bengkel</span>
+            </button>
+          )}
+
+          {(isOpenStatus || canTakeAction) && onEdit && (
             <button
               type="button"
               onClick={() => {
@@ -407,7 +460,7 @@ export default function DetailTicketModal({
               className="order-1 sm:order-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
             >
               <Edit3 className="w-3.5 h-3.5" />
-              <span>Koreksi / Edit Tiket</span>
+              <span>Diagnosa / Edit Kerusakan</span>
             </button>
           )}
         </div>
