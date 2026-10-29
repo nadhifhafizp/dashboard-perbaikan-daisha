@@ -99,29 +99,29 @@ export default function DaishaCharts({
         </div>
       </div>
 
-      {/* 2. Horizontal Ranked Bar Chart */}
-      <div style={{ height: Math.min(380, Math.max(120, currentData.length * 38 + 40)) }} className="w-full">
+      {/* 2. Horizontal Ranked Bar Chart - DIPERBESAR & DIPADATKAN */}
+      <div style={{ height: Math.min(440, Math.max(160, currentData.length * 40 + 45)) }} className="w-full">
         {currentData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={currentData}
               layout="vertical"
-              margin={{ top: 5, right: isMobile ? 36 : 55, left: isMobile ? 0 : 10, bottom: 5 }}
+              margin={{ top: 5, right: isMobile ? 40 : 60, left: isMobile ? 0 : 10, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
               <XAxis
                 type="number"
                 domain={[0, xDomainMax]}
-                tick={{ fontSize: 12, fill: '#64748b' }}
+                tick={{ fontSize: 13, fill: '#475569', fontWeight: 600 }}
                 axisLine={{ stroke: '#cbd5e1' }}
                 tickLine={false}
               />
               <YAxis
                 dataKey="name"
                 type="category"
-                tick={{ fontSize: 12, fill: '#1e293b', fontWeight: 600 }}
+                tick={{ fontSize: 13, fill: '#0f172a', fontWeight: 700 }}
                 tickFormatter={(val: string) => isMobile && val.length > 13 ? `${val.slice(0, 12)}…` : val}
-                width={isMobile ? 115 : 175}
+                width={isMobile ? 120 : 185}
                 axisLine={false}
                 tickLine={false}
               />
@@ -132,15 +132,15 @@ export default function DaishaCharts({
                   const count = item?.total || 0;
 
                   return (
-                    <div className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs shadow-md">
-                      <p className="font-bold text-slate-800">
-                        {item?.unit ? `${item.unit} (${item.sub})` : label}: <span className="text-blue-600 font-extrabold">{count} kasus</span>
+                    <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs shadow-md">
+                      <p className="font-bold text-slate-900 text-sm">
+                        {item?.unit ? `${item.unit} (${item.sub})` : label}: <span className="text-red-600 font-black">{count} kasus</span>
                       </p>
                     </div>
                   );
                 }}
               />
-              <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={16}>
+              <Bar dataKey="total" radius={[0, 5, 5, 0]} barSize={20}>
                 {currentData.map((entry, idx) => (
                   <Cell
                     key={`cell-daisha-${idx}`}
@@ -151,8 +151,8 @@ export default function DaishaCharts({
                   dataKey="total"
                   position="right"
                   fill="#0f172a"
-                  fontSize={12}
-                  fontWeight={700}
+                  fontSize={13}
+                  fontWeight={800}
                   formatter={(val: unknown) => `${Number(val).toLocaleString()}x`}
                 />
               </Bar>

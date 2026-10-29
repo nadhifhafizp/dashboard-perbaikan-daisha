@@ -196,7 +196,7 @@ export default function SectionCharts({
         {seksiDonutData.length > 0 ? (
           <div className="flex flex-col items-center justify-center">
             {/* Donut Chart Berukuran Besar & Jelas */}
-            <div className="relative h-52 w-52 flex items-center justify-center">
+            <div className="relative h-64 w-64 sm:h-72 sm:w-72 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -205,8 +205,8 @@ export default function SectionCharts({
                     nameKey="seksi"
                     cx="50%"
                     cy="50%"
-                    innerRadius={DONUT.inner}
-                    outerRadius={DONUT.outer}
+                    innerRadius={70}
+                    outerRadius={105}
                     paddingAngle={seksiDonutData.length > 1 ? 3 : 0}
                     startAngle={90}
                     endAngle={-270}
@@ -237,19 +237,19 @@ export default function SectionCharts({
                   <Tooltip content={<SectionDonutTooltip />} />
                   <text
                     x="50%"
-                    y="47%"
+                    y="46%"
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className="fill-slate-900 font-extrabold text-2xl"
+                    className="fill-slate-900 font-black text-3xl"
                   >
                     {totalSeksiAll}
                   </text>
                   <text
                     x="50%"
-                    y="61%"
+                    y="59%"
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className="fill-slate-500 font-medium text-xs"
+                    className="fill-slate-600 font-bold text-xs sm:text-sm uppercase tracking-wide"
                   >
                     Total Unit
                   </text>
@@ -258,7 +258,7 @@ export default function SectionCharts({
             </div>
 
             {/* Legenda Simpel Bersih (Inline) */}
-            <div className="flex flex-wrap justify-center items-center gap-x-2.5 gap-y-1.5 mt-5 max-w-full">
+            <div className="flex flex-wrap justify-center items-center gap-2 mt-4 max-w-full">
               {seksiDonutData.map((entry, idx) => {
                 const isSelected = selectedSeksi === entry.seksi;
                 const isTop1 = idx === 0 && entry.total > 0;
@@ -271,25 +271,25 @@ export default function SectionCharts({
                         onSelectSeksi(selectedSeksi === entry.seksi ? '' : entry.seksi);
                       }
                     }}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm transition cursor-pointer ${
                       isSelected
-                        ? 'bg-blue-50 text-blue-900 font-semibold ring-1 ring-blue-300'
-                        : 'hover:bg-slate-100 text-slate-600 font-normal'
+                        ? 'bg-blue-100 text-blue-900 font-bold ring-2 ring-blue-400'
+                        : 'hover:bg-slate-100 bg-slate-50 text-slate-800 font-medium border border-slate-200'
                     }`}
                     title={`Klik untuk filter seksi ${entry.seksi}`}
                   >
                     <span
-                      className="w-2.5 h-2.5 rounded-xs shrink-0"
+                      className="w-3 h-3 rounded-xs shrink-0"
                       style={{ backgroundColor: entry.color }}
                     />
-                    <span className="text-slate-800 font-medium">{entry.seksi}</span>
+                    <span className="text-slate-900 font-bold">{entry.seksi}</span>
                     {isTop1 && (
-                      <span className="text-xs font-extrabold px-1.5 py-0.2 bg-amber-100 text-amber-900 border border-amber-200 rounded">
+                      <span className="text-xs font-black px-1.5 py-0.5 bg-amber-200 text-amber-900 border border-amber-300 rounded">
                         Top
                       </span>
                     )}
-                    <span className="text-slate-900 font-semibold tabular-nums">{entry.total} unit</span>
-                    <span className="text-slate-400 tabular-nums">({entry.persen}%)</span>
+                    <span className="text-slate-950 font-black tabular-nums">{entry.total}</span>
+                    <span className="text-slate-500 font-semibold tabular-nums">({entry.persen}%)</span>
                   </button>
                 );
               })}

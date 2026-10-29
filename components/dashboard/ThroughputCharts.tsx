@@ -208,25 +208,25 @@ export default function ThroughputCharts({
           </div>
         </div>
 
-        {/* 1 Grafik: Komparasi Volume Masuk vs Selesai (Tanggal di Sumbu Bawah / X-Axis) */}
-        <div className="w-full my-2 h-[310px]">
+        {/* 1 Grafik: Komparasi Volume Masuk vs Selesai (DIPERBESAR & DIPERLEBAR) */}
+        <div className="w-full my-2 h-[370px] sm:h-[420px]">
           {activeTimelineData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={activeTimelineData}
-                margin={{ top: 22, right: 25, left: -15, bottom: 15 }}
+                margin={{ top: 25, right: 25, left: -10, bottom: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis
                   dataKey="tanggal"
-                  tick={{ fontSize: 11, fill: '#334155', fontWeight: 600 }}
+                  tick={{ fontSize: 12, fill: '#1e293b', fontWeight: 700 }}
                   axisLine={{ stroke: '#cbd5e1' }}
                   tickLine={false}
                 />
                 <YAxis
                   type="number"
                   domain={[0, yMaxDomain]}
-                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  tick={{ fontSize: 12, fill: '#475569', fontWeight: 600 }}
                   allowDecimals={false}
                   axisLine={{ stroke: '#e2e8f0' }}
                   tickLine={false}
@@ -239,26 +239,26 @@ export default function ThroughputCharts({
                     const selesaiVal = Number(payload.find((p) => p.dataKey === 'Selesai')?.value || 0);
                     const balance = masukVal - selesaiVal;
                     return (
-                      <div className="bg-white/95 backdrop-blur-xs border border-slate-200 rounded-xl p-3 shadow-lg text-xs space-y-1.5 min-w-[190px]">
+                      <div className="bg-white/95 backdrop-blur-xs border border-slate-200 rounded-xl p-3.5 shadow-lg text-xs space-y-2 min-w-[210px]">
                         <p className="font-bold text-slate-800 border-b border-slate-100 pb-1 flex items-center justify-between">
-                          <span>{label}</span>
-                          <span className="text-xs text-slate-500 font-normal">Komparasi Harian</span>
+                          <span className="text-sm">{label}</span>
+                          <span className="text-xs text-slate-500 font-semibold">Komparasi Harian</span>
                         </p>
-                        <div className="flex items-center justify-between font-semibold text-red-700">
+                        <div className="flex items-center justify-between font-bold text-red-700">
                           <span className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-xs bg-red-600" />
+                            <span className="w-2.5 h-2.5 rounded-xs bg-red-600" />
                             <span>Unit Masuk:</span>
                           </span>
-                          <span>{masukVal} Unit</span>
+                          <span className="text-sm font-black">{masukVal} Unit</span>
                         </div>
-                        <div className="flex items-center justify-between font-semibold text-emerald-700">
+                        <div className="flex items-center justify-between font-bold text-emerald-700">
                           <span className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-xs bg-emerald-500" />
+                            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500" />
                             <span>Unit Selesai:</span>
                           </span>
-                          <span>{selesaiVal} Unit</span>
+                          <span className="text-sm font-black">{selesaiVal} Unit</span>
                         </div>
-                        <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-xs font-medium text-slate-500">
+                        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-600">
                           <span>Status Arus:</span>
                           <span
                             className={
@@ -284,28 +284,28 @@ export default function ThroughputCharts({
                   dataKey="Masuk"
                   name="Unit Masuk"
                   fill="#dc2626"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={32}
+                  radius={[5, 5, 0, 0]}
+                  maxBarSize={40}
                 >
                   <LabelList
                     dataKey="Masuk"
                     position="top"
                     formatter={(val: unknown) => (Number(val) > 0 ? String(val) : '')}
-                    style={{ fontSize: 11, fontWeight: 700, fill: '#dc2626' }}
+                    style={{ fontSize: 13, fontWeight: 800, fill: '#dc2626' }}
                   />
                 </Bar>
                 <Bar
                   dataKey="Selesai"
                   name="Unit Selesai"
                   fill="#059669"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={32}
+                  radius={[5, 5, 0, 0]}
+                  maxBarSize={40}
                 >
                   <LabelList
                     dataKey="Selesai"
                     position="top"
                     formatter={(val: unknown) => (Number(val) > 0 ? String(val) : '')}
-                    style={{ fontSize: 11, fontWeight: 700, fill: '#059669' }}
+                    style={{ fontSize: 13, fontWeight: 800, fill: '#059669' }}
                   />
                 </Bar>
               </BarChart>
@@ -316,8 +316,6 @@ export default function ThroughputCharts({
             </div>
           )}
         </div>
-
-
       </div>
 
       {/* Baris kedua: Donut status & lead time */}
@@ -333,17 +331,17 @@ export default function ThroughputCharts({
           </div>
 
           {totalStatus > 0 ? (
-            <div className="flex flex-col sm:flex-row items-center gap-6 flex-1 py-2">
-              {/* Diagram Donat dengan KPI Total di Tengah */}
-              <div className="relative h-48 w-48 shrink-0 flex items-center justify-center">
+            <div className="flex flex-col sm:flex-row items-center gap-6 flex-1 py-3">
+              {/* Diagram Donat dengan KPI Total di Tengah - DIBESARKAN */}
+              <div className="relative h-56 w-56 sm:h-64 sm:w-64 shrink-0 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={statusData.filter((d) => d.value > 0)}
                       cx="50%"
                       cy="50%"
-                      innerRadius={DONUT.inner}
-                      outerRadius={DONUT.outer}
+                      innerRadius={68}
+                      outerRadius={100}
                       paddingAngle={3}
                       dataKey="value"
                       startAngle={90}
@@ -358,19 +356,19 @@ export default function ThroughputCharts({
                     <Tooltip content={<DonutTooltip totalStatus={totalStatus} />} />
                     <text
                       x="50%"
-                      y="47%"
+                      y="46%"
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      className="fill-slate-900 font-extrabold text-2xl"
+                      className="fill-slate-900 font-black text-3xl sm:text-4xl"
                     >
                       {totalStatus}
                     </text>
                     <text
                       x="50%"
-                      y="61%"
+                      y="59%"
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      className="fill-slate-500 font-medium text-xs"
+                      className="fill-slate-500 font-bold text-xs uppercase tracking-wide"
                     >
                       Total Tiket
                     </text>
@@ -470,22 +468,22 @@ export default function ThroughputCharts({
               </div>
             </div>
 
-            {/* Batang Horizontal Lead Time */}
-            <div className="h-56 w-full">
+            {/* Batang Horizontal Lead Time - DIBESARKAN */}
+            <div className="h-64 sm:h-72 w-full">
               {chartLeadTime.some((d) => d.total > 0) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartLeadTime}
                     layout="vertical"
-                    margin={{ top: 5, right: 40, left: 30, bottom: 5 }}
+                    margin={{ top: 8, right: 45, left: 35, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                    <XAxis type="number" tick={{ fontSize: 12, fill: '#64748b' }} allowDecimals={false} axisLine={false} tickLine={false} />
+                    <XAxis type="number" tick={{ fontSize: 13, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} axisLine={false} tickLine={false} />
                     <YAxis
                       dataKey="rentang"
                       type="category"
-                      tick={{ fontSize: 12, fill: '#1e293b', fontWeight: 600 }}
-                      width={85}
+                      tick={{ fontSize: 13, fill: '#0f172a', fontWeight: 700 }}
+                      width={95}
                       axisLine={false}
                       tickLine={false}
                     />

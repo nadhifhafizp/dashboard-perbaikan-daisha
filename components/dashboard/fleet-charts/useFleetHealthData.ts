@@ -4,6 +4,12 @@ import { Ticket } from '@/types/ticket';
 import { JenisHealthItem, BreakdownItem, RecurringUnitItem } from './types';
 import { DAFTAR_SEKSI } from '@/lib/masterData';
 
+// 'OK' dan 'REPAIR_DONE' keduanya berarti unit sudah selesai diperbaiki / siap operasi.
+// Hanya 'RUSAK' yang berarti unit benar-benar belum ditangani.
+function isConditionNG(cond: string | null | undefined): boolean {
+  return cond === 'RUSAK';
+}
+
 interface UseFleetHealthDataProps {
   units: FleetUnit[];
   tickets: Ticket[];
@@ -88,7 +94,7 @@ export function useFleetHealthData({
 
       const isNG =
         activeRepairNoDaishaSet.has((u.nomor_daisha || '').trim().toUpperCase()) ||
-        u.last_condition === 'RUSAK';
+        isConditionNG(u.last_condition);
 
       if (isNG) {
         broken++;
@@ -156,7 +162,7 @@ export function useFleetHealthData({
       }
       const isNG =
         activeRepairNoDaishaSet.has((u.nomor_daisha || '').trim().toUpperCase()) ||
-        u.last_condition === 'RUSAK';
+        isConditionNG(u.last_condition);
       if (isNG) {
         map[s].ng++;
       }
@@ -190,7 +196,7 @@ export function useFleetHealthData({
       map[j].total++;
       const isNG =
         activeRepairNoDaishaSet.has((u.nomor_daisha || '').trim().toUpperCase()) ||
-        u.last_condition === 'RUSAK';
+        isConditionNG(u.last_condition);
       if (isNG) {
         map[j].ng++;
       } else {
@@ -236,7 +242,7 @@ export function useFleetHealthData({
 
       const isNG =
         activeRepairNoDaishaSet.has((u.nomor_daisha || '').trim().toUpperCase()) ||
-        u.last_condition === 'RUSAK';
+        isConditionNG(u.last_condition);
 
       if (isNG) {
         map[j].broken++;

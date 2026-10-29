@@ -168,13 +168,13 @@ export default function DamageCharts({
               <ResponsiveContainer width="100%" height={heightKategori}>
                 <BarChart data={dataKategori} layout="vertical" margin={{ top: 10, right: 45, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis type="number" tick={{ fontSize: 12, fill: '#64748b' }} allowDecimals={false} axisLine={false} tickLine={false} />
+                  <XAxis type="number" tick={{ fontSize: 13, fill: '#475569', fontWeight: 600 }} allowDecimals={false} axisLine={false} tickLine={false} />
                   <YAxis
                     dataKey="kategori"
                     type="category"
                     interval={0}
-                    width={150}
-                    tick={{ fontSize: 12, fill: '#1e293b', fontWeight: 600 }}
+                    width={160}
+                    tick={{ fontSize: 13, fill: '#0f172a', fontWeight: 700 }}
                     tickFormatter={formatKategori}
                     axisLine={false}
                     tickLine={false}
@@ -211,14 +211,21 @@ export default function DamageCharts({
                       );
                     }}
                   />
-                  <Bar dataKey="displayVal" radius={[0, 4, 4, 0]} barSize={16}>
+                  <Bar dataKey="displayVal" radius={[0, 5, 5, 0]} barSize={20}>
                     {dataKategori.map((entry, idx) => (
                       <Cell
                         key={`cell-kat-${idx}`}
                         fill={idx === 0 ? CHART.main : CHART.muted}
                       />
                     ))}
-                    <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={12} fontWeight={700} />
+                    <LabelList
+                      dataKey="displayVal"
+                      position="right"
+                      fill="#0f172a"
+                      fontSize={13}
+                      fontWeight={800}
+                      formatter={(val: unknown) => `${Number(val).toLocaleString()}`}
+                    />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -289,14 +296,14 @@ export default function DamageCharts({
                       );
                     }}
                   />
-                  <Bar dataKey="displayVal" radius={[0, 4, 4, 0]} barSize={16}>
+                  <Bar dataKey="displayVal" radius={[0, 5, 5, 0]} barSize={20}>
                     {dataGejala.map((entry, idx) => (
                       <Cell
                         key={`cell-gejala-${idx}`}
                         fill={idx === 0 ? CHART.main : CHART.muted}
                       />
                     ))}
-                    <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={12} fontWeight={700} />
+                    <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={13} fontWeight={800} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -309,29 +316,29 @@ export default function DamageCharts({
         </div>
       </div>
 
-      {/* C. Diagram Donat: Proporsi tindakan bengkel */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200/60">
+      {/* C. Diagram Donat: Proporsi tindakan bengkel - DIBESARKAN */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200/60 shadow-xs">
         <div className="flex flex-wrap justify-between items-center gap-2 mb-3 pb-2 border-b border-slate-100">
-          <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
+          <h4 className="text-sm sm:text-base font-bold text-slate-900">
             Proporsi Tindakan
           </h4>
-          <span className="text-xs font-medium text-slate-500">
+          <span className="text-xs font-semibold text-slate-500">
             {metricMode === 'pcs' ? 'Pcs Part' : 'Kasus'}
           </span>
         </div>
 
         {totalTindakan > 0 ? (
-          <div className="flex flex-col md:flex-row items-center justify-around gap-6 py-2">
+          <div className="flex flex-col md:flex-row items-center justify-around gap-6 py-3">
             {/* Diagram Donat */}
-            <div className="relative h-48 w-48 shrink-0 flex items-center justify-center">
+            <div className="relative h-56 w-56 sm:h-64 sm:w-64 shrink-0 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={tindakanDonutData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={DONUT.inner}
-                    outerRadius={DONUT.outer}
+                    innerRadius={68}
+                    outerRadius={100}
                     paddingAngle={4}
                     dataKey="value"
                     startAngle={90}
@@ -344,19 +351,19 @@ export default function DamageCharts({
                   <Tooltip content={<TindakanTooltip totalTindakan={totalTindakan} metricMode={metricMode} />} />
                   <text
                     x="50%"
-                    y="47%"
+                    y="46%"
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className="fill-slate-900 font-extrabold text-2xl"
+                    className="fill-slate-900 font-black text-3xl sm:text-4xl"
                   >
                     {totalTindakan}
                   </text>
                   <text
                     x="50%"
-                    y="61%"
+                    y="59%"
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className="fill-slate-500 font-medium text-xs"
+                    className="fill-slate-500 font-bold text-xs uppercase tracking-wide"
                   >
                     {metricMode === 'pcs' ? 'Total Pcs' : 'Tindakan'}
                   </text>

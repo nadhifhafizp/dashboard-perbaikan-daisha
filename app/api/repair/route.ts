@@ -434,7 +434,7 @@ export async function POST(request: Request) {
                   "last_repair_date" = ${completionDate},
                   "last_waktu_masuk" = ${ticketWaktuMasuk},
                   "last_waktu_keluar" = ${completionDate},
-                  "last_condition" = 'REPAIR_DONE',
+                  "last_condition" = 'OK',
                   "updated_at" = now()
                 WHERE id = ${dId}
               `;
@@ -449,7 +449,7 @@ export async function POST(request: Request) {
                 )
                 VALUES (
                   ${noD}, ${jenisResolved}, ${ukuranResolved}, ${completionDate},
-                  ${completionDate}, ${ticketWaktuMasuk}, ${completionDate}, 'REPAIR_DONE'
+                  ${completionDate}, ${ticketWaktuMasuk}, ${completionDate}, 'OK'
                 )
                 RETURNING id
               `;
@@ -470,9 +470,21 @@ export async function POST(request: Request) {
             `;
           }
         }
+
+        // Jika unit dinyatakan Scrap / Rusak Total
+        if (normalizedStatus === 'Scrap') {
+          const tRow = await tx`SELECT "noDaisha" FROM "Ticket" WHERE "idTiket" = ${idTiket} LIMIT 1`;
+          if (tRow.length > 0 && tRow[0].noDaisha) {
+            await tx`
+              UPDATE "Daisha"
+              SET "last_condition" = 'RUSAK', "updated_at" = now()
+              WHERE UPPER(nomor_daisha) = ${tRow[0].noDaisha.trim().toUpperCase()}
+            `;
+          }
+        }
       });
 
-      if (normalizedStatus === 'Done') {
+      if (normalizedStatus === 'Done' || normalizedStatus === 'Scrap') {
         invalidateMaintenanceCache();
       }
 

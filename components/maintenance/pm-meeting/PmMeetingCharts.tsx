@@ -102,7 +102,7 @@ export default function PmMeetingCharts({
                   </span>
                 </div>
 
-                <div className="h-72 w-full pt-4">
+                <div className="h-[380px] sm:h-[420px] w-full pt-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={chartJenisData}
@@ -115,14 +115,14 @@ export default function PmMeetingCharts({
                         horizontal={false}
                         stroke={CHART.grid}
                       />
-                      <XAxis type="number" tick={{ fill: CHART.axis, fontSize: 11 }} />
+                      <XAxis type="number" tick={{ fill: CHART.axis, fontSize: 12, fontWeight: 600 }} />
                       <YAxis
                         type="category"
                         dataKey="name"
                         tickLine={false}
                         axisLine={{ stroke: '#cbd5e1' }}
-                        tick={{ fill: '#334155', fontSize: 11, fontWeight: 500 }}
-                        width={110}
+                        tick={{ fill: '#0f172a', fontSize: 12, fontWeight: 700 }}
+                        width={130}
                       />
                       <Tooltip
                         content={({ active, payload }) => {
@@ -218,13 +218,13 @@ export default function PmMeetingCharts({
                   </span>
                 </div>
 
-                <div className="h-72 w-full pt-4">
+                <div className="h-[380px] sm:h-[420px] w-full pt-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={dailyTrend}
-                      margin={{ top: 10, right: 15, left: -15, bottom: 5 }}
-                      barGap={4}
-                      barCategoryGap="25%"
+                      margin={{ top: 15, right: 20, left: -10, bottom: 10 }}
+                      barGap={5}
+                      barCategoryGap="22%"
                     >
                       <CartesianGrid
                         strokeDasharray="3 3"
@@ -235,12 +235,12 @@ export default function PmMeetingCharts({
                         dataKey="dateLabel"
                         tickLine={false}
                         axisLine={{ stroke: '#cbd5e1' }}
-                        tick={{ fill: '#64748b', fontSize: 11 }}
+                        tick={{ fill: '#1e293b', fontSize: 12, fontWeight: 700 }}
                       />
                       <YAxis
                         tickLine={false}
                         axisLine={false}
-                        tick={{ fill: '#64748b', fontSize: 11 }}
+                        tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }}
                         allowDecimals={false}
                       />
                       <Tooltip
@@ -372,17 +372,17 @@ export default function PmMeetingCharts({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 items-center">
-            {/* DONUT 1: Progres PM Tahunan */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 py-2">
-              <div className="relative h-44 w-44 shrink-0 flex items-center justify-center">
+            {/* DONUT 1: Progres PM Tahunan - DIBESARKAN */}
+            <div className="flex flex-col sm:flex-row items-center gap-5 py-3">
+              <div className="relative h-56 w-56 sm:h-64 sm:w-64 shrink-0 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={pmDonutData.filter((d) => d.value > 0)}
                       cx="50%"
                       cy="50%"
-                      innerRadius={DONUT.inner}
-                      outerRadius={DONUT.outer}
+                      innerRadius={68}
+                      outerRadius={100}
                       paddingAngle={3}
                       dataKey="value"
                       startAngle={90}
@@ -409,11 +409,11 @@ export default function PmMeetingCharts({
                                 )
                               : 0;
                           return (
-                            <div className="bg-white p-2.5 rounded-lg shadow-lg border border-slate-200 text-xs">
-                              <p className="font-semibold text-slate-900">
+                            <div className="bg-white p-3 rounded-lg shadow-lg border border-slate-200 text-xs">
+                              <p className="font-bold text-slate-900 text-sm">
                                 {d.name}
                               </p>
-                              <p className="text-slate-600">
+                              <p className="text-slate-700 font-semibold mt-0.5">
                                 {Number(d.value).toLocaleString('id-ID')} unit ({pct}
                                 %)
                               </p>
@@ -428,7 +428,7 @@ export default function PmMeetingCharts({
                       y="46%"
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      className="fill-slate-900 font-extrabold text-2xl"
+                      className="fill-slate-900 font-black text-3xl sm:text-4xl"
                     >
                       {totalPopulasi > 0
                         ? Math.round((totalMaintained / totalPopulasi) * 100)
@@ -437,10 +437,10 @@ export default function PmMeetingCharts({
                     </text>
                     <text
                       x="50%"
-                      y="62%"
+                      y="59%"
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      className="fill-slate-500 font-medium text-xs"
+                      className="fill-slate-600 font-bold text-xs uppercase tracking-wide"
                     >
                       Selesai PM
                     </text>
@@ -487,17 +487,17 @@ export default function PmMeetingCharts({
               </div>
             </div>
 
-            {/* DONUT 2: Kesiapan Fisik Armada */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 py-2">
-              <div className="relative h-44 w-44 shrink-0 flex items-center justify-center">
+            {/* DONUT 2: Kesiapan Fisik Armada - DIBESARKAN */}
+            <div className="flex flex-col sm:flex-row items-center gap-5 py-3">
+              <div className="relative h-56 w-56 sm:h-64 sm:w-64 shrink-0 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={conditionDonutData.filter((d) => d.value > 0)}
                       cx="50%"
                       cy="50%"
-                      innerRadius={DONUT.inner}
-                      outerRadius={DONUT.outer}
+                      innerRadius={68}
+                      outerRadius={100}
                       paddingAngle={3}
                       dataKey="value"
                       startAngle={90}
@@ -526,10 +526,10 @@ export default function PmMeetingCharts({
                               : '100';
                           return (
                             <div className="bg-white p-2.5 rounded-lg shadow-lg border border-slate-200 text-xs">
-                              <p className="font-semibold text-slate-900">
+                              <p className="font-bold text-slate-900 text-sm">
                                 {d.name}
                               </p>
-                              <p className="text-slate-600">
+                              <p className="text-slate-700 font-semibold mt-0.5">
                                 {Number(d.value).toLocaleString('id-ID')} unit ({pct}
                                 %)
                               </p>
@@ -544,7 +544,7 @@ export default function PmMeetingCharts({
                       y="46%"
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      className="fill-slate-900 font-extrabold text-2xl"
+                      className="fill-slate-900 font-black text-3xl sm:text-4xl"
                     >
                       {totalPopulasi > 0
                         ? ((okUnitsCount / totalPopulasi) * 100).toFixed(1)
@@ -553,12 +553,12 @@ export default function PmMeetingCharts({
                     </text>
                     <text
                       x="50%"
-                      y="62%"
+                      y="59%"
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      className="fill-slate-500 font-medium text-xs"
+                      className="fill-slate-600 font-bold text-xs uppercase tracking-wide"
                     >
-                      Armada Siap
+                      Armada OKE
                     </text>
                   </PieChart>
                 </ResponsiveContainer>

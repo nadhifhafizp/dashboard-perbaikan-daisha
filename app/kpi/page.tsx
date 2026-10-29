@@ -331,30 +331,30 @@ function KpiDashboardContent() {
     (!isSeksi && activeTab === 'spareparts' && loadingSpareparts);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-5 lg:p-6 pb-24 md:pb-8 space-y-5 max-w-[1680px] w-full mx-auto">
       {/* 1. Header Pusat Dashboard */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-200">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-3.5 border-b border-slate-200">
         <div className="space-y-1">
           <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
             <Link
               href="/"
-              className="inline-flex items-center gap-1 font-medium hover:text-slate-800 transition"
+              className="inline-flex items-center gap-1 font-semibold hover:text-slate-800 transition"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Portal</span>
             </Link>
             <span className="text-slate-300">/</span>
-            <span className="font-semibold text-slate-900">KPI Daisha</span>
+            <span className="font-bold text-slate-900">KPI Daisha</span>
           </nav>
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-lg bg-red-50 border border-red-200 text-red-600 flex items-center justify-center">
-              <BarChart3 className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center shrink-0 shadow-2xs">
+              <BarChart3 className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="t-title text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                 {userSeksi ? `KPI Daisha - Seksi ${userSeksi}` : 'KPI Daisha'}
               </h1>
-              <p className="t-caption text-slate-500">
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
                 {userSeksi
                   ? `Performa armada, pemeliharaan (PM), dan request Seksi ${userSeksi}`
                   : 'Performa armada, PM, dan perbaikan bengkel'}
@@ -367,7 +367,7 @@ function KpiDashboardContent() {
           {isSeksi ? (
             <Link
               href="/lapor-rusak"
-              className="h-10 min-h-[40px] px-3.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
+              className="h-10 min-h-[40px] px-4 bg-white border border-slate-300 text-slate-800 hover:bg-slate-100 text-xs sm:text-sm font-bold rounded-lg inline-flex items-center gap-1.5 transition shadow-2xs"
             >
               <span>Lapor Rusak</span>
               <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
@@ -375,7 +375,7 @@ function KpiDashboardContent() {
           ) : (
             <Link
               href="/input"
-              className="h-10 min-h-[40px] px-3.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
+              className="h-10 min-h-[40px] px-4 bg-white border border-slate-300 text-slate-800 hover:bg-slate-100 text-xs sm:text-sm font-bold rounded-lg inline-flex items-center gap-1.5 transition shadow-2xs"
             >
               <span>Input Kerusakan</span>
               <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
@@ -383,7 +383,7 @@ function KpiDashboardContent() {
           )}
           <Link
             href="/maintenance?tab=staging"
-            className="h-10 min-h-[40px] px-3.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
+            className="h-10 min-h-[40px] px-4 bg-white border border-slate-300 text-slate-800 hover:bg-slate-100 text-xs sm:text-sm font-bold rounded-lg inline-flex items-center gap-1.5 transition shadow-2xs"
           >
             <span>Penjemputan PM</span>
             <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
@@ -391,14 +391,14 @@ function KpiDashboardContent() {
           {isAdmin ? (
             <Link
               href="/admin"
-              className="h-10 min-h-[40px] px-4 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
+              className="h-10 min-h-[40px] px-4.5 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold rounded-lg inline-flex items-center gap-1.5 transition shadow-xs"
             >
               <span>Panel Tindakan</span>
             </Link>
           ) : (
             <Link
               href="/riwayat"
-              className="h-10 min-h-[40px] px-4 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1 transition"
+              className="h-10 min-h-[40px] px-4.5 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold rounded-lg inline-flex items-center gap-1.5 transition shadow-xs"
             >
               <span>{isOperator ? 'Tindakan Bengkel' : 'Antrean Unit'}</span>
             </Link>
@@ -407,7 +407,7 @@ function KpiDashboardContent() {
             type="button"
             onClick={handleGlobalRefresh}
             disabled={isCurrentTabLoading}
-            className="h-10 min-h-[40px] px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="h-10 min-h-[40px] px-4 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs sm:text-sm font-bold rounded-lg transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-2xs"
           >
             {isCurrentTabLoading ? (
               <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
@@ -421,20 +421,20 @@ function KpiDashboardContent() {
 
       {/* 2. Primary Tab Navigation (Flat Single-Tier: Terpadu) */}
       <div className="flex items-center justify-between border-b border-slate-200 gap-2 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-1 sm:gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-2">
           {/* 1. Jumlah Seluruh Daisha */}
           <button
             type="button"
             onClick={() => handleTabChange('jumlah_daisha')}
-            className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'jumlah_daisha'
-                ? 'border-red-600 text-red-600 bg-red-50/40'
-                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'border-red-600 text-red-600 bg-red-50/50'
+                : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            <Layers className="w-4 h-4" />
+            <Layers className="w-4.5 h-4.5" />
             <span>1. Jumlah Seluruh Daisha</span>
-            <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
+            <span className="px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-800 font-mono font-black border border-slate-200">
               {pmSummary.totalUnits > 0
                 ? `${pmSummary.totalUnits.toLocaleString('id-ID')} Unit`
                 : catalogStats?.totalAllUnits
@@ -449,15 +449,15 @@ function KpiDashboardContent() {
           <button
             type="button"
             onClick={() => handleTabChange('perbaikan_daisha')}
-            className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'perbaikan_daisha'
-                ? 'border-red-600 text-red-600 bg-red-50/40'
-                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'border-red-600 text-red-600 bg-red-50/50'
+                : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            <Wrench className="w-4 h-4" />
+            <Wrench className="w-4.5 h-4.5" />
             <span>2. Perbaikan Daisha</span>
-            <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
+            <span className="px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-800 font-mono font-black border border-slate-200">
               {filteredData.length} Tiket
             </span>
           </button>
@@ -466,16 +466,16 @@ function KpiDashboardContent() {
           <button
             type="button"
             onClick={() => handleTabChange('pm_daisha')}
-            className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'pm_daisha'
-                ? 'border-red-600 text-red-600 bg-red-50/40'
-                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'border-red-600 text-red-600 bg-red-50/50'
+                : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            <ShieldCheck className="w-4 h-4" />
+            <ShieldCheck className="w-4.5 h-4.5" />
             <span>3. PM Daisha</span>
             {pmSummary.percentage > 0 && (
-              <span className="px-1.5 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-800 font-bold">
+              <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-900 font-black border border-emerald-300">
                 PM {pmSummary.percentage.toFixed(0)}%
               </span>
             )}
@@ -486,16 +486,16 @@ function KpiDashboardContent() {
             <button
               type="button"
               onClick={() => handleTabChange('request')}
-              className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
                 activeTab === 'request'
-                  ? 'border-red-600 text-red-600 bg-red-50/40'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'border-red-600 text-red-600 bg-red-50/50'
+                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <SendHorizonal className="w-4 h-4" />
+              <SendHorizonal className="w-4.5 h-4.5" />
               <span>4. Request Seksi</span>
               {visibleRequests.length > 0 && (
-                <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 font-mono">
+                <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-900 font-mono font-bold border border-blue-200">
                   {visibleRequests.length}
                 </span>
               )}
@@ -506,13 +506,13 @@ function KpiDashboardContent() {
               <button
                 type="button"
                 onClick={() => handleTabChange('data_mentah')}
-                className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
                   activeTab === 'data_mentah'
-                    ? 'border-red-600 text-red-600 bg-red-50/40'
-                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'border-red-600 text-red-600 bg-red-50/50'
+                    : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <FileSpreadsheet className="w-4 h-4" />
+                <FileSpreadsheet className="w-4.5 h-4.5" />
                 <span>Data Tiket</span>
               </button>
 
@@ -520,16 +520,16 @@ function KpiDashboardContent() {
               <button
                 type="button"
                 onClick={() => handleTabChange('request')}
-                className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
                   activeTab === 'request'
-                    ? 'border-red-600 text-red-600 bg-red-50/40'
-                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'border-red-600 text-red-600 bg-red-50/50'
+                    : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <SendHorizonal className="w-4 h-4" />
+                <SendHorizonal className="w-4.5 h-4.5" />
                 <span>Request Seksi</span>
                 {requests.length > 0 && (
-                  <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 font-mono">
+                  <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-900 font-mono font-bold border border-blue-200">
                     {requests.length}
                   </span>
                 )}
@@ -539,16 +539,16 @@ function KpiDashboardContent() {
               <button
                 type="button"
                 onClick={() => handleTabChange('spareparts')}
-                className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
                   activeTab === 'spareparts'
-                    ? 'border-red-600 text-red-600 bg-red-50/40'
-                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'border-red-600 text-red-600 bg-red-50/50'
+                    : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <Package className="w-4 h-4" />
+                <Package className="w-4.5 h-4.5" />
                 <span>Stok Sparepart</span>
                 {spareparts.length > 0 && (
-                  <span className="px-1.5 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800 font-mono">
+                  <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-900 font-mono font-bold border border-amber-200">
                     {spareparts.length}
                   </span>
                 )}

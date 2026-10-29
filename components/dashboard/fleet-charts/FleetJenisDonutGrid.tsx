@@ -120,7 +120,7 @@ export default function FleetJenisDonutGrid({
           Tidak ditemukan jenis daisha yang sesuai dengan filter.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 pt-1">
           {filteredJenisData.map((item) => {
             const donutData = [
               { name: 'Siap Operasi', value: item.ready, color: '#059669' },
@@ -130,43 +130,43 @@ export default function FleetJenisDonutGrid({
             return (
               <div
                 key={item.nama}
-                className={`bg-white rounded-xl border p-4 transition flex flex-col justify-between ${
-                  item.broken > 0 ? 'border-red-200' : 'border-slate-200'
+                className={`bg-white rounded-xl border-2 p-4 sm:p-5 transition flex flex-col justify-between shadow-2xs ${
+                  item.broken > 0 ? 'border-red-300' : 'border-slate-200'
                 }`}
               >
                 {/* Header Kartu Donat Jenis */}
                 <div>
-                  <div className="flex items-start justify-between gap-1 pb-2 border-b border-slate-100">
+                  <div className="flex items-start justify-between gap-1 pb-2.5 border-b border-slate-100">
                     <div className="min-w-0 pr-1">
-                      <h4 className="text-xs font-bold text-slate-900 truncate" title={item.nama}>
+                      <h4 className="text-sm font-black text-slate-900 truncate" title={item.nama}>
                         {item.nama}
                       </h4>
-                      <span className="text-xs text-slate-400 block truncate">
+                      <span className="text-xs text-slate-500 font-medium block truncate mt-0.5">
                         {item.seksiList.join(', ') || 'Semua Seksi'}
                       </span>
                     </div>
 
                     {item.broken > 0 ? (
-                      <span className="h-6 px-2.5 rounded-full text-xs font-bold bg-red-100 text-red-700 shrink-0 inline-flex items-center">
+                      <span className="h-7 px-2.5 rounded-md text-xs font-black bg-red-100 text-red-700 shrink-0 inline-flex items-center border border-red-300">
                         {item.broken} Rusak
                       </span>
                     ) : (
-                      <span className="h-6 px-2.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 shrink-0 inline-flex items-center">
+                      <span className="h-7 px-2.5 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 shrink-0 inline-flex items-center border border-emerald-300">
                         100% Siap
                       </span>
                     )}
                   </div>
 
-                  {/* Donut Chart Khusus untuk Jenis Daisha Ini */}
-                  <div className="h-[150px] w-full relative flex items-center justify-center mt-2">
+                  {/* Donut Chart Khusus untuk Jenis Daisha Ini - DIBESARKAN */}
+                  <div className="h-[180px] w-full relative flex items-center justify-center mt-2">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={donutData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={42}
-                          outerRadius={60}
+                          innerRadius={50}
+                          outerRadius={72}
                           paddingAngle={item.broken > 0 ? 3 : 0}
                           dataKey="value"
                           isAnimationActive={false}
@@ -183,17 +183,17 @@ export default function FleetJenisDonutGrid({
                             ).toFixed(1)}%)`,
                             String(name || ''),
                           ]}
-                          contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
+                          contentStyle={{ borderRadius: '8px', fontSize: '12px', fontWeight: 600 }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
 
                     {/* Angka & Persentase di Tengah Donat */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                      <span className="text-base font-bold text-slate-900 tabular-nums">
+                      <span className="text-xl sm:text-2xl font-black text-slate-900 tabular-nums">
                         {item.pctReady.toFixed(0)}%
                       </span>
-                      <span className="text-xs font-semibold text-slate-500">
+                      <span className="text-xs font-bold text-slate-600 mt-0.5">
                         {item.total.toLocaleString('id-ID')} Unit
                       </span>
                     </div>
@@ -201,27 +201,23 @@ export default function FleetJenisDonutGrid({
                 </div>
 
                 {/* Footer Rincian Siap Operasi vs Dalam Perbaikan */}
-                <div className="grid grid-cols-2 gap-1.5 pt-3 border-t border-slate-100 text-xs mt-2">
-                  <div className="p-1.5 rounded-lg bg-emerald-50/60 border border-emerald-100/80 text-center">
-                    <span className="text-xs text-emerald-700 block font-medium">Siap Operasi</span>
-                    <span className="font-bold text-emerald-800 tabular-nums">
+                <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 text-xs sm:text-sm mt-2">
+                  <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-center">
+                    <span className="text-xs text-emerald-800 block font-bold">Siap Operasi</span>
+                    <span className="font-black text-emerald-900 text-sm sm:text-base tabular-nums">
                       {item.ready.toLocaleString('id-ID')}
                     </span>
                   </div>
 
                   <div
-                    className={`p-1.5 rounded-lg text-center border ${
+                    className={`p-2 rounded-lg text-center border ${
                       item.broken > 0
-                        ? 'bg-red-50 text-red-700 border-red-200'
-                        : 'bg-slate-50 text-slate-500 border-slate-100'
+                        ? 'bg-red-50 text-red-800 border-red-300'
+                        : 'bg-slate-50 text-slate-600 border-slate-200'
                     }`}
                   >
-                    <span className="text-xs block font-medium">Perbaikan</span>
-                    <span
-                      className={`font-bold tabular-nums ${
-                        item.broken > 0 ? 'text-red-700' : 'text-slate-600'
-                      }`}
-                    >
+                    <span className="text-xs block font-bold">Perbaikan</span>
+                    <span className="font-black text-sm sm:text-base tabular-nums">
                       {item.broken.toLocaleString('id-ID')}
                     </span>
                   </div>
