@@ -130,9 +130,129 @@ export default function DamageCatalogSelector({
             )}
           </div>
 
-          {/* ACTIVE WORKBENCH: Ringkasan & Konfigurasi Tindakan Kerusakan Terpilih */}
+          {/* Grid Katalog Komponen Master Data */}
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+            {Object.entries(katalogKerusakan).map(([komponen, listGejala]) => {
+              const filteredGejala = searchGejala.trim()
+                ? listGejala.filter(
+                    (g) =>
+                      g.toLowerCase().includes(searchGejala.toLowerCase()) ||
+                      komponen.toLowerCase().includes(searchGejala.toLowerCase())
+                  )
+                : listGejala;
+
+              if (filteredGejala.length === 0) return null;
+
+              return (
+                <div
+                  key={komponen}
+                  className="p-3 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2"
+                >
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{komponen}</span>
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {filteredGejala.map((gejala) => {
+                      const key = `${komponen}:::${gejala}`;
+                      const isSelected = selectedKerusakan.includes(key);
+                      const tindakan = tindakanMap[key] || 'Repair';
+                      const currentQty = qtyMap[key] || 1;
+
+                      return (
+                        <button
+                          key={gejala}
+                          type="button"
+                          onClick={() => onToggleKerusakan(komponen, gejala)}
+                          className={`px-3 py-1.5 text-xs rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer text-left ${
+                            isSelected
+                              ? tindakan === 'Ganti'
+                                ? 'bg-blue-600 text-white font-bold shadow-2xs'
+                                : 'bg-amber-600 text-white font-bold shadow-2xs'
+                              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          {isSelected ? (
+                            <Check className="w-3.5 h-3.5 shrink-0" />
+                          ) : (
+                            <Plus className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          )}
+                          <span>{gejala}</span>
+                          {isSelected && (
+                            <span className="text-xs px-1.5 py-0.5 bg-black/20 rounded font-semibold flex items-center gap-1 tabular-nums">
+                              {currentQty > 1 && <span>({currentQty}x)</span>}
+                              <span>{tindakan}</span>
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Empty state bila pencarian tidak cocok */}
+            {searchGejala.trim() &&
+              !Object.entries(katalogKerusakan).some(
+                ([komponen, listGejala]) =>
+                  komponen.toLowerCase().includes(searchGejala.toLowerCase()) ||
+                  listGejala.some((g) => g.toLowerCase().includes(searchGejala.toLowerCase()))
+              ) && (
+                <div className="py-8 px-4 text-center bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                  <Search className="w-6 h-6 text-slate-400 mx-auto" />
+                  <p className="text-xs font-semibold text-slate-800">
+                    Tidak Ditemukan Gejala Kerusakan
+                  </p>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                    Tidak ada komponen atau gejala yang cocok dengan &quot;{searchGejala}&quot;.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSearchGejala('')}
+                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg transition cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Reset Pencarian</span>
+                  </button>
+                </div>
+              )}
+          </div>
+
+          {/* Input Manual Tambahan Jika Kerusakan Tidak Ada di Daftar */}
+          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2">
+            <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+              <PenTool className="w-3.5 h-3.5 text-slate-500" />
+              <span>Kerusakan Lainnya / Manual (Jika tidak ada pada pilihan di atas):</span>
+            </span>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={inputManualText}
+                onChange={(e) => setInputManualText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddManualSubmit();
+                  }
+                }}
+                placeholder="Ketik rincian kerusakan lain, lalu tekan Enter atau klik Tambah..."
+                className="flex-1 px-3 h-10 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none placeholder-slate-400"
+              />
+              <button
+                type="button"
+                onClick={() => handleAddManualSubmit()}
+                className="px-4 h-10 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1 shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Tambah</span>
+              </button>
+            </div>
+          </div>
+
+          {/* ACTIVE WORKBENCH: Daftar Kerusakan Aktif (Ditempatkan Setelah User Menginput / Memilih Part) */}
           {totalDipilih > 0 && (
-            <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/90 space-y-2.5">
+            <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/90 space-y-2.5 animate-fade-in">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-800">
                 <span className="flex items-center gap-1.5">
                   <Wrench className="w-3.5 h-3.5 text-slate-600" />
@@ -141,7 +261,7 @@ export default function DamageCatalogSelector({
                 <span className="text-slate-500 font-normal">Tentukan jumlah &amp; tindakan:</span>
               </div>
 
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                 {selectedKerusakan.map((key) => {
                   const [komponen, detail] = key.split(':::');
                   const currentTindakan = tindakanMap[key] || 'Repair';
@@ -308,126 +428,6 @@ export default function DamageCatalogSelector({
               </div>
             </div>
           )}
-
-          {/* Grid Katalog Komponen Master Data */}
-          <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-            {Object.entries(katalogKerusakan).map(([komponen, listGejala]) => {
-              const filteredGejala = searchGejala.trim()
-                ? listGejala.filter(
-                    (g) =>
-                      g.toLowerCase().includes(searchGejala.toLowerCase()) ||
-                      komponen.toLowerCase().includes(searchGejala.toLowerCase())
-                  )
-                : listGejala;
-
-              if (filteredGejala.length === 0) return null;
-
-              return (
-                <div
-                  key={komponen}
-                  className="p-3 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2"
-                >
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-slate-500" />
-                    <span>{komponen}</span>
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {filteredGejala.map((gejala) => {
-                      const key = `${komponen}:::${gejala}`;
-                      const isSelected = selectedKerusakan.includes(key);
-                      const tindakan = tindakanMap[key] || 'Repair';
-                      const currentQty = qtyMap[key] || 1;
-
-                      return (
-                        <button
-                          key={gejala}
-                          type="button"
-                          onClick={() => onToggleKerusakan(komponen, gejala)}
-                          className={`px-3 py-1.5 text-xs rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer text-left ${
-                            isSelected
-                              ? tindakan === 'Ganti'
-                                ? 'bg-blue-600 text-white font-bold shadow-2xs'
-                                : 'bg-amber-600 text-white font-bold shadow-2xs'
-                              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 hover:border-slate-300'
-                          }`}
-                        >
-                          {isSelected ? (
-                            <Check className="w-3.5 h-3.5 shrink-0" />
-                          ) : (
-                            <Plus className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          )}
-                          <span>{gejala}</span>
-                          {isSelected && (
-                            <span className="text-xs px-1.5 py-0.5 bg-black/20 rounded font-semibold flex items-center gap-1 tabular-nums">
-                              {currentQty > 1 && <span>({currentQty}x)</span>}
-                              <span>{tindakan}</span>
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Empty state bila pencarian tidak cocok */}
-            {searchGejala.trim() &&
-              !Object.entries(katalogKerusakan).some(
-                ([komponen, listGejala]) =>
-                  komponen.toLowerCase().includes(searchGejala.toLowerCase()) ||
-                  listGejala.some((g) => g.toLowerCase().includes(searchGejala.toLowerCase()))
-              ) && (
-                <div className="py-8 px-4 text-center bg-slate-50 rounded-lg border border-slate-200 space-y-2">
-                  <Search className="w-6 h-6 text-slate-400 mx-auto" />
-                  <p className="text-xs font-semibold text-slate-800">
-                    Tidak Ditemukan Gejala Kerusakan
-                  </p>
-                  <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                    Tidak ada komponen atau gejala yang cocok dengan &quot;{searchGejala}&quot;.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setSearchGejala('')}
-                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg transition cursor-pointer"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Reset Pencarian</span>
-                  </button>
-                </div>
-              )}
-          </div>
-
-          {/* Input Manual Tambahan Jika Kerusakan Tidak Ada di Daftar */}
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2">
-            <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-              <PenTool className="w-3.5 h-3.5 text-slate-500" />
-              <span>Kerusakan Lainnya / Manual (Jika tidak ada pada pilihan di atas):</span>
-            </span>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={inputManualText}
-                onChange={(e) => setInputManualText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddManualSubmit();
-                  }
-                }}
-                placeholder="Ketik rincian kerusakan lain, lalu tekan Enter atau klik Tambah..."
-                className="flex-1 px-3 h-10 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none placeholder-slate-400"
-              />
-              <button
-                type="button"
-                onClick={() => handleAddManualSubmit()}
-                className="px-4 h-10 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1 shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Tambah</span>
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
