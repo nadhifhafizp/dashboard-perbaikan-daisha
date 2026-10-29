@@ -241,10 +241,14 @@ export async function GET(request: Request) {
 
       const jenisSet = new Set<string>();
 
-      // Mapping unit dengan status tahun berjalan
+      // Mapping unit dengan status tahun berjalan (Dua Pintu: PM Rutin + Perbaikan Bengkel)
       const mappedUnits = targetDaisha.map((u) => {
-        const lastDate = u.last_maintenance_date ? new Date(u.last_maintenance_date) : null;
-        const isMaintainedThisYear = lastDate !== null && lastDate >= startOfYear && lastDate <= endOfYear;
+        const lastMaint = u.last_maintenance_date ? new Date(u.last_maintenance_date) : null;
+        const lastRepair = u.last_repair_date ? new Date(u.last_repair_date) : null;
+        const effectiveLastDate = (lastMaint && lastRepair)
+          ? (lastMaint > lastRepair ? lastMaint : lastRepair)
+          : (lastMaint || lastRepair);
+        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfYear && effectiveLastDate <= endOfYear;
         
         const jenisClean = u.jenis || 'LAINNYA';
         jenisSet.add(jenisClean);
@@ -271,8 +275,8 @@ export async function GET(request: Request) {
           summary.unmaintainedUnits++;
         }
 
-        // Hitung hari sejak maintenance terakhir
-        const daysSinceLast = lastDate ? Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)) : null;
+        // Hitung hari sejak pemeliharaan terakhir (dari salah satu 2 pintu)
+        const daysSinceLast = effectiveLastDate ? Math.floor((now.getTime() - effectiveLastDate.getTime()) / (1000 * 60 * 60 * 24)) : null;
 
         // Ekstrak nomor urut numerik (contoh "S-045" -> 45)
         const numMatch = u.nomor_daisha.match(/\d+/);
@@ -286,7 +290,7 @@ export async function GET(request: Request) {
           nama_daisha: u.nama_daisha || u.jenis,
           seksi: u.seksi || 'All seksi',
           ukuran: u.ukuran,
-          last_maintenance_date: u.last_maintenance_date,
+          last_maintenance_date: effectiveLastDate ? effectiveLastDate.toISOString() : null,
           last_condition: u.last_condition || 'OK',
           last_repair_date: u.last_repair_date,
           last_waktu_masuk: u.last_waktu_masuk,
@@ -309,8 +313,12 @@ export async function GET(request: Request) {
         const entry = seksiMap.get(s)!;
         entry.total++;
 
-        const lastDate = u.last_maintenance_date ? new Date(u.last_maintenance_date) : null;
-        const isMaintainedThisYear = lastDate !== null && lastDate >= startOfYear && lastDate <= endOfYear;
+        const lastMaint = u.last_maintenance_date ? new Date(u.last_maintenance_date) : null;
+        const lastRepair = u.last_repair_date ? new Date(u.last_repair_date) : null;
+        const effectiveLastDate = (lastMaint && lastRepair)
+          ? (lastMaint > lastRepair ? lastMaint : lastRepair)
+          : (lastMaint || lastRepair);
+        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfYear && effectiveLastDate <= endOfYear;
         if (isMaintainedThisYear) {
           entry.maintained++;
         } else {

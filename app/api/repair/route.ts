@@ -415,9 +415,12 @@ export async function POST(request: Request) {
             const ticketWaktuMasuk = tRow[0].waktuMasuk ? new Date(tRow[0].waktuMasuk) : completionDate;
             const detailKerusakan = body.detail ? sanitizeText(body.detail, 1000) : 'Perbaikan kerusakan di bengkel';
             
-            // Cari unit Daisha atau buat baru
+            const cleanNoD = noD.replace(/\s+/g, '').toUpperCase();
             const daishaMatch = await tx`
-              SELECT id FROM "Daisha" WHERE UPPER(nomor_daisha) = ${noD.toUpperCase()} LIMIT 1
+              SELECT id FROM "Daisha" 
+              WHERE UPPER(nomor_daisha) = ${noD.toUpperCase()}
+                 OR REPLACE(UPPER(nomor_daisha), ' ', '') = ${cleanNoD}
+              LIMIT 1
             `;
 
             let dId: string;
