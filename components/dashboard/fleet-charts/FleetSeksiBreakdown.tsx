@@ -72,30 +72,32 @@ export default function FleetSeksiBreakdown({
         </div>
       )}
 
-      {/* Grafik Komparasi Stacked Bar - DIPERLEBAR DAN DIPERBESAR */}
+      {/* Grafik Komparasi Stacked Bar - DIPERLEBAR PADAT, BATANG BESAR TEBAL, TULISAN SEKSI LURUS */}
       <div className="w-full pt-1 pb-2">
-        <div className="h-[360px] sm:h-[420px] w-full">
+        <div className="h-[450px] sm:h-[520px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={activeBreakdownList}
-              margin={{ top: 25, right: 20, left: -5, bottom: 35 }}
-              barGap={6}
+              margin={{ top: 35, right: 25, left: 10, bottom: 25 }}
+              barCategoryGap="8%"
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART.grid} />
               <XAxis
                 dataKey="label"
                 tickLine={false}
-                axisLine={{ stroke: '#cbd5e1' }}
-                tick={{ fill: '#1e293b', fontSize: 13, fontWeight: 700 }}
+                axisLine={{ stroke: '#94a3b8', strokeWidth: 2 }}
+                tick={{ fill: '#0f172a', fontSize: 15, fontWeight: 900 }}
                 interval={0}
-                angle={-10}
-                textAnchor="end"
+                angle={0}
+                textAnchor="middle"
+                dy={12}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }}
+                tick={{ fill: '#334155', fontSize: 13, fontWeight: 800 }}
                 allowDecimals={false}
+                width={50}
                 domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.15)]}
               />
               <Tooltip
@@ -103,12 +105,12 @@ export default function FleetSeksiBreakdown({
                   `${Number(val || 0).toLocaleString('id-ID')} Unit`,
                   String(name || ''),
                 ]}
-                contentStyle={{ borderRadius: '10px', fontSize: '13px', fontWeight: 600 }}
+                contentStyle={{ borderRadius: '12px', fontSize: '15px', fontWeight: 800, padding: '12px 16px' }}
               />
               <Legend
                 verticalAlign="top"
                 align="right"
-                wrapperStyle={{ fontSize: '13px', fontWeight: 700, paddingBottom: '12px' }}
+                wrapperStyle={{ fontSize: '15px', fontWeight: 900, paddingBottom: '16px' }}
               />
               <Bar
                 dataKey="oke"
@@ -116,8 +118,8 @@ export default function FleetSeksiBreakdown({
                 stackId="a"
                 fill="#059669"
                 radius={[4, 4, 0, 0]}
-                maxBarSize={44}
-                minPointSize={8}
+                maxBarSize={130}
+                minPointSize={10}
               >
                 <LabelList
                   content={(props: { x?: number | string; y?: number | string; width?: number | string; height?: number | string; index?: number }) => {
@@ -129,15 +131,15 @@ export default function FleetSeksiBreakdown({
                     const item = activeBreakdownList[index];
                     if (!item || !item.total) return null;
                     const ngHeight = item.oke > 0 && item.ng > 0 ? (heightNum / item.oke) * item.ng : 0;
-                    const labelY = yNum - ngHeight - 8;
+                    const labelY = yNum - ngHeight - 12;
                     return (
                       <text
                         x={xNum + widthNum / 2}
                         y={labelY}
                         fill="#0f172a"
                         textAnchor="middle"
-                        fontSize={13}
-                        fontWeight={800}
+                        fontSize={16}
+                        fontWeight={900}
                       >
                         {item.total.toLocaleString('id-ID')}
                       </text>
@@ -150,9 +152,9 @@ export default function FleetSeksiBreakdown({
                 name="NG (Dalam Perbaikan)"
                 stackId="a"
                 fill="#dc2626"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={44}
-                minPointSize={6}
+                radius={[5, 5, 0, 0]}
+                maxBarSize={130}
+                minPointSize={8}
               >
                 <LabelList
                   content={(props: { x?: number | string; y?: number | string; width?: number | string; index?: number }) => {
@@ -165,11 +167,11 @@ export default function FleetSeksiBreakdown({
                     return (
                       <text
                         x={xNum + widthNum / 2}
-                        y={yNum - 8}
+                        y={yNum - 12}
                         fill="#0f172a"
                         textAnchor="middle"
-                        fontSize={13}
-                        fontWeight={800}
+                        fontSize={16}
+                        fontWeight={900}
                       >
                         {item.total.toLocaleString('id-ID')}
                       </text>

@@ -93,8 +93,8 @@ export async function GET(request: Request) {
       LEFT JOIN "Daisha" d ON UPPER(TRIM(t."noDaisha")) = UPPER(TRIM(d."nomor_daisha"))
                            OR REPLACE(UPPER(t."noDaisha"), ' ', '') = REPLACE(UPPER(d."nomor_daisha"), ' ', '')
       WHERE (${idParam}::text IS NULL OR t."idTiket" = ${idParam} OR UPPER(t."noDaisha") = UPPER(${idParam}))
-        AND (${fromIso}::timestamptz IS NULL OR t."waktuMasuk" >= ${fromIso}::timestamptz)
-        AND (${toIso}::timestamptz IS NULL OR t."waktuMasuk" <= ${toIso}::timestamptz)
+        AND (${fromIso}::timestamptz IS NULL OR t."waktuMasuk" >= ${fromIso}::timestamptz OR t."status" IN ('Open', 'Progress', 'Pending'))
+        AND (${toIso}::timestamptz IS NULL OR t."waktuMasuk" <= ${toIso}::timestamptz OR t."status" IN ('Open', 'Progress', 'Pending'))
       ORDER BY t."waktuMasuk" DESC
     `;
 
@@ -546,8 +546,32 @@ export async function POST(request: Request) {
         );
       }
 
+      const tRows = await sql`SELECT "noDaisha" FROM "Ticket" WHERE "idTiket" = ${idTiket} LIMIT 1`;
+      const deletedNoDaisha = tRows.length > 0 ? tRows[0].noDaisha : null;
+
       await sql`DELETE FROM "TicketDetail" WHERE "idTiket" = ${idTiket}`;
       await sql`DELETE FROM "Ticket" WHERE "idTiket" = ${idTiket}`;
+
+      // Jika tiket dihapus, cek apakah unit masih memiliki tiket aktif lain
+      if (deletedNoDaisha) {
+        const remainingActive = await sql`
+          SELECT count(*)::int as c
+          FROM "Ticket"
+          WHERE ("noDaisha" = ${deletedNoDaisha} OR UPPER(TRIM("noDaisha")) = UPPER(TRIM(${deletedNoDaisha})))
+            AND status IN ('Open', 'Progress', 'Pending')
+        `;
+        if ((remainingActive[0]?.c || 0) === 0) {
+          await sql`
+            UPDATE "Daisha"
+            SET "last_condition" = 'OK', "updated_at" = NOW()
+            WHERE UPPER(TRIM("nomor_daisha")) = UPPER(TRIM(${deletedNoDaisha}))
+               OR REPLACE(UPPER("nomor_daisha"), ' ', '') = REPLACE(UPPER(${deletedNoDaisha}), ' ', '')
+          `;
+        }
+      }
+
+      invalidateMaintenanceCache();
+      invalidateRepairCache();
 
       recordAuditLog({
         action: 'TICKET_DELETE',

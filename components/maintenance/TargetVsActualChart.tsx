@@ -476,7 +476,7 @@ export default function TargetVsActualChart({
           </div>
 
           {/* Grouped Bar Chart: Target Harian vs Real Actual per Jenis Daisha */}
-          <div className="h-64 sm:h-72 w-full pt-1">
+          <div className="h-72 sm:h-80 w-full pt-1">
             {filteredAndSortedJenis.length === 0 ? (
               <div className="h-full flex items-center justify-center text-xs text-slate-400">
                 Tidak ada data jenis daisha yang sesuai pencarian
@@ -487,23 +487,23 @@ export default function TargetVsActualChart({
                   data={filteredAndSortedJenis.slice(0, 16)} // Tampilkan 16 jenis paling relevan di grafik
                   margin={{ top: 15, right: 15, left: -15, bottom: 25 }}
                   barGap={4}
-                  barCategoryGap="20%"
+                  barCategoryGap="10%"
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART.grid} />
                   <XAxis
                     dataKey="nama"
                     tickLine={false}
                     axisLine={{ stroke: CHART.muted }}
-                    tick={{ fill: CHART.axis, fontSize: 12 }}
+                    tick={{ fill: '#0f172a', fontSize: 13, fontWeight: 700 }}
                     interval={0}
-                    angle={-20}
-                    textAnchor="end"
+                    angle={0}
+                    textAnchor="middle"
                     height={40}
                   />
                   <YAxis
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fill: CHART.axis, fontSize: 12 }}
+                    tick={{ fill: '#334155', fontSize: 12, fontWeight: 600 }}
                     allowDecimals={false}
                   />
                   <Tooltip content={<CustomJenisTooltip />} />
@@ -514,7 +514,7 @@ export default function TargetVsActualChart({
                     name="Target Harian"
                     fill={CHART.muted}
                     radius={[4, 4, 0, 0]}
-                    maxBarSize={24}
+                    maxBarSize={60}
                   />
 
                   {/* Bar 2: Real Actual Pengerjaan Hari Ini */}
@@ -523,7 +523,7 @@ export default function TargetVsActualChart({
                     name="Real Actual Hari Ini"
                     fill={CHART.status.ok}
                     radius={[4, 4, 0, 0]}
-                    maxBarSize={24}
+                    maxBarSize={60}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -559,25 +559,25 @@ export default function TargetVsActualChart({
           ============================================================================ */}
       {viewMode === 'TREND' && (
         <div className="space-y-4">
-          <div className="h-64 sm:h-72 w-full pt-1">
+          <div className="h-72 sm:h-80 w-full pt-1">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
                 margin={{ top: 15, right: 15, left: -15, bottom: 0 }}
                 barGap={3}
-                barCategoryGap="25%"
+                barCategoryGap="10%"
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis
                   dataKey="dateLabel"
                   tickLine={false}
                   axisLine={{ stroke: '#cbd5e1' }}
-                  tick={{ fill: '#64748b', fontSize: 11 }}
+                  tick={{ fill: '#0f172a', fontSize: 13, fontWeight: 800 }}
                 />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: '#64748b', fontSize: 11 }}
+                  tick={{ fill: '#334155', fontSize: 12, fontWeight: 700 }}
                   allowDecimals={false}
                 />
                 <Tooltip
@@ -653,7 +653,7 @@ export default function TargetVsActualChart({
                   name="Target Harian"
                   fill={CHART.muted}
                   radius={[4, 4, 0, 0]}
-                  maxBarSize={22}
+                  maxBarSize={60}
                 />
 
                 {/* Bar 2: Aktual Maintenance Rutin */}
@@ -663,7 +663,7 @@ export default function TargetVsActualChart({
                   fill={CHART.status.ok}
                   stackId="actual"
                   radius={[0, 0, 0, 0]}
-                  maxBarSize={22}
+                  maxBarSize={60}
                 />
 
                 {/* Bar 3: Aktual Repair Perbaikan */}
@@ -673,7 +673,7 @@ export default function TargetVsActualChart({
                   fill={CHART.main}
                   stackId="actual"
                   radius={[4, 4, 0, 0]}
-                  maxBarSize={22}
+                  maxBarSize={60}
                 />
               </BarChart>
             </ResponsiveContainer>

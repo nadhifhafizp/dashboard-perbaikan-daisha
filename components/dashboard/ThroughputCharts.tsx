@@ -219,14 +219,15 @@ export default function ThroughputCharts({
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis
                   dataKey="tanggal"
-                  tick={{ fontSize: 12, fill: '#1e293b', fontWeight: 700 }}
+                  tick={{ fontSize: 13, fill: '#0f172a', fontWeight: 800 }}
                   axisLine={{ stroke: '#cbd5e1' }}
                   tickLine={false}
+                  dy={6}
                 />
                 <YAxis
                   type="number"
                   domain={[0, yMaxDomain]}
-                  tick={{ fontSize: 12, fill: '#475569', fontWeight: 600 }}
+                  tick={{ fontSize: 13, fill: '#334155', fontWeight: 700 }}
                   allowDecimals={false}
                   axisLine={{ stroke: '#e2e8f0' }}
                   tickLine={false}
@@ -285,13 +286,13 @@ export default function ThroughputCharts({
                   name="Unit Masuk"
                   fill="#dc2626"
                   radius={[5, 5, 0, 0]}
-                  maxBarSize={40}
+                  maxBarSize={85}
                 >
                   <LabelList
                     dataKey="Masuk"
                     position="top"
                     formatter={(val: unknown) => (Number(val) > 0 ? String(val) : '')}
-                    style={{ fontSize: 13, fontWeight: 800, fill: '#dc2626' }}
+                    style={{ fontSize: 14, fontWeight: 900, fill: '#dc2626' }}
                   />
                 </Bar>
                 <Bar
@@ -299,13 +300,13 @@ export default function ThroughputCharts({
                   name="Unit Selesai"
                   fill="#059669"
                   radius={[5, 5, 0, 0]}
-                  maxBarSize={40}
+                  maxBarSize={85}
                 >
                   <LabelList
                     dataKey="Selesai"
                     position="top"
                     formatter={(val: unknown) => (Number(val) > 0 ? String(val) : '')}
-                    style={{ fontSize: 13, fontWeight: 800, fill: '#059669' }}
+                    style={{ fontSize: 14, fontWeight: 900, fill: '#059669' }}
                   />
                 </Bar>
               </BarChart>

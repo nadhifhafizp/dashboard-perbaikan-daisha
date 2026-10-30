@@ -138,8 +138,8 @@ export async function GET(request: Request) {
         };
       }
 
-      // Query tabel log dan master katalog secara paralel (Sangat cepat < 35ms)
-      const [todayLogs, recentLogs, trendLogRows, conditionRows, catalogRows] = await Promise.all([
+      // Query tabel log, master katalog, dan tiket aktif secara paralel (Sangat cepat < 35ms)
+      const [todayLogs, recentLogs, trendLogRows, conditionRows, catalogRows, activeTicketRows] = await Promise.all([
         sql`
           SELECT 
             l.id,
@@ -206,7 +206,29 @@ export async function GET(request: Request) {
             variants
           FROM "DaishaCatalog"
         `,
+        sql<Array<{ noDaisha: string }>>`
+          SELECT DISTINCT UPPER(TRIM("noDaisha")) as "noDaisha"
+          FROM "Ticket"
+          WHERE status IN ('Open', 'Progress', 'Pending')
+            AND "noDaisha" IS NOT NULL
+            AND "noDaisha" != '-'
+        `,
       ]);
+
+      // Sinkronisasi status kondisi unit dengan tiket perbaikan aktif di workshop
+      // Menjamin tidak ada unit hantu / orphan condition yang berbeda antara workshop & KPI
+      const activeRepairNoSet = new Set(
+        activeTicketRows.map((r) => r.noDaisha.replace(/[\s\-_]+/g, ''))
+      );
+
+      for (const d of allDaisha) {
+        const norm = (d.nomor_daisha || '').trim().toUpperCase().replace(/[\s\-_]+/g, '');
+        if (activeRepairNoSet.has(norm)) {
+          d.last_condition = 'RUSAK';
+        } else if (d.last_condition !== 'SCRAP') {
+          d.last_condition = 'OK';
+        }
+      }
 
       // Agregasi statistik resmi dari DaishaCatalog (Registri Daisha)
       const catalogSeksiMap = new Map<string, number>();

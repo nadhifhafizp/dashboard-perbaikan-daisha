@@ -4,10 +4,16 @@ import { Ticket } from '@/types/ticket';
 import { JenisHealthItem, BreakdownItem, RecurringUnitItem } from './types';
 import { DAFTAR_SEKSI } from '@/lib/masterData';
 
+// Normalisasi nomor daisha untuk pencocokan akurat tanpa terpengaruh spasi, strip, atau huruf besar/kecil
+export function normalizeDaishaCode(val: string | null | undefined): string {
+  if (!val) return '';
+  return val.trim().toUpperCase().replace(/[\s\-_]+/g, '');
+}
+
 // 'OK' dan 'REPAIR_DONE' keduanya berarti unit sudah selesai diperbaiki / siap operasi.
-// Hanya 'RUSAK' yang berarti unit benar-benar belum ditangani.
+// Hanya 'RUSAK' atau 'SCRAP' yang berarti unit belum siap operasi.
 function isConditionNG(cond: string | null | undefined): boolean {
-  return cond === 'RUSAK';
+  return cond === 'RUSAK' || cond === 'SCRAP';
 }
 
 interface UseFleetHealthDataProps {
@@ -68,13 +74,31 @@ export function useFleetHealthData({
     const set = new Set<string>();
     tickets.forEach((t) => {
       if (t.status === 'Open' || t.status === 'Progress' || t.status === 'Pending') {
-        if (t.noDaisha && t.noDaisha.trim() && t.noDaisha !== '-') {
-          set.add(t.noDaisha.trim().toUpperCase());
+        const norm = normalizeDaishaCode(t.noDaisha);
+        if (norm && norm !== '-') {
+          set.add(norm);
         }
       }
     });
     return set;
   }, [tickets]);
+
+  // Fungsi penentu apakah unit terhitung NG (Dalam antrean bengkel / Scrap)
+  // Single Source of Truth: Menjamin angka NG di KPI selalu 100% klop dengan antrean tindakan bengkel
+  const isUnitNG = useMemo(() => {
+    return (u: FleetUnit): boolean => {
+      const norm = normalizeDaishaCode(u.nomor_daisha);
+      if (!norm) return false;
+      // Jika data tiket sudah termuat, antrean bengkel menjadi penentu mutlak unit yang NG
+      if (tickets.length > 0) {
+        if (activeRepairNoDaishaSet.has(norm)) return true;
+        if (u.last_condition === 'SCRAP') return true;
+        return false;
+      }
+      // Fallback sementara saat tiket sedang proses dimuat
+      return isConditionNG(u.last_condition);
+    };
+  }, [activeRepairNoDaishaSet, tickets.length]);
 
   // Filter unit berdasarkan seksi jika ada seleksi aktif
   const targetUnits = useMemo(() => {
@@ -92,9 +116,7 @@ export function useFleetHealthData({
       if (u.seksi) seksiSet.add(u.seksi);
       if (u.jenis) jenisSet.add(u.jenis);
 
-      const isNG =
-        activeRepairNoDaishaSet.has((u.nomor_daisha || '').trim().toUpperCase()) ||
-        isConditionNG(u.last_condition);
+      const isNG = isUnitNG(u);
 
       if (isNG) {
         broken++;
@@ -142,7 +164,7 @@ export function useFleetHealthData({
       totalJenis: jenisSet.size,
       recurringUnitsCount,
     };
-  }, [targetUnits, tickets, activeRepairNoDaishaSet, currentSeksi, catalogStats]);
+  }, [targetUnits, tickets, isUnitNG, currentSeksi, catalogStats]);
 
   // Breakdown KPI Jumlah Daisha dari Setiap Seksi (Total, OKE, NG)
   const seksiBreakdownList = useMemo<BreakdownItem[]>(() => {
@@ -155,16 +177,22 @@ export function useFleetHealthData({
     });
 
     units.forEach((u) => {
-      const s = u.seksi && u.seksi.trim() ? u.seksi.trim() : '';
-      if (!s || s.toLowerCase() === 'all seksi') return;
-      if (!map[s]) {
-        map[s] = { label: s, seksi: s, total: catalogStats?.bySeksi[s] ?? 0, oke: 0, ng: 0 };
+      const rawS = u.seksi && u.seksi.trim() ? u.seksi.trim() : '';
+      if (!rawS || rawS.toLowerCase() === 'all seksi' || rawS.toLowerCase() === 'all') return;
+      
+      // Cocokkan ke daftar seksi resmi
+      const matchedSeksi = DAFTAR_SEKSI.find(
+        (ds) => ds.toLowerCase() === rawS.toLowerCase()
+      ) || (DAFTAR_SEKSI.includes(rawS as any) ? rawS : null);
+
+      if (!matchedSeksi) return;
+
+      if (!map[matchedSeksi]) {
+        map[matchedSeksi] = { label: matchedSeksi, seksi: matchedSeksi, total: catalogStats?.bySeksi[matchedSeksi] ?? 0, oke: 0, ng: 0 };
       }
-      const isNG =
-        activeRepairNoDaishaSet.has((u.nomor_daisha || '').trim().toUpperCase()) ||
-        isConditionNG(u.last_condition);
+      const isNG = isUnitNG(u);
       if (isNG) {
-        map[s].ng++;
+        map[matchedSeksi].ng++;
       }
     });
 
@@ -181,7 +209,7 @@ export function useFleetHealthData({
         };
       })
       .sort((a, b) => b.total - a.total);
-  }, [units, activeRepairNoDaishaSet, catalogStats]);
+  }, [units, isUnitNG, catalogStats]);
 
   // Breakdown saat seksi difilter
   const jenisInSeksiBreakdownList = useMemo<BreakdownItem[]>(() => {
@@ -194,9 +222,7 @@ export function useFleetHealthData({
         map[j] = { label: j, jenis: j, total: 0, oke: 0, ng: 0 };
       }
       map[j].total++;
-      const isNG =
-        activeRepairNoDaishaSet.has((u.nomor_daisha || '').trim().toUpperCase()) ||
-        isConditionNG(u.last_condition);
+      const isNG = isUnitNG(u);
       if (isNG) {
         map[j].ng++;
       } else {
@@ -211,7 +237,7 @@ export function useFleetHealthData({
         pctNg: item.total > 0 ? (item.ng / item.total) * 100 : 0,
       }))
       .sort((a, b) => b.total - a.total);
-  }, [targetUnits, currentSeksi, activeRepairNoDaishaSet]);
+  }, [targetUnits, currentSeksi, isUnitNG]);
 
   const isSeksiFiltered = Boolean(currentSeksi && currentSeksi !== 'all');
   const activeBreakdownList: BreakdownItem[] = isSeksiFiltered ? jenisInSeksiBreakdownList : seksiBreakdownList;
@@ -240,9 +266,7 @@ export function useFleetHealthData({
       map[j].total++;
       if (u.seksi) map[j].seksiSet.add(u.seksi);
 
-      const isNG =
-        activeRepairNoDaishaSet.has((u.nomor_daisha || '').trim().toUpperCase()) ||
-        isConditionNG(u.last_condition);
+      const isNG = isUnitNG(u);
 
       if (isNG) {
         map[j].broken++;
@@ -262,7 +286,7 @@ export function useFleetHealthData({
     }));
 
     return list;
-  }, [targetUnits, activeRepairNoDaishaSet]);
+  }, [targetUnits, isUnitNG]);
 
   // Filter & Sort per jenis daisha
   const filteredJenisData = useMemo(() => {
