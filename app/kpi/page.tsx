@@ -332,12 +332,7 @@ function KpiDashboardContent() {
     (!isSeksi && activeTab === 'spareparts' && loadingSpareparts);
 
   return (
-    <div
-      className="p-3 sm:p-5 lg:p-6 pb-24 md:pb-8 space-y-6 max-w-[1750px] w-full mx-auto transition-all kpi-scale-2xl"
-      style={{
-        zoom: 1.25,
-      }}
-    >
+    <div className="p-3 sm:p-5 lg:p-6 pb-24 md:pb-8 space-y-6 max-w-[1750px] w-full mx-auto transition-all">
       {/* 1. Header Pusat Dashboard */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-3.5 border-b border-slate-200">
         <div className="space-y-1">

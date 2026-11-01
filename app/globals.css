@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+html {
+  zoom: 1.25;
+}
+
+@media print {
+  html {
+    zoom: 1 !important;
+  }
+}
+
 :root {
   /* Official Bridgestone Brand Tokens */
   --primary: #E60012; /* Bridgestone Red (#E60012) */
