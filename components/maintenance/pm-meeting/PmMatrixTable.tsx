@@ -37,29 +37,35 @@ export default function PmMatrixTable({
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-xs whitespace-nowrap">
-        <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+        <thead className="bg-slate-100/80 text-slate-700 font-extrabold border-b-2 border-slate-200 uppercase tracking-wider text-xs">
           <tr>
-            <th scope="col" className="py-3 px-4">
-              {groupingMode === 'JENIS' ? 'Jenis Daisha' : 'Seksi Operasional'}
+            <th scope="col" className="py-3.5 px-4">
+              {groupingMode === 'JENIS' ? 'Jenis Armada' : 'Seksi Pabrik'}
             </th>
-            <th scope="col" className="py-3 px-3 text-right">Populasi</th>
-            <th scope="col" className="py-3 px-3 text-right">Siap / OK</th>
-            <th scope="col" className="py-3 px-3 text-right">Rusak (Repair)</th>
-            <th scope="col" className="py-3 px-3 text-left">
-              Progres PM Tahun {currentYear}
+            <th scope="col" className="py-3.5 px-3 text-right">
+              Populasi
             </th>
-            <th scope="col" className="py-3 px-3 text-right">Sudah di-PM</th>
-            <th scope="col" className="py-3 px-3 text-right">Belum di-PM</th>
-            <th scope="col" className="py-3 px-3 text-right">Target Harian</th>
-            <th scope="col" className="py-3 px-3 text-right">Aktual Hari Ini</th>
-            <th scope="col" className="py-3 px-3 text-center">Status PM</th>
-            <th scope="col" className="py-3 px-4 text-center">Rincian Unit</th>
+            <th scope="col" className="py-3.5 px-3 text-center">
+              Kondisi Fisik
+            </th>
+            <th scope="col" className="py-3.5 px-4 text-left w-52">
+              Progres PM ({currentYear})
+            </th>
+            <th scope="col" className="py-3.5 px-3 text-right">
+              Belum PM
+            </th>
+            <th scope="col" className="py-3.5 px-3 text-center">
+              Target vs Hari Ini
+            </th>
+            <th scope="col" className="py-3.5 px-4 text-center">
+              Aksi
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
           {activeMatrixList.length === 0 ? (
             <tr>
-              <td colSpan={11} className="py-8 text-center text-xs text-slate-400">
+              <td colSpan={7} className="py-8 text-center text-xs text-slate-400">
                 Tidak ada kategori armada yang sesuai dengan kata kunci pencarian.
               </td>
             </tr>
@@ -72,130 +78,106 @@ export default function PmMatrixTable({
               return (
                 <React.Fragment key={item.key}>
                   <tr
-                    className={`transition hover:bg-slate-50/80 ${
-                      isExpanded ? 'bg-red-50/30 font-medium' : ''
+                    className={`transition hover:bg-slate-50 ${
+                      isExpanded ? 'bg-red-50/40 font-medium' : ''
                     }`}
                   >
-                    {/* Nama Kategori */}
+                    {/* 1. Nama Kategori & Ukuran */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-slate-400" />
-                        <span className="font-semibold text-slate-900">
+                        <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0" />
+                        <span className="font-bold text-slate-900 text-sm">
                           {item.nama}
                         </span>
                         {item.subLabel && groupingMode === 'JENIS' && (
-                          <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-medium">
+                          <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-mono font-bold border border-slate-200">
                             {item.subLabel}
                           </span>
                         )}
                       </div>
                     </td>
 
-                    {/* Total Populasi */}
-                    <td className="py-3 px-3 text-right font-semibold text-slate-800 tabular-nums">
+                    {/* 2. Total Populasi */}
+                    <td className="py-3 px-3 text-right font-black text-slate-900 text-sm tabular-nums">
                       {item.total.toLocaleString('id-ID')}
                     </td>
 
-                    {/* Siap / OK */}
-                    <td className="py-3 px-3 text-right font-semibold text-emerald-700 tabular-nums">
-                      {item.okCount.toLocaleString('id-ID')}
-                    </td>
-
-                    {/* Rusak / Repair */}
-                    <td className="py-3 px-3 text-right tabular-nums">
-                      {item.rusakCount > 0 ? (
-                        <span className="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
-                          <AlertCircle className="w-3 h-3 text-rose-600" />
-                          <span>{item.rusakCount} unit</span>
+                    {/* 3. Kondisi Fisik Ringkas (OK vs Rusak) */}
+                    <td className="py-3 px-3 text-center">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-bold">
+                        <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {item.okCount.toLocaleString('id-ID')} OK
                         </span>
-                      ) : (
-                        <span className="text-slate-400 font-medium">0</span>
-                      )}
+                        {item.rusakCount > 0 ? (
+                          <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                            {item.rusakCount} Rusak
+                          </span>
+                        ) : null}
+                      </div>
                     </td>
 
-                    {/* Progress Bar PM */}
-                    <td className="py-3 px-3 min-w-[130px]">
-                      <div className="space-y-1">
+                    {/* 4. Progres PM Bersih (Persen + Progress Bar + Angka) */}
+                    <td className="py-3 px-4">
+                      <div className="space-y-1.5">
                         <div className="flex justify-between items-center text-xs tabular-nums">
-                          <span className="font-semibold text-slate-800">
+                          <span className="font-extrabold text-slate-900">
                             {item.percentage}%
                           </span>
-                          <span className="text-slate-400">
-                            {item.maintained}/{item.total}
+                          <span className="text-slate-500 font-medium text-xs">
+                            {item.maintained} dari {item.total} unit
                           </span>
                         </div>
-                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                           <div
-                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                            className={`h-2 rounded-full transition-all duration-300 ${
                               item.percentage >= 100
                                 ? 'bg-emerald-600'
                                 : item.percentage >= 50
                                 ? 'bg-emerald-500'
                                 : 'bg-amber-500'
                             }`}
-                            style={{ width: `${item.percentage}%` }}
+                            style={{ width: `${Math.min(100, item.percentage)}%` }}
                           />
                         </div>
                       </div>
                     </td>
 
-                    {/* Sudah di-PM */}
-                    <td className="py-3 px-3 text-right font-bold text-emerald-700 tabular-nums">
-                      {item.maintained.toLocaleString('id-ID')}
-                    </td>
-
-                    {/* Belum di-PM */}
-                    <td className="py-3 px-3 text-right font-bold text-rose-700 tabular-nums">
-                      {item.unmaintained.toLocaleString('id-ID')}
-                    </td>
-
-                    {/* Target Harian */}
-                    <td className="py-3 px-3 text-right font-semibold text-slate-700 tabular-nums">
-                      {item.dailyTarget}{' '}
-                      <span className="text-xs font-normal text-slate-400">/hr</span>
-                    </td>
-
-                    {/* Aktual Hari Ini */}
-                    <td className="py-3 px-3 text-right font-bold text-slate-900 tabular-nums">
-                      <span
-                        className={
-                          item.todayActual > 0
-                            ? 'text-emerald-700'
-                            : 'text-slate-500'
-                        }
-                      >
-                        {item.todayActual}
-                      </span>
-                    </td>
-
-                    {/* Status PM */}
-                    <td className="py-3 px-3 text-center">
-                      {item.percentage >= 100 ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          <span>Selesai 100%</span>
-                        </span>
-                      ) : isMetToday ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          <span>Tercapai</span>
-                        </span>
-                      ) : item.todayActual > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                          <Clock className="w-3 h-3 text-amber-600" />
-                          <span>
-                            Kurang{' '}
-                            {Math.max(0, item.dailyTarget - item.todayActual)}
-                          </span>
+                    {/* 5. Sisa Belum di-PM (Fokus Utama Backlog) */}
+                    <td className="py-3 px-3 text-right tabular-nums">
+                      {item.unmaintained > 0 ? (
+                        <span className="font-extrabold text-rose-700 text-sm">
+                          {item.unmaintained.toLocaleString('id-ID')} unit
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                          <span>Belum Jalan</span>
+                        <span className="text-emerald-700 font-bold text-xs bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          Selesai
                         </span>
                       )}
                     </td>
 
-                    {/* Aksi Rincian Unit */}
+                    {/* 6. Target vs Hari Ini Ringkas */}
+                    <td className="py-3 px-3 text-center">
+                      <div className="inline-flex items-center gap-1.5 text-xs tabular-nums font-semibold">
+                        <span className="text-slate-600">
+                          {item.todayActual}
+                        </span>
+                        <span className="text-slate-300">/</span>
+                        <span className="text-slate-500" title="Target Harian">
+                          {item.dailyTarget} hr
+                        </span>
+                        {item.percentage >= 100 ? (
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" title="PM 100% Selesai" />
+                        ) : isMetToday ? (
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" title="Target Hari Ini Tercapai" />
+                        ) : item.todayActual > 0 ? (
+                          <span className="w-2 h-2 rounded-full bg-amber-500" title="Dalam Pengerjaan" />
+                        ) : (
+                          <span className="w-2 h-2 rounded-full bg-slate-300" title="Belum Ada Pengerjaan Hari Ini" />
+                        )}
+                      </div>
+                    </td>
+
+                    {/* 7. Aksi Buka Rincian Unit */}
                     <td className="py-3 px-4 text-center">
                       <button
                         type="button"
@@ -208,21 +190,19 @@ export default function PmMatrixTable({
                             setUnitSearch('');
                           }
                         }}
-                        className={`min-h-[32px] px-2.5 py-1 text-xs font-semibold rounded-md border transition inline-flex items-center gap-1 cursor-pointer ${
+                        className={`min-h-[32px] px-3 py-1 text-xs font-bold rounded-lg border transition inline-flex items-center gap-1 cursor-pointer ${
                           isExpanded
                             ? 'bg-red-600 text-white border-red-600 shadow-xs'
-                            : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                            : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-100 shadow-2xs'
                         }`}
                       >
                         <span>
-                          {isExpanded
-                            ? 'Tutup Unit'
-                            : `Lihat Unit (${item.total})`}
+                          {isExpanded ? 'Tutup' : 'Lihat Unit'}
                         </span>
                         {isExpanded ? (
-                          <ChevronUp className="w-3 h-3" />
+                          <ChevronUp className="w-3.5 h-3.5" />
                         ) : (
-                          <ChevronDown className="w-3 h-3" />
+                          <ChevronDown className="w-3.5 h-3.5" />
                         )}
                       </button>
                     </td>

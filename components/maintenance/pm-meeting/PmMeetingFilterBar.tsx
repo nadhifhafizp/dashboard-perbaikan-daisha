@@ -70,7 +70,7 @@ export default function PmMeetingFilterBar({
             </span>
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Monitoring populasi armada, kesehatan unit (OK vs RUSAK), dan kepatuhan PM dengan filter Jenis, Ukuran, dan Seksi
+            Daftar ringkas populasi, kesehatan fisik armada, serta progres dan sisa backlog PM
           </p>
         </div>
 
@@ -128,15 +128,27 @@ export default function PmMeetingFilterBar({
         </div>
       </div>
 
-      {/* Baris Filter Multikriteria */}
-      <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2.5">
+      {/* Baris Filter Ringkas & Bersih */}
+      <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-3">
+        {/* Pencarian Cepat */}
+        <div className="relative min-w-[200px] flex-1 max-w-xs">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Cari jenis atau nomor daisha..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 pl-8 pr-3 text-xs bg-slate-50 hover:bg-white border border-slate-300 rounded-lg w-full focus:outline-none focus:border-red-500 font-medium"
+          />
+        </div>
+
         {/* Filter Seksi */}
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-bold text-slate-600">Seksi:</span>
           <select
             value={filterSeksi}
             onChange={(e) => setFilterSeksi(e.target.value)}
-            className="h-8.5 px-2.5 bg-slate-50 hover:bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-medium cursor-pointer focus:outline-none focus:border-red-500"
+            className="h-9 px-2.5 bg-slate-50 hover:bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold cursor-pointer focus:outline-none focus:border-red-500"
           >
             <option value="all">Semua Seksi ({seksiOptions.length})</option>
             {seksiOptions.map((s) => (
@@ -153,7 +165,7 @@ export default function PmMeetingFilterBar({
           <select
             value={filterJenis}
             onChange={(e) => setFilterJenis(e.target.value)}
-            className="h-8.5 px-2.5 bg-slate-50 hover:bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-medium cursor-pointer focus:outline-none focus:border-red-500 max-w-[170px]"
+            className="h-9 px-2.5 bg-slate-50 hover:bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold cursor-pointer focus:outline-none focus:border-red-500 max-w-[180px]"
           >
             <option value="all">Semua Jenis ({jenisOptions.length})</option>
             {jenisOptions.map((j) => (
@@ -164,35 +176,19 @@ export default function PmMeetingFilterBar({
           </select>
         </div>
 
-        {/* Filter Rincian Ukuran */}
+        {/* Filter Status PM */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-slate-600">Ukuran:</span>
-          <select
-            value={filterUkuran}
-            onChange={(e) => setFilterUkuran(e.target.value)}
-            className="h-8.5 px-2.5 bg-slate-50 hover:bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-medium cursor-pointer focus:outline-none focus:border-red-500"
-          >
-            <option value="all">Semua Ukuran</option>
-            <option value="SMALL">Small (S)</option>
-            <option value="MEDIUM">Medium (M)</option>
-            <option value="LARGE">Large (L)</option>
-            <option value="NONE">Tanpa Ukuran</option>
-          </select>
-        </div>
-
-        {/* Filter Kepatuhan PM */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-slate-600">Kepatuhan PM:</span>
+          <span className="text-xs font-bold text-slate-600">Status PM:</span>
           <select
             value={filterPmStatus}
             onChange={(e) =>
               setFilterPmStatus(e.target.value as 'all' | 'maintained' | 'unmaintained')
             }
-            className="h-8.5 px-2.5 bg-slate-50 hover:bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-medium cursor-pointer focus:outline-none focus:border-red-500"
+            className="h-9 px-2.5 bg-slate-50 hover:bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold cursor-pointer focus:outline-none focus:border-red-500"
           >
-            <option value="all">Semua Status PM</option>
-            <option value="maintained">Sudah di-PM</option>
-            <option value="unmaintained">Belum di-PM (Backlog)</option>
+            <option value="all">Semua PM</option>
+            <option value="unmaintained">Belum PM (Backlog)</option>
+            <option value="maintained">Sudah PM</option>
           </select>
         </div>
 
@@ -204,7 +200,7 @@ export default function PmMeetingFilterBar({
             onChange={(e) =>
               setFilterCondition(e.target.value as 'all' | 'OK' | 'RUSAK')
             }
-            className="h-8.5 px-2.5 bg-slate-50 hover:bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-medium cursor-pointer focus:outline-none focus:border-red-500"
+            className="h-9 px-2.5 bg-slate-50 hover:bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold cursor-pointer focus:outline-none focus:border-red-500"
           >
             <option value="all">Semua Kondisi</option>
             <option value="OK">Siap Pakai (OK)</option>
@@ -212,20 +208,8 @@ export default function PmMeetingFilterBar({
           </select>
         </div>
 
-        {/* Pencarian */}
-        <div className="relative min-w-[150px]">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Cari nama / no daisha..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8.5 pl-8 pr-3 text-xs bg-slate-50 hover:bg-white border border-slate-300 rounded-lg w-full focus:outline-none focus:border-red-500"
-          />
-        </div>
-
         {/* Sorting */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 ml-auto">
           <span className="text-xs font-bold text-slate-600">Urutkan:</span>
           <select
             value={sortBy}
@@ -240,14 +224,14 @@ export default function PmMeetingFilterBar({
                   | 'name'
               )
             }
-            className="h-8.5 px-2 bg-slate-50 hover:bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-medium cursor-pointer focus:outline-none"
+            className="h-9 px-2.5 bg-slate-50 hover:bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold cursor-pointer focus:outline-none"
           >
             <option value="backlog">Sisa Belum PM (Terbanyak)</option>
             <option value="total">Populasi Terbesar</option>
             <option value="rusak">Kondisi Rusak Terbanyak</option>
             <option value="pct">Persentase Capaian</option>
             <option value="target">Target Harian</option>
-            <option value="name">Nama Kategori (A-Z)</option>
+            <option value="name">Nama (A-Z)</option>
           </select>
         </div>
 
@@ -256,10 +240,10 @@ export default function PmMeetingFilterBar({
           <button
             type="button"
             onClick={handleResetFilters}
-            className="h-8.5 px-2.5 text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 inline-flex items-center gap-1 cursor-pointer transition"
+            className="h-9 px-3 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 inline-flex items-center gap-1 cursor-pointer transition"
             title="Reset semua filter mapping PM"
           >
-            <RotateCcw className="w-3 h-3" />
+            <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset</span>
           </button>
         )}

@@ -36,7 +36,7 @@ export default function PmExpandedUnits({
 
   return (
     <tr>
-      <td colSpan={11} className="p-0 bg-slate-50 border-y border-slate-200">
+      <td colSpan={7} className="p-0 bg-slate-50 border-y border-slate-200">
         <div className="p-4 sm:p-5 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
             <div>
