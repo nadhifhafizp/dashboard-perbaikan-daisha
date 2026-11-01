@@ -124,29 +124,6 @@ function KpiDashboardContent() {
     window.history.replaceState(null, '', url.pathname + url.search);
   };
 
-  // Pengaturan Ukuran Tampilan / Font Skala KPI (Standar / Besar / Jumbo / Super Jumbo)
-  const [fontScale, setFontScale] = useState<'normal' | 'large' | 'xl' | '2xl'>('large');
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('kpi_font_scale');
-      if (saved === 'normal' || saved === 'large' || saved === 'xl' || saved === '2xl') {
-        setFontScale(saved as 'normal' | 'large' | 'xl' | '2xl');
-      }
-    } catch {
-      // Abaikan jika SSR / security exception
-    }
-  }, []);
-
-  const changeFontScale = (scale: 'normal' | 'large' | 'xl' | '2xl') => {
-    setFontScale(scale);
-    try {
-      localStorage.setItem('kpi_font_scale', scale);
-    } catch {
-      // Abaikan
-    }
-  };
-
   // Data perbaikan daisha
   const {
     tickets: dataRaw,
@@ -356,11 +333,9 @@ function KpiDashboardContent() {
 
   return (
     <div
-      className={`p-3 sm:p-5 lg:p-6 pb-24 md:pb-8 space-y-6 max-w-[1750px] w-full mx-auto transition-all ${
-        fontScale === '2xl' ? 'kpi-scale-2xl' : fontScale === 'xl' ? 'kpi-scale-xl' : fontScale === 'large' ? 'kpi-scale-large' : 'kpi-scale-normal'
-      }`}
+      className="p-3 sm:p-5 lg:p-6 pb-24 md:pb-8 space-y-6 max-w-[1750px] w-full mx-auto transition-all kpi-scale-2xl"
       style={{
-        zoom: fontScale === '2xl' ? 1.25 : fontScale === 'xl' ? 1.15 : fontScale === 'large' ? 1.08 : 1,
+        zoom: 1.25,
       }}
     >
       {/* 1. Header Pusat Dashboard */}
@@ -395,64 +370,6 @@ function KpiDashboardContent() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap self-end md:self-center">
-          {/* Pengatur Ukuran Font / Skala Tampilan (Standar / Besar / Jumbo / Super) */}
-          <div className="flex items-center h-10 bg-slate-100 rounded-lg p-1 border border-slate-300 shadow-2xs">
-            <span className="text-xs font-black text-slate-800 px-2 flex items-center gap-1.5 select-none" title="Pilih Ukuran Tampilan / Font">
-              <Type className="w-3.5 h-3.5 text-red-600" />
-              <span>Zoom Tampilan:</span>
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => changeFontScale('normal')}
-                className={`h-8 px-2.5 rounded-md text-xs font-bold transition cursor-pointer ${
-                  fontScale === 'normal'
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200'
-                }`}
-                title="Ukuran Standar (100%)"
-              >
-                100%
-              </button>
-              <button
-                type="button"
-                onClick={() => changeFontScale('large')}
-                className={`h-8 px-2.5 rounded-md text-xs sm:text-sm font-black transition cursor-pointer ${
-                  fontScale === 'large'
-                    ? 'bg-red-600 text-white shadow-xs'
-                    : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200'
-                }`}
-                title="Ukuran Besar (108%)"
-              >
-                Besar (A+)
-              </button>
-              <button
-                type="button"
-                onClick={() => changeFontScale('xl')}
-                className={`h-8 px-2.5 rounded-md text-xs sm:text-sm font-black transition cursor-pointer ${
-                  fontScale === 'xl'
-                    ? 'bg-red-600 text-white shadow-xs'
-                    : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200'
-                }`}
-                title="Ukuran Jumbo (115%)"
-              >
-                Jumbo (A++)
-              </button>
-              <button
-                type="button"
-                onClick={() => changeFontScale('2xl')}
-                className={`h-8 px-2.5 rounded-md text-xs sm:text-sm font-black transition cursor-pointer ${
-                  fontScale === '2xl'
-                    ? 'bg-red-700 text-white shadow-xs'
-                    : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200'
-                }`}
-                title="Ukuran Super Jumbo (125% - Sangat Jelas untuk Layar TV/Presentasi)"
-              >
-                Super (125%)
-              </button>
-            </div>
-          </div>
-
           {isSeksi ? (
             <Link
               href="/lapor-rusak"
