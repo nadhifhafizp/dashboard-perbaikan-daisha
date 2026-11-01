@@ -96,9 +96,9 @@ export default function DamageCharts({
     { name: 'Repair / Servis Fisik', value: repairVal, color: CHART.status.warn, sub: 'Perbaikan tanpa ganti part' },
   ].filter((d) => d.value > 0);
 
-  // Hitung tinggi eksplisit agar setiap baris memiliki ruang vertikal yang cukup (38-42px per bar)
-  const heightKategori = Math.max(380, dataKategori.length * 38 + 40);
-  const heightGejala = Math.max(380, dataGejala.length * 40 + 40);
+  // Hitung tinggi proporsional dan padat (32-34px per bar) agar tidak renggang
+  const heightKategori = Math.max(340, dataKategori.length * 34 + 30);
+  const heightGejala = Math.max(340, dataGejala.length * 34 + 30);
 
   const maxKategori = dataKategori.length > 0 ? Math.max(...dataKategori.map((d) => d.displayVal)) : 1;
   const maxGejala = dataGejala.length > 0 ? Math.max(...dataGejala.map((d) => d.displayVal)) : 1;
@@ -211,7 +211,7 @@ export default function DamageCharts({
                       );
                     }}
                   />
-                  <Bar dataKey="displayVal" radius={[0, 5, 5, 0]} barSize={20}>
+                  <Bar dataKey="displayVal" radius={[0, 6, 6, 0]} barSize={26}>
                     {dataKategori.map((entry, idx) => (
                       <Cell
                         key={`cell-kat-${idx}`}
@@ -296,7 +296,7 @@ export default function DamageCharts({
                       );
                     }}
                   />
-                  <Bar dataKey="displayVal" radius={[0, 5, 5, 0]} barSize={20}>
+                  <Bar dataKey="displayVal" radius={[0, 6, 6, 0]} barSize={26}>
                     {dataGejala.map((entry, idx) => (
                       <Cell
                         key={`cell-gejala-${idx}`}

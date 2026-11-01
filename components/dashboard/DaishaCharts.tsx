@@ -100,7 +100,7 @@ export default function DaishaCharts({
       </div>
 
       {/* 2. Horizontal Ranked Bar Chart - DIPERBESAR & DIPADATKAN */}
-      <div style={{ height: Math.min(440, Math.max(160, currentData.length * 40 + 45)) }} className="w-full">
+      <div style={{ height: Math.min(420, Math.max(160, currentData.length * 34 + 30)) }} className="w-full">
         {currentData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -140,7 +140,7 @@ export default function DaishaCharts({
                   );
                 }}
               />
-              <Bar dataKey="total" radius={[0, 5, 5, 0]} barSize={20}>
+              <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={26}>
                 {currentData.map((entry, idx) => (
                   <Cell
                     key={`cell-daisha-${idx}`}

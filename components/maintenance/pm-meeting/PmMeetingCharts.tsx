@@ -102,13 +102,13 @@ export default function PmMeetingCharts({
                   </span>
                 </div>
 
-                <div className="h-[440px] sm:h-[500px] w-full pt-4">
+                <div className="h-[460px] sm:h-[500px] w-full pt-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={chartJenisData}
                       layout="vertical"
-                      margin={{ top: 5, right: 25, left: 25, bottom: 5 }}
-                      barCategoryGap="8%"
+                      margin={{ top: 5, right: 25, left: 20, bottom: 5 }}
+                      barCategoryGap="4%"
                     >
                       <CartesianGrid
                         strokeDasharray="3 3"
@@ -175,7 +175,7 @@ export default function PmMeetingCharts({
                         stackId="a"
                         fill="#059669"
                         radius={[0, 0, 0, 0]}
-                        maxBarSize={28}
+                        barSize={24}
                       />
                       <Bar
                         dataKey="unmaintained"
@@ -183,7 +183,7 @@ export default function PmMeetingCharts({
                         stackId="a"
                         fill="#f43f5e"
                         radius={[0, 4, 4, 0]}
-                        maxBarSize={28}
+                        barSize={24}
                       />
                     </BarChart>
                   </ResponsiveContainer>
@@ -220,13 +220,13 @@ export default function PmMeetingCharts({
                   </span>
                 </div>
 
-                <div className="h-[440px] sm:h-[500px] w-full pt-4">
+                <div className="h-[460px] sm:h-[500px] w-full pt-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={dailyTrend}
                       margin={{ top: 15, right: 20, left: -10, bottom: 10 }}
-                      barGap={4}
-                      barCategoryGap="8%"
+                      barGap={2}
+                      barCategoryGap="4%"
                     >
                       <CartesianGrid
                         strokeDasharray="3 3"
@@ -320,7 +320,7 @@ export default function PmMeetingCharts({
                         name="Target Harian"
                         fill="#94a3b8"
                         radius={[4, 4, 0, 0]}
-                        maxBarSize={80}
+                        barSize={32}
                       />
                       <Bar
                         dataKey="rutin"
@@ -328,7 +328,7 @@ export default function PmMeetingCharts({
                         stackId="act"
                         fill="#059669"
                         radius={[0, 0, 0, 0]}
-                        maxBarSize={80}
+                        barSize={32}
                       />
                       <Bar
                         dataKey="repair"
@@ -336,7 +336,7 @@ export default function PmMeetingCharts({
                         stackId="act"
                         fill="#0284c7"
                         radius={[4, 4, 0, 0]}
-                        maxBarSize={80}
+                        barSize={32}
                       />
                     </BarChart>
                   </ResponsiveContainer>
