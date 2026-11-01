@@ -162,7 +162,7 @@ export default function PmMeetingHeader({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
           <span className="text-xs font-medium text-slate-500 block">
-            Total Populasi Pabrik
+            Total Populasi Armada PM
           </span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-xl font-bold text-slate-900 tabular-nums">
@@ -171,7 +171,7 @@ export default function PmMeetingHeader({
             <span className="text-xs text-slate-500">Unit</span>
           </div>
           <span className="text-xs text-slate-500 mt-1 block">
-            {jenisCount} kategori di 6 seksi pabrik
+            {jenisCount} kategori armada wajib PM
           </span>
         </div>
 

@@ -98,7 +98,7 @@ export default function PmMeetingCharts({
                     </p>
                   </div>
                   <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded">
-                    Top 14 Populasi
+                    6 Kategori Armada PM
                   </span>
                 </div>
 

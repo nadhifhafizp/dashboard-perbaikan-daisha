@@ -9,7 +9,13 @@ import {
   requireAuth,
   sanitizeText,
 } from '@/lib/security';
-import { DAFTAR_SEKSI, DAFTAR_SEMUA_DAISHA } from '@/lib/masterData';
+import {
+  DAFTAR_SEKSI,
+  DAFTAR_SEMUA_DAISHA,
+  DAFTAR_PM_DAISHA,
+  isPmEligibleDaisha,
+  getCanonicalPmJenis,
+} from '@/lib/masterData';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -235,6 +241,10 @@ export async function GET(request: Request) {
       const catalogJenisSet = new Set<string>();
       let catalogTotalAllUnits = 0;
 
+      // Statistik khusus 6 armada PM resmi
+      const pmCatalogSeksiMap = new Map<string, number>();
+      let pmCatalogTotalUnits = 0;
+
       for (const cat of catalogRows) {
         const s = (cat.seksi && cat.seksi.trim()) ? cat.seksi.trim() : 'Building';
         const units = Number(cat.totalUnits) || 0;
@@ -242,6 +252,10 @@ export async function GET(request: Request) {
         catalogTotalAllUnits += units;
         if (cat.name && cat.name.trim()) {
           catalogJenisSet.add(cat.name.trim());
+          if (isPmEligibleDaisha(cat.name)) {
+            pmCatalogSeksiMap.set(s, (pmCatalogSeksiMap.get(s) || 0) + units);
+            pmCatalogTotalUnits += units;
+          }
         }
       }
 
@@ -251,43 +265,52 @@ export async function GET(request: Request) {
         !filterSeksi.trim() ||
         ['all', 'all seksi', 'semua'].includes(filterSeksi.trim().toLowerCase());
 
-      const targetDaisha = !isAllSeksi
+      // targetDaisha: armada seluruh pabrik sesuai filter seksi
+      const targetAllDaisha = !isAllSeksi
         ? allDaisha.filter(
             (d) => (d.seksi || '').toLowerCase() === filterSeksi.trim().toLowerCase()
           )
         : Array.from(allDaisha);
 
-      const targetUnitIds = new Set(targetDaisha.map((d) => d.id));
-      const targetUnitNos = new Set(targetDaisha.map((d) => (d.nomor_daisha || '').toUpperCase()));
+      // targetPmDaisha: KHUSUS FITUR PM - HANYA 6 JENIS DAISHA RESMI
+      const targetPmDaisha = targetAllDaisha.filter((d) =>
+        isPmEligibleDaisha(d.jenis || d.nama_daisha)
+      );
 
-      const targetTodayLogs = !isAllSeksi
-        ? todayLogs.filter((l) => targetUnitIds.has(l.daisha_id) || targetUnitNos.has((l.nomor_daisha || '').toUpperCase()))
-        : todayLogs;
+      const targetPmUnitIds = new Set(targetPmDaisha.map((d) => d.id));
+      const targetPmUnitNos = new Set(targetPmDaisha.map((d) => (d.nomor_daisha || '').toUpperCase()));
 
-      // Tentukan angka total populasi resmi yang mengacu 100% ke DaishaCatalog
-      let officialTotalUnits = targetDaisha.length;
+      const targetTodayLogs = todayLogs.filter(
+        (l) =>
+          targetPmUnitIds.has(l.daisha_id) ||
+          targetPmUnitNos.has((l.nomor_daisha || '').toUpperCase()) ||
+          isPmEligibleDaisha(l.jenis)
+      );
+
+      // Tentukan angka total populasi resmi PM yang mengacu ke DaishaCatalog
+      let officialPmUnits = targetPmDaisha.length;
       if (isAllSeksi) {
-        officialTotalUnits = catalogTotalAllUnits > 0 ? catalogTotalAllUnits : targetDaisha.length;
+        officialPmUnits = pmCatalogTotalUnits > 0 ? pmCatalogTotalUnits : targetPmDaisha.length;
       } else {
-        const matchedKey = Array.from(catalogSeksiMap.keys()).find(
+        const matchedKey = Array.from(pmCatalogSeksiMap.keys()).find(
           (k) => k.toLowerCase() === filterSeksi.trim().toLowerCase()
         );
-        if (matchedKey && catalogSeksiMap.has(matchedKey)) {
-          officialTotalUnits = catalogSeksiMap.get(matchedKey)!;
+        if (matchedKey && pmCatalogSeksiMap.has(matchedKey)) {
+          officialPmUnits = pmCatalogSeksiMap.get(matchedKey)!;
         }
       }
 
-      // 2. Hitung agregasi per kategori
+      // 2. Hitung agregasi per kategori KHUSUS PM
       const summary = {
-        totalUnits: officialTotalUnits,
+        totalUnits: officialPmUnits,
         maintainedUnits: 0,
         unmaintainedUnits: 0,
         percentage: 0,
         remainingWorkDays,
         dailyTarget: 0,
         todayActual: targetTodayLogs.length,
-        todayRutin: targetTodayLogs.filter(l => l.jenis_pekerjaan === 'RUTIN').length,
-        todayRepair: targetTodayLogs.filter(l => l.jenis_pekerjaan === 'REPAIR').length,
+        todayRutin: targetTodayLogs.filter((l) => l.jenis_pekerjaan === 'RUTIN').length,
+        todayRepair: targetTodayLogs.filter((l) => l.jenis_pekerjaan === 'REPAIR').length,
       };
 
       const breakdown: Record<string, {
@@ -299,10 +322,8 @@ export async function GET(request: Request) {
         todayActual: number;
       }> = {};
 
-      const jenisSet = new Set<string>();
-
-      // Mapping unit dengan status tahun berjalan (Dua Pintu: PM Rutin + Perbaikan Bengkel)
-      const mappedUnits = targetDaisha.map((u) => {
+      // Mapping unit PM dengan status tahun berjalan
+      const mappedPmUnits = targetPmDaisha.map((u) => {
         const lastMaint = u.last_maintenance_date ? new Date(u.last_maintenance_date) : null;
         const lastRepair = u.last_repair_date ? new Date(u.last_repair_date) : null;
         const effectiveLastDate = (lastMaint && lastRepair)
@@ -310,12 +331,11 @@ export async function GET(request: Request) {
           : (lastMaint || lastRepair);
         const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfYear && effectiveLastDate <= endOfYear;
         
-        const jenisClean = u.jenis || 'LAINNYA';
-        jenisSet.add(jenisClean);
+        const canonicalJenis = getCanonicalPmJenis(u.jenis);
 
-        let key = jenisClean;
+        let key = canonicalJenis;
         if (u.ukuran && u.ukuran !== 'NONE') {
-          key = `${jenisClean}_${u.ukuran}`;
+          key = `${canonicalJenis}_${u.ukuran}`;
         }
 
         if (!breakdown[key]) {
@@ -325,20 +345,43 @@ export async function GET(request: Request) {
         breakdown[key].total++;
         if (isMaintainedThisYear) {
           breakdown[key].maintained++;
-        } else {
-          breakdown[key].unmaintained++;
-        }
-
-        if (isMaintainedThisYear) {
           summary.maintainedUnits++;
         } else {
+          breakdown[key].unmaintained++;
           summary.unmaintainedUnits++;
         }
 
-        // Hitung hari sejak pemeliharaan terakhir (dari salah satu 2 pintu)
         const daysSinceLast = effectiveLastDate ? Math.floor((now.getTime() - effectiveLastDate.getTime()) / (1000 * 60 * 60 * 24)) : null;
+        const numMatch = u.nomor_daisha.match(/\d+/);
+        const serialNumber = numMatch ? parseInt(numMatch[0], 10) : 0;
 
-        // Ekstrak nomor urut numerik (contoh "S-045" -> 45)
+        return {
+          id: u.id,
+          nomor_daisha: u.nomor_daisha,
+          serial_number: serialNumber,
+          jenis: canonicalJenis,
+          nama_daisha: u.nama_daisha || canonicalJenis,
+          seksi: u.seksi || 'All seksi',
+          ukuran: u.ukuran,
+          last_maintenance_date: effectiveLastDate ? effectiveLastDate.toISOString() : null,
+          last_condition: u.last_condition || 'OK',
+          last_repair_date: u.last_repair_date,
+          last_waktu_masuk: u.last_waktu_masuk,
+          last_waktu_keluar: u.last_waktu_keluar,
+          is_maintained: isMaintainedThisYear,
+          days_since_last: daysSinceLast,
+        };
+      });
+
+      // Mapping seluruh armada pabrik (30 jenis, ~8.050 unit) untuk fitur non-PM (Fleet KPI / Perbaikan)
+      const mappedAllUnits = targetAllDaisha.map((u) => {
+        const lastMaint = u.last_maintenance_date ? new Date(u.last_maintenance_date) : null;
+        const lastRepair = u.last_repair_date ? new Date(u.last_repair_date) : null;
+        const effectiveLastDate = (lastMaint && lastRepair)
+          ? (lastMaint > lastRepair ? lastMaint : lastRepair)
+          : (lastMaint || lastRepair);
+        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfYear && effectiveLastDate <= endOfYear;
+        const daysSinceLast = effectiveLastDate ? Math.floor((now.getTime() - effectiveLastDate.getTime()) / (1000 * 60 * 60 * 24)) : null;
         const numMatch = u.nomor_daisha.match(/\d+/);
         const serialNumber = numMatch ? parseInt(numMatch[0], 10) : 0;
 
@@ -360,17 +403,14 @@ export async function GET(request: Request) {
         };
       });
 
-      // 2b. Hitung Sebaran Populasi per Seksi & Daftar Jenis dari SELURUH armada pabrik
-      // Penting: Selalu hitung dari allDaisha agar filter dropdown seksi, jenis, dan tabel kepatuhan seksi tidak menghilang ketika user memilih salah 1 seksi!
-      const seksiMap = new Map<string, { total: number; maintained: number; unmaintained: number; rusak: number }>();
-      const globalJenisSet = new Set<string>();
-
-      for (const u of allDaisha) {
+      // Sebaran Populasi Seksi KHUSUS PM (Building, Cutt/Cal, Extruding)
+      const pmSeksiMap = new Map<string, { total: number; maintained: number; unmaintained: number; rusak: number }>();
+      for (const u of targetPmDaisha) {
         const s = (u.seksi && u.seksi.trim() && u.seksi.toLowerCase() !== 'all seksi') ? u.seksi.trim() : 'Lainnya';
-        if (!seksiMap.has(s)) {
-          seksiMap.set(s, { total: 0, maintained: 0, unmaintained: 0, rusak: 0 });
+        if (!pmSeksiMap.has(s)) {
+          pmSeksiMap.set(s, { total: 0, maintained: 0, unmaintained: 0, rusak: 0 });
         }
-        const entry = seksiMap.get(s)!;
+        const entry = pmSeksiMap.get(s)!;
         entry.total++;
 
         const lastMaint = u.last_maintenance_date ? new Date(u.last_maintenance_date) : null;
@@ -387,16 +427,14 @@ export async function GET(request: Request) {
         if (u.last_condition === 'RUSAK') {
           entry.rusak++;
         }
-
-        const j = (u.jenis || '').trim();
-        if (j) globalJenisSet.add(j);
       }
 
-      const officialSeksiList = [...DAFTAR_SEKSI];
-      const seksiSummaries = officialSeksiList
+      // Daftar Seksi yang memiliki armada PM resmi
+      const pmSeksiList = ['Building', 'Cutt/Cal', 'Extruding'];
+      const seksiSummaries = pmSeksiList
         .map((seksiName) => {
-          const counts = seksiMap.get(seksiName) || { total: 0, maintained: 0, unmaintained: 0, rusak: 0 };
-          const officialTotal = catalogSeksiMap.get(seksiName) ?? counts.total;
+          const counts = pmSeksiMap.get(seksiName) || { total: 0, maintained: 0, unmaintained: 0, rusak: 0 };
+          const officialTotal = pmCatalogSeksiMap.get(seksiName) ?? counts.total;
           return {
             seksi: seksiName,
             total: officialTotal,
@@ -407,23 +445,17 @@ export async function GET(request: Request) {
         })
         .sort((a, b) => b.total - a.total);
 
-      const seksiList = officialSeksiList.slice();
-      const globalJenisList =
-        catalogJenisSet.size > 0
-          ? Array.from(catalogJenisSet).sort((a, b) => a.localeCompare(b))
-          : DAFTAR_SEMUA_DAISHA.slice().sort();
-
-      // Hitung persentase & target harian untuk summary
+      // Hitung persentase & target harian untuk summary PM
       summary.unmaintainedUnits = Math.max(0, summary.totalUnits - summary.maintainedUnits);
       summary.percentage = summary.totalUnits > 0 ? Math.round((summary.maintainedUnits / summary.totalUnits) * 100) : 0;
       summary.dailyTarget = calculateDailyTarget(summary.unmaintainedUnits, remainingWorkDays);
 
       // Hitung breakdown aktual hari ini & target
-      for (const log of todayLogs) {
-        const logJenis = log.jenis || 'LAINNYA';
-        let key = logJenis;
+      for (const log of targetTodayLogs) {
+        const canonical = getCanonicalPmJenis(log.jenis);
+        let key = canonical;
         if (log.ukuran && log.ukuran !== 'NONE') {
-          key = `${logJenis}_${log.ukuran}`;
+          key = `${canonical}_${log.ukuran}`;
         }
         if (breakdown[key]) {
           breakdown[key].todayActual++;
@@ -436,7 +468,7 @@ export async function GET(request: Request) {
         b.dailyTarget = calculateDailyTarget(b.unmaintained, remainingWorkDays);
       }
 
-      // 3. Agregasi tren 14 hari di memori JS (Super Cepat < 1ms)
+      // 3. Agregasi tren 14 hari di memori JS
       const trendMap = new Map<string, { rutin: number; repair: number }>();
       for (const row of trendLogRows) {
         const dKey = formatDateKey(new Date(row.tanggal_pengerjaan));
@@ -473,17 +505,22 @@ export async function GET(request: Request) {
       }
 
       // Filter units jika ada parameter query
-      let filteredUnits = mappedUnits;
+      let filteredPmUnits = mappedPmUnits;
       if (filterJenis) {
-        filteredUnits = filteredUnits.filter((u) => u.jenis === filterJenis);
+        filteredPmUnits = filteredPmUnits.filter(
+          (u) =>
+            u.jenis.toLowerCase() === filterJenis.toLowerCase() ||
+            (filterJenis === 'VERTICAL' && u.jenis === 'Vertical') ||
+            (filterJenis === 'NAGARA_FILTER' && u.jenis === 'A-Truck Nagara Filler')
+        );
       }
       if (filterUkuran) {
-        filteredUnits = filteredUnits.filter((u) => u.ukuran === filterUkuran);
+        filteredPmUnits = filteredPmUnits.filter((u) => u.ukuran === filterUkuran);
       }
 
-      // Condition Stats selalu dihitung dari seluruh populasi armada targetDaisha
-      const okCount = targetDaisha.filter((d) => (d.last_condition || 'OK') !== 'RUSAK').length;
-      const rusakCount = targetDaisha.filter((d) => (d.last_condition || 'OK') === 'RUSAK').length;
+      // Condition Stats dihitung dari armada targetPmDaisha
+      const okCount = targetPmDaisha.filter((d) => (d.last_condition || 'OK') !== 'RUSAK').length;
+      const rusakCount = targetPmDaisha.filter((d) => (d.last_condition || 'OK') === 'RUSAK').length;
       const totalCondition = okCount + rusakCount;
       const conditionStats = {
         okCount,
@@ -494,8 +531,10 @@ export async function GET(request: Request) {
       };
 
       const finalRecentLogs = !isAllSeksi
-        ? recentLogs.filter((l) => targetUnitIds.has(l.daisha_id) || targetUnitNos.has((l.nomor_daisha || '').toUpperCase()))
+        ? recentLogs.filter((l) => targetPmUnitIds.has(l.daisha_id) || targetPmUnitNos.has((l.nomor_daisha || '').toUpperCase()))
         : recentLogs;
+
+      const pmJenisList = [...DAFTAR_PM_DAISHA];
 
       return {
         success: true,
@@ -504,14 +543,18 @@ export async function GET(request: Request) {
         conditionStats,
         breakdown,
         dailyTrend,
-        jenisList: globalJenisList,
-        seksiList,
+        jenisList: pmJenisList,
+        seksiList: pmSeksiList,
         seksiSummaries,
         catalogStats: {
           totalAllUnits: catalogTotalAllUnits,
+          totalPmUnits: pmCatalogTotalUnits,
           bySeksi: Object.fromEntries(catalogSeksiMap),
+          pmBySeksi: Object.fromEntries(pmCatalogSeksiMap),
         },
-        units: filteredUnits,
+        units: filteredPmUnits,
+        pmUnits: mappedPmUnits,
+        allUnits: mappedAllUnits,
         recentLogs: finalRecentLogs,
       };
     };

@@ -26,6 +26,7 @@ import RequestAnalyticsDashboard from '@/components/request/RequestAnalyticsDash
 import { SectionRequestFull } from '@/components/request/BridgestoneRequestPrintModal';
 
 import SparepartsAnalyticsDashboard, { SparepartItem } from '@/components/spareparts/SparepartsAnalyticsDashboard';
+import { isPmEligibleDaisha } from '@/lib/masterData';
 
 import {
   ArrowLeft,
@@ -223,6 +224,7 @@ function KpiDashboardContent() {
   const [pmBreakdown, setPmBreakdown] = useState<Record<string, BreakdownItem>>({});
   const [pmDailyTrend, setPmDailyTrend] = useState<DailyTrendItem[]>([]);
   const [pmUnits, setPmUnits] = useState<FleetUnit[]>([]);
+  const [allFleetUnits, setAllFleetUnits] = useState<FleetUnit[]>([]);
   const [catalogStats, setCatalogStats] = useState<{
     totalAllUnits: number;
     bySeksi: Record<string, number>;
@@ -239,7 +241,8 @@ function KpiDashboardContent() {
         setPmCondition(json.conditionStats || pmCondition);
         setPmBreakdown(json.breakdown || {});
         setPmDailyTrend(json.dailyTrend || []);
-        setPmUnits(json.units || []);
+        setPmUnits(json.units || json.pmUnits || []);
+        setAllFleetUnits(json.allUnits || json.units || []);
         if (json.catalogStats) {
           setCatalogStats(json.catalogStats);
         }
@@ -597,7 +600,7 @@ function KpiDashboardContent() {
         {activeTab === 'jumlah_daisha' && (
           <div className="space-y-6">
             <FleetHealthCharts
-              units={pmUnits}
+              units={allFleetUnits.length > 0 ? allFleetUnits : pmUnits}
               tickets={visibleTickets}
               selectedSeksi={userSeksi || filterSeksi}
               onSelectSeksi={isSeksi ? undefined : (s) => setFilterSeksi(s)}
@@ -713,7 +716,7 @@ function KpiDashboardContent() {
                 onYearChange={(y) => setPmYear(y)}
                 conditionStats={pmCondition}
                 onExportRepair={exportToExcel}
-                repairTicketsCount={visibleTickets.filter((t) => t.status === 'Open' || t.status === 'Progress').length}
+                repairTicketsCount={visibleTickets.filter((t) => (t.status === 'Open' || t.status === 'Progress') && isPmEligibleDaisha(t.namaDaisha)).length}
               />
             )}
           </div>

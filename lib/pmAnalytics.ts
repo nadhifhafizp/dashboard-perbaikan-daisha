@@ -1,5 +1,6 @@
 import { FleetUnit } from '@/components/maintenance/FleetExplorer';
 import { BreakdownItem } from '@/components/maintenance/MaintenanceKPICards';
+import { getCanonicalPmJenis, isPmEligibleDaisha } from '@/lib/masterData';
 
 export interface UnifiedMatrixItem {
   key: string;
@@ -29,6 +30,9 @@ export interface PmFilterParams {
 export function formatJenisLabel(raw: string): string {
   if (!raw) return 'Lainnya';
   let clean = raw.replace(/_(SMALL|MEDIUM|LARGE|NONE)$/i, '');
+  if (isPmEligibleDaisha(clean)) {
+    return getCanonicalPmJenis(clean);
+  }
   clean = clean
     .replace(/_/g, ' ')
     .toLowerCase()
@@ -102,7 +106,10 @@ export function aggregateJenisList(
   const map = new Map<string, UnifiedMatrixItem>();
 
   filteredUnits.forEach((u) => {
-    const baseJenis = (u.jenis || 'LAINNYA').trim();
+    const rawJenis = (u.jenis || 'LAINNYA').trim();
+    const baseJenis = isPmEligibleDaisha(rawJenis)
+      ? getCanonicalPmJenis(rawJenis)
+      : rawJenis;
     const rawUkuran =
       u.ukuran && u.ukuran !== 'NONE' ? u.ukuran.toUpperCase() : undefined;
     const friendlyBase = formatJenisLabel(baseJenis);

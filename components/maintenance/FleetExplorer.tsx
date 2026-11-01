@@ -17,7 +17,7 @@ import {
   Building2,
   Download,
 } from 'lucide-react';
-import { getSectionDaishaList } from '@/lib/masterData';
+import { getSectionPmDaishaList } from '@/lib/masterData';
 
 export interface FleetUnit {
   id: number | string;
@@ -98,8 +98,9 @@ export default function FleetExplorer({
 
   // Extract distinct jenis options matching the master catalog for the active seksi
   const availableJenis = useMemo(() => {
+    if (jenisList && jenisList.length > 0) return jenisList;
     const currentSeksi = (isSeksiUser || seksi) ? (seksi || units[0]?.seksi) : (filterSeksi !== 'ALL' ? filterSeksi : undefined);
-    const masterTypes = getSectionDaishaList(currentSeksi);
+    const masterTypes = getSectionPmDaishaList(currentSeksi);
     const s = new Set<string>(masterTypes);
 
     // Only include unit types matching the active seksi
@@ -108,17 +109,15 @@ export default function FleetExplorer({
       : units;
 
     relevantUnits.forEach((u) => {
-      if (u.nama_daisha) {
+      if (u.jenis) {
+        s.add(u.jenis);
+      } else if (u.nama_daisha) {
         s.add(u.nama_daisha);
-      } else if (u.jenis) {
-        if (u.jenis === 'VERTICAL') s.add('Vertical');
-        else if (u.jenis === 'GT_RING') s.add('GT Ring');
-        else s.add(u.jenis.replace(/_/g, ' '));
       }
     });
 
     return Array.from(s).sort();
-  }, [isSeksiUser, seksi, filterSeksi, units]);
+  }, [jenisList, isSeksiUser, seksi, filterSeksi, units]);
 
   // Filtered Units
   const filteredUnits = useMemo(() => {
