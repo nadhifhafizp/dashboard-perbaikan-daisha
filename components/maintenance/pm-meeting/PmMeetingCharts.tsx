@@ -175,15 +175,15 @@ export default function PmMeetingCharts({
                         stackId="a"
                         fill="#059669"
                         radius={[0, 0, 0, 0]}
-                        barSize={24}
+                        barSize={36}
                       />
                       <Bar
                         dataKey="unmaintained"
                         name="Belum di-PM"
                         stackId="a"
                         fill="#f43f5e"
-                        radius={[0, 4, 4, 0]}
-                        barSize={24}
+                        radius={[0, 6, 6, 0]}
+                        barSize={36}
                       />
                     </BarChart>
                   </ResponsiveContainer>

@@ -211,7 +211,7 @@ export default function DamageCharts({
                       );
                     }}
                   />
-                  <Bar dataKey="displayVal" radius={[0, 6, 6, 0]} barSize={26}>
+                  <Bar dataKey="displayVal" radius={[0, 6, 6, 0]} barSize={32}>
                     {dataKategori.map((entry, idx) => (
                       <Cell
                         key={`cell-kat-${idx}`}
@@ -296,7 +296,7 @@ export default function DamageCharts({
                       );
                     }}
                   />
-                  <Bar dataKey="displayVal" radius={[0, 6, 6, 0]} barSize={26}>
+                  <Bar dataKey="displayVal" radius={[0, 6, 6, 0]} barSize={32}>
                     {dataGejala.map((entry, idx) => (
                       <Cell
                         key={`cell-gejala-${idx}`}

@@ -470,20 +470,21 @@ export default function ThroughputCharts({
             </div>
 
             {/* Batang Horizontal Lead Time - DIBESARKAN */}
-            <div className="h-64 sm:h-72 w-full">
+            <div className="h-72 sm:h-80 w-full">
               {chartLeadTime.some((d) => d.total > 0) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartLeadTime}
                     layout="vertical"
-                    margin={{ top: 8, right: 45, left: 35, bottom: 5 }}
+                    margin={{ top: 8, right: 65, left: 35, bottom: 5 }}
+                    barCategoryGap="12%"
                   >
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                     <XAxis type="number" tick={{ fontSize: 13, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} axisLine={false} tickLine={false} />
                     <YAxis
                       dataKey="rentang"
                       type="category"
-                      tick={{ fontSize: 13, fill: '#0f172a', fontWeight: 700 }}
+                      tick={{ fontSize: 13, fill: '#0f172a', fontWeight: 800 }}
                       width={95}
                       axisLine={false}
                       tickLine={false}
@@ -521,7 +522,7 @@ export default function ThroughputCharts({
                         );
                       }}
                     />
-                    <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={18}>
+                    <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={38}>
                       {chartLeadTime.map((entry, idx) => {
                         let barColor = '#0d9488';
                         if (entry.rentang.includes('< 4')) barColor = '#10b981';
@@ -536,8 +537,8 @@ export default function ThroughputCharts({
                         dataKey="total"
                         position="right"
                         fill="#0f172a"
-                        fontSize={12}
-                        fontWeight={800}
+                        fontSize={13}
+                        fontWeight={900}
                         formatter={(val: unknown) => `${val ?? 0} unit`}
                       />
                     </Bar>

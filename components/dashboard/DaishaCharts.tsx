@@ -140,7 +140,7 @@ export default function DaishaCharts({
                   );
                 }}
               />
-              <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={26}>
+              <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={32}>
                 {currentData.map((entry, idx) => (
                   <Cell
                     key={`cell-daisha-${idx}`}
