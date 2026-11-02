@@ -412,8 +412,8 @@ export function useInputKerusakan() {
         showFeedback(
           'success',
           'Laporan Berhasil Disimpan',
-          `Laporan unit ${pendingPayload.noDaisha} (${pendingPayload.namaDaisha}) berhasil disimpan ${statusLabelDesc}.`,
-          `Seksi: ${pendingPayload.seksi} | Status: ${pendingPayload.status} | Komponen: ${pendingPayload.kategori}`,
+          `Laporan unit **${pendingPayload.noDaisha} (${pendingPayload.namaDaisha})** berhasil disimpan ${statusLabelDesc}.`,
+          `Seksi: **${pendingPayload.seksi}** | Status: **${pendingPayload.status}** | Komponen: **${pendingPayload.kategori}**`,
           'Tutup'
         );
 

@@ -5,12 +5,48 @@ import { CheckCircle2, XCircle, Info } from 'lucide-react';
 
 export type FeedbackType = 'success' | 'error' | 'info';
 
+function formatMessageContent(content: string | React.ReactNode): React.ReactNode {
+  if (typeof content !== 'string') return content;
+
+  // 1. Dukungan format markdown **bold**
+  if (content.includes('**')) {
+    const parts = content.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <strong key={i} className="font-extrabold text-slate-900">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      return part;
+    });
+  }
+
+  // 2. Auto-bolding nama/nomor unit jika belum memakai markdown (contoh: "unit S00118 (Vertical)")
+  const unitMatch = content.match(/(unit\s+)([A-Za-z0-9\-\.\/]+(?:\s*\([^)]+\))?)/i);
+  if (unitMatch && unitMatch.index !== undefined) {
+    const prefix = content.slice(0, unitMatch.index + unitMatch[1].length);
+    const unitPart = unitMatch[2];
+    const suffix = content.slice(unitMatch.index + unitMatch[0].length);
+    return (
+      <>
+        {prefix}
+        <strong className="font-extrabold text-slate-900">{unitPart}</strong>
+        {suffix}
+      </>
+    );
+  }
+
+  return content;
+}
+
 interface FeedbackModalProps {
   isOpen: boolean;
   type?: FeedbackType;
   title: string;
-  message: string;
-  detail?: string;
+  message: string | React.ReactNode;
+  detail?: string | React.ReactNode;
   buttonText?: string;
   secondaryButtonText?: string;
   onSecondaryClick?: () => void;
@@ -81,11 +117,13 @@ export default function FeedbackModal({
           </div>
 
           <h3 id="feedback-modal-title" className="text-base font-semibold text-slate-900 tracking-tight">{title}</h3>
-          <p id="feedback-modal-desc" className="text-xs text-slate-600 font-normal mt-1 leading-relaxed">{message}</p>
+          <p id="feedback-modal-desc" className="text-xs text-slate-600 font-normal mt-1 leading-relaxed">
+            {formatMessageContent(message)}
+          </p>
 
           {detail && (
-            <div className="mt-3 p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-xs font-mono font-medium text-slate-700 text-left truncate">
-              {detail}
+            <div className="mt-3 p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-xs font-mono font-medium text-slate-700 text-left break-words">
+              {formatMessageContent(detail)}
             </div>
           )}
         </div>
