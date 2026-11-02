@@ -53,10 +53,16 @@ export function useFleetHealthData({
   // Daftar seksi yang tersedia dengan jumlah unit armada resmi katalog
   const availableSeksiList = useMemo(() => {
     if (catalogStats?.bySeksi) {
-      return DAFTAR_SEKSI.map((name) => ({
-        name,
-        count: catalogStats.bySeksi[name] ?? 0,
-      })).sort((a, b) => b.count - a.count);
+      const allSeksiKeys = Array.from(
+        new Set([...DAFTAR_SEKSI, ...Object.keys(catalogStats.bySeksi)])
+      ).filter((s) => Boolean(s) && s.toLowerCase() !== 'all seksi' && s.toLowerCase() !== 'all');
+
+      return allSeksiKeys
+        .map((name) => ({
+          name,
+          count: catalogStats.bySeksi[name] ?? 0,
+        }))
+        .sort((a, b) => b.count - a.count);
     }
     const map: Record<string, number> = {};
     units.forEach((u) => {
@@ -170,8 +176,15 @@ export function useFleetHealthData({
   const seksiBreakdownList = useMemo<BreakdownItem[]>(() => {
     const map: Record<string, { label: string; seksi: string; total: number; oke: number; ng: number }> = {};
     
-    // Inisialisasi dari 6 seksi resmi
-    DAFTAR_SEKSI.forEach((s) => {
+    // Inisialisasi dari seluruh seksi yang tercatat di katalog master
+    const allKnownSeksi = Array.from(
+      new Set([
+        ...DAFTAR_SEKSI,
+        ...(catalogStats?.bySeksi ? Object.keys(catalogStats.bySeksi) : []),
+      ])
+    ).filter((s) => Boolean(s) && s.toLowerCase() !== 'all seksi' && s.toLowerCase() !== 'all');
+
+    allKnownSeksi.forEach((s) => {
       const offTotal = catalogStats?.bySeksi[s] ?? 0;
       map[s] = { label: s, seksi: s, total: offTotal, oke: 0, ng: 0 };
     });
@@ -180,12 +193,10 @@ export function useFleetHealthData({
       const rawS = u.seksi && u.seksi.trim() ? u.seksi.trim() : '';
       if (!rawS || rawS.toLowerCase() === 'all seksi' || rawS.toLowerCase() === 'all') return;
       
-      // Cocokkan ke daftar seksi resmi
+      // Cocokkan ke daftar seksi resmi atau pakai nama aslinya jika seksi baru
       const matchedSeksi = DAFTAR_SEKSI.find(
         (ds) => ds.toLowerCase() === rawS.toLowerCase()
-      ) || (DAFTAR_SEKSI.includes(rawS as any) ? rawS : null);
-
-      if (!matchedSeksi) return;
+      ) || rawS;
 
       if (!map[matchedSeksi]) {
         map[matchedSeksi] = { label: matchedSeksi, seksi: matchedSeksi, total: catalogStats?.bySeksi[matchedSeksi] ?? 0, oke: 0, ng: 0 };

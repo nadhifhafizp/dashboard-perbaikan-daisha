@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { FleetUnit } from './FleetExplorer';
 import { DAFTAR_SEKSI, getSectionDaishaList } from '@/lib/masterData';
+import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 import QrScannerModal from '@/components/input/QrScannerModal';
 
 export type PartCondition = 'OK' | 'SERVIS' | 'GANTI';
@@ -120,6 +121,8 @@ export default function MaintenanceInputModal({
   currentUser,
   seksi,
 }: MaintenanceInputModalProps) {
+  const { catalog, seksiList: dynamicSeksiList, getDaishaBySeksi } = useDaishaCatalog();
+
   // Form State
   const [nomorDaisha, setNomorDaisha] = useState<string>('');
   const [seksiAsal, setSeksiAsal] = useState<string>('Building');
@@ -130,9 +133,16 @@ export default function MaintenanceInputModal({
   const [adminPic, setAdminPic] = useState<string>('');
   const [catatan, setCatatan] = useState<string>('');
 
+  const availableSeksiList = useMemo(() => {
+    const set = new Set<string>([...DAFTAR_SEKSI, ...dynamicSeksiList]);
+    return Array.from(set).filter((s) => Boolean(s) && s.toLowerCase() !== 'all seksi');
+  }, [dynamicSeksiList]);
+
   const availableJenisList = useMemo(() => {
+    const dynamicList = getDaishaBySeksi(seksiAsal);
+    if (dynamicList && dynamicList.length > 0) return dynamicList;
     return getSectionDaishaList(seksiAsal);
-  }, [seksiAsal]);
+  }, [seksiAsal, getDaishaBySeksi]);
 
   // 9-Part Checklist State
   const [parts, setParts] = useState<PartCheckItem[]>(() =>
@@ -208,7 +218,8 @@ export default function MaintenanceInputModal({
   // Handle Seksi Change
   const handleSeksiChange = (newSeksi: string) => {
     setSeksiAsal(newSeksi);
-    const list = getSectionDaishaList(newSeksi);
+    const dynamicList = getDaishaBySeksi(newSeksi);
+    const list = dynamicList.length > 0 ? dynamicList : getSectionDaishaList(newSeksi);
     if (!list.includes(jenis)) {
       setJenis(list[0] || 'Vertical');
     }
@@ -569,7 +580,7 @@ export default function MaintenanceInputModal({
                 onChange={(e) => handleSeksiChange(e.target.value)}
                 className="mt-1 w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 cursor-pointer"
               >
-                {DAFTAR_SEKSI.filter((s) => s.toLowerCase() !== 'all seksi').map((s) => (
+                {availableSeksiList.map((s) => (
                   <option key={s} value={s}>
                     Seksi {s}
                   </option>

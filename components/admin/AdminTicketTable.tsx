@@ -5,6 +5,7 @@ import { Ticket } from '@/types/ticket';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { DAFTAR_SEKSI, getDaishaBySeksi, DAFTAR_SEMUA_DAISHA } from '@/lib/masterData';
+import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 import { SortOption, SORT_OPTIONS, sortTickets } from '@/lib/sortTickets';
 import PaginationControl from '@/components/common/PaginationControl';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -57,6 +58,8 @@ function AdminTicketTableComponent({
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   // Dynamic dropdown options
+  const { daishaList: catalogDaishaList, getDaishaBySeksi: getCatalogDaishaBySeksi } = useDaishaCatalog();
+
   const seksiList = useMemo(() => {
     const fromMaster = DAFTAR_SEKSI.filter((s) => s.toLowerCase() !== 'all');
     const fromData = Array.from(new Set(tickets.map((t) => t.seksi).filter(Boolean)));
@@ -66,7 +69,8 @@ function AdminTicketTableComponent({
 
   const daishaList = useMemo(() => {
     if (selectedSeksi !== 'all') {
-      const fromMaster = getDaishaBySeksi(selectedSeksi);
+      const fromCatalog = getCatalogDaishaBySeksi(selectedSeksi);
+      const fromMaster = fromCatalog.length > 0 ? fromCatalog : getDaishaBySeksi(selectedSeksi);
       const fromData = Array.from(
         new Set(
           tickets
@@ -80,10 +84,11 @@ function AdminTicketTableComponent({
       );
     }
     const fromData = Array.from(new Set(tickets.map((t) => t.namaDaisha).filter(Boolean)));
-    return Array.from(new Set([...DAFTAR_SEMUA_DAISHA, ...fromData])).sort((a, b) =>
+    const baseList = catalogDaishaList.length > 0 ? catalogDaishaList : DAFTAR_SEMUA_DAISHA;
+    return Array.from(new Set([...baseList, ...fromData])).sort((a, b) =>
       a.localeCompare(b)
     );
-  }, [tickets, selectedSeksi]);
+  }, [tickets, selectedSeksi, catalogDaishaList, getCatalogDaishaBySeksi]);
 
   // Handle barcode/QR scan success
   const handleScanSuccess = (decoded: string) => {

@@ -66,6 +66,18 @@ let globalSectionsCache: SectionItem[] | null = null;
 let globalTreeCache: DaishaTreeItem[] | null = null;
 let lastCatalogFetchTimestamp = 0;
 
+export function broadcastCatalogUpdate() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('daisha-catalog-updated'));
+  try {
+    const channel = new BroadcastChannel('daisha-catalog-channel');
+    channel.postMessage({ type: 'CATALOG_UPDATED', timestamp: Date.now() });
+    channel.close();
+  } catch {
+    // Fallback jika browser tidak mendukung BroadcastChannel
+  }
+}
+
 export function useDaishaCatalog() {
   const [catalog, setCatalog] = useState<CatalogMap>(() => globalCatalogCache || {});
   const [seksiList, setSeksiList] = useState<string[]>(() => globalSeksiCache || [...DAFTAR_SEKSI]);
@@ -74,8 +86,8 @@ export function useDaishaCatalog() {
   const [loading, setLoading] = useState(() => !globalCatalogCache);
 
   const fetchCatalog = useCallback(async (force = false) => {
-    // Lewati jika cache masih baru (< 5 menit) dan tidak dipaksa
-    if (!force && globalCatalogCache && Date.now() - lastCatalogFetchTimestamp < 5 * 60 * 1000) {
+    // Lewati jika cache masih baru (< 30 detik) dan tidak dipaksa
+    if (!force && globalCatalogCache && Date.now() - lastCatalogFetchTimestamp < 30 * 1000) {
       return;
     }
 
@@ -117,22 +129,39 @@ export function useDaishaCatalog() {
     globalTreeCache = null;
     lastCatalogFetchTimestamp = 0;
     await fetchCatalog(true);
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('daisha-catalog-updated'));
-    }
+    broadcastCatalogUpdate();
   }, [fetchCatalog]);
 
   useEffect(() => {
     void fetchCatalog();
 
     const handleCatalogUpdate = () => {
+      globalCatalogCache = null;
+      globalSeksiCache = null;
+      globalSectionsCache = null;
+      globalTreeCache = null;
+      lastCatalogFetchTimestamp = 0;
       void fetchCatalog(true);
     };
 
+    let channel: BroadcastChannel | null = null;
     if (typeof window !== 'undefined') {
       window.addEventListener('daisha-catalog-updated', handleCatalogUpdate);
+
+      try {
+        channel = new BroadcastChannel('daisha-catalog-channel');
+        channel.onmessage = (event) => {
+          if (event.data?.type === 'CATALOG_UPDATED') {
+            handleCatalogUpdate();
+          }
+        };
+      } catch {
+        // BroadcastChannel unsupported
+      }
+
       return () => {
         window.removeEventListener('daisha-catalog-updated', handleCatalogUpdate);
+        if (channel) channel.close();
       };
     }
   }, [fetchCatalog]);

@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { detectDaishaSize } from '@/lib/daishaSize';
 import { matchesAgingFilter } from '@/lib/date';
 import { DAFTAR_SEKSI, getDaishaBySeksi, DAFTAR_SEMUA_DAISHA } from '@/lib/masterData';
+import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 import { SortOption, SORT_OPTIONS, sortTickets } from '@/lib/sortTickets';
 import { broadcastTicketChange } from '@/hooks/useTickets';
 import { TicketStatus, UpdateTicketPayload } from '@/types/ticket';
@@ -333,6 +334,8 @@ export default function RiwayatLaporanPage() {
   // Modal Detail State (Cross-check)
   const [ticketForDetail, setTicketForDetail] = useState<Ticket | null>(null);
 
+  const { daishaList: catalogDaishaList, getDaishaBySeksi: getCatalogDaishaBySeksi } = useDaishaCatalog();
+
   // Daftar Seksi yang tersedia (Master data + Tiket)
   const seksiList = useMemo(() => {
     if (userSeksi) return [userSeksi];
@@ -345,7 +348,8 @@ export default function RiwayatLaporanPage() {
   const daishaList = useMemo(() => {
     const activeSection = userSeksi || (selectedSeksi !== 'all' ? selectedSeksi : null);
     if (activeSection) {
-      const bySeksi = getDaishaBySeksi(activeSection);
+      const fromCatalog = getCatalogDaishaBySeksi(activeSection);
+      const bySeksi = fromCatalog.length > 0 ? fromCatalog : getDaishaBySeksi(activeSection);
       const fromTickets = tickets
         .filter((t) => t.seksi?.toLowerCase() === activeSection.toLowerCase())
         .map((t) => t.namaDaisha)
@@ -353,8 +357,9 @@ export default function RiwayatLaporanPage() {
       return Array.from(new Set([...bySeksi, ...fromTickets])).sort();
     }
     const fromTickets = tickets.map((t) => t.namaDaisha).filter(Boolean);
-    return Array.from(new Set([...DAFTAR_SEMUA_DAISHA, ...fromTickets])).sort();
-  }, [selectedSeksi, userSeksi, tickets]);
+    const baseList = catalogDaishaList.length > 0 ? catalogDaishaList : DAFTAR_SEMUA_DAISHA;
+    return Array.from(new Set([...baseList, ...fromTickets])).sort();
+  }, [selectedSeksi, userSeksi, tickets, catalogDaishaList, getCatalogDaishaBySeksi]);
 
   const hasActiveFilters =
     (!userSeksi && selectedSeksi !== 'all') ||

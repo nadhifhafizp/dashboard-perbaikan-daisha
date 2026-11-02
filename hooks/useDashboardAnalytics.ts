@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Ticket } from '@/types/ticket';
-import { getDaishaBySeksi, getKomponenKerusakan, getDetailKerusakan } from '@/lib/masterData';
+import { getDaishaBySeksi as fallbackGetDaishaBySeksi, getKomponenKerusakan as fallbackGetKomponenKerusakan } from '@/lib/masterData';
+import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { parseToISODate, parseToTimestamp, formatDisplayDate } from '@/lib/date';
 
@@ -88,6 +89,8 @@ export interface FilterOptions {
 }
 
 export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilters) {
+  const { getDaishaBySeksi, getKomponenKerusakan, getDetailKerusakan } = useDaishaCatalog();
+
   const {
     search,
     filterSeksi,
@@ -192,14 +195,18 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       if (d.pelapor && d.pelapor !== '-') setPelapor.add(d.pelapor);
     });
 
+    const dynamicDaisha = getDaishaBySeksi(filterSeksi);
+    const dynamicKomponen = getKomponenKerusakan(filterDaisha);
+    const dynamicDetail = getDetailKerusakan(filterDaisha, filterKerusakan);
+
     return {
-      pilihanDaisha: getDaishaBySeksi(filterSeksi),
-      pilihanKomponen: getKomponenKerusakan(filterDaisha),
-      pilihanDetail: getDetailKerusakan(filterDaisha, filterKerusakan),
+      pilihanDaisha: dynamicDaisha.length > 0 ? dynamicDaisha : fallbackGetDaishaBySeksi(filterSeksi),
+      pilihanKomponen: dynamicKomponen.length > 0 ? dynamicKomponen : fallbackGetKomponenKerusakan(filterDaisha),
+      pilihanDetail: dynamicDetail.length > 0 ? dynamicDetail : [],
       pilihanNoDaisha: Array.from(setUnit).sort(),
       pilihanPelapor: Array.from(setPelapor).sort(),
     };
-  }, [dataRaw, filterSeksi, filterDaisha, filterKerusakan]);
+  }, [dataRaw, filterSeksi, filterDaisha, filterKerusakan, getDaishaBySeksi, getKomponenKerusakan, getDetailKerusakan]);
 
   // 4. KPI Ringkasan Eksekutif (Simulasi SQL Aggregations: COUNT, AVG)
   const kpi: KpiSummary = useMemo(() => {

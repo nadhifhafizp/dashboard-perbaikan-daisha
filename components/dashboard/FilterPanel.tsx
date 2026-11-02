@@ -3,6 +3,7 @@
 import React from 'react';
 import { SlidersHorizontal, RotateCcw, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { DAFTAR_SEKSI } from '@/lib/masterData';
+import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 
 interface FilterPanelProps {
   search: string;
@@ -50,6 +51,12 @@ export default function FilterPanel({
   isSeksiLocked = false,
 }: FilterPanelProps) {
   const [isMobileExpanded, setIsMobileExpanded] = React.useState(false);
+  const { seksiList } = useDaishaCatalog();
+
+  const displaySeksiList = React.useMemo(() => {
+    const set = new Set<string>([...DAFTAR_SEKSI, ...seksiList]);
+    return Array.from(set).filter((s) => Boolean(s) && s.toLowerCase() !== 'all seksi' && s.toLowerCase() !== 'all');
+  }, [seksiList]);
 
   const activeFilterCount =
     (search ? 1 : 0) +
@@ -188,7 +195,7 @@ export default function FilterPanel({
               className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
             >
               <option value="">Semua Seksi</option>
-              {DAFTAR_SEKSI.map((s) => (
+              {displaySeksiList.map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
