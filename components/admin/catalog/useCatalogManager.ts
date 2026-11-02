@@ -60,6 +60,7 @@ export function useCatalogManager() {
   } | null>(null);
 
   // Form inputs
+  const [isSubmittingDaisha, setIsSubmittingDaisha] = useState(false);
   const [newDaishaForm, setNewDaishaForm] = useState({
     name: '',
     seksi: 'Building',
@@ -191,8 +192,9 @@ export function useCatalogManager() {
   // 1. Submit Tambah Daisha Baru
   const handleAddDaishaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDaishaForm.name.trim()) return;
+    if (!newDaishaForm.name.trim() || isSubmittingDaisha) return;
 
+    setIsSubmittingDaisha(true);
     try {
       const res = await fetch('/api/catalog', {
         method: 'POST',
@@ -227,6 +229,8 @@ export function useCatalogManager() {
     } catch (err) {
       console.error(err);
       showFeedback('error', 'Koneksi Terputus', 'Gagal menghubungi server.');
+    } finally {
+      setIsSubmittingDaisha(false);
     }
   };
 
@@ -474,6 +478,7 @@ export function useCatalogManager() {
     setDeleteItem,
     newDaishaForm,
     setNewDaishaForm,
+    isSubmittingDaisha,
     newVariantForm,
     setNewVariantForm,
     newComponentName,

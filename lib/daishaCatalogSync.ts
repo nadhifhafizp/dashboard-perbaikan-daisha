@@ -238,3 +238,58 @@ export async function syncDaishaMasterFromCatalog(): Promise<SyncCatalogResult> 
     bySeksi,
   };
 }
+
+/**
+ * Registrasi unit baru secara instan (< 50ms) tanpa me-resync seluruh tabel database 8.000+ unit
+ */
+export async function insertNewDaishaUnits(
+  name: string,
+  seksi: string,
+  codePrefix: string | null,
+  totalUnits: number
+): Promise<number> {
+  if (totalUnits <= 0) return 0;
+
+  const prefix = (codePrefix || '').trim();
+  const unitsToInsert: Array<{
+    nomor_daisha: string;
+    nama_daisha: string;
+    jenis: string;
+    ukuran: string;
+    seksi: string;
+    last_condition: string;
+  }> = [];
+
+  for (let i = 1; i <= totalUnits; i++) {
+    const noD = prefix && prefix !== 'null'
+      ? `${prefix}${String(i).padStart(4, '0')}`
+      : `${name.replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase()}-${String(i).padStart(3, '0')}`;
+
+    unitsToInsert.push({
+      nomor_daisha: noD.toUpperCase(),
+      nama_daisha: name,
+      jenis: name,
+      ukuran: 'NONE',
+      seksi,
+      last_condition: 'OK',
+    });
+  }
+
+  if (unitsToInsert.length > 0) {
+    const batchSize = 250;
+    for (let i = 0; i < unitsToInsert.length; i += batchSize) {
+      const chunk = unitsToInsert.slice(i, i + batchSize);
+      await sql`
+        INSERT INTO "Daisha" ${sql(chunk, 'nomor_daisha', 'nama_daisha', 'jenis', 'ukuran', 'seksi', 'last_condition')}
+        ON CONFLICT ("nomor_daisha") DO UPDATE SET
+          "nama_daisha" = EXCLUDED."nama_daisha",
+          "jenis" = EXCLUDED."jenis",
+          "seksi" = EXCLUDED."seksi",
+          "updated_at" = NOW()
+      `;
+    }
+  }
+
+  invalidateMaintenanceCache();
+  return unitsToInsert.length;
+}

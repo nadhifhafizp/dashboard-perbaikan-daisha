@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo } from 'react';
-import { Layers, Wrench, Plus, Pencil, X, Tag, Building2, CheckCircle2 } from 'lucide-react';
+import { Layers, Wrench, Plus, Pencil, X, Tag, Building2, CheckCircle2, Loader2 } from 'lucide-react';
 import { DaishaTreeItem } from '@/hooks/useDaishaCatalog';
 import { DAFTAR_SEKSI } from '@/lib/masterData';
 
@@ -23,6 +23,7 @@ interface AddDaishaModalProps {
   setForm: React.Dispatch<React.SetStateAction<{ name: string; seksi: string; codePrefix: string; totalUnits: number }>>;
   onSubmit: (e: React.FormEvent) => void;
   seksiList: string[];
+  isSubmitting?: boolean;
 }
 
 export function AddDaishaModal({
@@ -32,6 +33,7 @@ export function AddDaishaModal({
   setForm,
   onSubmit,
   seksiList,
+  isSubmitting = false,
 }: AddDaishaModalProps) {
   useEscapeKey(isOpen, onClose);
 
@@ -175,15 +177,26 @@ export function AddDaishaModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg cursor-pointer transition text-xs"
+              disabled={isSubmitting}
+              className="h-9 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg cursor-pointer transition text-xs disabled:opacity-50"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg cursor-pointer transition text-xs shadow-xs"
+              disabled={isSubmitting}
+              className={`h-9 px-4 text-white font-bold rounded-lg transition text-xs shadow-xs flex items-center gap-1.5 ${
+                isSubmitting ? 'bg-red-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 cursor-pointer'
+              }`}
             >
-              Simpan &amp; Registrasikan Daisha
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Mendaftarkan Unit...</span>
+                </>
+              ) : (
+                <span>Simpan &amp; Registrasikan Daisha</span>
+              )}
             </button>
           </div>
         </form>

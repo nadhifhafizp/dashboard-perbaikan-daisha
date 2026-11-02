@@ -59,6 +59,7 @@ export default function CatalogManager() {
     seksiCounts,
     totalAllUnits,
     uniqueSeksiList,
+    isSubmittingDaisha,
     handleAddDaishaSubmit,
     handleAddComponentSubmit,
     handleAddSymptomSubmit,
@@ -166,6 +167,7 @@ export default function CatalogManager() {
         setForm={setNewDaishaForm}
         onSubmit={handleAddDaishaSubmit}
         seksiList={uniqueSeksiList}
+        isSubmitting={isSubmittingDaisha}
       />
 
       <AddVariantModal
