@@ -124,6 +124,15 @@ export default function CatalogManager() {
                 onToggleCollapseSeksi={toggleCollapseSeksi}
                 expandedDaishaIds={expandedDaishaIds}
                 onToggleAccordion={toggleAccordion}
+                onOpenAddDaisha={(seksi) => {
+                  setNewDaishaForm({
+                    name: '',
+                    seksi,
+                    codePrefix: '',
+                    totalUnits: 0,
+                  });
+                  setIsAddDaishaModalOpen(true);
+                }}
                 onOpenAddComponent={(daisha) => setAddComponentTarget(daisha)}
                 onOpenAddVariant={(daisha) => {
                   setAddVariantTarget(daisha);

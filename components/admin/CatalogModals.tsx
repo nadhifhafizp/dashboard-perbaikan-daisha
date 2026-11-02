@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { Layers, Wrench, Plus, Pencil, X, Tag } from 'lucide-react';
+import React, { useEffect, useMemo } from 'react';
+import { Layers, Wrench, Plus, Pencil, X, Tag, Building2, CheckCircle2 } from 'lucide-react';
 import { DaishaTreeItem } from '@/hooks/useDaishaCatalog';
+import { DAFTAR_SEKSI } from '@/lib/masterData';
 
 function useEscapeKey(isOpen: boolean, onClose: () => void) {
   useEffect(() => {
@@ -33,93 +34,156 @@ export function AddDaishaModal({
   seksiList,
 }: AddDaishaModalProps) {
   useEscapeKey(isOpen, onClose);
+
+  // Gabungkan opsi seksi standar plant dengan list yang ada di database
+  const availableSeksiOptions = useMemo(() => {
+    const set = new Set<string>([...DAFTAR_SEKSI, ...seksiList]);
+    return Array.from(set).filter(Boolean);
+  }, [seksiList]);
+
+  // Preview unit yang akan terbentuk
+  const previewText = useMemo(() => {
+    const total = Number(form.totalUnits) || 0;
+    if (total <= 0) return null;
+
+    const prefix = form.codePrefix ? form.codePrefix.trim().toUpperCase() : '';
+    const cleanPrefix = form.name.trim()
+      ? form.name.trim().replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase()
+      : 'DAISHA';
+
+    const startNum = prefix ? `${prefix}0001` : `${cleanPrefix}-001`;
+    const endNum = prefix
+      ? `${prefix}${String(total).padStart(4, '0')}`
+      : `${cleanPrefix}-${String(total).padStart(3, '0')}`;
+
+    return {
+      range: `${startNum} s/d ${endNum}`,
+      count: total,
+    };
+  }, [form.codePrefix, form.totalUnits, form.name]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="bg-white rounded-xl max-w-md w-full p-5 shadow-xl border border-slate-200 space-y-4">
+      <div className="bg-white rounded-xl max-w-md w-full p-5 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-150">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
-            <Layers className="w-5 h-5 text-red-600" />
-            <span>Tambah Jenis Daisha Baru</span>
-          </h3>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+              <Layers className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900 leading-tight">
+                Registrasi Daisha Baru
+              </h3>
+              <p className="text-xs text-slate-500">
+                Tambah model daisha untuk Seksi <span className="font-bold text-slate-800">{form.seksi || 'Pabrik'}</span>
+              </p>
+            </div>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+            className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center cursor-pointer transition"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-3 text-xs">
+        <form onSubmit={onSubmit} className="space-y-3.5 text-xs">
+          {/* Seksi Penempatan */}
           <div>
-            <label className="font-medium text-slate-700 block mb-1">Nama / Jenis Daisha</label>
-            <input
-              type="text"
-              required
-              placeholder="Contoh: Palet B/B, GT Ring, Vertical"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-medium text-slate-900"
-            />
-          </div>
-
-          <div>
-            <label className="font-medium text-slate-700 block mb-1">Seksi Plant Penempatan</label>
-            <input
-              type="text"
-              required
-              list="seksi-options-add"
-              placeholder="Pilih atau ketik seksi..."
+            <label className="font-bold text-slate-800 block mb-1 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-slate-500" />
+              <span>Seksi Pemilik / Penempatan Daisha</span>
+            </label>
+            <select
               value={form.seksi}
               onChange={(e) => setForm({ ...form, seksi: e.target.value })}
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900"
-            />
-            <datalist id="seksi-options-add">
-              {seksiList.map((s) => (
-                <option key={s} value={s} />
+              className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-bold text-slate-900 bg-white cursor-pointer"
+            >
+              {availableSeksiOptions.map((s) => (
+                <option key={s} value={s}>
+                  Seksi {s}
+                </option>
               ))}
-            </datalist>
+            </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-1">
+          {/* Nama / Jenis Daisha */}
+          <div>
+            <label className="font-bold text-slate-800 block mb-1">
+              Nama / Jenis Model Daisha <span className="text-red-600">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Contoh: Troli Moulding, A-Truck Nagara, Palet Baru"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-medium text-slate-900"
+            />
+          </div>
+
+          {/* Prefix & Total Unit */}
+          <div className="grid grid-cols-2 gap-3 pt-0.5">
             <div>
-              <label className="font-medium text-slate-700 block mb-1">Prefix Kode Unit</label>
+              <label className="font-bold text-slate-800 block mb-1">Prefix Kode Unit</label>
               <input
                 type="text"
-                placeholder="Contoh: BAN-A-, M00, S40"
+                placeholder="Contoh: EXT-A-, FIL-B-"
                 value={form.codePrefix}
-                onChange={(e) => setForm({ ...form, codePrefix: e.target.value })}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-mono uppercase text-slate-900"
+                onChange={(e) => setForm({ ...form, codePrefix: e.target.value.toUpperCase() })}
+                className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-mono font-bold uppercase text-slate-900"
               />
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Awalan nomor barcode</span>
             </div>
             <div>
-              <label className="font-medium text-slate-700 block mb-1">Total Unit Armada</label>
+              <label className="font-bold text-slate-800 block mb-1">
+                Jumlah Populasi Unit <span className="text-red-600">*</span>
+              </label>
               <input
                 type="number"
-                min="0"
-                placeholder="Contoh: 370"
+                min="1"
+                required
+                placeholder="Contoh: 10, 50, 100"
                 value={form.totalUnits || ''}
                 onChange={(e) => setForm({ ...form, totalUnits: Number(e.target.value) || 0 })}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-semibold text-slate-900"
+                className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-bold text-slate-900"
               />
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Total unit fisik baru</span>
             </div>
           </div>
+
+          {/* Live Preview Box Nomor Daisha Otomatis */}
+          {previewText && (
+            <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-emerald-950 text-xs">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Registrasi Otomatis ke Database:</span>
+              </div>
+              <p className="text-emerald-900 font-mono font-extrabold text-xs tracking-tight">
+                {previewText.range}
+              </p>
+              <p className="text-[11px] text-emerald-800">
+                Sebanyak <strong>{previewText.count} unit fisik</strong> siap digunakan dan langsung terdaftar untuk Seksi <strong>{form.seksi}</strong>.
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg cursor-pointer transition"
+              className="h-9 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg cursor-pointer transition text-xs"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer transition"
+              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg cursor-pointer transition text-xs shadow-xs"
             >
-              Simpan Daisha
+              Simpan &amp; Registrasikan Daisha
             </button>
           </div>
         </form>
