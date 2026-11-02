@@ -654,13 +654,24 @@ export async function POST(request: Request) {
       `;
 
       if (parsedDetails.items.length > 0) {
-        await sql`
-          INSERT INTO "TicketDetail" ("idTiket", "komponen", "gejala", "tindakan", "qty")
-          VALUES ${sql(parsedDetails.items.map(it => [idTiket, it.komponen, it.gejala, it.tindakan || 'Repair', it.qty || 1]))}
-        `;
+        try {
+          const detailRows = parsedDetails.items.map((it) => ({
+            idTiket,
+            komponen: it.komponen,
+            gejala: it.gejala,
+            tindakan: it.tindakan || 'Repair',
+            qty: it.qty || 1,
+          }));
+          await sql`
+            INSERT INTO "TicketDetail" ${sql(detailRows, 'idTiket', 'komponen', 'gejala', 'tindakan', 'qty')}
+          `;
+        } catch (detailErr) {
+          console.warn('[TicketDetail] Gagal sinkronisasi baris detail:', detailErr);
+        }
       }
 
       invalidateRepairCache();
+      invalidateMaintenanceCache();
 
       recordAuditLog({
         action: 'TICKET_EDIT',
@@ -680,16 +691,17 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: "Aksi tidak dikenali" }, { status: 400 });
   } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Internal Server Error';
     console.error("Database POST Error:", error);
     recordAuditLog({
       action: 'TICKET_POST_ERROR',
       ip: auth.ip,
       user: auth.user?.username,
       status: 'FAILED',
-      details: error instanceof Error ? error.message : 'Internal Server Error',
+      details: errorMsg,
     });
     return NextResponse.json(
-      { error: "Terjadi kesalahan internal pada server database" },
+      { error: `Terjadi kesalahan internal pada server database: ${errorMsg}` },
       { status: 500 }
     );
   }
