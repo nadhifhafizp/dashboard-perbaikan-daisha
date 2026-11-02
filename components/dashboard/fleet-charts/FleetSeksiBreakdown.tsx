@@ -98,7 +98,7 @@ export default function FleetSeksiBreakdown({
                 tick={{ fill: '#334155', fontSize: 13, fontWeight: 800 }}
                 allowDecimals={false}
                 width={50}
-                domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.15)]}
+                domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.25)]}
               />
               <Tooltip
                 formatter={(val: unknown, name: unknown) => [
@@ -131,18 +131,48 @@ export default function FleetSeksiBreakdown({
                     const item = activeBreakdownList[index];
                     if (!item || !item.total) return null;
                     const ngHeight = item.oke > 0 && item.ng > 0 ? (heightNum / item.oke) * item.ng : 0;
-                    const labelY = yNum - ngHeight - 12;
+                    const topOfBarY = yNum - ngHeight;
+                    const centerX = xNum + widthNum / 2;
+
                     return (
-                      <text
-                        x={xNum + widthNum / 2}
-                        y={labelY}
-                        fill="#0f172a"
-                        textAnchor="middle"
-                        fontSize={16}
-                        fontWeight={900}
-                      >
-                        {item.total.toLocaleString('id-ID')}
-                      </text>
+                      <g>
+                        {/* 1. Angka Total Populasi Seksi */}
+                        <text
+                          x={centerX}
+                          y={topOfBarY - 24}
+                          fill="#0f172a"
+                          textAnchor="middle"
+                          fontSize={16}
+                          fontWeight={900}
+                        >
+                          {item.total.toLocaleString('id-ID')}
+                        </text>
+
+                        {/* 2. Angka NG Langsung Terlihat Tanpa Drag */}
+                        {item.ng > 0 ? (
+                          <text
+                            x={centerX}
+                            y={topOfBarY - 7}
+                            fill="#dc2626"
+                            textAnchor="middle"
+                            fontSize={13}
+                            fontWeight={900}
+                          >
+                            {item.ng} NG
+                          </text>
+                        ) : (
+                          <text
+                            x={centerX}
+                            y={topOfBarY - 7}
+                            fill="#059669"
+                            textAnchor="middle"
+                            fontSize={12}
+                            fontWeight={800}
+                          >
+                            0 NG
+                          </text>
+                        )}
+                      </g>
                     );
                   }}
                 />
@@ -164,17 +194,30 @@ export default function FleetSeksiBreakdown({
                     const index = props.index ?? 0;
                     const item = activeBreakdownList[index];
                     if (!item || !item.total || item.oke > 0) return null;
+                    const centerX = xNum + widthNum / 2;
                     return (
-                      <text
-                        x={xNum + widthNum / 2}
-                        y={yNum - 12}
-                        fill="#0f172a"
-                        textAnchor="middle"
-                        fontSize={16}
-                        fontWeight={900}
-                      >
-                        {item.total.toLocaleString('id-ID')}
-                      </text>
+                      <g>
+                        <text
+                          x={centerX}
+                          y={yNum - 24}
+                          fill="#0f172a"
+                          textAnchor="middle"
+                          fontSize={16}
+                          fontWeight={900}
+                        >
+                          {item.total.toLocaleString('id-ID')}
+                        </text>
+                        <text
+                          x={centerX}
+                          y={yNum - 7}
+                          fill="#dc2626"
+                          textAnchor="middle"
+                          fontSize={13}
+                          fontWeight={900}
+                        >
+                          {item.ng} NG
+                        </text>
+                      </g>
                     );
                   }}
                 />
