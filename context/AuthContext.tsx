@@ -79,9 +79,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Handle auto logout saat idle
   const handleIdleLogout = useCallback(async () => {
     try {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        // Jika browser sedang offline (misal baru bangun dari sleep), lewati request jaringan
+        return;
+      }
       await fetch('/api/auth/logout', { method: 'POST' });
-    } catch (err) {
-      console.error('Idle logout error:', err);
+    } catch {
+      // Abaikan error koneksi jaringan saat laptop baru bangun dari sleep/offline
     } finally {
       setCurrentUser(null);
       router.push('/login?reason=idle');
