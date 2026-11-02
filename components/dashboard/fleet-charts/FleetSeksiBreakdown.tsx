@@ -74,11 +74,11 @@ export default function FleetSeksiBreakdown({
 
       {/* Grafik Komparasi Stacked Bar - DIPERLEBAR PADAT, BATANG BESAR TEBAL, TULISAN SEKSI LURUS */}
       <div className="w-full pt-1 pb-2">
-        <div className="h-[450px] sm:h-[520px] w-full">
+        <div className="h-[460px] sm:h-[530px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={activeBreakdownList}
-              margin={{ top: 35, right: 25, left: 10, bottom: 25 }}
+              margin={{ top: 52, right: 25, left: 10, bottom: 25 }}
               barCategoryGap="8%"
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART.grid} />
@@ -98,7 +98,7 @@ export default function FleetSeksiBreakdown({
                 tick={{ fill: '#334155', fontSize: 13, fontWeight: 800 }}
                 allowDecimals={false}
                 width={50}
-                domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.25)]}
+                domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.3)]}
               />
               <Tooltip
                 formatter={(val: unknown, name: unknown) => [
@@ -110,14 +110,14 @@ export default function FleetSeksiBreakdown({
               <Legend
                 verticalAlign="top"
                 align="right"
-                wrapperStyle={{ fontSize: '15px', fontWeight: 900, paddingBottom: '16px' }}
+                wrapperStyle={{ fontSize: '15px', fontWeight: 900, paddingBottom: '20px' }}
               />
               <Bar
                 dataKey="oke"
                 name="OKE (Siap Pakai)"
                 stackId="a"
                 fill="#059669"
-                radius={[4, 4, 0, 0]}
+                radius={[0, 0, 0, 0]}
                 maxBarSize={130}
                 minPointSize={10}
               >
@@ -129,51 +129,29 @@ export default function FleetSeksiBreakdown({
                     const heightNum = Number(props.height || 0);
                     const index = props.index ?? 0;
                     const item = activeBreakdownList[index];
-                    if (!item || !item.total) return null;
-                    const ngHeight = item.oke > 0 && item.ng > 0 ? (heightNum / item.oke) * item.ng : 0;
-                    const topOfBarY = yNum - ngHeight;
+                    if (!item || !item.total || item.oke <= 0) return null;
                     const centerX = xNum + widthNum / 2;
 
-                    return (
-                      <g>
-                        {/* 1. Angka Total Populasi Seksi */}
+                    // Tampilkan angka OKE di dalam batang hijau jika tingginya cukup
+                    if (heightNum >= 26) {
+                      const textY = yNum + Math.min(heightNum / 2 + 5, heightNum - 12);
+                      return (
                         <text
                           x={centerX}
-                          y={topOfBarY - 24}
-                          fill="#0f172a"
+                          y={textY}
+                          fill="#ffffff"
                           textAnchor="middle"
-                          fontSize={16}
+                          fontSize={13}
                           fontWeight={900}
+                          style={{
+                            filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.5))',
+                          }}
                         >
-                          {item.total.toLocaleString('id-ID')}
+                          {item.oke.toLocaleString('id-ID')} OKE
                         </text>
-
-                        {/* 2. Angka NG Langsung Terlihat Tanpa Drag */}
-                        {item.ng > 0 ? (
-                          <text
-                            x={centerX}
-                            y={topOfBarY - 7}
-                            fill="#dc2626"
-                            textAnchor="middle"
-                            fontSize={13}
-                            fontWeight={900}
-                          >
-                            {item.ng} NG
-                          </text>
-                        ) : (
-                          <text
-                            x={centerX}
-                            y={topOfBarY - 7}
-                            fill="#059669"
-                            textAnchor="middle"
-                            fontSize={12}
-                            fontWeight={800}
-                          >
-                            0 NG
-                          </text>
-                        )}
-                      </g>
-                    );
+                      );
+                    }
+                    return null;
                   }}
                 />
               </Bar>
@@ -182,24 +160,26 @@ export default function FleetSeksiBreakdown({
                 name="NG (Dalam Perbaikan)"
                 stackId="a"
                 fill="#dc2626"
-                radius={[5, 5, 0, 0]}
+                radius={[6, 6, 0, 0]}
                 maxBarSize={130}
                 minPointSize={8}
               >
                 <LabelList
-                  content={(props: { x?: number | string; y?: number | string; width?: number | string; index?: number }) => {
+                  content={(props: { x?: number | string; y?: number | string; width?: number | string; height?: number | string; index?: number }) => {
                     const xNum = Number(props.x || 0);
                     const yNum = Number(props.y || 0);
                     const widthNum = Number(props.width || 0);
                     const index = props.index ?? 0;
                     const item = activeBreakdownList[index];
-                    if (!item || !item.total || item.oke > 0) return null;
+                    if (!item || !item.total) return null;
                     const centerX = xNum + widthNum / 2;
+
                     return (
                       <g>
+                        {/* 1. Angka Total Populasi di paling atas */}
                         <text
                           x={centerX}
-                          y={yNum - 24}
+                          y={yNum - 27}
                           fill="#0f172a"
                           textAnchor="middle"
                           fontSize={16}
@@ -207,16 +187,55 @@ export default function FleetSeksiBreakdown({
                         >
                           {item.total.toLocaleString('id-ID')}
                         </text>
-                        <text
-                          x={centerX}
-                          y={yNum - 7}
-                          fill="#dc2626"
-                          textAnchor="middle"
-                          fontSize={13}
-                          fontWeight={900}
-                        >
-                          {item.ng} NG
-                        </text>
+
+                        {/* 2. Badge Angka NG Langsung Terlihat Jelas Tanpa Drag */}
+                        {item.ng > 0 ? (
+                          <g>
+                            <rect
+                              x={centerX - 35}
+                              y={yNum - 22}
+                              width={70}
+                              height={18}
+                              rx={9}
+                              fill="#fee2e2"
+                              stroke="#ef4444"
+                              strokeWidth={1.5}
+                            />
+                            <text
+                              x={centerX}
+                              y={yNum - 9}
+                              fill="#b91c1c"
+                              textAnchor="middle"
+                              fontSize={11.5}
+                              fontWeight={900}
+                            >
+                              {item.ng} NG
+                            </text>
+                          </g>
+                        ) : (
+                          <g>
+                            <rect
+                              x={centerX - 28}
+                              y={yNum - 22}
+                              width={56}
+                              height={18}
+                              rx={9}
+                              fill="#ecfdf5"
+                              stroke="#10b981"
+                              strokeWidth={1.2}
+                            />
+                            <text
+                              x={centerX}
+                              y={yNum - 9}
+                              fill="#047857"
+                              textAnchor="middle"
+                              fontSize={11}
+                              fontWeight={900}
+                            >
+                              0 NG
+                            </text>
+                          </g>
+                        )}
                       </g>
                     );
                   }}
