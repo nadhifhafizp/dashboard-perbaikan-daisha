@@ -69,7 +69,7 @@ export function broadcastTicketChange() {
 }
 
 interface UseTicketsOptions {
-  autoRefreshIntervalMs?: number; // default 15000ms (15 detik) untuk sinkronisasi antrean real-time
+  autoRefreshIntervalMs?: number; // default 60000ms (60 detik), sinkronisasi instan via BroadcastChannel saat mutasi
   initialFetch?: boolean;
   days?: number;
   from?: string;
@@ -79,7 +79,7 @@ interface UseTicketsOptions {
 
 export function useTickets(options: UseTicketsOptions = {}) {
   const {
-    autoRefreshIntervalMs = 15_000,
+    autoRefreshIntervalMs = 60_000,
     initialFetch = true,
     days,
     from,
