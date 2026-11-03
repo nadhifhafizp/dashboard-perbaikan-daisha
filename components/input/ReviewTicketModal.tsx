@@ -30,6 +30,8 @@ export default function ReviewTicketModal({
   onConfirm,
   onCancel,
 }: ReviewTicketModalProps) {
+  const { getStockInfo } = useSparepartsStock();
+
   React.useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -43,7 +45,6 @@ export default function ReviewTicketModal({
 
   if (!isOpen || !payload) return null;
 
-  const { getStockInfo } = useSparepartsStock();
   const parsed = parseTicketDamageDetail(payload.detail);
   const sizeInfo = detectDaishaSize(payload.noDaisha);
 
