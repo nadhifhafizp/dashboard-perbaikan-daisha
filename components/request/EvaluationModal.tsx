@@ -11,6 +11,7 @@ import {
   Boxes,
   Timer,
   Hammer,
+  ShieldCheck,
 } from 'lucide-react';
 import FlowchartTracker from './FlowchartTracker';
 import { FlowStepCode } from '@/lib/workflowConstants';
@@ -198,6 +199,26 @@ export default function EvaluationModal({
                   </a>
                   <button
                     type="button"
+                    onClick={() => form.handleAssignAtasanSpecialProject()}
+                    disabled={form.loading}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>{form.loading ? 'Menyimpan...' : 'ACC / Setujui Assign S.Project Sekarang'}</span>
+                  </button>
+                  {requestData.approvalToken && (
+                    <a
+                      href={`/request/approval?token=${encodeURIComponent(requestData.approvalToken)}&role=special_project`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-100 text-purple-700 border border-purple-300 rounded-lg text-xs font-semibold transition"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Buka Lembar Approval Terpisah</span>
+                    </a>
+                  )}
+                  <button
+                    type="button"
                     onClick={() => form.setNotifSuccessData(null)}
                     className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition cursor-pointer"
                   >
@@ -220,6 +241,7 @@ export default function EvaluationModal({
               setFormData={form.setFormData}
               onDecisionLanjut={form.handleDecisionLanjut}
               onDecisionTolak={form.handleDecisionTolak}
+              onAssignSpecialProject={form.handleAssignAtasanSpecialProject}
             />
           )}
 
@@ -289,6 +311,7 @@ export default function EvaluationModal({
               isPendingMaterial={Boolean(isPendingMaterial)}
               showPendingDialog={form.showPendingDialog}
               alasanPendingInput={form.alasanPendingInput}
+              approvalToken={requestData.approvalToken}
               setFormData={form.setFormData}
               setShowPendingDialog={form.setShowPendingDialog}
               setAlasanPendingInput={form.setAlasanPendingInput}

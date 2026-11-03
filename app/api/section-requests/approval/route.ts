@@ -41,8 +41,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const token = sanitizeText(body.token, 100);
-    const action = sanitizeText(body.action, 20); // 'APPROVE' | 'REJECT'
+    const action = sanitizeText(body.action, 30); // 'APPROVE' | 'REJECT' | 'APPROVE_SPROJECT' | 'REJECT_SPROJECT'
+    const role = sanitizeText(body.role, 30); // 'seksi' | 'special_project'
     const namaAtasan = sanitizeText(body.namaAtasan, 100);
+    const namaDeptHead = sanitizeText(body.namaDeptHead, 100);
     const catatan = sanitizeText(body.catatan, 1000);
     const alasanTolak = sanitizeText(body.alasanTolak, 1000);
 
@@ -58,12 +60,15 @@ export async function POST(request: Request) {
       perihal: string;
       namaBarang: string;
       statusApprovalAtasanSeksi: string;
+      flowStep: string;
+      status: string;
       emailMentorWorkshop: string | null;
       namaAtasanSeksi: string | null;
     }>>`
       SELECT 
         id, "nomorRequest", "seksiPemohon", "picPemohon",
         perihal, "namaBarang", "statusApprovalAtasanSeksi",
+        "flowStep", status,
         "emailMentorWorkshop", "namaAtasanSeksi"
       FROM "SectionRequest"
       WHERE "approvalToken" = ${token}
@@ -74,6 +79,153 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Data request tidak ditemukan untuk token ini.' }, { status: 404 });
     }
 
+    // Jalur A: Approval Atasan Special Project (8210 / 820)
+    const isSpecialProjectApproval =
+      role === 'special_project' ||
+      action === 'APPROVE_SPROJECT' ||
+      action === 'REJECT_SPROJECT';
+
+    if (isSpecialProjectApproval) {
+      if (current.status === 'Selesai' || current.flowStep === 'STEP_7_SELESAI') {
+        return NextResponse.json(
+          {
+            error:
+              'Permohonan ini sudah berstatus Selesai dan tidak dapat diubah lagi.',
+          },
+          { status: 400 }
+        );
+      }
+
+      const spReviewer = namaAtasan || 'Manager Special Project (8210)';
+      const deptHeadReviewer = namaDeptHead || 'Dept Head Special Project (820)';
+
+      if (action === 'APPROVE' || action === 'APPROVE_SPROJECT') {
+        const updated = await withTransaction(async (tx) => {
+          const [upd] = await tx<Array<{ nomorRequest: string }>>`
+            UPDATE "SectionRequest"
+            SET
+              "keputusan8210" = ${spReviewer},
+              "keputusan820" = ${deptHeadReviewer},
+              "statusApprovalAtasanSeksi" = 'APPROVED',
+              status = 'Dikerjakan',
+              "flowStep" = 'STEP_6_DALAM_PENGERJAAN',
+              "catatanAdmin" = CASE 
+                WHEN "catatanAdmin" IS NULL OR "catatanAdmin" = '' THEN ${catatan ? `[Catatan S.Project: ${catatan}]` : null}
+                ELSE "catatanAdmin" || ${catatan ? ` [Catatan S.Project: ${catatan}]` : ''}
+              END,
+              "waktuUpdate" = NOW()
+            WHERE id = ${current.id}
+            RETURNING *
+          `;
+
+          // In-App Notification untuk Workshop & Admin
+          await createInAppNotification(
+            {
+              requestId: current.id,
+              nomorRequest: current.nomorRequest,
+              targetRole: 'ADMIN',
+              tipe: 'ASSIGN_ATASAN_SPROJECT',
+              judul: `Request ${current.nomorRequest} Disetujui Atasan S.Project`,
+              pesan: `Atasan Special Project (${spReviewer}) telah menyetujui & meng-assign request ${current.nomorRequest}. Pengerjaan fisik siap dimulai oleh teknisi bengkel.`,
+              link: `/request`,
+            },
+            tx
+          );
+
+          // In-App Notification untuk Pemohon Seksi
+          await createInAppNotification(
+            {
+              requestId: current.id,
+              nomorRequest: current.nomorRequest,
+              targetRole: 'USER_SEKSI',
+              targetUser: current.picPemohon,
+              tipe: 'ASSIGN_ATASAN_SPROJECT',
+              judul: `Request ${current.nomorRequest} Disetujui Special Project`,
+              pesan: `Permohonan Anda (${current.perihal || current.namaBarang}) telah disetujui Atasan Special Project dan langsung masuk tahap pengerjaan bengkel.`,
+              link: `/request`,
+            },
+            tx
+          );
+
+          return upd;
+        });
+
+        recordAuditLog({
+          action: 'SECTION_REQUEST_APPROVE_ATASAN_SPROJECT',
+          ip,
+          status: 'SUCCESS',
+          targetId: current.nomorRequest,
+          details: `Disetujui oleh: ${spReviewer} & ${deptHeadReviewer}`,
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: `Permohonan ${current.nomorRequest} berhasil disetujui oleh Atasan Special Project dan berstatus "Dikerjakan".`,
+          request: updated,
+        });
+      }
+
+      if (action === 'REJECT' || action === 'REJECT_SPROJECT') {
+        const updated = await withTransaction(async (tx) => {
+          const [upd] = await tx<Array<{ nomorRequest: string }>>`
+            UPDATE "SectionRequest"
+            SET
+              "keputusan8210" = 'DITOLAK',
+              status = 'Ditolak',
+              "flowStep" = 'STEP_5_DITOLAK',
+              "alasanTolak" = ${alasanTolak || catatan || 'Ditolak oleh Atasan Special Project (8210 / 820)'},
+              "waktuUpdate" = NOW()
+            WHERE id = ${current.id}
+            RETURNING *
+          `;
+
+          await createInAppNotification(
+            {
+              requestId: current.id,
+              nomorRequest: current.nomorRequest,
+              targetRole: 'USER_SEKSI',
+              targetUser: current.picPemohon,
+              tipe: 'INFO_TOLAK_SEKSI',
+              judul: `Request ${current.nomorRequest} Ditolak Special Project`,
+              pesan: `Permohonan ditolak oleh Atasan Special Project (${spReviewer}). Alasan: ${alasanTolak || catatan || '-'}`,
+              link: `/request`,
+            },
+            tx
+          );
+
+          await createInAppNotification(
+            {
+              requestId: current.id,
+              nomorRequest: current.nomorRequest,
+              targetRole: 'ADMIN',
+              tipe: 'INFO_TOLAK_SEKSI',
+              judul: `Request ${current.nomorRequest} Ditolak Atasan Special Project`,
+              pesan: `Permohonan Seksi ${current.seksiPemohon} ditolak oleh Atasan Special Project. Alasan: ${alasanTolak || catatan || '-'}`,
+              link: `/request`,
+            },
+            tx
+          );
+
+          return upd;
+        });
+
+        recordAuditLog({
+          action: 'SECTION_REQUEST_REJECT_ATASAN_SPROJECT',
+          ip,
+          status: 'SUCCESS',
+          targetId: current.nomorRequest,
+          details: `Ditolak oleh: ${spReviewer}. Alasan: ${alasanTolak || catatan || '-'}`,
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: `Permohonan ${current.nomorRequest} ditolak oleh Atasan Special Project.`,
+          request: updated,
+        });
+      }
+    }
+
+    // Jalur B: Approval Atasan Seksi Pemohon
     if (current.statusApprovalAtasanSeksi === 'APPROVED') {
       return NextResponse.json({
         error: 'Formulir ini sudah disetujui sebelumnya dan sedang diproses di Workshop.',

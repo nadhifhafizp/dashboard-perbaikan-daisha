@@ -47,6 +47,8 @@ function RequestTrackingContent() {
     openEvalModal,
     shareApprovalRequest,
     setShareApprovalRequest,
+    shareApprovalRole,
+    openShareApproval,
     requestToDelete,
     setRequestToDelete,
     feedback,
@@ -155,7 +157,7 @@ function RequestTrackingContent() {
           onResetFilter={() => setFilterFlow('all')}
           onOpenPrint={(req) => void openPrintModal(req)}
           onOpenEval={(req) => void openEvalModal(req)}
-          onOpenShareApproval={(req) => setShareApprovalRequest(req)}
+          onOpenShareApproval={openShareApproval}
           onRequestDelete={(req) => setRequestToDelete(req)}
         />
       </div>
@@ -168,6 +170,7 @@ function RequestTrackingContent() {
 
       <ShareApprovalModal
         request={shareApprovalRequest}
+        role={shareApprovalRole}
         onClose={() => setShareApprovalRequest(null)}
       />
 

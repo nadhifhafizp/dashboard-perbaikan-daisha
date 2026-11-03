@@ -508,19 +508,31 @@ export async function POST(request: Request) {
           alasanTolak: alasanTolak || komentarActual || 'Tidak memenuhi kriteria workshop',
           detailLink: `${origin}/request`,
         });
-      } else if (keputusan === 'GO') {
+      } else if (keputusan === 'GO' || body.assignAtasanSpecialProject || action === 'ASSIGN_ATASAN_SPROJECT') {
         if (body.assignAtasanSpecialProject || action === 'ASSIGN_ATASAN_SPROJECT') {
           nextFlowStep = 'STEP_6_DALAM_PENGERJAAN';
-          nextStatus = 'Disetujui';
+          nextStatus = newStatus === 'Disetujui' ? 'Dikerjakan' : (newStatus || 'Dikerjakan');
 
-          // Setelah Atasan Special Project approve: notif CUKUP via web apps saja yang muncul ke Admin
+          // Setelah Atasan Special Project approve: notifikasi ke Admin & Workshop
           await createInAppNotification({
             requestId: current.id,
             nomorRequest: current.nomorRequest,
             targetRole: 'ADMIN',
             tipe: 'ASSIGN_ATASAN_SPROJECT',
             judul: `Request ${current.nomorRequest} Disetujui Atasan S.Project`,
-            pesan: `Atasan Special Project (8210 / 820) telah menyetujui request ${current.nomorRequest}. Pengerjaan siap dimulai oleh operator bengkel.`,
+            pesan: `Atasan Special Project (8210 / 820) telah menyetujui request ${current.nomorRequest}. Pengerjaan fisik siap dimulai oleh teknisi bengkel.`,
+            link: `/request`,
+          });
+
+          // Notifikasi juga ke Seksi Pemohon
+          await createInAppNotification({
+            requestId: current.id,
+            nomorRequest: current.nomorRequest,
+            targetRole: 'USER_SEKSI',
+            targetUser: current.picPemohon,
+            tipe: 'ASSIGN_ATASAN_SPROJECT',
+            judul: `Request ${current.nomorRequest} Disetujui Special Project`,
+            pesan: `Permohonan Anda (${current.perihal || current.namaBarang}) telah disetujui & di-assign Atasan Special Project. Teknisi bengkel siap memulai pengerjaan.`,
             link: `/request`,
           });
         } else {

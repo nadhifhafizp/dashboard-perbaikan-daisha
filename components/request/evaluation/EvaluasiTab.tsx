@@ -9,6 +9,8 @@ import {
   ArrowRight,
   Ban,
   FileText,
+  ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
 import { SectionRequestFull } from '../BridgestoneRequestPrintModal';
 import { EvaluationFormData } from './types';
@@ -21,6 +23,7 @@ interface EvaluasiTabProps {
   setFormData: React.Dispatch<React.SetStateAction<EvaluationFormData>>;
   onDecisionLanjut: () => void;
   onDecisionTolak: () => void;
+  onAssignSpecialProject?: (sp8210?: string, sp820?: string, catatan?: string) => void;
 }
 
 export default function EvaluasiTab({
@@ -30,7 +33,23 @@ export default function EvaluasiTab({
   setFormData,
   onDecisionLanjut,
   onDecisionTolak,
+  onAssignSpecialProject,
 }: EvaluasiTabProps) {
+  const isWaitingSpecialProject =
+    formData.flowStep === 'STEP_5_MENUNGGU_ATASAN_SPROJECT' ||
+    formData.status === 'Menunggu Assign S.Project' ||
+    formData.status === 'Pending: Menunggu Assign S.Project' ||
+    requestData.flowStep === 'STEP_5_MENUNGGU_ATASAN_SPROJECT' ||
+    requestData.status === 'Menunggu Assign S.Project' ||
+    requestData.status === 'Pending: Menunggu Assign S.Project';
+
+  const isAlreadyAssigned =
+    formData.flowStep === 'STEP_6_DALAM_PENGERJAAN' ||
+    formData.status === 'Dikerjakan' ||
+    formData.flowStep === 'STEP_7_PEKERJAAN_SELESAI' ||
+    formData.status === 'Pekerjaan Fisik Selesai' ||
+    formData.flowStep === 'STEP_8_SELESAI' ||
+    formData.status === 'Selesai';
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Ringkasan Permohonan Pemohon */}
@@ -177,6 +196,118 @@ export default function EvaluasiTab({
         </div>
       </div>
 
+      {/* 5. BOX UTAMA ACC & ASSIGN ATASAN SPECIAL PROJECT (8210 / 820) */}
+      {isWaitingSpecialProject && (
+        <div className="p-4 sm:p-5 rounded-2xl border-2 border-purple-500 bg-purple-50/90 space-y-4 shadow-sm animate-scale-up">
+          <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-purple-200">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold shadow-xs">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-purple-950 uppercase tracking-wide flex items-center gap-2">
+                  <span>Persetujuan &amp; ACC Assign Atasan Special Project (8210 / 820)</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-black bg-purple-200 text-purple-900 border border-purple-300">
+                    TAHAP 5 AKTIF
+                  </span>
+                </h4>
+                <p className="text-xs text-purple-800 mt-0.5">
+                  Klik tombol <strong>ACC / Setujui Assign</strong> di bawah ini agar permohonan langsung beralih ke <strong>&quot;Dikerjakan&quot; (Tahap 6)</strong> dan tersimpan ke database.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-purple-950 mb-1">
+                Reviewer / Manager 8210 *
+              </label>
+              <input
+                type="text"
+                value={formData.keputusan8210 || 'Manager Special Project (8210)'}
+                onChange={(e) => setFormData((p) => ({ ...p, keputusan8210: e.target.value }))}
+                placeholder="Manager Special Project (8210)"
+                className="w-full h-10 px-3 bg-white border border-purple-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 shadow-2xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-purple-950 mb-1">
+                Dept Head 820 *
+              </label>
+              <input
+                type="text"
+                value={formData.keputusan820 || 'Dept Head Special Project (820)'}
+                onChange={(e) => setFormData((p) => ({ ...p, keputusan820: e.target.value }))}
+                placeholder="Dept Head Special Project (820)"
+                className="w-full h-10 px-3 bg-white border border-purple-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 shadow-2xs"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-purple-950 mb-1">
+              Catatan Instruksi Pengerjaan Bengkel (Opsional)
+            </label>
+            <input
+              type="text"
+              value={formData.catatanAdmin || ''}
+              onChange={(e) => setFormData((p) => ({ ...p, catatanAdmin: e.target.value }))}
+              placeholder="Contoh: Prioritas pengerjaan shift 1, pastikan finishing bubut sesuai toleransi..."
+              className="w-full h-10 px-3 bg-white border border-purple-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 shadow-2xs"
+            />
+          </div>
+
+          <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-purple-200">
+            <span className="text-xs text-purple-900">
+              * Perubahan tersimpan secara nyata ke database PostgreSQL dan tercatat di lembar cetak formulir ENG-KP-011.
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {requestData.approvalToken && (
+                <a
+                  href={`/request/approval?token=${encodeURIComponent(requestData.approvalToken)}&role=special_project`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="h-10 px-3.5 bg-white hover:bg-purple-100 text-purple-800 font-semibold text-xs rounded-lg border border-purple-300 transition inline-flex items-center gap-1.5"
+                >
+                  <FileText className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Lembar Approval Eksternal</span>
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => onAssignSpecialProject?.(formData.keputusan8210, formData.keputusan820, formData.catatanAdmin)}
+                disabled={loading}
+                className="h-10 px-5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-2 shadow-md disabled:opacity-50"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>{loading ? 'Menyimpan ke DB...' : 'ACC / Setujui Assign Special Project (8210 / 820)'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Konfirmasi jika sudah di-ACC Special Project */}
+      {isAlreadyAssigned && (
+        <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center justify-between flex-wrap gap-2 text-xs animate-scale-up">
+          <div className="flex items-center gap-2 text-emerald-950 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>
+              Telah di-ACC oleh Atasan Special Project: <strong>{formData.keputusan8210 || '8210'}</strong> &amp; <strong>{formData.keputusan820 || '820'}</strong> (Status: Dikerjakan / Tahap 6).
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => onAssignSpecialProject?.(formData.keputusan8210, formData.keputusan820, formData.catatanAdmin)}
+            disabled={loading}
+            className="px-3 py-1 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-md text-xs font-semibold cursor-pointer"
+          >
+            Perbarui Data ACC S.Project
+          </button>
+        </div>
+      )}
+
       {/* Action Box: Keputusan Pekerjaan (Lanjut atau Tolak) */}
       <div className="p-4 rounded-xl border border-slate-300 bg-slate-50/70 space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -185,7 +316,9 @@ export default function EvaluasiTab({
             <span>Keputusan Evaluasi PIC Workshop</span>
           </span>
           <span className="text-xs text-slate-500">
-            Kirim notifikasi otomatis ke Atasan Special Project
+            {isWaitingSpecialProject
+              ? 'Evaluasi workshop telah selesai disetujui (Menunggu ACC Special Project di atas)'
+              : 'Kirim notifikasi otomatis ke Atasan Special Project'}
           </span>
         </div>
 
@@ -211,8 +344,20 @@ export default function EvaluasiTab({
             className="h-10 px-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
           >
             <ArrowRight className="w-4 h-4" />
-            <span>Setujui Request</span>
+            <span>Setujui Evaluasi Workshop</span>
           </button>
+
+          {!isWaitingSpecialProject && !isAlreadyAssigned && (
+            <button
+              type="button"
+              onClick={() => onAssignSpecialProject?.(formData.keputusan8210, formData.keputusan820, formData.catatanAdmin)}
+              disabled={loading}
+              className="h-10 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50 shadow-2xs"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Setujui &amp; Langsung ACC S.Project (Fast Track)</span>
+            </button>
+          )}
 
           <button
             type="button"

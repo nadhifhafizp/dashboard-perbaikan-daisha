@@ -18,6 +18,10 @@ import {
   Printer,
   ChevronLeft,
   Mail,
+  Wrench,
+  Users,
+  DollarSign,
+  Package,
 } from 'lucide-react';
 import { SectionRequestFull } from '@/components/request/BridgestoneRequestPrintModal';
 import { getSeksiCode } from '@/lib/nomorSurat';
@@ -26,17 +30,29 @@ function ApprovalContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
+  const roleParam = searchParams.get('role'); // 'seksi' | 'special_project'
 
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [requestData, setRequestData] = useState<SectionRequestFull | null>(null);
 
+  // Active Role State ('seksi' vs 'special_project')
+  const [activeRole, setActiveRole] = useState<'seksi' | 'special_project'>(
+    roleParam === 'special_project' ? 'special_project' : 'seksi'
+  );
+
   // Form Approval Action
   const [namaAtasan, setNamaAtasan] = useState('');
+  const [namaDeptHead, setNamaDeptHead] = useState('');
   const [catatan, setCatatan] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [actionDone, setActionDone] = useState<'APPROVED' | 'REJECTED' | null>(null);
-  const [adminEmailData, setAdminEmailData] = useState<{ toEmail?: string; subject: string; bodyText: string; mailtoUrl: string } | null>(null);
+  const [adminEmailData, setAdminEmailData] = useState<{
+    toEmail?: string;
+    subject: string;
+    bodyText: string;
+    mailtoUrl: string;
+  } | null>(null);
 
   // Reject Modal
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -52,15 +68,43 @@ function ApprovalContent() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch(`/api/section-requests/approval?token=${encodeURIComponent(token)}`);
+        const res = await fetch(
+          `/api/section-requests/approval?token=${encodeURIComponent(token)}`
+        );
         const data = await res.json();
         if (res.ok && data.success) {
-          setRequestData(data.request);
-          setNamaAtasan(data.request.namaAtasanSeksi || data.request.foreman || '');
-          if (data.request.statusApprovalAtasanSeksi === 'APPROVED') {
-            setActionDone('APPROVED');
-          } else if (data.request.statusApprovalAtasanSeksi === 'REJECTED') {
-            setActionDone('REJECTED');
+          const req: SectionRequestFull = data.request;
+          setRequestData(req);
+
+          // Determine initial role
+          const isSPTarget =
+            roleParam === 'special_project' ||
+            (req.statusApprovalAtasanSeksi === 'APPROVED' &&
+              (req.flowStep === 'STEP_5_MENUNGGU_ATASAN_SPROJECT' ||
+                req.status === 'Menunggu Assign S.Project' ||
+                req.status === 'Pending: Menunggu Assign S.Project'));
+
+          if (isSPTarget) {
+            setActiveRole('special_project');
+            setNamaAtasan(req.keputusan8210 || 'Manager Special Project (8210)');
+            setNamaDeptHead(req.keputusan820 || 'Dept Head Special Project (820)');
+            if (
+              req.flowStep === 'STEP_6_DALAM_PENGERJAAN' ||
+              req.status === 'Dikerjakan' ||
+              req.status === 'Selesai'
+            ) {
+              setActionDone('APPROVED');
+            } else if (req.flowStep === 'STEP_5_DITOLAK') {
+              setActionDone('REJECTED');
+            }
+          } else {
+            setActiveRole('seksi');
+            setNamaAtasan(req.namaAtasanSeksi || req.foreman || '');
+            if (req.statusApprovalAtasanSeksi === 'APPROVED') {
+              setActionDone('APPROVED');
+            } else if (req.statusApprovalAtasanSeksi === 'REJECTED') {
+              setActionDone('REJECTED');
+            }
           }
         } else {
           setErrorMsg(data.error || 'Gagal memuat formulir request.');
@@ -73,7 +117,37 @@ function ApprovalContent() {
     };
 
     void fetchData();
-  }, [token]);
+  }, [token, roleParam]);
+
+  // Switch role handler for simulation
+  const handleSwitchRole = (newRole: 'seksi' | 'special_project') => {
+    setActiveRole(newRole);
+    if (!requestData) return;
+    if (newRole === 'special_project') {
+      setNamaAtasan(requestData.keputusan8210 || 'Manager Special Project (8210)');
+      setNamaDeptHead(requestData.keputusan820 || 'Dept Head Special Project (820)');
+      if (
+        requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' ||
+        requestData.status === 'Dikerjakan' ||
+        requestData.status === 'Selesai'
+      ) {
+        setActionDone('APPROVED');
+      } else if (requestData.flowStep === 'STEP_5_DITOLAK') {
+        setActionDone('REJECTED');
+      } else {
+        setActionDone(null);
+      }
+    } else {
+      setNamaAtasan(requestData.namaAtasanSeksi || requestData.foreman || '');
+      if (requestData.statusApprovalAtasanSeksi === 'APPROVED') {
+        setActionDone('APPROVED');
+      } else if (requestData.statusApprovalAtasanSeksi === 'REJECTED') {
+        setActionDone('REJECTED');
+      } else {
+        setActionDone(null);
+      }
+    }
+  };
 
   // Escape key listener untuk menutup modal penolakan
   useEffect(() => {
@@ -92,16 +166,29 @@ function ApprovalContent() {
     setSubmitting(true);
     setErrorMsg('');
 
+    const isSpecialProject = activeRole === 'special_project';
+
     try {
+      const payload = isSpecialProject
+        ? {
+            token,
+            role: 'special_project',
+            action: 'APPROVE_SPROJECT',
+            namaAtasan: namaAtasan || 'Manager Special Project (8210)',
+            namaDeptHead: namaDeptHead || 'Dept Head Special Project (820)',
+            catatan,
+          }
+        : {
+            token,
+            action: 'APPROVE',
+            namaAtasan: namaAtasan || 'Atasan Seksi',
+            catatan,
+          };
+
       const res = await fetch('/api/section-requests/approval', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          action: 'APPROVE',
-          namaAtasan: namaAtasan || 'Atasan Seksi',
-          catatan,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -111,12 +198,22 @@ function ApprovalContent() {
           setAdminEmailData(data.adminWorkshopEmail);
         }
         if (requestData) {
-          setRequestData({
-            ...requestData,
-            statusApprovalAtasanSeksi: 'APPROVED',
-            foreman: namaAtasan || requestData.foreman || 'Atasan Seksi',
-            status: 'Diterima Workshop',
-          });
+          if (isSpecialProject) {
+            setRequestData({
+              ...requestData,
+              keputusan8210: namaAtasan || 'Manager Special Project (8210)',
+              keputusan820: namaDeptHead || 'Dept Head Special Project (820)',
+              status: 'Dikerjakan',
+              flowStep: 'STEP_6_DALAM_PENGERJAAN',
+            });
+          } else {
+            setRequestData({
+              ...requestData,
+              statusApprovalAtasanSeksi: 'APPROVED',
+              foreman: namaAtasan || requestData.foreman || 'Atasan Seksi',
+              status: 'Diterima Workshop',
+            });
+          }
         }
       } else {
         setErrorMsg(data.error || 'Gagal menyetujui request.');
@@ -136,16 +233,28 @@ function ApprovalContent() {
     setSubmitting(true);
     setErrorMsg('');
 
+    const isSpecialProject = activeRole === 'special_project';
+
     try {
+      const payload = isSpecialProject
+        ? {
+            token,
+            role: 'special_project',
+            action: 'REJECT_SPROJECT',
+            namaAtasan: namaAtasan || 'Manager Special Project (8210)',
+            alasanTolak,
+          }
+        : {
+            token,
+            action: 'REJECT',
+            namaAtasan: namaAtasan || 'Atasan Seksi',
+            alasanTolak,
+          };
+
       const res = await fetch('/api/section-requests/approval', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          action: 'REJECT',
-          namaAtasan: namaAtasan || 'Atasan Seksi',
-          alasanTolak,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -153,11 +262,22 @@ function ApprovalContent() {
         setActionDone('REJECTED');
         setShowRejectModal(false);
         if (requestData) {
-          setRequestData({
-            ...requestData,
-            statusApprovalAtasanSeksi: 'REJECTED',
-            status: 'Ditolak Atasan Seksi',
-          });
+          if (isSpecialProject) {
+            setRequestData({
+              ...requestData,
+              status: 'Ditolak',
+              flowStep: 'STEP_5_DITOLAK',
+              alasanTolak: alasanTolak,
+              keputusan8210: 'DITOLAK',
+            });
+          } else {
+            setRequestData({
+              ...requestData,
+              statusApprovalAtasanSeksi: 'REJECTED',
+              status: 'Ditolak Atasan Seksi',
+              alasanTolak: alasanTolak,
+            });
+          }
         }
       } else {
         setErrorMsg(data.error || 'Gagal menolak request.');
@@ -201,11 +321,13 @@ function ApprovalContent() {
     );
   }
 
+  const isSpecialProject = activeRole === 'special_project';
+
   return (
     <div className="min-h-screen bg-slate-100/80 font-sans pb-16">
       {/* Top Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <div className="relative w-7 h-7">
               <Image src="/logo-bs.png" alt="BS" fill className="object-contain" priority />
@@ -215,17 +337,56 @@ function ApprovalContent() {
                 PT Bridgestone Tire Indonesia
               </span>
               <span className="text-xs text-slate-500 font-mono">
-                Persetujuan Formulir Permohonan Seksi (ENG-KP-011)
+                {isSpecialProject
+                  ? 'Persetujuan & Assign Atasan Special Project (8210 / 820)'
+                  : 'Persetujuan Formulir Permohonan Seksi (ENG-KP-011)'}
               </span>
             </div>
           </div>
-          <Link
-            href="/request"
-            className="text-xs text-red-600 hover:text-red-700 font-semibold inline-flex items-center gap-1"
-          >
-            <span>Dashboard Request</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+
+          <div className="flex items-center gap-2">
+            {/* Simulasi Role Switcher (Dapat beralih kapan saja untuk keperluan simulasi & pengujian) */}
+            <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold shadow-2xs">
+              <button
+                type="button"
+                onClick={() => handleSwitchRole('seksi')}
+                className={`px-2.5 py-1 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
+                  !isSpecialProject
+                    ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Atasan Seksi</span>
+                {requestData?.statusApprovalAtasanSeksi === 'APPROVED' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Sudah Disetujui Seksi" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSwitchRole('special_project')}
+                className={`px-2.5 py-1 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
+                  isSpecialProject
+                    ? 'bg-purple-600 text-white shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Atasan Special Project</span>
+                {requestData?.keputusan8210 && requestData?.keputusan8210 !== 'DITOLAK' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="Sudah Di-assign S.Project" />
+                )}
+              </button>
+            </div>
+
+            <Link
+              href="/request"
+              className="text-xs text-red-600 hover:text-red-700 font-semibold inline-flex items-center gap-1 ml-2"
+            >
+              <span>Dashboard Request</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -239,17 +400,41 @@ function ApprovalContent() {
             </div>
             <div>
               <h2 className="text-sm font-bold text-emerald-950">
-                Formulir Telah Berhasil Disetujui & Ditandatangani!
+                {isSpecialProject
+                  ? 'Permohonan Telah Disetujui & Di-assign oleh Atasan Special Project!'
+                  : 'Formulir Telah Berhasil Disetujui & Ditandatangani!'}
               </h2>
               <p className="text-xs text-emerald-800 mt-0.5 leading-relaxed">
-                Tanda tangan Anda telah dicantumkan pada kotak <strong>FOREMAN</strong>. Dokumen request{' '}
-                <strong className="font-mono">{requestData?.nomorRequest}</strong> otomatis diteruskan ke{' '}
-                <strong>Admin & PIC Workshop Produksi</strong> untuk tahap Evaluasi Pekerjaan (Waktu, Men Power, Sparepart, Material).
+                {isSpecialProject ? (
+                  <>
+                    Persetujuan Anda telah dicatat pada kotak <strong>Bengkel Prod. (K.SIE / 8210 / 820)</strong>. Dokumen request{' '}
+                    <strong className="font-mono">
+                      {requestData?.nomorRequest?.startsWith('REQ-') && requestData?.nomorSurat
+                        ? requestData.nomorSurat
+                        : requestData?.nomorRequest}
+                    </strong>{' '}
+                    kini berstatus <strong>&quot;Dikerjakan&quot; (STEP 6)</strong> dan teknisi workshop siap memulai pengerjaan fisik.
+                  </>
+                ) : (
+                  <>
+                    Tanda tangan Anda telah dicantumkan pada kotak <strong>FOREMAN</strong>. Dokumen request{' '}
+                    <strong className="font-mono">
+                      {requestData?.nomorRequest?.startsWith('REQ-') && requestData?.nomorSurat
+                        ? requestData.nomorSurat
+                        : requestData?.nomorRequest}
+                    </strong>{' '}
+                    otomatis diteruskan ke <strong>Admin & PIC Workshop Produksi</strong> untuk tahap Evaluasi Pekerjaan (Waktu, Men Power, Sparepart, Material).
+                  </>
+                )}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-100/90 px-2.5 py-1 rounded-md border border-emerald-300">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                  <span>Notifikasi otomatis telah terkirim ke Admin Workshop (via Web Apps & Email)</span>
+                  <span>
+                    {isSpecialProject
+                      ? 'Notifikasi otomatis telah terkirim ke Workshop Bengkel & Seksi Pemohon'
+                      : 'Notifikasi otomatis telah terkirim ke Admin Workshop (via Web Apps & Email)'}
+                  </span>
                 </span>
                 {adminEmailData && (
                   <a
@@ -260,6 +445,13 @@ function ApprovalContent() {
                     <span>Buka Email ke Admin Workshop</span>
                   </a>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setActionDone(null)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition cursor-pointer"
+                >
+                  <span>Ubah Data / Simulasi Ulang</span>
+                </button>
               </div>
             </div>
           </div>
@@ -269,9 +461,37 @@ function ApprovalContent() {
               <XCircle className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-rose-950">Permohonan Telah Ditolak</h2>
+              <h2 className="text-sm font-bold text-rose-950">
+                {isSpecialProject
+                  ? 'Permohonan Ditolak oleh Atasan Special Project'
+                  : 'Permohonan Telah Ditolak oleh Atasan Seksi'}
+              </h2>
               <p className="text-xs text-rose-800 mt-0.5">
-                Alasan penolakan telah tercatat dan diinformasikan ke Seksi Pemohon.
+                Alasan penolakan: <strong>{alasanTolak || requestData?.alasanTolak || '-'}</strong>. Status telah diperbarui dan Seksi Pemohon diinformasikan.
+              </p>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setActionDone(null)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition cursor-pointer"
+                >
+                  <span>Batalkan / Coba Ulang Persetujuan</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : isSpecialProject ? (
+          <div className="p-4 sm:p-5 rounded-2xl bg-purple-50 border-2 border-purple-300 shadow-sm flex items-start gap-3.5">
+            <div className="w-9 h-9 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-purple-950">
+                Permintaan Persetujuan & Penugasan (Assign) Atasan Special Project
+              </h2>
+              <p className="text-xs text-purple-900 mt-0.5 leading-relaxed">
+                PIC Workshop telah menyelesaikan evaluasi teknis, estimasi waktu, kebutuhan men-power, biaya, dan kebutuhan material/sparepart.
+                Silakan tinjau ringkasan evaluasi bengkel dan lembar formulir di bawah ini, kemudian klik tombol <strong>&quot;Setujui &amp; Assign Pengerjaan Workshop&quot;</strong>.
               </p>
             </div>
           </div>
@@ -282,7 +502,7 @@ function ApprovalContent() {
             </div>
             <div>
               <h2 className="text-sm font-bold text-amber-950">
-                Permintaan Persetujuan & Tanda Tangan (Assign) Formulir
+                Permintaan Persetujuan & Tanda Tangan (Assign) Formulir Seksi
               </h2>
               <p className="text-xs text-amber-900 mt-0.5 leading-relaxed">
                 PIC Seksi pemohon (<strong className="text-slate-900">{requestData?.picPemohon}</strong>) meminta persetujuan Anda sebagai Atasan Seksi.
@@ -292,48 +512,205 @@ function ApprovalContent() {
           </div>
         )}
 
+        {/* Info Banner Khusus Mode Simulasi Special Project */}
+        {isSpecialProject && !actionDone && (
+          <div className="p-3.5 bg-purple-50/80 border border-purple-200 rounded-2xl text-purple-950 text-xs flex items-start gap-2.5">
+            <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold block">Simulasi Approval &amp; Assign Atasan Special Project (8210 / 820):</span>
+              <p className="mt-0.5 text-purple-900 leading-relaxed">
+                Anda sedang mensimulasikan peran <strong>Manager 8210</strong> dan <strong>Dept Head 820</strong>.
+                Ketika tombol persetujuan diklik, keputusan, nama reviewer, dan instruksi pengerjaan akan disimpan secara nyata ke database PostgreSQL,
+                dan status request otomatis berlanjut ke <strong>&quot;Dikerjakan&quot; (STEP 6)</strong>.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Ringkasan Hasil Evaluasi Workshop (Ditampilkan khusus untuk Atasan Special Project) */}
+        {isSpecialProject && requestData && (
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Wrench className="w-4 h-4 text-purple-600" />
+                <h3 className="text-xs font-bold text-slate-900">
+                  Hasil Evaluasi Teknis & Estimasi PIC Workshop (Bengkel Prod.)
+                </h3>
+              </div>
+              <span className="text-xs font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                PIC Bengkel: {requestData.picBengkel || 'Workshop Team'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-200/80">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
+                  <Clock className="w-3.5 h-3.5 text-blue-600" />
+                  <span>1. Estimasi Waktu</span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900">
+                  {requestData.waktuEstimate || '-'}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-50/50 border border-amber-200/80">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                  <Users className="w-3.5 h-3.5 text-amber-600" />
+                  <span>2. Men Power</span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900">
+                  {requestData.orangJamEstimate || '-'}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-emerald-50/50 border border-emerald-200/80">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>3. Estimasi Biaya</span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900">
+                  {requestData.biayaEstimate || '-'}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-xs font-bold text-slate-700 block mb-1">
+                  Kebutuhan Suku Cadang (Sparepart):
+                </span>
+                <span className="text-xs text-slate-800 font-medium">
+                  {requestData.kebutuhanSparepart || '-'}
+                </span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-xs font-bold text-slate-700 block mb-1">
+                  Kebutuhan Bahan Fabrikasi / Material:
+                </span>
+                <span className="text-xs text-slate-800 font-medium">
+                  {requestData.kebutuhanMaterial || '-'}
+                </span>
+              </div>
+            </div>
+
+            {requestData.materials && requestData.materials.length > 0 && (
+              <div className="pt-1">
+                <span className="text-xs font-bold text-slate-700 block mb-1.5">
+                  Daftar Suku Cadang & Material Terdaftar ({requestData.materials.length}):
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {requestData.materials.map((m, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 rounded-md border border-slate-300 text-xs font-medium text-slate-800"
+                    >
+                      <Package className="w-3 h-3 text-slate-500" />
+                      <span>{m.namaKomponen}</span>
+                      <strong className="text-purple-700 font-bold ml-1">
+                        ({m.qty} {m.satuan || 'Pcs'})
+                      </strong>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Action Card For Atasan (Only if still pending) */}
         {!actionDone && (
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-300 shadow-md space-y-4">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-red-600" />
-              <h3 className="text-sm font-bold text-slate-900">Tindakan Atasan Seksi Pemohon</h3>
+              <ShieldCheck
+                className={`w-5 h-5 ${isSpecialProject ? 'text-purple-600' : 'text-red-600'}`}
+              />
+              <h3 className="text-sm font-bold text-slate-900">
+                {isSpecialProject
+                  ? 'Tindakan Atasan Special Project (8210 / 820)'
+                  : 'Tindakan Atasan Seksi Pemohon'}
+              </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Nama Lengkap / Paraf Atasan *
-                </label>
-                <input
-                  type="text"
-                  value={namaAtasan}
-                  onChange={(e) => setNamaAtasan(e.target.value)}
-                  className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none font-medium"
-                  placeholder="Nama atasan (akan dicantumkan di kotak Foreman)"
-                  required
-                />
+            {isSpecialProject ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Nama Reviewer / Manager 8210 *
+                    </label>
+                    <input
+                      type="text"
+                      value={namaAtasan}
+                      onChange={(e) => setNamaAtasan(e.target.value)}
+                      className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-purple-600 outline-none font-medium"
+                      placeholder="Mis: Manager Special Project (8210)"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Nama Dept Head 820 *
+                    </label>
+                    <input
+                      type="text"
+                      value={namaDeptHead}
+                      onChange={(e) => setNamaDeptHead(e.target.value)}
+                      className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-purple-600 outline-none font-medium"
+                      placeholder="Mis: Dept Head Special Project (820)"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Instruksi Khusus / Catatan Pengerjaan Bengkel (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={catatan}
+                    onChange={(e) => setCatatan(e.target.value)}
+                    className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-purple-600 outline-none"
+                    placeholder="Misal: Prioritas pengerjaan shift 1, perhatikan presisi bubut roda..."
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Catatan Tambahan (Opsional)
-                </label>
-                <input
-                  type="text"
-                  value={catatan}
-                  onChange={(e) => setCatatan(e.target.value)}
-                  className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
-                  placeholder="Catatan persetujuan untuk PIC Workshop"
-                />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Nama Lengkap / Paraf Atasan *
+                  </label>
+                  <input
+                    type="text"
+                    value={namaAtasan}
+                    onChange={(e) => setNamaAtasan(e.target.value)}
+                    className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none font-medium"
+                    placeholder="Nama atasan (akan dicantumkan di kotak Foreman)"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Catatan Tambahan (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={catatan}
+                    onChange={(e) => setCatatan(e.target.value)}
+                    className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
+                    placeholder="Catatan persetujuan untuk PIC Workshop"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="flex flex-col sm:flex-row justify-end items-center gap-2.5 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setShowRejectModal(true)}
                 disabled={submitting}
-                className="w-full sm:w-auto h-9 px-4 bg-white hover:bg-rose-50 text-rose-700 font-semibold text-xs rounded-lg border border-rose-300 transition cursor-pointer"
+                className="w-full sm:w-auto h-10 px-4 bg-white hover:bg-rose-50 text-rose-700 font-semibold text-xs rounded-lg border border-rose-300 transition cursor-pointer"
               >
                 Tolak Permohonan
               </button>
@@ -341,10 +718,20 @@ function ApprovalContent() {
                 type="button"
                 onClick={handleApprove}
                 disabled={submitting}
-                className="w-full sm:w-auto h-9 px-5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-lg transition cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-2 shadow-sm"
+                className={`w-full sm:w-auto h-10 px-5 text-white font-bold text-xs rounded-lg transition cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-2 shadow-sm ${
+                  isSpecialProject
+                    ? 'bg-purple-600 hover:bg-purple-700'
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>{submitting ? 'Memproses Persetujuan...' : 'Setujui & Tanda Tangani (Assign Form)'}</span>
+                <span>
+                  {submitting
+                    ? 'Memproses Persetujuan...'
+                    : isSpecialProject
+                    ? 'Setujui & Assign Pengerjaan Workshop (8210 / 820)'
+                    : 'Setujui & Tanda Tangani (Assign Form)'}
+                </span>
               </button>
             </div>
           </div>
@@ -405,12 +792,18 @@ function ApprovalContent() {
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
                   <div className="py-0.5">DRAFTER</div>
                   <div className="py-0.5">FOREMAN</div>
-                  <div className="py-0.5">{requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)}</div>
+                  <div className="py-0.5">
+                    {requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)}
+                  </div>
                 </div>
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-end pb-1">
-                  <div className="truncate px-1 font-medium">{requestData.drafter || requestData.picPemohon || '-'}</div>
+                  <div className="truncate px-1 font-medium">
+                    {requestData.drafter || requestData.picPemohon || '-'}
+                  </div>
                   <div className="truncate px-1 font-bold text-emerald-800 bg-emerald-50/50 py-0.5">
-                    {actionDone === 'APPROVED' ? (namaAtasan || requestData.foreman || 'Approved') : requestData.foreman || '(Pending)'}
+                    {!isSpecialProject && actionDone === 'APPROVED'
+                      ? namaAtasan || requestData.foreman || 'Approved'
+                      : requestData.foreman || '(Pending)'}
                   </div>
                   <div className="truncate px-1 font-medium">{requestData.seksiPemohon}</div>
                 </div>
@@ -428,8 +821,16 @@ function ApprovalContent() {
                 </div>
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-end pb-1">
                   <div className="truncate px-1 font-medium">{requestData.picBengkel || '-'}</div>
-                  <div className="truncate px-1 font-medium">{requestData.keputusan8210 || '-'}</div>
-                  <div className="truncate px-1 font-medium">{requestData.keputusan820 || '-'}</div>
+                  <div className="truncate px-1 font-bold text-purple-900 bg-purple-50/50 py-0.5">
+                    {isSpecialProject && actionDone === 'APPROVED'
+                      ? namaAtasan || requestData.keputusan8210 || 'Approved'
+                      : requestData.keputusan8210 || (isSpecialProject ? '(Pending)' : '-')}
+                  </div>
+                  <div className="truncate px-1 font-bold text-purple-900 bg-purple-50/50 py-0.5">
+                    {isSpecialProject && actionDone === 'APPROVED'
+                      ? namaDeptHead || requestData.keputusan820 || 'Approved'
+                      : requestData.keputusan820 || (isSpecialProject ? '(Pending)' : '-')}
+                  </div>
                 </div>
               </div>
             </div>
@@ -452,7 +853,9 @@ function ApprovalContent() {
                 <div>
                   <span className="font-bold">TUJUAN : </span>
                   <span className="font-semibold underline">{requestData.tujuan || 'Safety'}</span>
-                  <span className="ml-2 font-normal text-slate-700">({requestData.alasan || requestData.spesifikasi || '-'})</span>
+                  <span className="ml-2 font-normal text-slate-700">
+                    ({requestData.alasan || requestData.spesifikasi || '-'})
+                  </span>
                 </div>
                 <div className="flex gap-1.5 shrink-0">
                   <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs">
@@ -475,9 +878,15 @@ function ApprovalContent() {
                 <div className="border border-slate-200 rounded bg-slate-50 min-h-[140px] flex items-center justify-center overflow-hidden">
                   {requestData.fotoSebelum ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={requestData.fotoSebelum} alt="Keadaan Sekarang" className="max-h-[180px] w-full object-contain p-1" />
+                    <img
+                      src={requestData.fotoSebelum}
+                      alt="Keadaan Sekarang"
+                      className="max-h-[180px] w-full object-contain p-1"
+                    />
                   ) : (
-                    <span className="text-xs text-slate-500 italic">Tidak ada foto kondisi sekarang</span>
+                    <span className="text-xs text-slate-500 italic">
+                      Tidak ada foto kondisi sekarang
+                    </span>
                   )}
                 </div>
               </div>
@@ -490,9 +899,15 @@ function ApprovalContent() {
                 <div className="border border-slate-200 rounded bg-slate-50 min-h-[140px] flex items-center justify-center overflow-hidden">
                   {requestData.fotoSesudah ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={requestData.fotoSesudah} alt="Rencana Tindakan" className="max-h-[180px] w-full object-contain p-1" />
+                    <img
+                      src={requestData.fotoSesudah}
+                      alt="Rencana Tindakan"
+                      className="max-h-[180px] w-full object-contain p-1"
+                    />
                   ) : (
-                    <span className="text-xs text-slate-500 italic">Tidak ada foto rencana tindakan</span>
+                    <span className="text-xs text-slate-500 italic">
+                      Tidak ada foto rencana tindakan
+                    </span>
                   )}
                 </div>
               </div>
@@ -512,7 +927,8 @@ function ApprovalContent() {
 
             {/* Footer ASBES */}
             <div className="text-center font-bold italic text-[9.5px] p-1.5 text-slate-700">
-              Perhatian : Barang/Material yang dipergunakan di PT. Bridgestone Tire Indonesia tidak boleh mengandung ASBES
+              Perhatian : Barang/Material yang dipergunakan di PT. Bridgestone Tire Indonesia tidak
+              boleh mengandung ASBES
             </div>
           </div>
         )}
@@ -522,16 +938,21 @@ function ApprovalContent() {
       {showRejectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-4 animate-scale-up">
-            <h3 className="text-sm font-bold text-slate-900">Alasan Penolakan Permohonan</h3>
+            <h3 className="text-sm font-bold text-slate-900">
+              {isSpecialProject
+                ? 'Alasan Penolakan Permohonan (Atasan Special Project)'
+                : 'Alasan Penolakan Permohonan (Atasan Seksi)'}
+            </h3>
             <p className="text-xs text-slate-500">
-              Mohon berikan alasan penolakan agar PIC Seksi pemohon dapat merevisi atau memahami kendala yang ada.
+              Mohon berikan alasan penolakan agar PIC Seksi pemohon atau tim workshop dapat memahami
+              kendala yang ada.
             </p>
             <textarea
               value={alasanTolak}
               onChange={(e) => setAlasanTolak(e.target.value)}
               rows={3}
               className="w-full p-2.5 border border-slate-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-rose-500 text-slate-900"
-              placeholder="Misal: Prioritas anggaran dialihkan, atau desain belum sesuai standar teknis..."
+              placeholder="Misal: Prioritas anggaran dialihkan, beban mesin bengkel penuh, atau spesifikasi belum sesuai..."
             />
             <div className="flex justify-end gap-2 pt-2">
               <button
@@ -560,11 +981,13 @@ function ApprovalContent() {
 
 export default function RequestApprovalPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
       <ApprovalContent />
     </Suspense>
   );

@@ -91,7 +91,16 @@ export function useSectionRequests() {
   const [printModalRequest, setPrintModalRequest] = useState<SectionRequestFull | null>(null);
   const [evalModalRequest, setEvalModalRequest] = useState<SectionRequestFull | null>(null);
   const [shareApprovalRequest, setShareApprovalRequest] = useState<SectionRequestFull | null>(null);
+  const [shareApprovalRole, setShareApprovalRole] = useState<'seksi' | 'special_project'>('seksi');
   const [requestToDelete, setRequestToDelete] = useState<SectionRequestFull | null>(null);
+
+  const openShareApproval = useCallback(
+    (req: SectionRequestFull, role: 'seksi' | 'special_project' = 'seksi') => {
+      setShareApprovalRequest(req);
+      setShareApprovalRole(role);
+    },
+    []
+  );
 
   // Feedback Modal
   const [feedback, setFeedback] = useState<{
@@ -387,6 +396,9 @@ export function useSectionRequests() {
     openEvalModal,
     shareApprovalRequest,
     setShareApprovalRequest,
+    shareApprovalRole,
+    setShareApprovalRole,
+    openShareApproval,
     requestToDelete,
     setRequestToDelete,
     feedback,

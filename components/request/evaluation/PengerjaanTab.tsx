@@ -5,6 +5,7 @@ import {
   PauseCircle,
   PlayCircle,
   CheckCircle2,
+  ExternalLink,
 } from 'lucide-react';
 import { EvaluationFormData } from './types';
 import PendingConfirmationModal from './PendingConfirmationModal';
@@ -15,6 +16,7 @@ interface PengerjaanTabProps {
   isPendingMaterial: boolean;
   showPendingDialog: boolean;
   alasanPendingInput: string;
+  approvalToken?: string;
   setFormData: React.Dispatch<React.SetStateAction<EvaluationFormData>>;
   setShowPendingDialog: (val: boolean) => void;
   setAlasanPendingInput: (val: string) => void;
@@ -30,6 +32,7 @@ export default function PengerjaanTab({
   isPendingMaterial,
   showPendingDialog,
   alasanPendingInput,
+  approvalToken,
   setFormData,
   setShowPendingDialog,
   setAlasanPendingInput,
@@ -53,7 +56,9 @@ export default function PengerjaanTab({
         </div>
 
         {/* 1. Kondisi jika belum disetujui Special Project */}
-        {formData.status === 'Pending: Menunggu Assign S.Project' && (
+        {(formData.status === 'Pending: Menunggu Assign S.Project' ||
+          formData.status === 'Menunggu Assign S.Project' ||
+          formData.flowStep === 'STEP_5_MENUNGGU_ATASAN_SPROJECT') && (
           <div className="p-3.5 rounded-lg bg-purple-50 border border-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <p className="font-bold text-xs text-purple-950">
@@ -63,15 +68,28 @@ export default function PengerjaanTab({
                 Begitu disetujui, request akan <strong>otomatis langsung berstatus &quot;Dikerjakan&quot;</strong>.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={onAssignAtasanSpecialProject}
-              disabled={loading}
-              className="h-10 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-lg transition cursor-pointer shrink-0 flex items-center gap-1.5 disabled:opacity-50"
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>Setujui Proyek</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              {approvalToken && (
+                <a
+                  href={`/request/approval?token=${approvalToken}&role=special_project`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="h-10 px-3.5 bg-white hover:bg-purple-100 text-purple-900 border border-purple-300 font-bold text-xs rounded-lg transition inline-flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Buka Lembar Approval</span>
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={onAssignAtasanSpecialProject}
+                disabled={loading}
+                className="h-10 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-lg transition cursor-pointer shrink-0 flex items-center gap-1.5 disabled:opacity-50"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Setujui Proyek</span>
+              </button>
+            </div>
           </div>
         )}
 

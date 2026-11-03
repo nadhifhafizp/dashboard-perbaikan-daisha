@@ -138,6 +138,11 @@ export function useEvaluationForm(
             emailData: data.atasanSProjectEmail,
           });
           onSuccess();
+        } else if (customUpdates?.assignAtasanSpecialProject) {
+          setNotifSuccessData({
+            message: `Permohonan ${requestData.nomorRequest} berhasil di-ACC & di-assign oleh Atasan Special Project! Status kini "Dikerjakan" (Tahap 6).`,
+          });
+          onSuccess();
         } else {
           onSuccess();
           if (customAction === 'FINISH_REQUEST') {
@@ -174,11 +179,20 @@ export function useEvaluationForm(
     });
   };
 
-  const handleAssignAtasanSpecialProject = () => {
-    void handleSaveAction('EVALUASI_WORKSHOP', {
+  const handleAssignAtasanSpecialProject = (
+    sp8210?: string,
+    sp820?: string,
+    catatan?: string
+  ) => {
+    const k8210 = sp8210 || formData.keputusan8210 || 'Manager Special Project (8210)';
+    const k820 = sp820 || formData.keputusan820 || 'Dept Head Special Project (820)';
+    const cat = catatan !== undefined ? catatan : formData.catatanAdmin;
+    void handleSaveAction('ASSIGN_ATASAN_SPROJECT', {
       assignAtasanSpecialProject: true,
-      keputusan8210: formData.keputusan8210 || 'Eng 8210',
-      keputusan820: formData.keputusan820 || 'Mgr 820',
+      keputusan: 'GO',
+      keputusan8210: k8210,
+      keputusan820: k820,
+      catatanAdmin: cat,
       status: 'Dikerjakan',
       flowStep: 'STEP_6_DALAM_PENGERJAAN',
     });
