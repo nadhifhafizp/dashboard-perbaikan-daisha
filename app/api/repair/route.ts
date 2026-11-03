@@ -320,13 +320,35 @@ export async function POST(request: Request) {
         const gantiItems = itemsJson.filter((it) => it.tindakan === 'Ganti');
         for (const it of gantiItems) {
           try {
-            await tx`
+            const targetKomponen = (it.komponen || '').trim();
+            const deductQty = Number(it.qty) || 1;
+            if (!targetKomponen) continue;
+
+            const [upd] = await tx<Array<{ namaKomponen: string; stokGudang: number; satuan: string }>>`
               UPDATE "Sparepart"
-              SET "stokGudang" = "stokGudang" - ${it.qty || 1}
-              WHERE "namaKomponen" = ${it.komponen}
+              SET "stokGudang" = "stokGudang" - ${deductQty}
+              WHERE "namaKomponen" = ${targetKomponen}
+                 OR UPPER("namaKomponen") = UPPER(${targetKomponen})
+              RETURNING "namaKomponen", "stokGudang", "satuan"
             `;
+
+            if (upd) {
+              await tx`
+                INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
+                VALUES (
+                  ${upd.namaKomponen},
+                  'OUT',
+                  ${deductQty},
+                  ${idTiket},
+                  ${`Penggantian sparepart perbaikan Daisha ${noDaisha} (${namaDaisha}) - ${it.gejala || 'Ganti Baru'}`},
+                  NOW()
+                )
+              `;
+            } else {
+              console.warn(`[Sparepart] Komponen '${targetKomponen}' tidak ditemukan di katalog gudang, skip pengurangan stok.`);
+            }
           } catch (e) {
-            console.warn(`[Sparepart] Komponen '${it.komponen}' tidak ditemukan, skip pengurangan stok:`, e);
+            console.warn(`[Sparepart] Gagal update stok untuk '${it.komponen}':`, e);
           }
         }
       });
@@ -414,7 +436,7 @@ export async function POST(request: Request) {
             const completionDate = parsedWaktuSelesai || new Date();
             const ticketWaktuMasuk = tRow[0].waktuMasuk ? new Date(tRow[0].waktuMasuk) : completionDate;
             const detailKerusakan = body.detail ? sanitizeText(body.detail, 1000) : 'Perbaikan kerusakan di bengkel';
-            
+
             const cleanNoD = noD.replace(/\s+/g, '').toUpperCase();
             const daishaMatch = await tx`
               SELECT id FROM "Daisha" 

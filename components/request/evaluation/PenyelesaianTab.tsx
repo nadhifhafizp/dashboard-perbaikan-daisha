@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Send } from 'lucide-react';
+import { CheckCircle2, Send, Clock, Users, DollarSign, CalendarCheck } from 'lucide-react';
 import { EvaluationFormData } from './types';
 
 interface PenyelesaianTabProps {
@@ -17,6 +17,82 @@ export default function PenyelesaianTab({
 }: PenyelesaianTabProps) {
   return (
     <div className="space-y-4 animate-fade-in">
+      {/* 1. Input Realisasi Pengerjaan Fisik (Actual di Akhir Pengerjaan) */}
+      <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 shadow-2xs">
+        <div className="flex items-center gap-2">
+          <CalendarCheck className="w-4 h-4 text-emerald-600" />
+          <span className="font-bold text-xs text-slate-900">
+            Realisasi Pengerjaan Akhir (Target VS Actual)
+          </span>
+          <span className="text-[11px] text-slate-500 font-normal">
+            • Diisi setelah pekerjaan selesai
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-3 rounded-lg border border-blue-200 bg-blue-50/40 space-y-1.5">
+            <div className="flex items-center justify-between text-xs font-bold text-blue-900">
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-blue-600" />
+                <span>Waktu Pengerjaan</span>
+              </span>
+              <span className="text-[10px] font-semibold text-blue-700 bg-blue-100/70 px-1.5 py-0.2 rounded">
+                Est: {formData.waktuEstimate || '-'}
+              </span>
+            </div>
+            <label className="text-[11px] text-slate-600 block">Realisasi Waktu (Actual)</label>
+            <input
+              type="text"
+              placeholder="Mis: 2.5 Hari Kerja"
+              value={formData.waktuActual}
+              onChange={(e) => setFormData((p) => ({ ...p, waktuActual: e.target.value }))}
+              className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:border-red-600 outline-none"
+            />
+          </div>
+
+          <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/40 space-y-1.5">
+            <div className="flex items-center justify-between text-xs font-bold text-amber-900">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-amber-600" />
+                <span>Men Power (Orang/Jam)</span>
+              </span>
+              <span className="text-[10px] font-semibold text-amber-700 bg-amber-100/70 px-1.5 py-0.2 rounded">
+                Est: {formData.orangJamEstimate || '-'}
+              </span>
+            </div>
+            <label className="text-[11px] text-slate-600 block">Realisasi Man-hours (Actual)</label>
+            <input
+              type="text"
+              placeholder="Mis: 2 Orang / 3.5 Jam"
+              value={formData.orangJamActual}
+              onChange={(e) => setFormData((p) => ({ ...p, orangJamActual: e.target.value }))}
+              className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:border-red-600 outline-none"
+            />
+          </div>
+
+          <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50/40 space-y-1.5">
+            <div className="flex items-center justify-between text-xs font-bold text-emerald-900">
+              <span className="flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Biaya Akhir</span>
+              </span>
+              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.2 rounded truncate max-w-[120px]">
+                Est: {formData.biayaEstimate ? `Rp ${Number(formData.biayaEstimate).toLocaleString('id-ID')}` : '-'}
+              </span>
+            </div>
+            <label className="text-[11px] text-slate-600 block">Realisasi Biaya Aktual (Rp)</label>
+            <input
+              type="text"
+              placeholder="Mis: Rp 210.000"
+              value={formData.biayaActual}
+              onChange={(e) => setFormData((p) => ({ ...p, biayaActual: e.target.value }))}
+              className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:border-red-600 outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Pengecekan Akhir Pemohon & Serah Terima */}
       <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
         <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -47,7 +123,7 @@ export default function PenyelesaianTab({
                 placeholder="Nama staf seksi yang mengecek barang"
                 value={formData.hasilCheckPemohon}
                 onChange={(e) => setFormData((p) => ({ ...p, hasilCheckPemohon: e.target.value }))}
-                className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs"
+                className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs focus:border-red-600 outline-none"
               />
             </div>
             <div>
@@ -59,7 +135,7 @@ export default function PenyelesaianTab({
                 placeholder="Realisasi tanggal (mis: 02 Sep - 05 Sep 2026)"
                 value={formData.scheduleActual}
                 onChange={(e) => setFormData((p) => ({ ...p, scheduleActual: e.target.value }))}
-                className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs"
+                className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs focus:border-red-600 outline-none"
               />
             </div>
           </div>

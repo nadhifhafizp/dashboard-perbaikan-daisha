@@ -9,10 +9,10 @@ import {
   validatePositiveInt,
 } from '@/lib/security';
 
-// GET: Ambil daftar sparepart beserta log mutasi terakhir (Khusus ADMIN)
+// GET: Ambil daftar sparepart beserta stok gudang dan mutasi
 export async function GET(request: Request) {
-  // Verifikasi otorisasi admin
-  const auth = await requireAuth(request, ['ADMIN']);
+  // Verifikasi otorisasi (ADMIN, OPERATOR, USER_SEKSI berhak membaca stok sparepart)
+  const auth = await requireAuth(request, ['ADMIN', 'OPERATOR', 'USER_SEKSI']);
   if (!auth.authorized) return auth.errorResponse!;
 
   // Pembatasan laju permintaan (rate limiting 60 req/menit)

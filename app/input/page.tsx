@@ -88,6 +88,8 @@ export default function InputKerusakanPage() {
         <InputDamageSection
           formData={formData}
           setFormData={setFormData}
+          isAdmin={isAdmin}
+          isOperator={isOperator}
           isDiagnosaBengkel={isDiagnosaBengkel}
           setIsDiagnosaBengkel={setIsDiagnosaBengkel}
           catatanGejala={catatanGejala}

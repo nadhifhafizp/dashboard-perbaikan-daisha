@@ -9,6 +9,7 @@ export interface SparepartOption {
   kategori: string;
   stokGudang: number;
   satuan: string;
+  minStok?: number;
   lokasi?: string;
 }
 

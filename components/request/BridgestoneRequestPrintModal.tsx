@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { X, Printer, Check, ArrowRight, ShieldCheck, FileText, Download } from 'lucide-react';
+import { getSeksiCode } from '@/lib/nomorSurat';
 
 export interface SectionRequestFull {
   id: number;
@@ -274,18 +275,11 @@ export default function BridgestoneRequestPrintModal({
       <tr>
         <!-- Tanggal & Req No / Nomor Surat -->
         <td style="width: 32%; vertical-align: middle;">
-          <div style="font-size: 10.5px; margin-bottom: 3px;">
+          <div style="font-size: 11px; margin-bottom: 3px;">
             <strong>TANGGAL :</strong> ${formatDateIndo(requestData.waktuDibuat)}
           </div>
-          ${
-            requestData.nomorSurat
-              ? `<div style="font-size: 10.5px; margin-bottom: 3px;">
-                  <strong>NO. SURAT :</strong> <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #b91c1c; font-feature-settings: 'tnum';">${requestData.nomorSurat}</span>
-                </div>`
-              : ''
-          }
-          <div style="font-size: 10px; color: ${requestData.nomorSurat ? '#64748b' : '#000'};">
-            <strong>REQ. NO. :</strong> <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: bold; font-feature-settings: 'tnum';">${requestData.nomorRequest}</span>
+          <div style="font-size: 11px;">
+            <strong>REQ. NO. :</strong> <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #000; font-feature-settings: 'tnum';">${(requestData.nomorRequest?.startsWith('REQ-') && requestData.nomorSurat) ? requestData.nomorSurat : requestData.nomorRequest}</span>
           </div>
         </td>
 
@@ -298,7 +292,7 @@ export default function BridgestoneRequestPrintModal({
             <tr style="font-size: 9px; font-weight: bold; background: #fafafa;">
               <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">DRAFTER</td>
               <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">FOREMAN</td>
-              <td style="width: 34%; padding: 2px;">${requestData.kodeSeksi || 'SEKSI'}</td>
+              <td style="width: 34%; padding: 2px;">${requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)}</td>
             </tr>
             <tr class="signature-space">
               <td style="border-right: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">${requestData.drafter || requestData.picPemohon || ''}</td>
@@ -646,7 +640,11 @@ export default function BridgestoneRequestPrintModal({
                 </div>
                 <div>
                   <span className="font-bold">REQ. NO. : </span>
-                  <span className="font-mono font-bold">{requestData.nomorRequest}</span>
+                  <span className="font-mono font-bold">
+                    {requestData.nomorRequest?.startsWith('REQ-') && requestData.nomorSurat
+                      ? requestData.nomorSurat
+                      : requestData.nomorRequest}
+                  </span>
                 </div>
               </div>
 
@@ -658,7 +656,7 @@ export default function BridgestoneRequestPrintModal({
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
                   <div className="py-0.5">DRAFTER</div>
                   <div className="py-0.5">FOREMAN</div>
-                  <div className="py-0.5">{requestData.kodeSeksi || '3122'}</div>
+                  <div className="py-0.5">{requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)}</div>
                 </div>
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-11 items-end pb-1">
                   <div className="truncate px-1 font-medium">{requestData.drafter || requestData.picPemohon || '-'}</div>

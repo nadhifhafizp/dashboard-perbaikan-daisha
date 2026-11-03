@@ -136,27 +136,9 @@ export function normalizeMaterials(raw: unknown): Array<{
     });
 }
 
-// Buat nomor request unik: REQ-YYYYMMDD-XXX
-async function generateRequestNumber(): Promise<string> {
-  const now = new Date();
-  const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const prefix = `REQ-${dateStr}-`;
-
-  const [lastRequest] = await sql<Array<{ nomorRequest: string }>>`
-    SELECT "nomorRequest"
-    FROM "SectionRequest"
-    WHERE "nomorRequest" LIKE ${prefix + '%'}
-    ORDER BY "nomorRequest" DESC
-    LIMIT 1
-  `;
-
-  let seq = 1;
-  if (lastRequest) {
-    const lastSeq = parseInt(lastRequest.nomorRequest.replace(prefix, ''), 10);
-    if (!isNaN(lastSeq)) seq = lastSeq + 1;
-  }
-
-  return `${prefix}${String(seq).padStart(3, '0')}`;
+// Buat nomor request resmi Bridgestone (Format: 001/SEKSI/ROMAWI/TAHUN)
+async function generateRequestNumber(seksiPemohon: string, date: Date = new Date()): Promise<string> {
+  return generateNextNomorSurat(seksiPemohon, date);
 }
 
 // GET: Ambil daftar request (Admin: semua, USER_SEKSI: hanya milik seksinya)
@@ -336,16 +318,16 @@ export async function POST(request: Request) {
         );
       }
 
-      // Gunakan nomor request custom jika ada atau generate otomatis
+      // Gunakan nomor request custom jika ada atau generate otomatis (Format: 001/SEKSI/ROMAWI/TAHUN)
       let nomorRequest = sanitizeText(body.nomorRequest, 50);
-      if (!nomorRequest) {
-        nomorRequest = await generateRequestNumber();
+      if (!nomorRequest || nomorRequest.startsWith('REQ-')) {
+        nomorRequest = await generateRequestNumber(seksiPemohon);
       } else {
         const [existing] = await sql<Array<{ id: number }>>`
           SELECT id FROM "SectionRequest" WHERE "nomorRequest" = ${nomorRequest} LIMIT 1
         `;
         if (existing) {
-          nomorRequest = await generateRequestNumber();
+          nomorRequest = await generateRequestNumber(seksiPemohon);
         }
       }
 
@@ -394,7 +376,7 @@ export async function POST(request: Request) {
           'PENDING',
           'STEP_2_WAITING_ATASAN_SEKSI',
           'Menunggu Assign Atasan Seksi',
-          ${body.nomorSurat ? sanitizeText(body.nomorSurat, 100) : null},
+          ${body.nomorSurat ? sanitizeText(body.nomorSurat, 100) : nomorRequest},
           ${auth.user!.username},
           NOW(),
           NOW()
@@ -577,20 +559,20 @@ export async function POST(request: Request) {
         nextFlowStep = sanitizeText(body.flowStep, 50);
       }
 
-      // Generate nomor surat resmi jika disetujui (Opsi A: 1 urutan global per tahun) dan belum punya nomor surat
-      let finalNomorSurat = current.nomorSurat || null;
+      // Update nomor request / surat resmi jika disetujui atau diubah manual (Format: 001/SEKSI/ROMAWI/TAHUN)
+      let finalNomorSurat = current.nomorSurat || current.nomorRequest || null;
       if (body.nomorSurat && typeof body.nomorSurat === 'string' && body.nomorSurat.trim().length > 0) {
         finalNomorSurat = sanitizeText(body.nomorSurat, 100);
       } else if (
-        !finalNomorSurat &&
-        (keputusan === 'GO' ||
-          body.assignAtasanSpecialProject ||
-          action === 'ASSIGN_ATASAN_SPROJECT' ||
-          nextStatus === 'Disetujui' ||
-          nextStatus === 'Dikerjakan')
+        !finalNomorSurat ||
+        finalNomorSurat.startsWith('REQ-')
       ) {
         finalNomorSurat = await generateNextNomorSurat(current.seksiPemohon, new Date());
       }
+
+      const nextNomorRequest = (current.nomorRequest && !current.nomorRequest.startsWith('REQ-'))
+        ? current.nomorRequest
+        : (finalNomorSurat || current.nomorRequest);
 
       const [updated] = await sql<SectionRequestRow[]>`
         UPDATE "SectionRequest"
@@ -598,6 +580,7 @@ export async function POST(request: Request) {
           status = ${nextStatus},
           "flowStep" = ${nextFlowStep},
           "nomorSurat" = ${finalNomorSurat},
+          "nomorRequest" = ${nextNomorRequest},
           "alasanTolak" = ${alasanTolak !== undefined ? (alasanTolak || null) : (current.alasanTolak ?? null)},
           "picBengkel" = ${picBengkel !== undefined ? (picBengkel || null) : (current.picBengkel ?? null)},
           "estimasi" = ${estimasi !== undefined ? (estimasi || null) : (current.estimasi ?? null)},

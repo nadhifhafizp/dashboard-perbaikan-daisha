@@ -53,18 +53,18 @@ export default function EvaluasiTab({
         </div>
       </div>
 
-      {/* Pengaturan Nomor Surat Resmi Workshop (Format: NO/Seksi/Romawi/Tahun) */}
+      {/* Pengaturan Nomor Request / Surat Resmi (Format: 001/Seksi/Romawi/Tahun) */}
       <div className="p-3.5 bg-white rounded-xl border border-red-200/90 shadow-2xs space-y-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-red-600" />
             <span className="text-xs font-bold text-slate-900">
-              Nomor Surat / Tiket Resmi (Format: NO/Seksi/Romawi/Tahun)
+              Nomor Request Resmi (REQ. NO. : 001/Seksi/Romawi/Tahun)
             </span>
           </div>
-          {formData.nomorSurat ? (
+          {formData.nomorSurat || (requestData.nomorRequest && !requestData.nomorRequest.startsWith('REQ-')) ? (
             <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-              ✓ Nomor Surat Aktif
+              ✓ REQ. NO. Aktif
             </span>
           ) : (
             <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-300">
@@ -75,18 +75,18 @@ export default function EvaluasiTab({
         <div className="flex items-center gap-2">
           <input
             type="text"
-            value={formData.nomorSurat}
+            value={formData.nomorSurat || (requestData.nomorRequest && !requestData.nomorRequest.startsWith('REQ-') ? requestData.nomorRequest : '')}
             onChange={(e) => setFormData((p) => ({ ...p, nomorSurat: e.target.value }))}
-            placeholder={`Contoh: 001/${getSeksiCode(requestData.seksiPemohon)}/X/2026 (Diterbitkan otomatis saat approve)`}
+            placeholder={`Contoh: 001/${getSeksiCode(requestData.seksiPemohon)}/XI/2026`}
             className="flex-1 h-10 px-3 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 placeholder:font-normal placeholder-slate-400 focus:bg-white focus:border-red-600 outline-none uppercase tracking-wide"
           />
         </div>
         <p className="text-xs text-slate-500">
-          Penomoran terpusat 1 urutan global dari Workshop/Special Project. Diterbitkan otomatis begitu Anda menyetujui request ini, atau dapat disesuaikan manual.
+          Penomoran REQ. NO. terpusat 1 urutan global dari Special Project / Workshop Bridgestone (Format: 001/Seksi/Romawi/Tahun).
         </p>
       </div>
 
-      {/* Form Input Evaluasi (Waktu, Man Power, Biaya) */}
+      {/* Form Input Evaluasi Awal (Estimasi Waktu, Man Power, Biaya) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-3.5 rounded-xl border border-blue-200 bg-blue-50/40 space-y-2">
           <div className="flex items-center gap-1.5 font-bold text-blue-900 text-xs">
@@ -94,23 +94,13 @@ export default function EvaluasiTab({
             <span>1. Estimasi Waktu</span>
           </div>
           <div>
-            <label className="text-xs text-slate-500 font-medium">Planning (Hari / Tanggal)</label>
+            <label className="text-xs text-slate-600 font-medium">Planning (Hari / Tanggal)</label>
             <input
               type="text"
-              placeholder="Mis: 3 Hari Kerja"
+              placeholder="Mis: 3 Hari Kerja / 10 Nov 2026"
               value={formData.waktuEstimate}
               onChange={(e) => setFormData((p) => ({ ...p, waktuEstimate: e.target.value }))}
-              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs mt-1"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500 font-medium">Realisasi (Actual)</label>
-            <input
-              type="text"
-              placeholder="Mis: 2.5 Hari Kerja"
-              value={formData.waktuActual}
-              onChange={(e) => setFormData((p) => ({ ...p, waktuActual: e.target.value }))}
-              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs mt-1"
+              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs mt-1 focus:border-red-600 outline-none"
             />
           </div>
         </div>
@@ -121,23 +111,13 @@ export default function EvaluasiTab({
             <span>2. Men Power (Orang/Jam)</span>
           </div>
           <div>
-            <label className="text-xs text-slate-500 font-medium">Estimasi Man-hours</label>
+            <label className="text-xs text-slate-600 font-medium">Estimasi Man-hours</label>
             <input
               type="text"
               placeholder="Mis: 2 Orang / 4 Jam"
               value={formData.orangJamEstimate}
               onChange={(e) => setFormData((p) => ({ ...p, orangJamEstimate: e.target.value }))}
-              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs mt-1"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500 font-medium">Realisasi Man-hours</label>
-            <input
-              type="text"
-              placeholder="Mis: 2 Orang / 3.5 Jam"
-              value={formData.orangJamActual}
-              onChange={(e) => setFormData((p) => ({ ...p, orangJamActual: e.target.value }))}
-              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs mt-1"
+              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs mt-1 focus:border-red-600 outline-none"
             />
           </div>
         </div>
@@ -145,26 +125,16 @@ export default function EvaluasiTab({
         <div className="p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/40 space-y-2">
           <div className="flex items-center gap-1.5 font-bold text-emerald-900 text-xs">
             <DollarSign className="w-4 h-4 text-emerald-600" />
-            <span>Estimasi Biaya (Rp)</span>
+            <span>3. Estimasi Biaya (Rp)</span>
           </div>
           <div>
-            <label className="text-xs text-slate-500 font-medium">Estimasi Biaya</label>
+            <label className="text-xs text-slate-600 font-medium">Estimasi Biaya Fabrikasi / Servis</label>
             <input
               type="text"
               placeholder="Mis: Rp 250.000"
               value={formData.biayaEstimate}
               onChange={(e) => setFormData((p) => ({ ...p, biayaEstimate: e.target.value }))}
-              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs mt-1"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500 font-medium">Realisasi Biaya</label>
-            <input
-              type="text"
-              placeholder="Mis: Rp 210.000"
-              value={formData.biayaActual}
-              onChange={(e) => setFormData((p) => ({ ...p, biayaActual: e.target.value }))}
-              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs mt-1"
+              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs mt-1 focus:border-red-600 outline-none"
             />
           </div>
         </div>

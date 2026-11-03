@@ -432,8 +432,8 @@ function KpiDashboardContent() {
             type="button"
             onClick={() => handleTabChange('jumlah_daisha')}
             className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'jumlah_daisha'
-                ? 'border-red-600 text-red-600 bg-red-50/50'
-                : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+              ? 'border-red-600 text-red-600 bg-red-50/50'
+              : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
               }`}
           >
             <Layers className="w-4.5 h-4.5" />
@@ -454,8 +454,8 @@ function KpiDashboardContent() {
             type="button"
             onClick={() => handleTabChange('perbaikan_daisha')}
             className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'perbaikan_daisha'
-                ? 'border-red-600 text-red-600 bg-red-50/50'
-                : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+              ? 'border-red-600 text-red-600 bg-red-50/50'
+              : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
               }`}
           >
             <Wrench className="w-4.5 h-4.5" />
@@ -470,8 +470,8 @@ function KpiDashboardContent() {
             type="button"
             onClick={() => handleTabChange('pm_daisha')}
             className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'pm_daisha'
-                ? 'border-red-600 text-red-600 bg-red-50/50'
-                : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+              ? 'border-red-600 text-red-600 bg-red-50/50'
+              : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
               }`}
           >
             <ShieldCheck className="w-4.5 h-4.5" />
@@ -489,8 +489,8 @@ function KpiDashboardContent() {
               type="button"
               onClick={() => handleTabChange('request')}
               className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'request'
-                  ? 'border-red-600 text-red-600 bg-red-50/50'
-                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                ? 'border-red-600 text-red-600 bg-red-50/50'
+                : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                 }`}
             >
               <SendHorizonal className="w-4.5 h-4.5" />
@@ -508,8 +508,8 @@ function KpiDashboardContent() {
                 type="button"
                 onClick={() => handleTabChange('data_mentah')}
                 className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'data_mentah'
-                    ? 'border-red-600 text-red-600 bg-red-50/50'
-                    : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'border-red-600 text-red-600 bg-red-50/50'
+                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                   }`}
               >
                 <FileSpreadsheet className="w-4.5 h-4.5" />
@@ -521,8 +521,8 @@ function KpiDashboardContent() {
                 type="button"
                 onClick={() => handleTabChange('request')}
                 className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'request'
-                    ? 'border-red-600 text-red-600 bg-red-50/50'
-                    : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'border-red-600 text-red-600 bg-red-50/50'
+                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                   }`}
               >
                 <SendHorizonal className="w-4.5 h-4.5" />
@@ -539,8 +539,8 @@ function KpiDashboardContent() {
                 type="button"
                 onClick={() => handleTabChange('spareparts')}
                 className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'spareparts'
-                    ? 'border-red-600 text-red-600 bg-red-50/50'
-                    : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'border-red-600 text-red-600 bg-red-50/50'
+                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                   }`}
               >
                 <Package className="w-4.5 h-4.5" />

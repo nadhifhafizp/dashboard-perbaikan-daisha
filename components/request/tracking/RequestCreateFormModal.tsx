@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { X, Send, Upload, Trash2, User, Mail, Camera } from 'lucide-react';
 import { compressImageFile } from '@/lib/imageCompressor';
 import { RequestFormData, DAFTAR_SEKSI_REQUEST, DAFTAR_TUJUAN } from './types';
+import { getSeksiCode } from '@/lib/nomorSurat';
 import { SessionPayload } from '@/lib/auth';
 import QrScannerModal from '@/components/input/QrScannerModal';
 
@@ -29,6 +30,16 @@ export default function RequestCreateFormModal({
   const fileInputSebelumRef = useRef<HTMLInputElement>(null);
   const fileInputSesudahRef = useRef<HTMLInputElement>(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (currentUser?.seksi) {
+      setFormData((p) => ({
+        ...p,
+        seksiPemohon: p.seksiPemohon || currentUser.seksi || '',
+        kodeSeksi: p.kodeSeksi || getSeksiCode(currentUser.seksi),
+      }));
+    }
+  }, [currentUser, setFormData]);
 
   const handlePhotoUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -93,16 +104,22 @@ export default function RequestCreateFormModal({
             ) : (
               <select
                 value={formData.seksiPemohon}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, seksiPemohon: e.target.value }))
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const autoCode = getSeksiCode(val);
+                  setFormData((p) => ({
+                    ...p,
+                    seksiPemohon: val,
+                    kodeSeksi: autoCode !== 'SEKSI' && autoCode !== 'GEN' ? autoCode : p.kodeSeksi,
+                  }));
+                }}
                 className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
                 required
               >
                 <option value="">Pilih Seksi...</option>
                 {DAFTAR_SEKSI_REQUEST.map((s) => (
                   <option key={s} value={s}>
-                    {s}
+                    {s} ({getSeksiCode(s)})
                   </option>
                 ))}
               </select>
@@ -111,16 +128,16 @@ export default function RequestCreateFormModal({
 
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
-              Kode Seksi / Dept
+              Kode Seksi / Singkatan
             </label>
             <input
               type="text"
               value={formData.kodeSeksi}
               onChange={(e) =>
-                setFormData((p) => ({ ...p, kodeSeksi: e.target.value }))
+                setFormData((p) => ({ ...p, kodeSeksi: e.target.value.toUpperCase() }))
               }
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
-              placeholder="Mis: 3122"
+              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs font-bold uppercase bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
+              placeholder="Mis: TECH, EXTD, B/B"
             />
           </div>
 

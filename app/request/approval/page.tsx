@@ -20,6 +20,7 @@ import {
   Mail,
 } from 'lucide-react';
 import { SectionRequestFull } from '@/components/request/BridgestoneRequestPrintModal';
+import { getSeksiCode } from '@/lib/nomorSurat';
 
 function ApprovalContent() {
   const searchParams = useSearchParams();
@@ -388,7 +389,11 @@ function ApprovalContent() {
                 </div>
                 <div>
                   <span className="font-bold">REQ. NO. : </span>
-                  <span className="font-mono font-bold">{requestData.nomorRequest}</span>
+                  <span className="font-mono font-bold">
+                    {requestData.nomorRequest?.startsWith('REQ-') && requestData.nomorSurat
+                      ? requestData.nomorSurat
+                      : requestData.nomorRequest}
+                  </span>
                 </div>
               </div>
 
@@ -400,7 +405,7 @@ function ApprovalContent() {
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
                   <div className="py-0.5">DRAFTER</div>
                   <div className="py-0.5">FOREMAN</div>
-                  <div className="py-0.5">{requestData.kodeSeksi || '3122'}</div>
+                  <div className="py-0.5">{requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)}</div>
                 </div>
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-end pb-1">
                   <div className="truncate px-1 font-medium">{requestData.drafter || requestData.picPemohon || '-'}</div>

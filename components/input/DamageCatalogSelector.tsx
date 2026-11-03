@@ -14,7 +14,9 @@ import {
   RotateCcw,
   CheckCircle2,
   Trash2,
+  Package,
 } from 'lucide-react';
+import { useSparepartsStock } from '@/hooks/useSparepartsStock';
 
 export type TindakanType = 'Repair' | 'Ganti';
 
@@ -59,6 +61,7 @@ export default function DamageCatalogSelector({
 }: DamageCatalogSelectorProps) {
   const [searchGejala, setSearchGejala] = useState('');
   const [inputManualText, setInputManualText] = useState('');
+  const { getStockInfo } = useSparepartsStock();
 
   const totalDipilih = selectedKerusakan.length + customKerusakanList.length;
 
@@ -148,10 +151,24 @@ export default function DamageCatalogSelector({
                   key={komponen}
                   className="p-3 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2"
                 >
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-slate-500" />
-                    <span>{komponen}</span>
-                  </span>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-slate-500" />
+                      <span>{komponen}</span>
+                    </span>
+                    {(() => {
+                      const spInfo = getStockInfo(komponen, 1);
+                      if (!spInfo.found) return null;
+                      return (
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-bold border tabular-nums ${spInfo.statusBadge.bgClass} ${spInfo.statusBadge.textClass} ${spInfo.statusBadge.borderClass}`}
+                          title={`Stok di gudang: ${spInfo.stokGudang} ${spInfo.satuan}`}
+                        >
+                          Stok: {spInfo.stokGudang} {spInfo.satuan}
+                        </span>
+                      );
+                    })()}
+                  </div>
                   <div className="flex flex-wrap gap-1.5">
                     {filteredGejala.map((gejala) => {
                       const key = `${komponen}:::${gejala}`;
@@ -266,83 +283,140 @@ export default function DamageCatalogSelector({
                   const [komponen, detail] = key.split(':::');
                   const currentTindakan = tindakanMap[key] || 'Repair';
                   const currentQty = qtyMap[key] || 1;
+                  const stockInfo = getStockInfo(komponen, currentQty);
 
                   return (
                     <div
                       key={key}
-                      className="p-2.5 bg-white rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs hover:border-slate-300 transition"
+                      className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs hover:border-slate-300 transition space-y-2"
                     >
-                      <div className="min-w-0 flex-1 leading-snug">
-                        <span className="text-xs font-semibold text-slate-900 block truncate">
-                          {komponen}
-                        </span>
-                        <span className="text-xs text-slate-600 font-medium block truncate">
-                          {detail}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                        {/* Qty Stepper */}
-                        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-0.5">
-                          <button
-                            type="button"
-                            onClick={() => onSetQty?.(key, Math.max(1, currentQty - 1))}
-                            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
-                            title="Kurang"
-                          >
-                            -
-                          </button>
-                          <span className="w-7 text-center font-bold text-xs text-slate-900 tabular-nums">
-                            {currentQty}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1 leading-snug">
+                          <span className="text-xs font-semibold text-slate-900 block truncate">
+                            {komponen}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => onSetQty?.(key, currentQty + 1)}
-                            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
-                            title="Tambah"
-                          >
-                            +
-                          </button>
+                          <span className="text-xs text-slate-600 font-medium block truncate">
+                            {detail}
+                          </span>
                         </div>
 
-                        {/* Tindakan Toggle Pills */}
-                        <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                          {/* Qty Stepper */}
+                          <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-0.5">
+                            <button
+                              type="button"
+                              onClick={() => onSetQty?.(key, Math.max(1, currentQty - 1))}
+                              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
+                              title="Kurang"
+                            >
+                              -
+                            </button>
+                            <span className="w-7 text-center font-bold text-xs text-slate-900 tabular-nums">
+                              {currentQty}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => onSetQty?.(key, currentQty + 1)}
+                              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
+                              title="Tambah"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          {/* Tindakan Toggle Pills */}
+                          <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            <button
+                              type="button"
+                              onClick={() => onSetTindakan(key, 'Repair')}
+                              className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
+                                currentTindakan === 'Repair'
+                                  ? 'bg-amber-500 text-white shadow-2xs'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              <Wrench className="w-3 h-3" />
+                              <span>Repair</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onSetTindakan(key, 'Ganti')}
+                              className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
+                                currentTindakan === 'Ganti'
+                                  ? 'bg-blue-600 text-white shadow-2xs'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                              <span>Ganti</span>
+                            </button>
+                          </div>
+
+                          {/* Hapus button */}
                           <button
                             type="button"
-                            onClick={() => onSetTindakan(key, 'Repair')}
-                            className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
-                              currentTindakan === 'Repair'
-                                ? 'bg-amber-500 text-white shadow-2xs'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
+                            onClick={() => onToggleKerusakan(komponen, detail)}
+                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer"
+                            title="Hapus kerusakan ini"
                           >
-                            <Wrench className="w-3 h-3" />
-                            <span>Repair</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onSetTindakan(key, 'Ganti')}
-                            className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
-                              currentTindakan === 'Ganti'
-                                ? 'bg-blue-600 text-white shadow-2xs'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                            <span>Ganti</span>
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-
-                        {/* Hapus button */}
-                        <button
-                          type="button"
-                          onClick={() => onToggleKerusakan(komponen, detail)}
-                          className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer"
-                          title="Hapus kerusakan ini"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
+
+                      {/* Tampilan Sisa Stok Gudang pada saat Tindakan Ganti */}
+                      {currentTindakan === 'Ganti' && (
+                        <div
+                          className={`p-2 rounded-lg border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 animate-fade-in ${
+                            stockInfo.isZero
+                              ? 'bg-rose-50/90 border-rose-200 text-rose-900'
+                              : !stockInfo.isCukup
+                              ? 'bg-amber-50/90 border-amber-300 text-amber-900'
+                              : 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Package className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                            <span className="font-bold text-slate-900">
+                              {stockInfo.found ? stockInfo.namaKomponen : komponen}:
+                            </span>
+                            <span>
+                              Sisa Stok: <strong className="font-mono">{stockInfo.stokGudang} {stockInfo.satuan}</strong>
+                            </span>
+                            {stockInfo.lokasi && stockInfo.lokasi !== '-' && (
+                              <span className="text-slate-500 font-normal">
+                                • Lokasi: {stockInfo.lokasi}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-wrap sm:self-auto self-end">
+                            <span className="font-medium text-slate-700">
+                              Sisa setelah ganti:
+                              <strong className={`ml-1 font-mono ${stockInfo.sisaSetelahPakai < 0 ? 'text-rose-700 font-bold' : 'text-slate-900'}`}>
+                                {stockInfo.sisaSetelahPakai} {stockInfo.satuan}
+                              </strong>
+                            </span>
+                            {stockInfo.isZero ? (
+                              <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-rose-600 text-white shrink-0">
+                                Stok Habis (0)
+                              </span>
+                            ) : !stockInfo.isCukup ? (
+                              <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-amber-600 text-white shrink-0">
+                                Stok Kurang ({currentQty - stockInfo.stokGudang} lagi)
+                              </span>
+                            ) : stockInfo.isLow ? (
+                              <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-amber-100 text-amber-800 border border-amber-300 shrink-0">
+                                Stok Menipis
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-emerald-600 text-white shrink-0">
+                                ✓ Stok Cukup
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -350,78 +424,135 @@ export default function DamageCatalogSelector({
                 {customKerusakanList.map((text) => {
                   const currentTindakan = customTindakanMap[text] || 'Repair';
                   const currentQty = customQtyMap[text] || 1;
+                  const customStockInfo = getStockInfo(text, currentQty);
 
                   return (
                     <div
                       key={text}
-                      className="p-2.5 bg-white rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs hover:border-slate-300 transition"
+                      className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs hover:border-slate-300 transition space-y-2"
                     >
-                      <div className="min-w-0 flex-1 leading-snug">
-                        <span className="text-xs font-semibold text-slate-900 block truncate">
-                          Kerusakan Manual
-                        </span>
-                        <span className="text-xs text-slate-600 font-medium block truncate">
-                          {text}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-0.5">
-                          <button
-                            type="button"
-                            onClick={() => onSetCustomQty?.(text, Math.max(1, currentQty - 1))}
-                            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
-                          >
-                            -
-                          </button>
-                          <span className="w-7 text-center font-bold text-xs text-slate-900 tabular-nums">
-                            {currentQty}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1 leading-snug">
+                          <span className="text-xs font-semibold text-slate-900 block truncate">
+                            Kerusakan Manual
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => onSetCustomQty?.(text, currentQty + 1)}
-                            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
-                          >
-                            +
-                          </button>
+                          <span className="text-xs text-slate-600 font-medium block truncate">
+                            {text}
+                          </span>
                         </div>
 
-                        <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                          <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-0.5">
+                            <button
+                              type="button"
+                              onClick={() => onSetCustomQty?.(text, Math.max(1, currentQty - 1))}
+                              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
+                            >
+                              -
+                            </button>
+                            <span className="w-7 text-center font-bold text-xs text-slate-900 tabular-nums">
+                              {currentQty}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => onSetCustomQty?.(text, currentQty + 1)}
+                              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            <button
+                              type="button"
+                              onClick={() => onSetCustomTindakan(text, 'Repair')}
+                              className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
+                                currentTindakan === 'Repair'
+                                  ? 'bg-amber-500 text-white shadow-2xs'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              <Wrench className="w-3 h-3" />
+                              <span>Repair</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onSetCustomTindakan(text, 'Ganti')}
+                              className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
+                                currentTindakan === 'Ganti'
+                                  ? 'bg-blue-600 text-white shadow-2xs'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                              <span>Ganti</span>
+                            </button>
+                          </div>
+
                           <button
                             type="button"
-                            onClick={() => onSetCustomTindakan(text, 'Repair')}
-                            className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
-                              currentTindakan === 'Repair'
-                                ? 'bg-amber-500 text-white shadow-2xs'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
+                            onClick={() => onRemoveCustom(text)}
+                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer"
+                            title="Hapus kerusakan manual"
                           >
-                            <Wrench className="w-3 h-3" />
-                            <span>Repair</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onSetCustomTindakan(text, 'Ganti')}
-                            className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
-                              currentTindakan === 'Ganti'
-                                ? 'bg-blue-600 text-white shadow-2xs'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                            <span>Ganti</span>
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={() => onRemoveCustom(text)}
-                          className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer"
-                          title="Hapus kerusakan manual"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
+
+                      {/* Tampilan Sisa Stok Gudang untuk Kerusakan Manual */}
+                      {currentTindakan === 'Ganti' && (
+                        <div
+                          className={`p-2 rounded-lg border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 animate-fade-in ${
+                            customStockInfo.isZero
+                              ? 'bg-rose-50/90 border-rose-200 text-rose-900'
+                              : !customStockInfo.isCukup
+                              ? 'bg-amber-50/90 border-amber-300 text-amber-900'
+                              : 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Package className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                            <span className="font-bold text-slate-900">
+                              {customStockInfo.found ? customStockInfo.namaKomponen : text}:
+                            </span>
+                            <span>
+                              Sisa Stok: <strong className="font-mono">{customStockInfo.stokGudang} {customStockInfo.satuan}</strong>
+                            </span>
+                            {customStockInfo.lokasi && customStockInfo.lokasi !== '-' && (
+                              <span className="text-slate-500 font-normal">
+                                • Lokasi: {customStockInfo.lokasi}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-wrap sm:self-auto self-end">
+                            <span className="font-medium text-slate-700">
+                              Sisa setelah ganti:
+                              <strong className={`ml-1 font-mono ${customStockInfo.sisaSetelahPakai < 0 ? 'text-rose-700 font-bold' : 'text-slate-900'}`}>
+                                {customStockInfo.sisaSetelahPakai} {customStockInfo.satuan}
+                              </strong>
+                            </span>
+                            {customStockInfo.isZero ? (
+                              <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-rose-600 text-white shrink-0">
+                                Stok Habis (0)
+                              </span>
+                            ) : !customStockInfo.isCukup ? (
+                              <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-amber-600 text-white shrink-0">
+                                Stok Kurang ({currentQty - customStockInfo.stokGudang} lagi)
+                              </span>
+                            ) : customStockInfo.isLow ? (
+                              <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-amber-100 text-amber-800 border border-amber-300 shrink-0">
+                                Stok Menipis
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-emerald-600 text-white shrink-0">
+                                ✓ Stok Cukup
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

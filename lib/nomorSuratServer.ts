@@ -1,4 +1,4 @@
-﻿/**
+/**
  * lib/nomorSuratServer.ts - Server-side Generator Nomor Surat Request Seksi Bridgestone
  *
  * File ini HANYA boleh di-import di server side (API Route Handlers / Server Actions).
@@ -8,7 +8,8 @@ import sql from '@/lib/db';
 import { formatNomorSurat } from './nomorSurat';
 
 /**
- * Generate nomor surat resmi berikutnya dari database (Opsi A - Global Sequence per Tahun).
+ * Generate nomor request / surat resmi berikutnya dari database (Format: NO/SEKSI/ROMAWI/TAHUN).
+ * Urutan nomor (001, 002, ...) adalah urutan global terpusat per tahun kalender.
  */
 export async function generateNextNomorSurat(
   seksiPemohon: string,
@@ -19,23 +20,24 @@ export async function generateNextNomorSurat(
   const year = approvalDate.getFullYear();
   const yearPattern = `%/${year}`;
 
-  // Ambil seluruh nomor surat pada tahun yang sama
-  const existingRecords = await db<Array<{ nomorSurat: string }>>`
-    SELECT "nomorSurat"
+  // Ambil seluruh nomor request & surat pada tahun yang sama
+  const existingRecords = await db<Array<{ nomorSurat: string | null; nomorRequest: string | null }>>`
+    SELECT "nomorSurat", "nomorRequest"
     FROM "SectionRequest"
-    WHERE "nomorSurat" IS NOT NULL
-      AND "nomorSurat" LIKE ${yearPattern}
+    WHERE ("nomorSurat" LIKE ${yearPattern} OR "nomorRequest" LIKE ${yearPattern})
   `;
 
   let maxSeq = 0;
   for (const row of existingRecords) {
-    if (!row.nomorSurat) continue;
-    // Format: NO/Seksi/Romawi/Tahun -> ambil bagian NO paling depan
-    const parts = row.nomorSurat.split('/');
-    if (parts.length >= 4) {
-      const parsedSeq = parseInt(parts[0], 10);
-      if (!isNaN(parsedSeq) && parsedSeq > maxSeq) {
-        maxSeq = parsedSeq;
+    for (const val of [row.nomorSurat, row.nomorRequest]) {
+      if (!val) continue;
+      // Format: NO/Seksi/Romawi/Tahun -> ambil bagian NO paling depan
+      const parts = val.split('/');
+      if (parts.length >= 4) {
+        const parsedSeq = parseInt(parts[0], 10);
+        if (!isNaN(parsedSeq) && parsedSeq > maxSeq) {
+          maxSeq = parsedSeq;
+        }
       }
     }
   }
@@ -43,3 +45,5 @@ export async function generateNextNomorSurat(
   const nextSeq = maxSeq + 1;
   return formatNomorSurat(nextSeq, seksiPemohon, approvalDate);
 }
+
+export const generateNextNomorRequest = generateNextNomorSurat;

@@ -85,18 +85,12 @@ export default function RequestTable({
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  {r.nomorSurat ? (
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-mono font-bold text-red-700 text-xs tabular-nums bg-red-50 px-2 py-0.5 rounded border border-red-200">
-                        {r.nomorSurat}
-                      </span>
-                      <span className="font-mono text-xs text-slate-500 tabular-nums">
-                        ({r.nomorRequest})
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="font-mono font-bold text-slate-900 text-xs tabular-nums">
-                      {r.nomorRequest}
+                  <span className="font-mono font-bold text-red-700 text-xs tabular-nums bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                    {r.nomorRequest?.startsWith('REQ-') && r.nomorSurat ? r.nomorSurat : r.nomorRequest}
+                  </span>
+                  {r.nomorSurat && r.nomorRequest && r.nomorSurat !== r.nomorRequest && !r.nomorRequest.startsWith('REQ-') && (
+                    <span className="font-mono text-xs text-slate-500 tabular-nums ml-1.5">
+                      ({r.nomorSurat})
                     </span>
                   )}
                   <span className="text-xs text-slate-500 font-medium ml-1.5 tabular-nums">
@@ -250,25 +244,16 @@ export default function RequestTable({
               filtered.map((r) => (
                 <tr key={r.id} className="hover:bg-slate-50/70 transition">
                   <td className="p-3.5 tabular-nums">
-                    {r.nomorSurat ? (
-                      <div>
-                        <span className="font-mono font-bold text-red-700 text-xs bg-red-50/80 px-2 py-0.5 rounded border border-red-200 block w-fit mb-0.5">
-                          {r.nomorSurat}
-                        </span>
+                    <div>
+                      <span className="font-mono font-bold text-red-700 text-xs bg-red-50/80 px-2 py-0.5 rounded border border-red-200 block w-fit mb-0.5">
+                        {r.nomorRequest?.startsWith('REQ-') && r.nomorSurat ? r.nomorSurat : r.nomorRequest}
+                      </span>
+                      {r.nomorSurat && r.nomorRequest && r.nomorSurat !== r.nomorRequest && !r.nomorRequest.startsWith('REQ-') && (
                         <span className="font-mono text-xs text-slate-400 block">
-                          {r.nomorRequest}
+                          Ref: {r.nomorSurat}
                         </span>
-                      </div>
-                    ) : (
-                      <div>
-                        <span className="font-mono font-bold text-slate-800 text-xs block">
-                          {r.nomorRequest}
-                        </span>
-                        <span className="text-xs text-amber-700 font-medium block">
-                          Menunggu Approval
-                        </span>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </td>
                   <td className="p-3.5 text-slate-500 tabular-nums">
                     {formatDate(r.waktuDibuat)}

@@ -20,11 +20,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ exists: false, isRecent: false });
     }
 
-    // Cari di tabel Daisha (bisa match exact atau match nomor urut misal "45" atau "S-045")
+    // Cari di tabel Daisha menggunakan functional index UPPER(TRIM(...))
     let daisha = await sql`
       SELECT id, nomor_daisha, jenis, ukuran, seksi, nama_daisha, last_maintenance_date
       FROM "Daisha"
-      WHERE UPPER(nomor_daisha) = ${nomor.toUpperCase()}
+      WHERE UPPER(TRIM(nomor_daisha)) = UPPER(TRIM(${nomor}))
       LIMIT 1
     `;
 

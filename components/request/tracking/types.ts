@@ -1,3 +1,5 @@
+import { DAFTAR_SEKSI_FOLLOWUP } from '@/lib/nomorSurat';
+
 export type FlowchartFilter =
   | 'all'
   | 'waiting_atasan'
@@ -7,20 +9,7 @@ export type FlowchartFilter =
   | 'completed'
   | 'rejected';
 
-export const DAFTAR_SEKSI_REQUEST = [
-  'Final Inspection',
-  'TBR Produksi',
-  'MC/TB Produksi',
-  'PSR/AG Produksi',
-  'Mixing',
-  'Material',
-  'Engineering',
-  'Quality',
-  'PPC',
-  'Warehouse',
-  'Utility',
-  'Lainnya',
-];
+export const DAFTAR_SEKSI_REQUEST = [...DAFTAR_SEKSI_FOLLOWUP];
 
 export const DAFTAR_TUJUAN = [
   'Safety',

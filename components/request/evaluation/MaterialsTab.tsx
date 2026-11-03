@@ -127,18 +127,16 @@ export default function MaterialsTab({
         <button
           type="button"
           onClick={() => setItemCategoryMode('SPAREPART')}
-          className={`h-10 px-4 rounded-lg font-bold text-xs transition cursor-pointer flex items-center gap-2 ${
-            itemCategoryMode === 'SPAREPART'
+          className={`h-10 px-4 rounded-lg font-bold text-xs transition cursor-pointer flex items-center gap-2 ${itemCategoryMode === 'SPAREPART'
               ? 'bg-blue-600 text-white shadow-sm'
               : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-          }`}
+            }`}
         >
           <Wrench className="w-3.5 h-3.5" />
           <span>1. Input Suku Cadang (Sparepart)</span>
           <span
-            className={`px-1.5 py-0.5 rounded-full text-xs font-mono ${
-              itemCategoryMode === 'SPAREPART' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
-            }`}
+            className={`px-1.5 py-0.5 rounded-full text-xs font-mono ${itemCategoryMode === 'SPAREPART' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+              }`}
           >
             {countSparepart}
           </span>
@@ -147,18 +145,16 @@ export default function MaterialsTab({
         <button
           type="button"
           onClick={() => setItemCategoryMode('MATERIAL')}
-          className={`h-10 px-4 rounded-lg font-bold text-xs transition cursor-pointer flex items-center gap-2 ${
-            itemCategoryMode === 'MATERIAL'
+          className={`h-10 px-4 rounded-lg font-bold text-xs transition cursor-pointer flex items-center gap-2 ${itemCategoryMode === 'MATERIAL'
               ? 'bg-amber-600 text-white'
               : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-          }`}
+            }`}
         >
           <Package className="w-3.5 h-3.5" />
           <span>2. Input Material & Plat (Fabrikasi)</span>
           <span
-            className={`px-1.5 py-0.5 rounded-full text-xs font-mono ${
-              itemCategoryMode === 'MATERIAL' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
-            }`}
+            className={`px-1.5 py-0.5 rounded-full text-xs font-mono ${itemCategoryMode === 'MATERIAL' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+              }`}
           >
             {countMaterial}
           </span>
@@ -196,9 +192,35 @@ export default function MaterialsTab({
                 ))}
               </select>
               {currentSparepartDetail && (
-                <span className="text-xs text-slate-500 mt-1 block">
-                  Lokasi: <strong>{currentSparepartDetail.lokasi || '-'}</strong> • Sisa Stok: <strong>{currentSparepartDetail.stokGudang} {currentSparepartDetail.satuan}</strong>
-                </span>
+                <div className="mt-2 p-2 bg-white rounded-lg border border-blue-200 text-xs flex flex-wrap items-center justify-between gap-2 animate-fade-in">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span>
+                      Lokasi: <strong>{currentSparepartDetail.lokasi || '-'}</strong>
+                    </span>
+                    <span className="text-slate-400">•</span>
+                    <span>
+                      Sisa Stok Saat Ini: <strong className="text-blue-900 font-mono">{currentSparepartDetail.stokGudang} {currentSparepartDetail.satuan}</strong>
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span>
+                      Sisa setelah diambil:
+                      <strong className={`ml-1 font-mono ${currentSparepartDetail.stokGudang - sparepartQty < 0 ? 'text-rose-700 font-bold' : 'text-slate-900 font-bold'}`}>
+                        {currentSparepartDetail.stokGudang - sparepartQty} {currentSparepartDetail.satuan}
+                      </strong>
+                    </span>
+                    {currentSparepartDetail.stokGudang - sparepartQty < 0 ? (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-600 text-white">
+                        Stok Kurang
+                      </span>
+                    ) : (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white">
+                        ✓ Cukup
+                      </span>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
 
@@ -260,22 +282,20 @@ export default function MaterialsTab({
               <button
                 type="button"
                 onClick={() => setMaterialSourceMode('CATALOG')}
-                className={`px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${
-                  materialSourceMode === 'CATALOG'
+                className={`px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${materialSourceMode === 'CATALOG'
                     ? 'bg-amber-100 text-amber-900 font-bold'
                     : 'text-slate-600 hover:text-slate-900'
-                }`}
+                  }`}
               >
                 Katalog Material
               </button>
               <button
                 type="button"
                 onClick={() => setMaterialSourceMode('CUSTOM')}
-                className={`px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${
-                  materialSourceMode === 'CUSTOM'
+                className={`px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${materialSourceMode === 'CUSTOM'
                     ? 'bg-amber-100 text-amber-900 font-bold'
                     : 'text-slate-600 hover:text-slate-900'
-                }`}
+                  }`}
               >
                 Ketik Material Bebas
               </button>
@@ -311,9 +331,28 @@ export default function MaterialsTab({
                 />
               )}
               {currentMaterialDetail && materialSourceMode === 'CATALOG' && (
-                <span className="text-xs text-slate-500 mt-1 block">
-                  Lokasi: <strong>{currentMaterialDetail.lokasi || '-'}</strong> • Stok Fisik: <strong>{currentMaterialDetail.stokGudang} {currentMaterialDetail.satuan}</strong>
-                </span>
+                <div className="mt-2 p-2 bg-white rounded-lg border border-amber-200 text-xs flex flex-wrap items-center justify-between gap-2 animate-fade-in">
+                  <div>
+                    <span>
+                      Lokasi: <strong>{currentMaterialDetail.lokasi || '-'}</strong> • Stok Fisik: <strong className="text-amber-900 font-mono">{currentMaterialDetail.stokGudang} {currentMaterialDetail.satuan}</strong>
+                    </span>
+                  </div>
+                  {materialPotongStokGudang && (
+                    <div className="flex items-center gap-1.5">
+                      <span>
+                        Sisa Lembar:
+                        <strong className={`ml-1 font-mono ${currentMaterialDetail.stokGudang - materialQtyPotongGudang < 0 ? 'text-rose-700 font-bold' : 'text-slate-900 font-bold'}`}>
+                          {currentMaterialDetail.stokGudang - materialQtyPotongGudang} {currentMaterialDetail.satuan}
+                        </strong>
+                      </span>
+                      {currentMaterialDetail.stokGudang - materialQtyPotongGudang < 0 && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-600 text-white">
+                          Stok Kurang
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
@@ -530,27 +569,24 @@ export default function MaterialsTab({
             <button
               type="button"
               onClick={() => setTableFilterType('ALL')}
-              className={`px-2 py-0.5 rounded text-xs font-semibold cursor-pointer ${
-                tableFilterType === 'ALL' ? 'bg-slate-800 text-white' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`px-2 py-0.5 rounded text-xs font-semibold cursor-pointer ${tableFilterType === 'ALL' ? 'bg-slate-800 text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               Semua ({materialsList.length})
             </button>
             <button
               type="button"
               onClick={() => setTableFilterType('SPAREPART')}
-              className={`px-2 py-0.5 rounded text-xs font-semibold cursor-pointer ${
-                tableFilterType === 'SPAREPART' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`px-2 py-0.5 rounded text-xs font-semibold cursor-pointer ${tableFilterType === 'SPAREPART' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               Sparepart ({countSparepart})
             </button>
             <button
               type="button"
               onClick={() => setTableFilterType('MATERIAL')}
-              className={`px-2 py-0.5 rounded text-xs font-semibold cursor-pointer ${
-                tableFilterType === 'MATERIAL' ? 'bg-amber-600 text-white' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`px-2 py-0.5 rounded text-xs font-semibold cursor-pointer ${tableFilterType === 'MATERIAL' ? 'bg-amber-600 text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               Material ({countMaterial})
             </button>
@@ -572,6 +608,7 @@ export default function MaterialsTab({
                   <th className="py-2.5 px-3">Tipe</th>
                   <th className="py-2.5 px-3">Nama Komponen / Material</th>
                   <th className="py-2.5 px-3">Jumlah (Qty)</th>
+                  <th className="py-2.5 px-3">Sisa Stok Gudang</th>
                   <th className="py-2.5 px-3">Dimensi / Ukuran</th>
                   <th className="py-2.5 px-3">Keterangan</th>
                   <th className="py-2.5 px-3 text-right">Aksi</th>
@@ -583,11 +620,10 @@ export default function MaterialsTab({
                     <td className="py-2.5 px-3 text-slate-500 font-mono">{idx + 1}</td>
                     <td className="py-2.5 px-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
-                          m.tipe === 'MATERIAL'
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${m.tipe === 'MATERIAL'
                             ? 'bg-amber-100 text-amber-800 border border-amber-200'
                             : 'bg-blue-100 text-blue-800 border border-blue-200'
-                        }`}
+                          }`}
                       >
                         {m.tipe === 'MATERIAL' ? 'Material' : 'Sparepart'}
                       </span>
@@ -595,6 +631,30 @@ export default function MaterialsTab({
                     <td className="py-2.5 px-3 font-semibold text-slate-900">{m.namaKomponen}</td>
                     <td className="py-2.5 px-3 font-bold text-slate-900">
                       {m.qty} {m.satuan || 'Pcs'}
+                    </td>
+                    <td className="py-2.5 px-3 tabular-nums font-semibold">
+                      {(() => {
+                        const sp =
+                          sparepartsCatalogList.find(
+                            (s) => s.namaKomponen.toLowerCase() === m.namaKomponen.toLowerCase()
+                          ) ||
+                          materialsCatalogList.find(
+                            (s) => s.namaKomponen.toLowerCase() === m.namaKomponen.toLowerCase()
+                          );
+                        if (!sp) return <span className="text-slate-400 text-xs italic">Katalog Bebas</span>;
+                        return (
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border tabular-nums ${sp.stokGudang <= 0
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : sp.stokGudang <= (sp.minStok ?? 5)
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              }`}
+                          >
+                            {sp.stokGudang} {sp.satuan}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="py-2.5 px-3 text-slate-600 font-mono text-xs">
                       {m.dimensi || '-'}

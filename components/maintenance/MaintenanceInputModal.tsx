@@ -19,10 +19,12 @@ import {
   Truck,
   ArrowRight,
   Camera,
+  Package,
 } from 'lucide-react';
 import { FleetUnit } from './FleetExplorer';
 import { DAFTAR_SEKSI, getSectionDaishaList } from '@/lib/masterData';
 import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
+import { useSparepartsStock } from '@/hooks/useSparepartsStock';
 import QrScannerModal from '@/components/input/QrScannerModal';
 
 export type PartCondition = 'OK' | 'SERVIS' | 'GANTI';
@@ -122,6 +124,7 @@ export default function MaintenanceInputModal({
   seksi,
 }: MaintenanceInputModalProps) {
   const { catalog, seksiList: dynamicSeksiList, getDaishaBySeksi } = useDaishaCatalog();
+  const { getStockInfo } = useSparepartsStock();
 
   // Form State
   const [nomorDaisha, setNomorDaisha] = useState<string>('');
@@ -801,6 +804,28 @@ export default function MaintenanceInputModal({
                               </button>
                             ))}
                           </div>
+                          {isGanti && (() => {
+                            const spInfo = getStockInfo(part.name, 1);
+                            return (
+                              <div
+                                className={`mt-1.5 p-1.5 rounded border text-[11px] flex items-center justify-between gap-1.5 ${
+                                  spInfo.isZero
+                                    ? 'bg-rose-50 border-rose-200 text-rose-800'
+                                    : !spInfo.isCukup
+                                    ? 'bg-amber-50 border-amber-300 text-amber-800'
+                                    : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                }`}
+                              >
+                                <span className="flex items-center gap-1 font-semibold truncate">
+                                  <Package className="w-3 h-3 text-slate-500 shrink-0" />
+                                  <span className="truncate">Gudang: {spInfo.found ? spInfo.namaKomponen : part.name}</span>
+                                </span>
+                                <span className="font-bold tabular-nums shrink-0">
+                                  Sisa: {spInfo.stokGudang} {spInfo.satuan}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         <div>

@@ -13,6 +13,7 @@ import {
 import { CreateTicketPayload } from '@/types/ticket';
 import { parseTicketDamageDetail } from '@/lib/damageParser';
 import { detectDaishaSize } from '@/lib/daishaSize';
+import { useSparepartsStock } from '@/hooks/useSparepartsStock';
 
 interface ReviewTicketModalProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ export default function ReviewTicketModal({
 
   if (!isOpen || !payload) return null;
 
+  const { getStockInfo } = useSparepartsStock();
   const parsed = parseTicketDamageDetail(payload.detail);
   const sizeInfo = detectDaishaSize(payload.noDaisha);
 
@@ -164,7 +166,24 @@ export default function ReviewTicketModal({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                        {item.tindakan === 'Ganti' && (() => {
+                          const stockInfo = getStockInfo(item.komponen || item.gejala, item.qty);
+                          return (
+                            <span
+                              className={`text-[10px] px-1.5 py-0.5 rounded font-bold border tabular-nums ${
+                                stockInfo.isZero
+                                  ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                  : !stockInfo.isCukup
+                                  ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              }`}
+                              title={`Sisa stok gudang: ${stockInfo.stokGudang} ${stockInfo.satuan} (Sisa setelah dipakai: ${stockInfo.sisaSetelahPakai})`}
+                            >
+                              Sisa: {stockInfo.stokGudang} {stockInfo.satuan} (→ {stockInfo.sisaSetelahPakai})
+                            </span>
+                          );
+                        })()}
                         <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-medium text-xs border border-slate-200 tabular-nums">
                           {item.qty} pcs
                         </span>

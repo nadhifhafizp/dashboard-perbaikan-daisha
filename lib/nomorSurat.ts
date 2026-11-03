@@ -1,4 +1,4 @@
-﻿/**
+/**
  * lib/nomorSurat.ts - Format Standar Nomor Surat / Nomor Tiket Request Seksi Bridgestone
  *
  * File ini berisi fungsi utilitas murni (bebas dependency database) yang aman digunakan
@@ -12,6 +12,29 @@
  * dan di-reset setiap pergantian tahun kalender.
  */
 
+/**
+ * 15 Seksi Resmi dan Singkatan Baku untuk Fitur Follow-up Request Bridgestone
+ */
+export const DAFTAR_SEKSI_FOLLOWUP = [
+  'HRGA',
+  'QA',
+  'TEKNIKAL',
+  'LABORAT',
+  'BANBURRY',
+  'EXTRUDING',
+  'CUTTING/CALENDER',
+  'BEAD',
+  'BUILDING',
+  'CURING',
+  'FINAL INPECTION',
+  'RMW',
+  'TWH',
+  'TIRE EVAL',
+  'ENGINEERING',
+] as const;
+
+export type SeksiFollowupName = (typeof DAFTAR_SEKSI_FOLLOWUP)[number];
+
 export const SEKSI_CODE_MAP: Record<string, string> = {
   HRGA: 'HRGA',
   QA: 'QA',
@@ -24,10 +47,12 @@ export const SEKSI_CODE_MAP: Record<string, string> = {
   EXTRUDING: 'EXTD',
   'CUTTING/CALENDER': 'CUT/CAL',
   'CUTTING / CALENDER': 'CUT/CAL',
+  'CUTT/CAL': 'CUT/CAL',
   CUTTING: 'CUT/CAL',
   CALENDER: 'CUT/CAL',
   BEAD: 'BEAD',
   BUILDING: 'BUILD',
+  BUILD: 'BUILD',
   CURING: 'CURE',
   'FINAL INPECTION': 'FINAL',
   'FINAL INSPECTION': 'FINAL',
