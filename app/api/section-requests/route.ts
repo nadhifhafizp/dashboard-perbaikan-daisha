@@ -949,7 +949,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // 8. DELETE: Hapus request
+    // 8. DELETE: Hapus request via POST action
     if (action === 'DELETE') {
       if (auth.user!.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Hanya admin yang dapat menghapus request.' }, { status: 403 });
@@ -957,14 +957,113 @@ export async function POST(request: Request) {
 
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
 
-      await sql`DELETE FROM "SectionRequest" WHERE id = ${id}`;
+      const [current] = await sql<Array<{
+        id: number;
+        nomorRequest: string;
+      }>>`
+        SELECT id, "nomorRequest"
+        FROM "SectionRequest"
+        WHERE id = ${id}
+        LIMIT 1
+      `;
 
-      return NextResponse.json({ success: true, message: 'Request berhasil dihapus.' });
+      if (!current) {
+        return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
+      }
+
+      await withTransaction(async (tx) => {
+        await tx`DELETE FROM "SectionRequestNotification" WHERE "requestId" = ${id}`;
+        await tx`DELETE FROM "SectionRequestMaterial" WHERE "requestId" = ${id}`;
+        await tx`DELETE FROM "SectionRequest" WHERE id = ${id}`;
+      });
+
+      recordAuditLog({
+        action: 'SECTION_REQUEST_DELETE',
+        ip: auth.ip,
+        user: auth.user?.username,
+        role: auth.user?.role,
+        status: 'SUCCESS',
+        targetId: current.nomorRequest,
+        details: `Request ${current.nomorRequest} berhasil dihapus oleh ${auth.user?.username}`,
+      });
+
+      return NextResponse.json({ success: true, message: `Request ${current.nomorRequest} berhasil dihapus.` });
     }
 
     return NextResponse.json({ error: 'Action tidak valid.' }, { status: 400 });
   } catch (error) {
     console.error('POST /api/section-requests error:', error);
     return NextResponse.json({ error: 'Terjadi kesalahan pada server.' }, { status: 500 });
+  }
+}
+
+// DELETE: Handler resmi HTTP DELETE /api/section-requests?id=123
+export async function DELETE(request: Request) {
+  const auth = await requireAuth(request, ['ADMIN']);
+  if (!auth.authorized) return auth.errorResponse!;
+
+  const { searchParams } = new URL(request.url);
+  const idRaw = searchParams.get('id');
+  let id: number | null = null;
+
+  if (idRaw) {
+    const val = validatePositiveInt(idRaw, 'ID Request', 1);
+    if (val.error) return NextResponse.json({ error: val.error }, { status: 400 });
+    id = val.value;
+  } else {
+    try {
+      const body = await request.json();
+      if (body.id) {
+        const val = validatePositiveInt(body.id, 'ID Request', 1);
+        if (val.error) return NextResponse.json({ error: val.error }, { status: 400 });
+        id = val.value;
+      }
+    } catch {
+      // payload json kosong
+    }
+  }
+
+  if (!id) {
+    return NextResponse.json({ error: 'Parameter id wajib disertakan.' }, { status: 400 });
+  }
+
+  try {
+    const [current] = await sql<Array<{
+      id: number;
+      nomorRequest: string;
+    }>>`
+      SELECT id, "nomorRequest"
+      FROM "SectionRequest"
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+
+    if (!current) {
+      return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
+    }
+
+    await withTransaction(async (tx) => {
+      await tx`DELETE FROM "SectionRequestNotification" WHERE "requestId" = ${id}`;
+      await tx`DELETE FROM "SectionRequestMaterial" WHERE "requestId" = ${id}`;
+      await tx`DELETE FROM "SectionRequest" WHERE id = ${id}`;
+    });
+
+    recordAuditLog({
+      action: 'SECTION_REQUEST_DELETE',
+      ip: auth.ip,
+      user: auth.user?.username,
+      role: auth.user?.role,
+      status: 'SUCCESS',
+      targetId: current.nomorRequest,
+      details: `Request ${current.nomorRequest} berhasil dihapus oleh ${auth.user?.username}`,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Request ${current.nomorRequest} berhasil dihapus.`,
+    });
+  } catch (error) {
+    console.error('DELETE /api/section-requests error:', error);
+    return NextResponse.json({ error: 'Terjadi kesalahan pada server saat menghapus request.' }, { status: 500 });
   }
 }

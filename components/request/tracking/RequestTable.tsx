@@ -209,14 +209,25 @@ export default function RequestTable({
                   <span>Cetak Form</span>
                 </button>
                 {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => onOpenEval(r)}
-                    className="h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Wrench className="w-3.5 h-3.5" />
-                    <span>Evaluasi</span>
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => onOpenEval(r)}
+                      className="h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Wrench className="w-3.5 h-3.5" />
+                      <span>Evaluasi</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onRequestDelete(r)}
+                      className="h-11 sm:h-10 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1"
+                      title="Hapus Pengajuan"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus</span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>

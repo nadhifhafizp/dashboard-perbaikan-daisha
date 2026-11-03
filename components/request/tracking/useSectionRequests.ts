@@ -279,9 +279,16 @@ export function useSectionRequests() {
   const confirmDelete = async () => {
     if (!requestToDelete) return;
     try {
-      const res = await fetch(`/api/section-requests?id=${requestToDelete.id}`, {
+      let res = await fetch(`/api/section-requests?id=${requestToDelete.id}`, {
         method: 'DELETE',
       });
+      if (res.status === 405) {
+        res = await fetch('/api/section-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'DELETE', id: requestToDelete.id }),
+        });
+      }
       if (res.status === 401) {
         router.replace('/login?from=/request/tracking');
         return;
