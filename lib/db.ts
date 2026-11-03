@@ -1,4 +1,4 @@
-﻿/**
+/**
  * lib/db.ts - Koneksi Database PostgreSQL Terpusat (Singleton Pool)
  * 
  * ============================================================================
@@ -39,7 +39,7 @@ export const sql =
     ssl: 'require', // Memaksa enkripsi TLS saat koneksi ke database cloud
     prepare: false, // Wajib false untuk PgBouncer transaction mode
     max: 10, // Pool size stabil dan aman untuk cloud database
-    idle_timeout: 20, // Tutup koneksi idle lokal sebelum PgBouncer memutus koneksi
+    idle_timeout: 180, // Jaga koneksi warm hingga 3 menit agar request berurutan tidak perlu TLS handshake ulang
     max_lifetime: 60 * 10, // Daur ulang koneksi setiap 10 menit
     connect_timeout: 10, // Batas waktu koneksi awal
     keep_alive: 15, // Kirim TCP keep-alive probe setiap 15 detik untuk menjaga socket AWS/Supabase

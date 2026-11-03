@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useTickets } from '@/hooks/useTickets';
 import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
-import { exportTicketsToExcel } from '@/lib/excelExport';
+import { exportTicketsToExcel } from '@/lib/excelExport'; 1
 
 // Chart & Dashboard Components
 import FilterPanel from '@/components/dashboard/FilterPanel';
@@ -234,7 +234,8 @@ function KpiDashboardContent() {
     try {
       setLoadingPm(true);
       const seksiParam = userSeksi ? `&seksi=${encodeURIComponent(userSeksi)}` : '&seksi=all';
-      const res = await fetch(`/api/maintenance?year=${pmYear}${seksiParam}`);
+      const allUnitsParam = activeTab === 'jumlah_daisha' ? '&allUnits=true' : '';
+      const res = await fetch(`/api/maintenance?year=${pmYear}${seksiParam}${allUnitsParam}`);
       const json = await res.json();
       if (json.success) {
         setPmSummary(json.summary || pmSummary);
@@ -252,7 +253,7 @@ function KpiDashboardContent() {
     } finally {
       setLoadingPm(false);
     }
-  }, [pmYear, userSeksi]);
+  }, [pmYear, userSeksi, activeTab]);
 
   // Data request seksi
   const [requests, setRequests] = useState<SectionRequestFull[]>([]);
@@ -430,11 +431,10 @@ function KpiDashboardContent() {
           <button
             type="button"
             onClick={() => handleTabChange('jumlah_daisha')}
-            className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === 'jumlah_daisha'
+            className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'jumlah_daisha'
                 ? 'border-red-600 text-red-600 bg-red-50/50'
                 : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <Layers className="w-4.5 h-4.5" />
             <span>1. Jumlah Seluruh Daisha</span>
@@ -442,10 +442,10 @@ function KpiDashboardContent() {
               {pmSummary.totalUnits > 0
                 ? `${pmSummary.totalUnits.toLocaleString('id-ID')} Unit`
                 : catalogStats?.totalAllUnits
-                ? `${catalogStats.totalAllUnits.toLocaleString('id-ID')} Unit`
-                : userSeksi
-                ? 'Memuat...'
-                : '7.906 Unit'}
+                  ? `${catalogStats.totalAllUnits.toLocaleString('id-ID')} Unit`
+                  : userSeksi
+                    ? 'Memuat...'
+                    : '7.906 Unit'}
             </span>
           </button>
 
@@ -453,11 +453,10 @@ function KpiDashboardContent() {
           <button
             type="button"
             onClick={() => handleTabChange('perbaikan_daisha')}
-            className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === 'perbaikan_daisha'
+            className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'perbaikan_daisha'
                 ? 'border-red-600 text-red-600 bg-red-50/50'
                 : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <Wrench className="w-4.5 h-4.5" />
             <span>2. Perbaikan Daisha</span>
@@ -470,11 +469,10 @@ function KpiDashboardContent() {
           <button
             type="button"
             onClick={() => handleTabChange('pm_daisha')}
-            className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === 'pm_daisha'
+            className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'pm_daisha'
                 ? 'border-red-600 text-red-600 bg-red-50/50'
                 : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <ShieldCheck className="w-4.5 h-4.5" />
             <span>3. PM Daisha</span>
@@ -490,11 +488,10 @@ function KpiDashboardContent() {
             <button
               type="button"
               onClick={() => handleTabChange('request')}
-              className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
-                activeTab === 'request'
+              className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'request'
                   ? 'border-red-600 text-red-600 bg-red-50/50'
                   : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-              }`}
+                }`}
             >
               <SendHorizonal className="w-4.5 h-4.5" />
               <span>4. Request Seksi</span>
@@ -510,11 +507,10 @@ function KpiDashboardContent() {
               <button
                 type="button"
                 onClick={() => handleTabChange('data_mentah')}
-                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
-                  activeTab === 'data_mentah'
+                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'data_mentah'
                     ? 'border-red-600 text-red-600 bg-red-50/50'
                     : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 <FileSpreadsheet className="w-4.5 h-4.5" />
                 <span>Data Tiket</span>
@@ -524,11 +520,10 @@ function KpiDashboardContent() {
               <button
                 type="button"
                 onClick={() => handleTabChange('request')}
-                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
-                  activeTab === 'request'
+                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'request'
                     ? 'border-red-600 text-red-600 bg-red-50/50'
                     : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 <SendHorizonal className="w-4.5 h-4.5" />
                 <span>Request Seksi</span>
@@ -543,11 +538,10 @@ function KpiDashboardContent() {
               <button
                 type="button"
                 onClick={() => handleTabChange('spareparts')}
-                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${
-                  activeTab === 'spareparts'
+                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'spareparts'
                     ? 'border-red-600 text-red-600 bg-red-50/50'
                     : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 <Package className="w-4.5 h-4.5" />
                 <span>Stok Sparepart</span>
@@ -661,7 +655,7 @@ function KpiDashboardContent() {
                     availableMonths={charts.availableMonths}
                     chartPelapor={charts.pelapor}
                     selectedSeksi={userSeksi || filterSeksi}
-                    onSelectSeksi={isSeksi ? () => {} : (s) => setFilterSeksi(filterSeksi === s ? '' : s)}
+                    onSelectSeksi={isSeksi ? () => { } : (s) => setFilterSeksi(filterSeksi === s ? '' : s)}
                   />
                 </div>
                 <div className="lg:col-span-5">

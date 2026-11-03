@@ -79,6 +79,7 @@ export async function GET(request: Request) {
     const filterUkuran = searchParams.get('ukuran'); // 'SMALL' | 'MEDIUM' | 'LARGE' | null
     const filterSeksi = searchParams.get('seksi'); // 'Building' | 'Bead' | null
     const yearParam = searchParams.get('year');
+    const includeAllUnits = searchParams.get('allUnits') === 'true';
 
     const now = new Date();
     const currentYear = yearParam ? parseInt(yearParam, 10) : now.getFullYear();
@@ -87,7 +88,7 @@ export async function GET(request: Request) {
       !filterSeksi || ['all', 'all seksi', 'semua'].includes(filterSeksi.trim().toLowerCase())
         ? 'all'
         : filterSeksi.trim().toLowerCase();
-    const cacheKey = `maint_${currentYear}_${filterJenis || 'all'}_${filterUkuran || 'all'}_${normalizedSeksi}`;
+    const cacheKey = `maint_${currentYear}_${filterJenis || 'all'}_${filterUkuran || 'all'}_${normalizedSeksi}_${includeAllUnits ? 'all' : 'pm'}`;
     const cachedEntry = maintenanceCacheMap.get(cacheKey);
     if (cachedEntry && Date.now() - cachedEntry.timestamp < CACHE_TTL) {
       return NextResponse.json(cachedEntry.payload, {
@@ -373,35 +374,18 @@ export async function GET(request: Request) {
         };
       });
 
-      // Mapping seluruh armada pabrik (30 jenis, ~8.050 unit) untuk fitur non-PM (Fleet KPI / Perbaikan)
-      const mappedAllUnits = targetAllDaisha.map((u) => {
-        const lastMaint = u.last_maintenance_date ? new Date(u.last_maintenance_date) : null;
-        const lastRepair = u.last_repair_date ? new Date(u.last_repair_date) : null;
-        const effectiveLastDate = (lastMaint && lastRepair)
-          ? (lastMaint > lastRepair ? lastMaint : lastRepair)
-          : (lastMaint || lastRepair);
-        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfYear && effectiveLastDate <= endOfYear;
-        const daysSinceLast = effectiveLastDate ? Math.floor((now.getTime() - effectiveLastDate.getTime()) / (1000 * 60 * 60 * 24)) : null;
-        const numMatch = u.nomor_daisha.match(/\d+/);
-        const serialNumber = numMatch ? parseInt(numMatch[0], 10) : 0;
-
-        return {
-          id: u.id,
-          nomor_daisha: u.nomor_daisha,
-          serial_number: serialNumber,
-          jenis: u.jenis,
-          nama_daisha: u.nama_daisha || u.jenis,
-          seksi: u.seksi || 'All seksi',
-          ukuran: u.ukuran,
-          last_maintenance_date: effectiveLastDate ? effectiveLastDate.toISOString() : null,
-          last_condition: u.last_condition || 'OK',
-          last_repair_date: u.last_repair_date,
-          last_waktu_masuk: u.last_waktu_masuk,
-          last_waktu_keluar: u.last_waktu_keluar,
-          is_maintained: isMaintainedThisYear,
-          days_since_last: daysSinceLast,
-        };
-      });
+      // Mapping seluruh armada pabrik (hanya jika diminta spesifik oleh modul KPI Jumlah Daisha)
+      const mappedAllUnits = includeAllUnits
+        ? targetAllDaisha.map((u) => ({
+            id: u.id,
+            nomor_daisha: u.nomor_daisha,
+            jenis: u.jenis,
+            nama_daisha: u.nama_daisha || u.jenis,
+            seksi: u.seksi || 'All seksi',
+            ukuran: u.ukuran,
+            last_condition: u.last_condition || 'OK',
+          }))
+        : [];
 
       // Sebaran Populasi Seksi KHUSUS PM (Building, Cutt/Cal, Extruding)
       const pmSeksiMap = new Map<string, { total: number; maintained: number; unmaintained: number; rusak: number }>();
