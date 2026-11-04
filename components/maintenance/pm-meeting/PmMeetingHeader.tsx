@@ -47,13 +47,13 @@ export default function PmMeetingHeader({
     <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-red-50 text-red-600">
-              <ShieldCheck className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 rounded-lg bg-red-50 text-red-600 border border-red-100">
+              <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7" />
             </span>
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="t-card text-slate-900 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                   KPI PM Daisha Tahun {currentYear}
                 </h2>
                 {onYearChange && (

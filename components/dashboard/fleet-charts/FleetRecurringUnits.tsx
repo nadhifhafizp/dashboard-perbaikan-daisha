@@ -16,11 +16,11 @@ export default function FleetRecurringUnits({
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <RotateCcw className="w-5 h-5 text-amber-600" />
+        <div className="flex items-center gap-3">
+          <RotateCcw className="w-6 h-6 sm:w-7 sm:h-7 text-amber-600 shrink-0" />
           <div>
-            <h4 className="text-base font-bold text-slate-900 tracking-tight">Unit Paling Sering Servis</h4>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium">
+            <h4 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Unit Paling Sering Servis</h4>
+            <p className="text-sm sm:text-base text-slate-500 font-medium">
               Armada dengan frekuensi perbaikan berulang tertinggi
             </p>
           </div>

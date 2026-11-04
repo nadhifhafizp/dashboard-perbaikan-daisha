@@ -68,11 +68,11 @@ export default function AdminSectionDonutGrid({
       {/* 1. Header Panel Diagram Donut */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
         <div>
-          <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-            <PieIcon className="w-4 h-4 text-red-600" aria-hidden="true" />
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+            <PieIcon className="w-6 h-6 sm:w-7 sm:h-7 text-red-600 shrink-0" aria-hidden="true" />
             <span>Kepatuhan PM per seksi</span>
           </h2>
-          <p className="text-xs text-slate-500 font-normal mt-0.5">
+          <p className="text-sm sm:text-base text-slate-500 font-medium mt-0.5">
             Target 1 tahun 1x PM per seksi
           </p>
         </div>

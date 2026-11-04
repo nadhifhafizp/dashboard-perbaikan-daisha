@@ -275,8 +275,8 @@ export default function SparepartsAnalyticsDashboard({
         {/* Chart 1: Fast-Moving Parts (Bar Chart) */}
         <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <TrendingDown className="w-4 h-4 text-red-600" />
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+              <TrendingDown className="w-6 h-6 sm:w-7 sm:h-7 text-red-600 shrink-0" />
               <span>Top 5 Komponen Terpakai (Fast-Moving)</span>
             </h3>
           </div>
@@ -311,8 +311,8 @@ export default function SparepartsAnalyticsDashboard({
 
         {/* Chart 2: Komposisi Volume Stok per Kategori (Donut Chart) */}
         <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 space-y-4 flex flex-col justify-between">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Layers className="w-4 h-4 text-slate-500" />
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+            <Layers className="w-6 h-6 sm:w-7 sm:h-7 text-slate-600 shrink-0" />
             <span>Stok per Kategori</span>
           </h3>
 
@@ -373,15 +373,15 @@ export default function SparepartsAnalyticsDashboard({
       {metrics.criticalItems.length > 0 && (
         <div className="bg-white rounded-xl border border-red-200/90 overflow-hidden">
           <div className="p-4 bg-red-50/60 border-b border-red-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center">
-                <AlertTriangle className="w-4 h-4" />
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-red-100 text-red-700 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-red-950">
+                <h4 className="text-xl sm:text-2xl font-bold text-red-950 tracking-tight">
                   {metrics.criticalItems.length} item perlu restock
                 </h4>
-                <p className="text-xs text-red-800">
+                <p className="text-sm sm:text-base text-red-800 font-medium">
                   Stok habis atau mendekati batas minimum
                 </p>
               </div>

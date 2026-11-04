@@ -267,8 +267,8 @@ export default function RequestAnalyticsDashboard({
         {/* Chart 1: Volume Request per Seksi (Horizontal / Bar Chart) */}
         <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-slate-500" />
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+              <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-slate-600 shrink-0" />
               <span>Permohonan per Seksi</span>
             </h3>
             <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 tabular-nums">
@@ -306,8 +306,8 @@ export default function RequestAnalyticsDashboard({
 
         {/* Chart 2: Distribusi Tujuan Permohonan (Donut Chart) */}
         <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 space-y-4 flex flex-col justify-between">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Target className="w-4 h-4 text-slate-500" />
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+            <Target className="w-6 h-6 sm:w-7 sm:h-7 text-slate-600 shrink-0" />
             <span>Tujuan Permohonan</span>
           </h3>
 
@@ -363,8 +363,8 @@ export default function RequestAnalyticsDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Pipeline Bottleneck / Alur Tahapan */}
         <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200/60 p-4.5 sm:p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-blue-600" />
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+            <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 shrink-0" />
             <span>Tahapan Alur Pengerjaan (Pipeline)</span>
           </h3>
 
@@ -415,8 +415,8 @@ export default function RequestAnalyticsDashboard({
 
         {/* Tingkat Urgensi Request */}
         <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200/90 p-4.5 sm:p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+            <AlertTriangle className="w-6 h-6 sm:w-7 sm:h-7 text-amber-500 shrink-0" />
             <span>Prioritas Urgensi</span>
           </h3>
 

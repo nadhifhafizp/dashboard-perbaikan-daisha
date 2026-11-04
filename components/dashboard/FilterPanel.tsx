@@ -79,12 +79,12 @@ export default function FilterPanel({
     <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3.5">
       {/* Top Bar: Title, Count, Quick Presets & Actions */}
       <div className="flex flex-wrap justify-between items-center gap-3 border-b border-slate-100 pb-2.5">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className="w-4 h-4 text-slate-500" />
-          <h2 className="t-card text-slate-900 flex items-center gap-1.5">
+        <div className="flex items-center gap-3">
+          <SlidersHorizontal className="w-6 h-6 sm:w-7 sm:h-7 text-slate-700 shrink-0" />
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <span>Filter Data</span>
             {activeFilterCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200/60">
+              <span className="px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-semibold bg-red-50 text-red-700 border border-red-200/60">
                 {activeFilterCount} aktif
               </span>
             )}

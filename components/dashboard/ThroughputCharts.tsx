@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   ComposedChart,
   BarChart,
@@ -66,14 +66,6 @@ export default function ThroughputCharts({
   const [timelineScale, setTimelineScale] = useState<'7days' | '14days' | 'monthly'>('7days');
   // Orientasi batang: 'opposing' (Masuk di atas, Selesai di bawah) vs 'sideBySide' (berdampingan)
   const [chartOrientation, setChartOrientation] = useState<'opposing' | 'sideBySide'>('opposing');
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Siapkan data timeline bulanan jika mode bulanan dipilih
   const timelineMonthlyData = chartTrenBulanan.map((b) => ({
@@ -319,18 +311,10 @@ export default function ThroughputCharts({
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis
                   dataKey="tanggal"
-                  interval={0}
-                  tick={{
-                    fontSize: timelineScale === '14days' ? (isMobile ? 9 : 11) : 12,
-                    fill: '#0f172a',
-                    fontWeight: 800,
-                  }}
-                  angle={isMobile && timelineScale === '14days' ? -45 : 0}
-                  textAnchor={isMobile && timelineScale === '14days' ? 'end' : 'middle'}
-                  height={isMobile && timelineScale === '14days' ? 50 : (chartOrientation === 'opposing' ? 36 : 28)}
+                  tick={{ fontSize: 12, fill: '#0f172a', fontWeight: 800 }}
                   axisLine={{ stroke: '#cbd5e1' }}
                   tickLine={false}
-                  dy={chartOrientation === 'opposing' ? (isMobile && timelineScale === '14days' ? 6 : 14) : 6}
+                  dy={chartOrientation === 'opposing' ? 14 : 6}
                 />
                 {/* Sumbu Y Kiri: Volume Daisha (Atas Masuk ↑, Bawah Selesai ↓) */}
                 <YAxis

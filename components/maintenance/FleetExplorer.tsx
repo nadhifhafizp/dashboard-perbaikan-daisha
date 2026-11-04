@@ -271,13 +271,13 @@ export default function FleetExplorer({
       <div className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 space-y-4">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 pb-3 border-b border-slate-100">
           <div>
-            <h2 id="fleet-explorer-heading" className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <h2 id="fleet-explorer-heading" className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
               <span>Armada Daisha</span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 tabular-nums">
+              <span className="text-xs sm:text-sm font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 tabular-nums">
                 {filteredUnits.length} Unit
               </span>
             </h2>
-            <p className="text-xs text-slate-600 mt-0.5">
+            <p className="text-sm sm:text-base text-slate-600 font-medium mt-0.5">
               Status pemeliharaan berkala tahun {currentYear}
             </p>
           </div>

@@ -159,7 +159,7 @@ export default function DamageCharts({
         <div className="lg:col-span-6 bg-white p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
           <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-slate-100">
             <div className="flex justify-between items-center">
-              <h4 className="text-lg sm:text-xl font-bold text-slate-900">
+              <h4 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Top Komponen
               </h4>
               <span className="text-xs sm:text-sm font-medium text-slate-500">
@@ -247,7 +247,7 @@ export default function DamageCharts({
         <div className="lg:col-span-6 bg-white p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
           <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-slate-100">
             <div className="flex justify-between items-center">
-              <h4 className="text-lg sm:text-xl font-bold text-slate-900">
+              <h4 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Top Gejala
               </h4>
               <span className="text-xs sm:text-sm font-medium text-slate-500">
@@ -329,7 +329,7 @@ export default function DamageCharts({
       <div className="bg-white p-5 rounded-xl border border-slate-200/60 shadow-xs">
         <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-slate-100">
           <div className="flex flex-wrap justify-between items-center gap-2">
-            <h4 className="text-lg sm:text-xl font-bold text-slate-900">
+            <h4 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
               Proporsi Tindakan
             </h4>
             <span className="text-xs sm:text-sm font-semibold text-slate-500">

@@ -89,11 +89,11 @@ export default function PmMeetingCharts({
               <div>
                 <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                      <Truck className="w-4 h-4 text-emerald-600" />
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+                      <Truck className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-600 shrink-0" />
                       <span>Realisasi PM per Jenis Daisha</span>
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-sm sm:text-base text-slate-500 font-medium mt-0.5">
                       Perbandingan armada Sudah di-PM (Hijau) vs Belum di-PM (Merah)
                     </p>
                   </div>
@@ -207,11 +207,11 @@ export default function PmMeetingCharts({
               <div>
                 <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                      <TrendingUp className="w-4 h-4 text-sky-600" />
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+                      <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 text-sky-600 shrink-0" />
                       <span>Tren Kinerja Harian Workshop (14 Hari)</span>
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-sm sm:text-base text-slate-500 font-medium mt-0.5">
                       Konsistensi pencapaian target harian wajib vs realisasi pengerjaan aktual
                     </p>
                   </div>
@@ -361,11 +361,11 @@ export default function PmMeetingCharts({
         <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <PieIcon className="w-4 h-4 text-emerald-600" />
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+                <PieIcon className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-600 shrink-0" />
                 <span>Indikator Donat Proporsi PM & Kesehatan Armada</span>
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-sm sm:text-base text-slate-500 font-medium mt-0.5">
                 Rasio visual capaian kepatuhan tahun berjalan dan persentase kesiapan fisik armada pabrik
               </p>
             </div>
