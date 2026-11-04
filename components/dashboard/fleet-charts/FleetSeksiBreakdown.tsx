@@ -37,13 +37,13 @@ export default function FleetSeksiBreakdown({
     <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div>
-          <div className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-red-600" />
+          <div className="flex items-center gap-3">
+            <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-red-600 shrink-0" />
             <div>
-              <h3 className="t-section text-slate-900 tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 KPI Jumlah Daisha dari Setiap Seksi
               </h3>
-              <p className="t-caption text-slate-500">
+              <p className="text-sm sm:text-base text-slate-500 font-medium">
                 Perbandingan total populasi armada, rasio unit OKE (siap pakai) dan NG (dalam perbaikan) per seksi
               </p>
             </div>

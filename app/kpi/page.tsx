@@ -691,10 +691,10 @@ function KpiDashboardContent() {
             {/* Filter Detail Riwayat Perbaikan */}
             <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-4">
               <div>
-                <h3 className="t-section text-slate-900 tracking-tight">
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                   {userSeksi ? `Diagnostik Kerusakan & Servis Seksi ${userSeksi}` : 'Diagnostik Kerusakan, Throughput Bengkel & Sparepart'}
                 </h3>
-                <p className="t-caption text-slate-500">
+                <p className="text-sm sm:text-base text-slate-500 font-medium">
                   {userSeksi
                     ? `Analitik riwayat perbaikan armada dan tren penanganan kerusakan khusus Seksi ${userSeksi}`
                     : 'Filter detail riwayat perbaikan untuk melihat tren lead time, komponen kritis, dan frekuensi servis seksi'}

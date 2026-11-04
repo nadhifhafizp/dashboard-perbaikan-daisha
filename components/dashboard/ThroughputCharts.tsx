@@ -159,13 +159,13 @@ export default function ThroughputCharts({
       <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 shadow-2xs">
         <div>
           <div className="flex flex-wrap justify-between items-center gap-3 mb-2">
-            <div className="flex items-center gap-2.5">
-              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600 shrink-0" />
+            <div className="flex items-center gap-3">
+              <TrendingUp className="w-7 h-7 sm:w-8 sm:h-8 text-slate-700 shrink-0" />
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                   Data Servis Masuk, Servis Selesai, dan Backlog (Akumulasi)
                 </h3>
-                <span className="text-xs sm:text-sm text-slate-500 font-medium">
+                <span className="text-sm sm:text-base text-slate-500 font-medium">
                   {timelineScale === '7days' ? '7 Hari Terakhir' : timelineScale === '14days' ? '14 Hari Terakhir' : 'Akumulasi Bulanan'} • Grafik Masuk (Atas) vs Selesai (Bawah)
                 </span>
                 <ActiveFilterBadge filters={activeFilters} />
@@ -502,9 +502,9 @@ export default function ThroughputCharts({
         {/* 2. Diagram Donat: Status pipeline */}
         <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
           <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <PieIcon className="w-5 h-5 text-slate-600 shrink-0" />
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+            <div className="flex items-center gap-3">
+              <PieIcon className="w-6 h-6 sm:w-7 sm:h-7 text-slate-700 shrink-0" />
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Status Tiket
               </h3>
             </div>
@@ -612,9 +612,9 @@ export default function ThroughputCharts({
           <div>
             <div className="flex flex-wrap justify-between items-start gap-3 mb-2 pb-2 border-b border-slate-100">
               <div>
-                <div className="flex items-center gap-2.5">
-                  <Clock className="w-5 h-5 text-slate-600 shrink-0" />
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-6 h-6 sm:w-7 sm:h-7 text-slate-700 shrink-0" />
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                     Durasi Perbaikan
                   </h3>
                 </div>

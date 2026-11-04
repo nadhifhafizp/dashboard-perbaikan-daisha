@@ -37,13 +37,13 @@ export default function FleetJenisDonutGrid({
       {/* Header Section Kontrol & Filter */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div>
-          <div className="flex items-center gap-2">
-            <Truck className="w-5 h-5 text-red-600" />
+          <div className="flex items-center gap-3">
+            <Truck className="w-6 h-6 sm:w-7 sm:h-7 text-red-600 shrink-0" />
             <div>
-              <h3 className="t-section text-slate-900 tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Kondisi per Jenis Daisha
               </h3>
-              <p className="t-caption text-slate-500">
+              <p className="text-sm sm:text-base text-slate-500 font-medium">
                 {currentSeksi && currentSeksi !== 'all'
                   ? `Proporsi siap operasi vs dalam perbaikan jenis armada Seksi ${currentSeksi}`
                   : 'Proporsi siap operasi vs dalam perbaikan per kategori armada'}

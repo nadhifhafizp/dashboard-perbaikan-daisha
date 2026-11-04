@@ -60,15 +60,15 @@ export default function DaishaCharts({
       {/* 1. Header Card */}
       <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-slate-100">
         <div className="flex flex-wrap justify-between items-center gap-3">
-          <div className="flex items-center gap-2.5">
-            {activeMode === 'unit' ? <Truck className="w-5 h-5 text-slate-600 shrink-0" /> : <Layers className="w-5 h-5 text-slate-600 shrink-0" />}
+          <div className="flex items-center gap-3">
+            {activeMode === 'unit' ? <Truck className="w-6 h-6 sm:w-7 sm:h-7 text-slate-700 shrink-0" /> : <Layers className="w-6 h-6 sm:w-7 sm:h-7 text-slate-700 shrink-0" />}
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 {activeMode === 'unit'
                   ? 'Unit Sering Masuk'
                   : 'Model Sering Masuk'}
               </h3>
-              <span className="text-xs sm:text-sm text-slate-500 font-medium">
+              <span className="text-sm sm:text-base text-slate-500 font-medium">
                 {activeMode === 'unit' ? 'Top 10 Nomor Unit Fisik' : 'Top 10 Kategori Model'}
               </span>
             </div>

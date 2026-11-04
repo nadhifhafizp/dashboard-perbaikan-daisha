@@ -32,17 +32,17 @@ export default function FleetMasterOverview({
     <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-xs">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div>
-          <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-red-50 text-red-600 border border-red-100">
-              <PieIcon className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 rounded-lg bg-red-50 text-red-600 border border-red-100">
+              <PieIcon className="w-6 h-6" />
             </span>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 {currentSeksi && currentSeksi !== 'all'
                   ? `KPI Jumlah Daisha - Seksi ${currentSeksi}`
                   : 'KPI Jumlah Seluruh Daisha di Bridgestone'}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium">
+              <p className="text-sm sm:text-base text-slate-500 font-medium">
                 Data populasi armada fisik dan 2 status utama (OKE vs NG) diambil dari data perbaikan daisha dan seksi
               </p>
             </div>
