@@ -453,23 +453,27 @@ export default function ThroughputCharts({
                   <LabelList
                     dataKey={chartOrientation === 'opposing' ? 'SelesaiNeg' : 'Selesai'}
                     content={(props: any) => {
-                      const vx = props.viewBox;
-                      const num = Math.abs(Number(props.value));
-                      if (!num || isNaN(num) || !vx) return null;
+                      const vx = props.viewBox || {};
+                      const rawVal =
+                        props.value ??
+                        props.payload?.[chartOrientation === 'opposing' ? 'SelesaiNeg' : 'Selesai'] ??
+                        props.payload?.Selesai;
+                      const num = Math.abs(Number(rawVal));
+                      if (!num || isNaN(num)) return null;
 
-                      const barX = Number(vx.x ?? props.x ?? 0);
-                      const barY = Number(vx.y ?? props.y ?? 0);
-                      const barW = Number(vx.width ?? props.width ?? 0);
-                      const barH = Number(vx.height ?? props.height ?? 0);
-                      const centerX = barX + barW / 2;
+                      const rawY = Number(props.y ?? vx.y ?? 0);
+                      const rawH = Number(props.height ?? vx.height ?? 0);
+                      const rawX = Number(props.x ?? vx.x ?? 0);
+                      const rawW = Number(props.width ?? vx.width ?? 0);
+                      const centerX = rawX + rawW / 2;
 
                       if (chartOrientation === 'opposing') {
                         // Posisi label angka berada tepat di BAWAH ujung batang hijau yang menjulur ke bawah
-                        const bottomY = barY + barH + 16;
+                        const bottomEdgeY = Math.max(rawY, rawY + rawH);
                         return (
                           <text
                             x={centerX}
-                            y={bottomY}
+                            y={bottomEdgeY + 16}
                             fill="#059669"
                             textAnchor="middle"
                             fontSize={13}
@@ -481,10 +485,11 @@ export default function ThroughputCharts({
                       }
 
                       // Mode Berdampingan (naik ke atas): posisi label di atas batang
+                      const topEdgeY = Math.min(rawY, rawY + rawH);
                       return (
                         <text
                           x={centerX}
-                          y={barY - 6}
+                          y={topEdgeY - 6}
                           fill="#059669"
                           textAnchor="middle"
                           fontSize={13}
