@@ -318,6 +318,7 @@ export default function ThroughputCharts({
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={processedTimelineData}
+                stackOffset={chartOrientation === 'opposing' ? 'sign' : 'none'}
                 margin={{ top: 25, right: 35, left: -5, bottom: chartOrientation === 'opposing' ? 28 : 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
