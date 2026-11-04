@@ -429,6 +429,7 @@ export default function ThroughputCharts({
                   fill="#dc2626"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={65}
+                  stackId={chartOrientation === 'opposing' ? 'opposingFlow' : undefined}
                   isAnimationActive={false}
                 >
                   <LabelList
@@ -440,7 +441,7 @@ export default function ThroughputCharts({
                   />
                 </Bar>
 
-                {/* Batang Selesai Perbaikan (Di Bawah Garis 0 saat opposing, atau Berdampingan saat sideBySide) */}
+                {/* Batang Selesai Perbaikan (Di Bawah Garis 0 saat opposing, sejajar lurus dengan batang merah) */}
                 <Bar
                   yAxisId="left"
                   dataKey={chartOrientation === 'opposing' ? 'SelesaiNeg' : 'Selesai'}
@@ -448,6 +449,7 @@ export default function ThroughputCharts({
                   fill="#059669"
                   radius={chartOrientation === 'opposing' ? [0, 0, 4, 4] : [4, 4, 0, 0]}
                   maxBarSize={65}
+                  stackId={chartOrientation === 'opposing' ? 'opposingFlow' : undefined}
                   isAnimationActive={false}
                 >
                   <LabelList
