@@ -213,7 +213,7 @@ export default function LaporRusakSeksiPage() {
         setFeedback({
           isOpen: true,
           type: 'success',
-          title: 'Laporan Kerusakan Terkirim!',
+          title: 'Laporan Kerusakan Terkirim',
           message: `Daisha ${cleanNoDaisha} (${finalNamaDaisha}) dari Seksi ${activeSeksi} telah masuk ke antrean bengkel maintenance dengan ID Tiket ${cleanIdTiket}.`,
           actionLabel: 'Lihat Antrean Bengkel',
           onAction: () => router.push('/riwayat'),

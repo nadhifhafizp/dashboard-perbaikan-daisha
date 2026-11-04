@@ -125,7 +125,7 @@ export default function HandoverBatchForm({
                   onAddManualUnits();
                 }
               }}
-              placeholder="Ketik atau paste nomor Daisha (contoh: M021, M055, M104) lalu tekan Enter…"
+              placeholder="Ketik atau paste nomor Daisha (contoh: M021, M055, M104) lalu tekan Enter..."
               className="w-full h-10 px-3.5 text-xs border border-slate-300 rounded-xl focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600/20 focus-visible:border-emerald-600 font-medium text-slate-900 bg-slate-50/50 hover:bg-white"
             />
             {manualInputText && (
@@ -280,7 +280,7 @@ export default function HandoverBatchForm({
             autoComplete="off"
             value={lokasiPenjemputan}
             onChange={(e) => setLokasiPenjemputan(e.target.value)}
-            placeholder="Contoh: Staging Area Line 2 Building depan Bay 4…"
+            placeholder="Contoh: Staging Area Line 2 Building depan Bay 4..."
             className="w-full h-9 px-3 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600/20 focus-visible:border-emerald-600 font-medium text-slate-900"
             required
           />
@@ -301,7 +301,7 @@ export default function HandoverBatchForm({
             autoComplete="off"
             value={catatan}
             onChange={(e) => setCatatan(e.target.value)}
-            placeholder="Contoh: Unit sudah bersih dari muatan, rem roda terkunci, siap ditarik shift 1…"
+            placeholder="Contoh: Unit sudah bersih dari muatan, rem roda terkunci, siap ditarik shift 1..."
             className="w-full h-9 px-3 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600/20 focus-visible:border-emerald-600 text-slate-800"
           />
         </div>
@@ -324,7 +324,7 @@ export default function HandoverBatchForm({
                   className="w-3.5 h-3.5 animate-spin"
                   aria-hidden="true"
                 />
-                <span>Mengirim Notifikasi…</span>
+                <span>Mengirim Notifikasi...</span>
               </>
             ) : (
               <>

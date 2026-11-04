@@ -431,7 +431,7 @@ export function usePmHandover({
         setFeedback({
           isOpen: true,
           type: 'success',
-          title: 'Pengingat Berhasil Dikirim ke Workshop!',
+          title: 'Pengingat Berhasil Dikirim ke Workshop',
           message: `${selectedUnits.length} Daisha (${selectedUnits.join(
             ', '
           )}) telah dicatat siap dijemput di: "${lokasiPenjemputan.trim()}". Notifikasi telah diteruskan ke bengkel.`,

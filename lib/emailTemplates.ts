@@ -125,7 +125,7 @@ export function buildAtasanSpecialProjectEmailContent({
     const subject = `[ASSIGN S.PROJECT] Permohonan ${nomorRequest} Disanggupi Workshop - Mohon Persetujuan Atasan Special Project`;
     const bodyText = `Yth. Atasan Special Project (8210 / 820),
 
-PIC Workshop Produksi telah mengevaluasi dan MENYANGGUPI permohonan pengerjaan berikut:
+PIC Workshop Produksi telah mengevaluasi dan menyanggupi permohonan pengerjaan berikut:
 
 - No. Request: ${nomorRequest}
 - Seksi Pemohon: ${seksiPemohon} (Drafter: ${picPemohon})
@@ -149,10 +149,10 @@ PT Bridgestone Tire Indonesia - Sistem Workshop Management`;
     const mailtoUrl = `mailto:${encodeURIComponent(toEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
     return { toEmail, subject, bodyText, mailtoUrl };
   } else {
-    const subject = `[INFO S.PROJECT] Permohonan ${nomorRequest} TIDAK DISANGGUPI / DITOLAK oleh Workshop`;
+    const subject = `[INFO S.PROJECT] Permohonan ${nomorRequest} Tidak Disanggupi / Ditolak oleh Workshop`;
     const bodyText = `Yth. Atasan Special Project (8210 / 820),
 
-Diberitahukan bahwa permohonan pengerjaan berikut TIDAK DISANGGUPI / DITOLAK oleh PIC Workshop Produksi:
+Diberitahukan bahwa permohonan pengerjaan berikut tidak disanggupi / ditolak oleh PIC Workshop Produksi:
 
 - No. Request: ${nomorRequest}
 - Seksi Pemohon: ${seksiPemohon} (Drafter: ${picPemohon})

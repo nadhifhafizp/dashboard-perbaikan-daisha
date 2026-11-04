@@ -758,7 +758,7 @@ export default function RiwayatLaporanPage() {
                 autoComplete="off"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Cari tiket, seksi, atau pelapor…"
+                placeholder="Cari tiket, seksi, atau pelapor..."
                 aria-label="Cari tiket, seksi, atau pelapor"
                 className="w-full h-10 pl-8 pr-8 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 font-normal placeholder-slate-400 focus:bg-white focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 transition"
               />

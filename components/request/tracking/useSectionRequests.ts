@@ -300,7 +300,7 @@ export function useSectionRequests() {
       }
       showFeedback(
         'success',
-        'Berhasil Dihapus',
+        'Request Berhasil Dihapus',
         `Request ${requestToDelete.nomorRequest} berhasil dihapus.`
       );
       setRequestToDelete(null);

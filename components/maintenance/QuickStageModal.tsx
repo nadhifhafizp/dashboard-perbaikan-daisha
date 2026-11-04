@@ -177,7 +177,7 @@ export default function QuickStageModal({
               autoComplete="off"
               value={lokasi}
               onChange={(e) => setLokasi(e.target.value)}
-              placeholder="Contoh: Staging Area Line 2 depan Bay 4…"
+              placeholder="Contoh: Staging Area Line 2 depan Bay 4..."
               className="w-full h-9 px-3 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600/20 focus-visible:border-emerald-600 font-medium text-slate-900"
               required
             />
@@ -198,7 +198,7 @@ export default function QuickStageModal({
               autoComplete="off"
               value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
-              placeholder="Contoh: Unit sudah kosong, rem roda terkunci…"
+              placeholder="Contoh: Unit sudah kosong, rem roda terkunci..."
               className="w-full h-9 px-3 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600/20 focus-visible:border-emerald-600 text-slate-800"
             />
           </div>
@@ -228,7 +228,7 @@ export default function QuickStageModal({
               {submitting ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                  <span>Mengirim…</span>
+                  <span>Mengirim...</span>
                 </>
               ) : (
                 <>

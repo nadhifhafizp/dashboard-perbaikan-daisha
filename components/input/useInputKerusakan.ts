@@ -313,7 +313,7 @@ export function useInputKerusakan() {
     });
 
     if (!validation.valid) {
-      showFeedback('error', 'Validasi Form', validation.error || 'Harap periksa kelengkapan form.');
+      showFeedback('error', 'Data Belum Lengkap', validation.error || 'Periksa kembali kelengkapan data formulir sebelum menyimpan.');
       return;
     }
 

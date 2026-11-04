@@ -143,12 +143,12 @@ export default function SparepartsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        showFeedback('success', 'Berhasil', data.message);
+        showFeedback('success', 'Komponen Berhasil Ditambahkan', data.message);
         setShowAddModal(false);
         setAddForm({ namaKomponen: '', kategori: 'Umum', stokGudang: 0, satuan: 'pcs', minStok: 0, lokasi: '' });
         void fetchSpareparts();
       } else {
-        showFeedback('error', 'Gagal', data.error);
+        showFeedback('error', 'Gagal Menambah Komponen', data.error || 'Terjadi kesalahan sistem.');
       }
     } catch { showFeedback('error', 'Koneksi Terputus', 'Gagal menghubungi server.'); }
     finally { setSubmitting(false); }
@@ -170,7 +170,7 @@ export default function SparepartsPage() {
         setShowRestockModal(false);
         setMutasiForm({ qty: 0, referensi: '', keterangan: '' });
         void fetchSpareparts();
-      } else { showFeedback('error', 'Gagal', data.error); }
+      } else { showFeedback('error', 'Gagal Restock Komponen', data.error || 'Terjadi kesalahan sistem.'); }
     } catch { showFeedback('error', 'Koneksi Terputus', 'Gagal menghubungi server.'); }
     finally { setSubmitting(false); }
   };
@@ -191,7 +191,7 @@ export default function SparepartsPage() {
         setShowUseModal(false);
         setMutasiForm({ qty: 0, referensi: '', keterangan: '' });
         void fetchSpareparts();
-      } else { showFeedback('error', 'Gagal', data.error); }
+      } else { showFeedback('error', 'Gagal Mencatat Pengeluaran', data.error || 'Terjadi kesalahan sistem.'); }
     } catch { showFeedback('error', 'Koneksi Terputus', 'Gagal menghubungi server.'); }
     finally { setSubmitting(false); }
   };
@@ -207,10 +207,10 @@ export default function SparepartsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        showFeedback('success', 'Dihapus', data.message);
+        showFeedback('success', 'Komponen Berhasil Dihapus', data.message);
         setPartToDelete(null);
         void fetchSpareparts();
-      } else { showFeedback('error', 'Gagal', data.error); }
+      } else { showFeedback('error', 'Gagal Menghapus Komponen', data.error || 'Terjadi kesalahan sistem.'); }
     } catch { showFeedback('error', 'Koneksi Terputus', 'Gagal menghubungi server.'); }
   };
 
@@ -351,7 +351,7 @@ export default function SparepartsPage() {
                 autoComplete="off"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Cari komponen…"
+                placeholder="Cari komponen..."
                 aria-label="Cari nama komponen suku cadang"
                 className="h-10 pl-8 pr-3 border border-slate-200 rounded-lg text-xs bg-white focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:border-red-600 w-full sm:w-56 text-slate-800 transition"
               />

@@ -547,7 +547,7 @@ function MaintenanceModuleContent() {
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center gap-3">
           <div className="w-8 h-8 border-3 border-red-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs text-slate-500 font-medium">Memuat data analitik PM {activeSeksi ? `Seksi ${activeSeksi}` : ''}…</p>
+          <p className="text-xs text-slate-500 font-medium">Memuat data analitik PM {activeSeksi ? `Seksi ${activeSeksi}` : ''}...</p>
         </div>
       ) : (
         <>

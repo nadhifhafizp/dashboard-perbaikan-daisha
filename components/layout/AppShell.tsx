@@ -71,7 +71,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           confirmText="Keluar dari Akun"
           cancelText="Tetap di Sini"
           isLoading={isLoggingOut}
-          loadingText="Keluar dari sesi…"
+          loadingText="Keluar dari sesi..."
           onConfirm={executeLogout}
           onCancel={closeLogoutModal}
         />
@@ -150,7 +150,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         confirmText="Keluar dari Akun"
         cancelText="Tetap di Sini"
         isLoading={isLoggingOut}
-        loadingText="Keluar dari sesi…"
+        loadingText="Keluar dari sesi..."
         onConfirm={executeLogout}
         onCancel={closeLogoutModal}
       />
