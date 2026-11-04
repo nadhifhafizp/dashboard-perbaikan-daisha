@@ -429,10 +429,12 @@ export default function ThroughputCharts({
                   fill="#dc2626"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={65}
+                  isAnimationActive={false}
                 >
                   <LabelList
                     dataKey="Masuk"
                     position="top"
+                    offset={6}
                     formatter={(val: unknown) => (Number(val) > 0 ? String(val) : '')}
                     style={{ fontSize: 13, fontWeight: 900, fill: '#dc2626' }}
                   />
@@ -446,20 +448,28 @@ export default function ThroughputCharts({
                   fill="#059669"
                   radius={chartOrientation === 'opposing' ? [0, 0, 4, 4] : [4, 4, 0, 0]}
                   maxBarSize={65}
+                  isAnimationActive={false}
                 >
                   <LabelList
                     dataKey={chartOrientation === 'opposing' ? 'SelesaiNeg' : 'Selesai'}
                     content={(props: any) => {
-                      const { x, y, width, height, value } = props;
-                      const num = Math.abs(Number(value));
-                      if (!num || isNaN(num)) return null;
+                      const vx = props.viewBox;
+                      const num = Math.abs(Number(props.value));
+                      if (!num || isNaN(num) || !vx) return null;
+
+                      const barX = Number(vx.x ?? props.x ?? 0);
+                      const barY = Number(vx.y ?? props.y ?? 0);
+                      const barW = Number(vx.width ?? props.width ?? 0);
+                      const barH = Number(vx.height ?? props.height ?? 0);
+                      const centerX = barX + barW / 2;
 
                       if (chartOrientation === 'opposing') {
-                        // Posisi label angka berada di BAWAH ujung batang hijau yang menjulur ke bawah
+                        // Posisi label angka berada tepat di BAWAH ujung batang hijau yang menjulur ke bawah
+                        const bottomY = barY + barH + 16;
                         return (
                           <text
-                            x={Number(x) + Number(width) / 2}
-                            y={Number(y) + Number(height) + 15}
+                            x={centerX}
+                            y={bottomY}
                             fill="#059669"
                             textAnchor="middle"
                             fontSize={13}
@@ -470,10 +480,11 @@ export default function ThroughputCharts({
                         );
                       }
 
+                      // Mode Berdampingan (naik ke atas): posisi label di atas batang
                       return (
                         <text
-                          x={Number(x) + Number(width) / 2}
-                          y={Number(y) - 6}
+                          x={centerX}
+                          y={barY - 6}
                           fill="#059669"
                           textAnchor="middle"
                           fontSize={13}
