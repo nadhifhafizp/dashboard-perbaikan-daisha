@@ -454,53 +454,13 @@ export default function ThroughputCharts({
                 >
                   <LabelList
                     dataKey={chartOrientation === 'opposing' ? 'SelesaiNeg' : 'Selesai'}
-                    content={(props: any) => {
-                      const vx = props.viewBox || {};
-                      const rawVal =
-                        props.value ??
-                        props.payload?.[chartOrientation === 'opposing' ? 'SelesaiNeg' : 'Selesai'] ??
-                        props.payload?.Selesai;
-                      const num = Math.abs(Number(rawVal));
-                      if (!num || isNaN(num)) return null;
-
-                      const rawY = Number(props.y ?? vx.y ?? 0);
-                      const rawH = Number(props.height ?? vx.height ?? 0);
-                      const rawX = Number(props.x ?? vx.x ?? 0);
-                      const rawW = Number(props.width ?? vx.width ?? 0);
-                      const centerX = rawX + rawW / 2;
-
-                      if (chartOrientation === 'opposing') {
-                        // Di Recharts, props.y / vx.y pada bar negatif sudah merupakan koordinat ujung paling bawah batang
-                        // Tambahkan 16px ke bawah agar label angka tepat berada di bawah ujung batang hijau
-                        const targetY = rawY + 16;
-                        return (
-                          <text
-                            x={centerX}
-                            y={targetY}
-                            fill="#059669"
-                            textAnchor="middle"
-                            fontSize={13}
-                            fontWeight={900}
-                          >
-                            {num}
-                          </text>
-                        );
-                      }
-
-                      // Mode Berdampingan (naik ke atas): posisi label di atas batang
-                      return (
-                        <text
-                          x={centerX}
-                          y={rawY - 6}
-                          fill="#059669"
-                          textAnchor="middle"
-                          fontSize={13}
-                          fontWeight={900}
-                        >
-                          {num}
-                        </text>
-                      );
+                    position={chartOrientation === 'opposing' ? 'bottom' : 'top'}
+                    offset={6}
+                    formatter={(val: unknown) => {
+                      const num = Math.abs(Number(val));
+                      return num > 0 ? String(num) : '';
                     }}
+                    style={{ fontSize: 13, fontWeight: 900, fill: '#059669' }}
                   />
                 </Bar>
 
