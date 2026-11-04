@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { Truck, Search, ArrowUpDown } from 'lucide-react';
+import { Truck, Search, ArrowUpDown, Wrench, Layers, Hash, ChevronDown, ChevronUp } from 'lucide-react';
 import { JenisHealthItem } from './types';
 
 interface FleetJenisDonutGridProps {
@@ -141,9 +141,14 @@ export default function FleetJenisDonutGrid({
                       <h4 className="text-sm font-black text-slate-900 truncate" title={item.nama}>
                         {item.nama}
                       </h4>
-                      <span className="text-xs text-slate-500 font-medium block truncate mt-0.5">
-                        {item.seksiList.join(', ') || 'Semua Seksi'}
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          {item.seksi || (item.seksiList && item.seksiList[0]) || 'Building'}
+                        </span>
+                        <span className="text-xs text-slate-500 font-medium truncate">
+                          {item.total.toLocaleString('id-ID')} Total Unit
+                        </span>
+                      </div>
                     </div>
 
                     {item.broken > 0 ? (
@@ -157,16 +162,56 @@ export default function FleetJenisDonutGrid({
                     )}
                   </div>
 
-                  {/* Donut Chart Khusus untuk Jenis Daisha Ini - DIBESARKAN */}
-                  <div className="h-[180px] w-full relative flex items-center justify-center mt-2">
+                  {/* Rentang Nomor Seri & Varian Resmi dari Katalog */}
+                  {item.variants && item.variants.length > 0 ? (
+                    <div className="mt-2 px-2.5 py-1.5 rounded-lg bg-slate-50/80 border border-slate-200/80 text-[11px] space-y-1">
+                      <div className="flex items-center justify-between text-slate-700 font-bold">
+                        <span className="inline-flex items-center gap-1 text-[10px]">
+                          <Hash className="w-3 h-3 text-slate-500" />
+                          <span>Varian & Nomor ({item.variants.length})</span>
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-mono font-medium">
+                          {item.variants.reduce((a, b) => a + (Number(b.totalUnits) || 0), 0)} unit
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto scrollbar-none">
+                        {item.variants.map((v) => (
+                          <span
+                            key={v.id || v.name}
+                            className="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-700 text-[10px] font-mono font-semibold"
+                            title={`${v.name}: ${v.rangeFormat || (v.codePrefix ? `${v.codePrefix}...` : '')} (${v.totalUnits} unit)`}
+                          >
+                            {v.ukuran && v.ukuran !== 'NONE' ? `[${v.ukuran}] ` : ''}
+                            {v.rangeFormat || (v.codePrefix ? `${v.codePrefix} (${v.totalUnits}u)` : `${v.name} (${v.totalUnits}u)`)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : item.codePrefix ? (
+                    <div className="mt-2 px-2.5 py-1.5 rounded-lg bg-slate-50/80 border border-slate-200/80 text-[11px] flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1 text-[10px] text-slate-700 font-bold">
+                        <Hash className="w-3 h-3 text-slate-500" />
+                        <span>Prefix Nomor:</span>
+                        <span className="font-mono text-slate-900 bg-white px-1.5 py-0.2 rounded border border-slate-200 font-bold">
+                          {item.codePrefix}
+                        </span>
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        {item.total.toLocaleString('id-ID')} unit
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {/* Donut Chart Khusus untuk Jenis Daisha Ini */}
+                  <div className="h-[160px] w-full relative flex items-center justify-center mt-2">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={donutData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
-                          outerRadius={72}
+                          innerRadius={45}
+                          outerRadius={65}
                           paddingAngle={item.broken > 0 ? 3 : 0}
                           dataKey="value"
                           isAnimationActive={false}
@@ -193,7 +238,7 @@ export default function FleetJenisDonutGrid({
                       <span className="text-xl sm:text-2xl font-black text-slate-900 tabular-nums">
                         {item.pctReady.toFixed(0)}%
                       </span>
-                      <span className="text-xs font-bold text-slate-600 mt-0.5">
+                      <span className="text-[11px] font-bold text-slate-600 mt-0.5">
                         {item.total.toLocaleString('id-ID')} Unit
                       </span>
                     </div>
@@ -201,26 +246,65 @@ export default function FleetJenisDonutGrid({
                 </div>
 
                 {/* Footer Rincian Siap Operasi vs Dalam Perbaikan */}
-                <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 text-xs sm:text-sm mt-2">
-                  <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-center">
-                    <span className="text-xs text-emerald-800 block font-bold">Siap Operasi</span>
-                    <span className="font-black text-emerald-900 text-sm sm:text-base tabular-nums">
-                      {item.ready.toLocaleString('id-ID')}
-                    </span>
+                <div className="space-y-2 mt-2">
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs sm:text-sm">
+                    <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-center">
+                      <span className="text-[11px] text-emerald-800 block font-bold">Siap Operasi</span>
+                      <span className="font-black text-emerald-900 text-sm sm:text-base tabular-nums">
+                        {item.ready.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+
+                    <div
+                      className={`p-2 rounded-lg text-center border ${
+                        item.broken > 0
+                          ? 'bg-red-50 text-red-800 border-red-300'
+                          : 'bg-slate-50 text-slate-600 border-slate-200'
+                      }`}
+                    >
+                      <span className="text-[11px] block font-bold">Perbaikan</span>
+                      <span className="font-black text-sm sm:text-base tabular-nums">
+                        {item.broken.toLocaleString('id-ID')}
+                      </span>
+                    </div>
                   </div>
 
-                  <div
-                    className={`p-2 rounded-lg text-center border ${
-                      item.broken > 0
-                        ? 'bg-red-50 text-red-800 border-red-300'
-                        : 'bg-slate-50 text-slate-600 border-slate-200'
-                    }`}
-                  >
-                    <span className="text-xs block font-bold">Perbaikan</span>
-                    <span className="font-black text-sm sm:text-base tabular-nums">
-                      {item.broken.toLocaleString('id-ID')}
-                    </span>
-                  </div>
+                  {/* Part Titik Kerusakan Terdaftar di DaishaCatalog */}
+                  {item.components && item.components.length > 0 ? (
+                    <div className="pt-2 border-t border-slate-100 space-y-1">
+                      <div className="flex items-center justify-between text-[10px] font-bold text-slate-700">
+                        <span className="inline-flex items-center gap-1">
+                          <Wrench className="w-3 h-3 text-red-500" />
+                          <span>Part Kerusakan ({item.components.length})</span>
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-normal">Katalog</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {item.components.slice(0, 3).map((c) => (
+                          <span
+                            key={c.id || c.name}
+                            className="px-1.5 py-0.5 rounded bg-red-50 text-red-800 border border-red-200/70 text-[9px] font-semibold truncate max-w-[120px]"
+                            title={`${c.name}${c.symptoms && c.symptoms.length > 0 ? ` (${c.symptoms.length} gejala)` : ''}`}
+                          >
+                            {c.name}
+                          </span>
+                        ))}
+                        {item.components.length > 3 && (
+                          <span
+                            className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-semibold"
+                            title={item.components.slice(3).map((c) => c.name).join(', ')}
+                          >
+                            +{item.components.length - 3} part
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="pt-1.5 border-t border-slate-100 flex items-center gap-1 text-[10px] text-slate-400">
+                      <Wrench className="w-3 h-3 text-slate-300" />
+                      <span>Part standar</span>
+                    </div>
+                  )}
                 </div>
               </div>
             );

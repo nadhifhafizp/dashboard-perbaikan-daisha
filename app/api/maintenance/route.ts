@@ -204,14 +204,25 @@ export async function GET(request: Request) {
           WHERE tanggal_pengerjaan >= ${startOfYear} AND tanggal_pengerjaan <= ${endOfYear}
           GROUP BY COALESCE(kondisi, 'OK')
         `,
-        sql<Array<{ id: number; name: string; seksi: string; totalUnits: number | null; variants: unknown }>>`
+        sql<Array<{
+          id: number;
+          name: string;
+          seksi: string;
+          codePrefix: string | null;
+          totalUnits: number | null;
+          components: unknown;
+          variants: unknown;
+        }>>`
           SELECT 
             id, 
             name, 
             seksi, 
+            "codePrefix",
             COALESCE("totalUnits", 0)::int as "totalUnits", 
-            variants
+            COALESCE(components, '[]'::jsonb) as components,
+            COALESCE(variants, '[]'::jsonb) as variants
           FROM "DaishaCatalog"
+          ORDER BY name ASC
         `,
         sql<Array<{ noDaisha: string }>>`
           SELECT DISTINCT UPPER(TRIM("noDaisha")) as "noDaisha"
@@ -248,7 +259,18 @@ export async function GET(request: Request) {
 
       for (const cat of catalogRows) {
         const s = (cat.seksi && cat.seksi.trim()) ? cat.seksi.trim() : 'Building';
-        const units = Number(cat.totalUnits) || 0;
+        let units = Number(cat.totalUnits) || 0;
+        const variants = Array.isArray(cat.variants) ? (cat.variants as Array<Record<string, unknown>>) : [];
+        if (variants.length > 0) {
+          const vSum = variants.reduce((acc, v) => {
+            const vUnits = Number(v.totalUnits) || 0;
+            const minNum = Number(v.minNumber) || 1;
+            const maxNum = Number(v.maxNumber) || (minNum + vUnits - 1);
+            return acc + (vUnits > 0 ? vUnits : (maxNum >= minNum ? maxNum - minNum + 1 : 0));
+          }, 0);
+          if (vSum > 0) units = vSum;
+        }
+
         catalogSeksiMap.set(s, (catalogSeksiMap.get(s) || 0) + units);
         catalogTotalAllUnits += units;
         if (cat.name && cat.name.trim()) {
@@ -535,6 +557,15 @@ export async function GET(request: Request) {
           totalPmUnits: pmCatalogTotalUnits,
           bySeksi: Object.fromEntries(catalogSeksiMap),
           pmBySeksi: Object.fromEntries(pmCatalogSeksiMap),
+          catalogs: catalogRows.map((cat) => ({
+            id: cat.id,
+            name: cat.name,
+            seksi: cat.seksi,
+            codePrefix: cat.codePrefix,
+            totalUnits: Number(cat.totalUnits) || 0,
+            components: Array.isArray(cat.components) ? cat.components : [],
+            variants: Array.isArray(cat.variants) ? cat.variants : [],
+          })),
         },
         units: filteredPmUnits,
         pmUnits: mappedPmUnits,

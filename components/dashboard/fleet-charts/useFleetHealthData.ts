@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { FleetUnit } from '@/components/maintenance/FleetExplorer';
 import { Ticket } from '@/types/ticket';
-import { JenisHealthItem, BreakdownItem, RecurringUnitItem } from './types';
+import { JenisHealthItem, BreakdownItem, RecurringUnitItem, CatalogItemData } from './types';
 import { DAFTAR_SEKSI } from '@/lib/masterData';
 
 // Normalisasi nomor daisha untuk pencocokan akurat tanpa terpengaruh spasi, strip, atau huruf besar/kecil
@@ -23,7 +23,10 @@ interface UseFleetHealthDataProps {
   onSelectSeksi?: (seksi: string) => void;
   catalogStats?: {
     totalAllUnits: number;
+    totalPmUnits?: number;
     bySeksi: Record<string, number>;
+    pmBySeksi?: Record<string, number>;
+    catalogs?: CatalogItemData[];
   };
 }
 
@@ -222,48 +225,103 @@ export function useFleetHealthData({
       .sort((a, b) => b.total - a.total);
   }, [units, isUnitNG, catalogStats]);
 
-  // Breakdown saat seksi difilter
-  const jenisInSeksiBreakdownList = useMemo<BreakdownItem[]>(() => {
-    if (!currentSeksi || currentSeksi === 'all') return [];
-
-    const map: Record<string, { label: string; jenis: string; total: number; oke: number; ng: number }> = {};
-    targetUnits.forEach((u) => {
-      const j = (u.nama_daisha || u.jenis || 'LAINNYA').trim();
-      if (!map[j]) {
-        map[j] = { label: j, jenis: j, total: 0, oke: 0, ng: 0 };
-      }
-      map[j].total++;
-      const isNG = isUnitNG(u);
-      if (isNG) {
-        map[j].ng++;
-      } else {
-        map[j].oke++;
-      }
-    });
-
-    return Object.values(map)
-      .map((item) => ({
-        ...item,
-        pctOke: item.total > 0 ? (item.oke / item.total) * 100 : 100,
-        pctNg: item.total > 0 ? (item.ng / item.total) * 100 : 0,
-      }))
-      .sort((a, b) => b.total - a.total);
-  }, [targetUnits, currentSeksi, isUnitNG]);
-
-  const isSeksiFiltered = Boolean(currentSeksi && currentSeksi !== 'all');
-  const activeBreakdownList: BreakdownItem[] = isSeksiFiltered ? jenisInSeksiBreakdownList : seksiBreakdownList;
-
-  // Data donat master
-  const globalDonutData = useMemo(
-    () => [
-      { name: 'OKE (Siap Operasi)', value: globalStats.ready, color: '#059669' },
-      { name: 'NG (Perlu Servis/Bengkel)', value: globalStats.broken, color: '#dc2626' },
-    ],
-    [globalStats.ready, globalStats.broken]
-  );
-
-  // 2. DATA PER JENIS DAISHA
+  // 2. DATA PER JENIS DAISHA - Sinkron langsung dengan DaishaCatalog (Registri Daisha)
   const perJenisData = useMemo(() => {
+    // A. Jika data katalog master (DaishaCatalog) tersedia, jadikan sebagai basis utama
+    if (catalogStats?.catalogs && catalogStats.catalogs.length > 0) {
+      // Saring katalog sesuai seksi aktif jika ada filter
+      const targetCatalogs = catalogStats.catalogs.filter((cat) => {
+        if (!currentSeksi || currentSeksi === 'all') return true;
+        return (cat.seksi || '').toLowerCase() === currentSeksi.toLowerCase();
+      });
+
+      const processedNames = new Set<string>();
+
+      const catalogList: JenisHealthItem[] = targetCatalogs.map((cat) => {
+        const normCatName = normalizeDaishaCode(cat.name);
+        processedNames.add(normCatName);
+
+        // Hitung total unit resmi dari varian atau totalUnits
+        let total = Number(cat.totalUnits) || 0;
+        const variants = Array.isArray(cat.variants) ? cat.variants : [];
+        if (variants.length > 0) {
+          const vSum = variants.reduce((acc, v) => {
+            const vUnits = Number(v.totalUnits) || 0;
+            const minNum = Number(v.minNumber) || 1;
+            const maxNum = Number(v.maxNumber) || (minNum + vUnits - 1);
+            return acc + (vUnits > 0 ? vUnits : (maxNum >= minNum ? maxNum - minNum + 1 : 0));
+          }, 0);
+          if (vSum > 0) total = vSum;
+        }
+
+        // Cari unit yang rusak (NG) dari unit armada atau tiket aktif
+        const brokenNoSet = new Set<string>();
+        targetUnits.forEach((u) => {
+          const normUName = normalizeDaishaCode(u.nama_daisha || u.jenis);
+          const normNo = normalizeDaishaCode(u.nomor_daisha);
+          const isMatching =
+            normUName === normCatName ||
+            (cat.codePrefix && normNo.startsWith(normalizeDaishaCode(cat.codePrefix))) ||
+            variants.some((v) => v.codePrefix && normNo.startsWith(normalizeDaishaCode(v.codePrefix)));
+
+          if (isMatching && isUnitNG(u)) {
+            brokenNoSet.add(normNo);
+          }
+        });
+
+        const broken = brokenNoSet.size;
+        const ready = Math.max(0, total - broken);
+
+        return {
+          id: cat.id,
+          nama: cat.name,
+          seksi: cat.seksi,
+          total,
+          ready,
+          broken,
+          pctReady: total > 0 ? (ready / total) * 100 : 100,
+          pctBroken: total > 0 ? (broken / total) * 100 : 0,
+          seksiList: [cat.seksi || 'Building'],
+          codePrefix: cat.codePrefix,
+          components: cat.components || [],
+          variants,
+        };
+      });
+
+      // Tambahkan unit ad-hoc yang mungkin belum ada di DaishaCatalog
+      const adhocMap: Record<string, { nama: string; total: number; ready: number; broken: number; seksiSet: Set<string> }> = {};
+      targetUnits.forEach((u) => {
+        const j = (u.nama_daisha || u.jenis || 'LAINNYA').trim();
+        const normJ = normalizeDaishaCode(j);
+        if (processedNames.has(normJ)) return;
+
+        if (!adhocMap[j]) {
+          adhocMap[j] = { nama: j, total: 0, ready: 0, broken: 0, seksiSet: new Set() };
+        }
+        adhocMap[j].total++;
+        if (u.seksi) adhocMap[j].seksiSet.add(u.seksi);
+        if (isUnitNG(u)) {
+          adhocMap[j].broken++;
+        } else {
+          adhocMap[j].ready++;
+        }
+      });
+
+      const adhocList: JenisHealthItem[] = Object.values(adhocMap).map((item) => ({
+        nama: item.nama,
+        seksi: Array.from(item.seksiSet)[0] || 'Lainnya',
+        total: item.total,
+        ready: item.ready,
+        broken: item.broken,
+        pctReady: item.total > 0 ? (item.ready / item.total) * 100 : 100,
+        pctBroken: item.total > 0 ? (item.broken / item.total) * 100 : 0,
+        seksiList: Array.from(item.seksiSet),
+      }));
+
+      return [...catalogList, ...adhocList];
+    }
+
+    // B. Fallback: Kelompokkan dari targetUnits jika katalog belum termuat
     const map: Record<
       string,
       { nama: string; total: number; ready: number; broken: number; seksiSet: Set<string> }
@@ -288,6 +346,7 @@ export function useFleetHealthData({
 
     const list: JenisHealthItem[] = Object.values(map).map((item) => ({
       nama: item.nama,
+      seksi: Array.from(item.seksiSet)[0] || 'Lainnya',
       total: item.total,
       ready: item.ready,
       broken: item.broken,
@@ -297,7 +356,37 @@ export function useFleetHealthData({
     }));
 
     return list;
-  }, [targetUnits, isUnitNG]);
+  }, [catalogStats?.catalogs, targetUnits, currentSeksi, isUnitNG]);
+
+  // Breakdown saat seksi difilter (mengikuti langsung perJenisData agar 100% konsisten)
+  const jenisInSeksiBreakdownList = useMemo<BreakdownItem[]>(() => {
+    if (!currentSeksi || currentSeksi === 'all') return [];
+
+    return perJenisData
+      .map((item) => ({
+        label: item.nama,
+        seksi: item.seksi || currentSeksi,
+        jenis: item.nama,
+        total: item.total,
+        oke: item.ready,
+        ng: item.broken,
+        pctOke: item.pctReady,
+        pctNg: item.pctBroken,
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [currentSeksi, perJenisData]);
+
+  const isSeksiFiltered = Boolean(currentSeksi && currentSeksi !== 'all');
+  const activeBreakdownList: BreakdownItem[] = isSeksiFiltered ? jenisInSeksiBreakdownList : seksiBreakdownList;
+
+  // Data donat master
+  const globalDonutData = useMemo(
+    () => [
+      { name: 'OKE (Siap Operasi)', value: globalStats.ready, color: '#059669' },
+      { name: 'NG (Perlu Servis/Bengkel)', value: globalStats.broken, color: '#dc2626' },
+    ],
+    [globalStats.ready, globalStats.broken]
+  );
 
   // Filter & Sort per jenis daisha
   const filteredJenisData = useMemo(() => {

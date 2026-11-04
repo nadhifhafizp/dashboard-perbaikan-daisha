@@ -16,6 +16,7 @@ import ThroughputCharts from '@/components/dashboard/ThroughputCharts';
 import SectionCharts from '@/components/dashboard/SectionCharts';
 import TicketTable from '@/components/dashboard/TicketTable';
 import FleetHealthCharts from '@/components/dashboard/FleetHealthCharts';
+import MonthlyIncomingDaishaChart from '@/components/dashboard/MonthlyIncomingDaishaChart';
 
 import { BreakdownItem } from '@/components/maintenance/MaintenanceKPICards';
 import PmMeetingDashboard from '@/components/maintenance/PmMeetingDashboard';
@@ -227,7 +228,10 @@ function KpiDashboardContent() {
   const [allFleetUnits, setAllFleetUnits] = useState<FleetUnit[]>([]);
   const [catalogStats, setCatalogStats] = useState<{
     totalAllUnits: number;
+    totalPmUnits?: number;
     bySeksi: Record<string, number>;
+    pmBySeksi?: Record<string, number>;
+    catalogs?: any[];
   } | null>(null);
 
   const fetchPmData = useCallback(async () => {
@@ -439,13 +443,15 @@ function KpiDashboardContent() {
             <Layers className="w-4.5 h-4.5" />
             <span>1. Jumlah Seluruh Daisha</span>
             <span className="px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-800 font-mono font-black border border-slate-200">
-              {pmSummary.totalUnits > 0
-                ? `${pmSummary.totalUnits.toLocaleString('id-ID')} Unit`
+              {userSeksi && catalogStats?.bySeksi?.[userSeksi] !== undefined
+                ? `${catalogStats.bySeksi[userSeksi].toLocaleString('id-ID')} Unit`
                 : catalogStats?.totalAllUnits
                   ? `${catalogStats.totalAllUnits.toLocaleString('id-ID')} Unit`
-                  : userSeksi
-                    ? 'Memuat...'
-                    : '7.906 Unit'}
+                  : allFleetUnits.length > 0
+                    ? `${allFleetUnits.length.toLocaleString('id-ID')} Unit`
+                    : pmSummary.totalUnits > 0
+                      ? `${pmSummary.totalUnits.toLocaleString('id-ID')} Unit`
+                      : 'Memuat...'}
             </span>
           </button>
 
@@ -643,6 +649,15 @@ function KpiDashboardContent() {
                 isSeksiLocked={isSeksi}
               />
             </div>
+
+            {/* Diagram Batang: Total Seluruh Daisha Masuk per Bulan (Khusus Role Admin) */}
+            {isAdmin && (
+              <MonthlyIncomingDaishaChart
+                tickets={dataRaw}
+                filteredTickets={filteredData}
+                isAdmin={isAdmin}
+              />
+            )}
 
             {/* Grafik Diagnostik Kerusakan & Servis */}
             <div className="space-y-5">

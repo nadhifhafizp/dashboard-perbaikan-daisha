@@ -358,15 +358,14 @@ export async function POST(request: Request) {
         details: `Nama: ${newDaisha.name}, Seksi: ${newDaisha.seksi}`,
       });
 
-      // Registrasikan unit-unit fisik baru secara instan ke tabel "Daisha" (< 50ms)
+      // Registrasikan unit-unit fisik baru secara instan ke tabel "Daisha"
       if (totalUnits > 0) {
         await insertNewDaishaUnits(newDaisha.name, newDaisha.seksi, newDaisha.codePrefix, totalUnits);
-      } else {
-        invalidateMaintenanceCache();
       }
-
-      // Invalidate cache dan jalankan background sync secara non-blocking
-      void syncDaishaMasterFromCatalog().catch((err) => console.error('Background sync error:', err));
+      
+      // Sinkronkan seluruh master Daisha dan bersihkan cache
+      await syncDaishaMasterFromCatalog();
+      invalidateMaintenanceCache();
 
       return NextResponse.json({
         success: true,
@@ -427,6 +426,8 @@ export async function POST(request: Request) {
         targetId: newCompId,
         details: `Komponen: ${name}, Daisha: ${daisha.name}`,
       });
+
+      invalidateMaintenanceCache();
 
       return NextResponse.json({
         success: true,
@@ -499,6 +500,8 @@ export async function POST(request: Request) {
         targetId: newSymptomId,
         details: `Gejala: ${description}, Komponen: ${targetComp.name}`,
       });
+
+      invalidateMaintenanceCache();
 
       return NextResponse.json({
         success: true,
@@ -577,8 +580,8 @@ export async function POST(request: Request) {
         details: `Varian: ${name}, Daisha: ${daisha.name}`,
       });
 
+      await syncDaishaMasterFromCatalog();
       invalidateMaintenanceCache();
-      void syncDaishaMasterFromCatalog().catch((err) => console.error('Background sync error:', err));
 
       return NextResponse.json({
         success: true,
@@ -702,8 +705,8 @@ export async function PUT(request: Request) {
         details: `Nama: ${updated.name}`,
       });
 
+      await syncDaishaMasterFromCatalog();
       invalidateMaintenanceCache();
-      void syncDaishaMasterFromCatalog().catch((err) => console.error('Background sync error:', err));
 
       return NextResponse.json({
         success: true,
@@ -759,6 +762,8 @@ export async function PUT(request: Request) {
         targetId: id,
         details: `Nama: ${name}, Daisha: ${daisha.name}`,
       });
+
+      invalidateMaintenanceCache();
 
       return NextResponse.json({
         success: true,
@@ -825,6 +830,8 @@ export async function PUT(request: Request) {
         targetId: id,
         details: `Gejala: ${description}`,
       });
+
+      invalidateMaintenanceCache();
 
       return NextResponse.json({
         success: true,
@@ -904,8 +911,8 @@ export async function PUT(request: Request) {
         details: `Varian: ${name}, Daisha: ${daisha.name}`,
       });
 
+      await syncDaishaMasterFromCatalog();
       invalidateMaintenanceCache();
-      void syncDaishaMasterFromCatalog().catch((err) => console.error('Background sync error:', err));
 
       return NextResponse.json({
         success: true,
@@ -986,8 +993,8 @@ export async function DELETE(request: Request) {
         details: `Nama: ${deleted.name}`,
       });
 
+      await syncDaishaMasterFromCatalog();
       invalidateMaintenanceCache();
-      void syncDaishaMasterFromCatalog().catch((err) => console.error('Background sync error:', err));
 
       return NextResponse.json({ success: true, message: `Jenis Daisha "${deleted.name}" beserta komponennya berhasil dihapus.` });
     }
@@ -1027,6 +1034,8 @@ export async function DELETE(request: Request) {
         targetId: id,
         details: `Daisha: ${daisha.name}`,
       });
+
+      invalidateMaintenanceCache();
 
       return NextResponse.json({ success: true, message: 'Komponen beserta gejalanya berhasil dihapus.' });
     }
@@ -1072,6 +1081,8 @@ export async function DELETE(request: Request) {
         details: `Daisha: ${daisha.name}`,
       });
 
+      invalidateMaintenanceCache();
+
       return NextResponse.json({ success: true, message: 'Gejala kerusakan berhasil dihapus.' });
     }
 
@@ -1113,8 +1124,8 @@ export async function DELETE(request: Request) {
         details: `Daisha: ${daisha.name}`,
       });
 
+      await syncDaishaMasterFromCatalog();
       invalidateMaintenanceCache();
-      void syncDaishaMasterFromCatalog().catch((err) => console.error('Background sync error:', err));
 
       return NextResponse.json({ success: true, message: 'Varian Daisha berhasil dihapus dari database.' });
     }

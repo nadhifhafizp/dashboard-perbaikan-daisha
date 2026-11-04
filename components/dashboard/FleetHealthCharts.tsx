@@ -10,6 +10,8 @@ import FleetSeksiBreakdown from './fleet-charts/FleetSeksiBreakdown';
 import FleetJenisDonutGrid from './fleet-charts/FleetJenisDonutGrid';
 import FleetRecurringUnits from './fleet-charts/FleetRecurringUnits';
 
+import { JenisHealthItem, CatalogItemData } from './fleet-charts/types';
+
 interface FleetHealthChartsProps {
   units: FleetUnit[];
   tickets: Ticket[];
@@ -18,7 +20,10 @@ interface FleetHealthChartsProps {
   isSeksiLocked?: boolean;
   catalogStats?: {
     totalAllUnits: number;
+    totalPmUnits?: number;
     bySeksi: Record<string, number>;
+    pmBySeksi?: Record<string, number>;
+    catalogs?: CatalogItemData[];
   };
 }
 

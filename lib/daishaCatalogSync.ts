@@ -28,9 +28,8 @@ export function formatVariantUnitNumber(prefix: string, num: number, rangeFormat
 
   // Khusus Building Vertical (S00, M00, L00) & GT Ring (S30, S40, M30, L30): panjang total 6 karakter!
   if (p.startsWith('S0') || p.startsWith('M0') || p.startsWith('L0') || p.startsWith('S3') || p.startsWith('S4') || p.startsWith('M3') || p.startsWith('L3')) {
-    const numStr = String(num);
-    const prefixClean = p.slice(0, 6 - numStr.length);
-    return `${prefixClean}${numStr}`;
+    const letter = p.charAt(0);
+    return `${letter}${String(num).padStart(5, '0')}`;
   }
 
   let padLen = customPad && customPad > 0 ? customPad : 4;
@@ -222,6 +221,31 @@ export async function syncDaishaMasterFromCatalog(): Promise<SyncCatalogResult> 
     RETURNING id
   `;
   deletedObsolete = deleteResult.length;
+
+  // 4b. Sinkronkan namaDaisha dan seksi pada tiket & maintenance log dengan master daisha terbaru
+  try {
+    await sql`
+      UPDATE "Ticket" t
+      SET 
+        "namaDaisha" = d.nama_daisha,
+        "seksi" = d.seksi
+      FROM "Daisha" d
+      WHERE UPPER(TRIM(t."noDaisha")) = UPPER(TRIM(d.nomor_daisha))
+        AND (t."namaDaisha" IS DISTINCT FROM d.nama_daisha OR t."seksi" IS DISTINCT FROM d.seksi)
+    `;
+    await sql`
+      UPDATE "MaintenanceLog" m
+      SET 
+        "nama_daisha" = d.nama_daisha,
+        "jenis" = d.jenis,
+        "seksi" = d.seksi
+      FROM "Daisha" d
+      WHERE UPPER(TRIM(m.nomor_daisha)) = UPPER(TRIM(d.nomor_daisha))
+        AND (m.nama_daisha IS DISTINCT FROM d.nama_daisha OR m.seksi IS DISTINCT FROM d.seksi)
+    `;
+  } catch (err) {
+    console.warn('Sync ticket/maintenanceLog nama_daisha warning:', err);
+  }
 
   // 5. Invalidate cache agar API segera menampilkan data terbaru
   invalidateMaintenanceCache();
