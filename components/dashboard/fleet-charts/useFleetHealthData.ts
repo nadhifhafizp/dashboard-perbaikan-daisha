@@ -10,6 +10,12 @@ export function normalizeDaishaCode(val: string | null | undefined): string {
   return val.trim().toUpperCase().replace(/[\s\-_]+/g, '');
 }
 
+// Normalisasi nama seksi (misal 'Seksi Building' vs 'Building')
+export function normalizeSeksiName(s: string | null | undefined): string {
+  if (!s) return '';
+  return s.trim().toLowerCase().replace(/^seksi\s+/i, '');
+}
+
 // 'OK' dan 'REPAIR_DONE' keduanya berarti unit sudah selesai diperbaiki / siap operasi.
 // Hanya 'RUSAK' atau 'SCRAP' yang berarti unit belum siap operasi.
 function isConditionNG(cond: string | null | undefined): boolean {
@@ -112,7 +118,8 @@ export function useFleetHealthData({
   // Filter unit berdasarkan seksi jika ada seleksi aktif
   const targetUnits = useMemo(() => {
     if (!currentSeksi || currentSeksi === 'all') return units;
-    return units.filter((u) => (u.seksi || '').toLowerCase() === currentSeksi.toLowerCase());
+    const norm = normalizeSeksiName(currentSeksi);
+    return units.filter((u) => normalizeSeksiName(u.seksi) === norm);
   }, [units, currentSeksi]);
 
   // 1. STATISTIK KESEHATAN ARMADA (2 POIN UTAMA: OKE VS NG)
@@ -137,8 +144,9 @@ export function useFleetHealthData({
       if (!currentSeksi || currentSeksi === 'all') {
         total = catalogStats.totalAllUnits > 0 ? catalogStats.totalAllUnits : targetUnits.length;
       } else {
+        const norm = normalizeSeksiName(currentSeksi);
         const matchedKey = Object.keys(catalogStats.bySeksi).find(
-          (k) => k.toLowerCase() === currentSeksi.toLowerCase()
+          (k) => normalizeSeksiName(k) === norm
         );
         if (matchedKey && catalogStats.bySeksi[matchedKey] !== undefined) {
           total = catalogStats.bySeksi[matchedKey];
@@ -230,9 +238,10 @@ export function useFleetHealthData({
     // A. Jika data katalog master (DaishaCatalog) tersedia, jadikan sebagai basis utama
     if (catalogStats?.catalogs && catalogStats.catalogs.length > 0) {
       // Saring katalog sesuai seksi aktif jika ada filter
+      const normCurSeksi = normalizeSeksiName(currentSeksi);
       const targetCatalogs = catalogStats.catalogs.filter((cat) => {
-        if (!currentSeksi || currentSeksi === 'all') return true;
-        return (cat.seksi || '').toLowerCase() === currentSeksi.toLowerCase();
+        if (!normCurSeksi || normCurSeksi === 'all') return true;
+        return normalizeSeksiName(cat.seksi) === normCurSeksi;
       });
 
       const processedNames = new Set<string>();

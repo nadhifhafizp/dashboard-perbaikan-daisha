@@ -1,14 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeDaishaCode } from '@/components/dashboard/fleet-charts/useFleetHealthData';
+import { normalizeDaishaCode, normalizeSeksiName } from '@/components/dashboard/fleet-charts/useFleetHealthData';
 import { formatVariantUnitNumber } from '@/lib/daishaCatalogSync';
 
 describe('Catalog to KPI Synchronization & Normalization', () => {
-  it('harus menormalisasi kode daisha dengan tepat tanpa sensitif case atau spasi', () => {
+  it('harus menormalisasi kode daisha dan nama seksi dengan tepat', () => {
     expect(normalizeDaishaCode(' S-00001 ')).toBe('S00001');
     expect(normalizeDaishaCode('vertical')).toBe('VERTICAL');
     expect(normalizeDaishaCode('A-Truck Nagara Filler')).toBe('ATRUCKNAGARAFILLER');
     expect(normalizeDaishaCode('')).toBe('');
     expect(normalizeDaishaCode(null)).toBe('');
+
+    expect(normalizeSeksiName('Seksi Building')).toBe('building');
+    expect(normalizeSeksiName('Building')).toBe('building');
+    expect(normalizeSeksiName('seksi Extruding')).toBe('extruding');
+    expect(normalizeSeksiName('')).toBe('');
   });
 
   it('harus memformat nomor unit varian dengan aturan padding pabrik Bridgestone', () => {

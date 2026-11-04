@@ -88,19 +88,36 @@ export async function GET(request: Request) {
       !filterSeksi || ['all', 'all seksi', 'semua'].includes(filterSeksi.trim().toLowerCase())
         ? 'all'
         : filterSeksi.trim().toLowerCase();
+    
+    // Selalu bypass cache jika diminta armada penuh (KPI Jumlah Daisha) atau ada timestamp _t
+    const bypassCache =
+      includeAllUnits ||
+      searchParams.has('_t') ||
+      searchParams.has('nocache') ||
+      searchParams.has('t');
+
     const cacheKey = `maint_${currentYear}_${filterJenis || 'all'}_${filterUkuran || 'all'}_${normalizedSeksi}_${includeAllUnits ? 'all' : 'pm'}`;
-    const cachedEntry = maintenanceCacheMap.get(cacheKey);
-    if (cachedEntry && Date.now() - cachedEntry.timestamp < CACHE_TTL) {
-      return NextResponse.json(cachedEntry.payload, {
-        headers: { 'X-Cache': 'HIT' },
-      });
+    
+    if (!bypassCache) {
+      const cachedEntry = maintenanceCacheMap.get(cacheKey);
+      if (cachedEntry && Date.now() - cachedEntry.timestamp < CACHE_TTL) {
+        return NextResponse.json(cachedEntry.payload, {
+          headers: {
+            'X-Cache': 'HIT',
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+          },
+        });
+      }
     }
 
     // In-Flight Promise Deduplication: jika ada request concurrent untuk cacheKey yang sama, gunakan promise yang sama
-    if (inFlightMaintenancePromises.has(cacheKey)) {
+    if (!bypassCache && inFlightMaintenancePromises.has(cacheKey)) {
       const sharedResult = await inFlightMaintenancePromises.get(cacheKey)!;
       return NextResponse.json(sharedResult, {
-        headers: { 'X-Cache': 'DEDUP' },
+        headers: {
+          'X-Cache': 'DEDUP',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
       });
     }
 
@@ -116,11 +133,11 @@ export async function GET(request: Request) {
       const workDaysInfo = calculateRemainingWorkDaysInYear(now, true);
       const remainingWorkDays = workDaysInfo.remainingWorkDays;
 
-      // Ambil master daisha dari cache memori jika valid, fallback query database
+      // Ambil master daisha dari DB langsung jika bypassCache (selalu segar untuk KPI Armada)
       let allDaisha: DaishaRow[];
       const nowMs = Date.now();
       const cached = globalForMaint.cachedAllDaisha;
-      if (cached && nowMs - cached.timestamp < ALL_DAISHA_TTL) {
+      if (!bypassCache && cached && nowMs - cached.timestamp < ALL_DAISHA_TTL) {
         allDaisha = cached.data;
       } else {
         allDaisha = await sql<DaishaRow[]>`
@@ -579,17 +596,24 @@ export async function GET(request: Request) {
 
     try {
       const responsePayload = await promise;
-      maintenanceCacheMap.set(cacheKey, {
-        payload: responsePayload,
-        timestamp: Date.now(),
-      });
-      // Batasi ukuran cache map agar memori hemat
-      if (maintenanceCacheMap.size > 50) {
-        const oldestKey = maintenanceCacheMap.keys().next().value;
-        if (oldestKey) maintenanceCacheMap.delete(oldestKey);
+      if (!bypassCache) {
+        maintenanceCacheMap.set(cacheKey, {
+          payload: responsePayload,
+          timestamp: Date.now(),
+        });
+        // Batasi ukuran cache map agar memori hemat
+        if (maintenanceCacheMap.size > 50) {
+          const oldestKey = maintenanceCacheMap.keys().next().value;
+          if (oldestKey) maintenanceCacheMap.delete(oldestKey);
+        }
       }
       return NextResponse.json(responsePayload, {
-        headers: { 'X-Cache': 'MISS' },
+        headers: {
+          'X-Cache': bypassCache ? 'BYPASS' : 'MISS',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
       });
     } finally {
       inFlightMaintenancePromises.delete(cacheKey);

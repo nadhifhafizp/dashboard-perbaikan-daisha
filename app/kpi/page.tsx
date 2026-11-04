@@ -16,7 +16,6 @@ import ThroughputCharts from '@/components/dashboard/ThroughputCharts';
 import SectionCharts from '@/components/dashboard/SectionCharts';
 import TicketTable from '@/components/dashboard/TicketTable';
 import FleetHealthCharts from '@/components/dashboard/FleetHealthCharts';
-import MonthlyIncomingDaishaChart from '@/components/dashboard/MonthlyIncomingDaishaChart';
 
 import { BreakdownItem } from '@/components/maintenance/MaintenanceKPICards';
 import PmMeetingDashboard from '@/components/maintenance/PmMeetingDashboard';
@@ -239,7 +238,13 @@ function KpiDashboardContent() {
       setLoadingPm(true);
       const seksiParam = userSeksi ? `&seksi=${encodeURIComponent(userSeksi)}` : '&seksi=all';
       const allUnitsParam = activeTab === 'jumlah_daisha' ? '&allUnits=true' : '';
-      const res = await fetch(`/api/maintenance?year=${pmYear}${seksiParam}${allUnitsParam}`);
+      const res = await fetch(`/api/maintenance?year=${pmYear}${seksiParam}${allUnitsParam}&_t=${Date.now()}&nocache=1`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
       const json = await res.json();
       if (json.success) {
         setPmSummary(json.summary || pmSummary);
@@ -315,6 +320,58 @@ function KpiDashboardContent() {
       void fetchSpareparts();
     }
   }, [activeTab, fetchPmData, fetchRequests, fetchSpareparts, isSeksi]);
+
+  // Sinkronisasi otomatis real-time antara Registri Daisha (/catalog) dengan KPI Jumlah Daisha
+  useEffect(() => {
+    const handleSync = () => {
+      void fetchPmData();
+      refreshTickets();
+    };
+
+    window.addEventListener('daisha-catalog-updated', handleSync);
+    window.addEventListener('focus', handleSync);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        handleSync();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'daisha_catalog_updated_at') {
+        handleSync();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('daisha-catalog-channel');
+      channel.onmessage = (e) => {
+        if (e.data?.type === 'CATALOG_UPDATED') {
+          handleSync();
+        }
+      };
+    } catch {}
+
+    // Polling halus setiap 10 detik khusus pada tab Jumlah Seluruh Daisha
+    let intervalId: NodeJS.Timeout | null = null;
+    if (activeTab === 'jumlah_daisha') {
+      intervalId = setInterval(() => {
+        void fetchPmData();
+      }, 10000);
+    }
+
+    return () => {
+      window.removeEventListener('daisha-catalog-updated', handleSync);
+      window.removeEventListener('focus', handleSync);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('storage', handleStorage);
+      if (channel) channel.close();
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [activeTab, fetchPmData, refreshTickets]);
 
   const handleGlobalRefresh = () => {
     if (
@@ -649,15 +706,6 @@ function KpiDashboardContent() {
                 isSeksiLocked={isSeksi}
               />
             </div>
-
-            {/* Diagram Batang: Total Seluruh Daisha Masuk per Bulan (Khusus Role Admin) */}
-            {isAdmin && (
-              <MonthlyIncomingDaishaChart
-                tickets={dataRaw}
-                filteredTickets={filteredData}
-                isAdmin={isAdmin}
-              />
-            )}
 
             {/* Grafik Diagnostik Kerusakan & Servis */}
             <div className="space-y-5">

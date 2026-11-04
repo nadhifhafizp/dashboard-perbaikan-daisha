@@ -70,6 +70,9 @@ export function broadcastCatalogUpdate() {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent('daisha-catalog-updated'));
   try {
+    localStorage.setItem('daisha_catalog_updated_at', String(Date.now()));
+  } catch {}
+  try {
     const channel = new BroadcastChannel('daisha-catalog-channel');
     channel.postMessage({ type: 'CATALOG_UPDATED', timestamp: Date.now() });
     channel.close();
