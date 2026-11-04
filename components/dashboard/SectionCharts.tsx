@@ -149,9 +149,9 @@ export default function SectionCharts({
       {/* 1. Header Minimalis */}
       <div className="flex flex-col gap-1 mb-2 pb-2 border-b border-slate-100">
         <div className="flex flex-wrap justify-between items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-slate-500" />
-            <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+          <div className="flex items-center gap-2.5">
+            <Building2 className="w-5 h-5 text-slate-600 shrink-0" />
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
               Masuk per Seksi
             </h3>
           </div>

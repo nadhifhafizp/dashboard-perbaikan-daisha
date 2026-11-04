@@ -121,7 +121,7 @@ export default function DamageCharts({
     <div className="space-y-6">
       {/* 1. Header Ringkas & Metric Switcher */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
           Kerusakan Komponen
         </h3>
 
@@ -159,10 +159,10 @@ export default function DamageCharts({
         <div className="lg:col-span-6 bg-white p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
           <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-slate-100">
             <div className="flex justify-between items-center">
-              <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
+              <h4 className="text-sm sm:text-base font-bold text-slate-900">
                 Top Komponen
               </h4>
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs sm:text-sm font-medium text-slate-500">
                 {metricMode === 'pcs' ? 'Kuantitas (Pcs)' : 'Frekuensi (Kasus)'}
               </span>
             </div>
@@ -247,10 +247,10 @@ export default function DamageCharts({
         <div className="lg:col-span-6 bg-white p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
           <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-slate-100">
             <div className="flex justify-between items-center">
-              <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
+              <h4 className="text-sm sm:text-base font-bold text-slate-900">
                 Top Gejala
               </h4>
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs sm:text-sm font-medium text-slate-500">
                 {metricMode === 'pcs' ? 'Pcs Part' : 'Kasus'}
               </span>
             </div>
@@ -329,10 +329,10 @@ export default function DamageCharts({
       <div className="bg-white p-5 rounded-xl border border-slate-200/60 shadow-xs">
         <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-slate-100">
           <div className="flex flex-wrap justify-between items-center gap-2">
-            <h4 className="text-sm sm:text-base font-bold text-slate-900">
+            <h4 className="text-base sm:text-lg font-bold text-slate-900">
               Proporsi Tindakan
             </h4>
-            <span className="text-xs font-semibold text-slate-500">
+            <span className="text-xs sm:text-sm font-semibold text-slate-500">
               {metricMode === 'pcs' ? 'Pcs Part' : 'Kasus'}
             </span>
           </div>

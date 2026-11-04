@@ -55,13 +55,13 @@ export default function TicketTable({
     <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
       {/* Header Tabel */}
       <div className="p-3.5 sm:p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-slate-50/50">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
-            <ClipboardList className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+            <ClipboardList className="w-4 h-4" />
           </div>
-          <h3 className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-2">
+          <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
             <span>Daftar Tiket</span>
-            <span className="text-xs font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+            <span className="text-xs font-semibold px-2 py-0.5 bg-slate-200 text-slate-700 rounded-md">
               {filteredData.length} Tiket
             </span>
           </h3>
