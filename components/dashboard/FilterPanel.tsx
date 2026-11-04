@@ -4,6 +4,7 @@ import React from 'react';
 import { SlidersHorizontal, RotateCcw, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { DAFTAR_SEKSI } from '@/lib/masterData';
 import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
+import IndoDateInput from '@/components/common/IndoDateInput';
 
 interface FilterPanelProps {
   search: string;
@@ -243,12 +244,11 @@ export default function FilterPanel({
           <label htmlFor="filter-start-date" className="block text-xs font-medium text-slate-700 mb-1">
             Dari Tanggal
           </label>
-          <input
+          <IndoDateInput
             id="filter-start-date"
-            type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
+            onChange={setStartDate}
+            placeholder="Tanggal/ Bulan/ Tahun"
           />
         </div>
 
@@ -257,12 +257,11 @@ export default function FilterPanel({
           <label htmlFor="filter-end-date" className="block text-xs font-medium text-slate-700 mb-1">
             Sampai Tanggal
           </label>
-          <input
+          <IndoDateInput
             id="filter-end-date"
-            type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
+            onChange={setEndDate}
+            placeholder="Tanggal/ Bulan/ Tahun"
           />
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Filter, Calendar, Layers, Building2, Tag, Search, Repeat } from 'lucide-react';
+import { parseToISODate } from '@/lib/date';
 
 export interface ActiveFiltersInfo {
   seksi?: string;
@@ -37,13 +38,10 @@ export default function ActiveFilterBadge({ filters, className = '' }: ActiveFil
 
   const formatDateLabel = (d: string) => {
     if (!d) return '';
-    try {
-      const parts = d.split('-');
-      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    } catch {
-      // fallback
-    }
-    return d;
+    const iso = parseToISODate(d);
+    if (!iso || !iso.includes('-')) return d;
+    const [yyyy, mm, dd] = iso.split('-');
+    return `${dd} / ${mm} / ${yyyy}`;
   };
 
   const periodLabel =
@@ -120,3 +118,4 @@ export default function ActiveFilterBadge({ filters, className = '' }: ActiveFil
     </div>
   );
 }
+
