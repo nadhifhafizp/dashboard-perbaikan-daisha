@@ -983,6 +983,17 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: 'Jenis Daisha tidak ditemukan.' }, { status: 404 });
       }
 
+      // Bersihkan seluruh unit armada yang terasosiasi dengan jenis daisha yang dihapus
+      try {
+        await sql`
+          DELETE FROM "Daisha"
+          WHERE LOWER(TRIM(COALESCE(nama_daisha, jenis))) = LOWER(TRIM(${deleted.name}))
+             OR LOWER(TRIM(jenis)) = LOWER(TRIM(${deleted.name}))
+        `;
+      } catch (err) {
+        console.warn('Gagal menghapus unit fisik daisha saat katalog dihapus:', err);
+      }
+
       recordAuditLog({
         action: 'CATALOG_DELETE_DAISHA',
         ip: auth.ip,

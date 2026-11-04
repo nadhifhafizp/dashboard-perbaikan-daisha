@@ -235,18 +235,20 @@ export function useFleetHealthData({
 
   // 2. DATA PER JENIS DAISHA - Sinkron langsung dengan DaishaCatalog (Registri Daisha)
   const perJenisData = useMemo(() => {
-    // A. Jika data katalog master (DaishaCatalog) tersedia, jadikan sebagai basis utama
+    // A. Jika data katalog master (DaishaCatalog) tersedia, jadikan sebagai Single Source of Truth
     if (catalogStats?.catalogs && catalogStats.catalogs.length > 0) {
       // Saring katalog sesuai seksi aktif jika ada filter
       const normCurSeksi = normalizeSeksiName(currentSeksi);
+      const isFilteredSeksi = Boolean(normCurSeksi && normCurSeksi !== 'all');
+
       const targetCatalogs = catalogStats.catalogs.filter((cat) => {
-        if (!normCurSeksi || normCurSeksi === 'all') return true;
+        if (!isFilteredSeksi) return true;
         return normalizeSeksiName(cat.seksi) === normCurSeksi;
       });
 
       const processedNames = new Set<string>();
 
-      const catalogList: JenisHealthItem[] = targetCatalogs.map((cat) => {
+      const catalogList = targetCatalogs.reduce<JenisHealthItem[]>((acc, cat) => {
         const normCatName = normalizeDaishaCode(cat.name);
         processedNames.add(normCatName);
 
@@ -254,13 +256,18 @@ export function useFleetHealthData({
         let total = Number(cat.totalUnits) || 0;
         const variants = Array.isArray(cat.variants) ? cat.variants : [];
         if (variants.length > 0) {
-          const vSum = variants.reduce((acc, v) => {
+          const vSum = variants.reduce((vAcc, v) => {
             const vUnits = Number(v.totalUnits) || 0;
             const minNum = Number(v.minNumber) || 1;
             const maxNum = Number(v.maxNumber) || (minNum + vUnits - 1);
-            return acc + (vUnits > 0 ? vUnits : (maxNum >= minNum ? maxNum - minNum + 1 : 0));
+            return vAcc + (vUnits > 0 ? vUnits : (maxNum >= minNum ? maxNum - minNum + 1 : 0));
           }, 0);
           if (vSum > 0) total = vSum;
+        }
+
+        // Jika total unit 0 (misal daisha dinonaktifkan / dihapus dari registri), jangan tampilkan di grafik
+        if (total <= 0) {
+          return acc;
         }
 
         // Cari unit yang rusak (NG) dari unit armada atau tiket aktif
@@ -281,7 +288,7 @@ export function useFleetHealthData({
         const broken = brokenNoSet.size;
         const ready = Math.max(0, total - broken);
 
-        return {
+        acc.push({
           id: cat.id,
           nama: cat.name,
           seksi: cat.seksi,
@@ -294,10 +301,18 @@ export function useFleetHealthData({
           codePrefix: cat.codePrefix,
           components: cat.components || [],
           variants,
-        };
-      });
+        });
 
-      // Tambahkan unit ad-hoc yang mungkin belum ada di DaishaCatalog
+        return acc;
+      }, []);
+
+      // KETAT: Saat seksi tertentu sedang dipilih, JANGAN tampilkan unit ad-hoc yang tidak ada di DaishaCatalog resmi seksi tersebut!
+      // Ini mencegah unit sampah/nyasar dari seksi lain muncul di grafik seksi yang sedang dilihat pengguna.
+      if (isFilteredSeksi) {
+        return catalogList;
+      }
+
+      // Mode Semua Seksi: Tambahkan unit ad-hoc hanya jika benar-benar tidak ada di katalog master sama sekali
       const adhocMap: Record<string, { nama: string; total: number; ready: number; broken: number; seksiSet: Set<string> }> = {};
       targetUnits.forEach((u) => {
         const j = (u.nama_daisha || u.jenis || 'LAINNYA').trim();

@@ -415,15 +415,18 @@ export async function GET(request: Request) {
 
       // Mapping seluruh armada pabrik (hanya jika diminta spesifik oleh modul KPI Jumlah Daisha)
       const mappedAllUnits = includeAllUnits
-        ? targetAllDaisha.map((u) => ({
-            id: u.id,
-            nomor_daisha: u.nomor_daisha,
-            jenis: u.jenis,
-            nama_daisha: u.nama_daisha || u.jenis,
-            seksi: u.seksi || 'All seksi',
-            ukuran: u.ukuran,
-            last_condition: u.last_condition || 'OK',
-          }))
+        ? targetAllDaisha.map((u) => {
+            const canonicalNama = u.nama_daisha && u.nama_daisha !== 'VERTICAL' ? u.nama_daisha : (u.jenis || 'Daisha');
+            return {
+              id: u.id,
+              nomor_daisha: u.nomor_daisha,
+              jenis: canonicalNama,
+              nama_daisha: canonicalNama,
+              seksi: u.seksi || 'All seksi',
+              ukuran: u.ukuran,
+              last_condition: u.last_condition || 'OK',
+            };
+          })
         : [];
 
       // Sebaran Populasi Seksi KHUSUS PM (Building, Cutt/Cal, Extruding)

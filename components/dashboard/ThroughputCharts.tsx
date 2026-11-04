@@ -318,7 +318,7 @@ export default function ThroughputCharts({
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={processedTimelineData}
-                margin={{ top: 25, right: 35, left: -5, bottom: 20 }}
+                margin={{ top: 25, right: 35, left: -5, bottom: chartOrientation === 'opposing' ? 28 : 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis
@@ -326,7 +326,7 @@ export default function ThroughputCharts({
                   tick={{ fontSize: 12, fill: '#0f172a', fontWeight: 800 }}
                   axisLine={{ stroke: '#cbd5e1' }}
                   tickLine={false}
-                  dy={6}
+                  dy={chartOrientation === 'opposing' ? 14 : 6}
                 />
                 {/* Sumbu Y Kiri: Volume Daisha (Atas Masuk ↑, Bawah Selesai ↓) */}
                 <YAxis
@@ -339,17 +339,17 @@ export default function ThroughputCharts({
                   tickLine={false}
                   tickFormatter={(val: number) => String(Math.abs(val))}
                 />
-                {/* Sumbu Y Kanan: Backlog Mesin Akumulasi */}
+                {/* Sumbu Y Kanan: Backlog Mesin Akumulasi (Titik 0 Sejajar di Garis Tengah, Garis Berada di Separuh Atas) */}
                 <YAxis
                   yAxisId="right"
                   orientation="right"
                   type="number"
-                  domain={[0, yBacklogDomain]}
+                  domain={chartOrientation === 'opposing' ? [-yBacklogDomain, yBacklogDomain] : [0, yBacklogDomain]}
                   tick={{ fontSize: 12, fill: '#7c3aed', fontWeight: 800 }}
                   allowDecimals={false}
                   axisLine={{ stroke: '#e9d5ff' }}
                   tickLine={false}
-                  tickFormatter={(val: number) => String(val)}
+                  tickFormatter={(val: number) => (val >= 0 ? String(val) : '')}
                 />
                 {/* Garis Tengah Baseline 0 */}
                 <ReferenceLine
@@ -449,9 +449,40 @@ export default function ThroughputCharts({
                 >
                   <LabelList
                     dataKey={chartOrientation === 'opposing' ? 'SelesaiNeg' : 'Selesai'}
-                    position={chartOrientation === 'opposing' ? 'bottom' : 'top'}
-                    formatter={(val: unknown) => (Math.abs(Number(val)) > 0 ? String(Math.abs(Number(val))) : '')}
-                    style={{ fontSize: 13, fontWeight: 900, fill: '#059669' }}
+                    content={(props: any) => {
+                      const { x, y, width, height, value } = props;
+                      const num = Math.abs(Number(value));
+                      if (!num || isNaN(num)) return null;
+
+                      if (chartOrientation === 'opposing') {
+                        // Posisi label angka berada di BAWAH ujung batang hijau yang menjulur ke bawah
+                        return (
+                          <text
+                            x={Number(x) + Number(width) / 2}
+                            y={Number(y) + Number(height) + 15}
+                            fill="#059669"
+                            textAnchor="middle"
+                            fontSize={13}
+                            fontWeight={900}
+                          >
+                            {num}
+                          </text>
+                        );
+                      }
+
+                      return (
+                        <text
+                          x={Number(x) + Number(width) / 2}
+                          y={Number(y) - 6}
+                          fill="#059669"
+                          textAnchor="middle"
+                          fontSize={13}
+                          fontWeight={900}
+                        >
+                          {num}
+                        </text>
+                      );
+                    }}
                   />
                 </Bar>
 

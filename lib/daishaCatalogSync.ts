@@ -209,42 +209,37 @@ export async function syncDaishaMasterFromCatalog(): Promise<SyncCatalogResult> 
 
   // 4. Hapus unit usang (yang TIDAK ADA di katalog DAN TIDAK MEMILIKI referensi di Ticket / MaintenanceLog)
   const validKeys = Array.from(validUnitsMap.keys());
+  const activeCatalogNames = Array.from(new Set(catalogRows.map((c) => c.name.trim().toLowerCase())));
   let deletedObsolete = 0;
 
-  // Hapus unit dummy lama (misal S-001..200 dsb) yang tidak terhubung dengan log/tiket apa pun
-  const deleteResult = await sql`
-    DELETE FROM "Daisha"
-    WHERE UPPER(nomor_daisha) NOT IN ${sql(validKeys)}
-      AND UPPER(nomor_daisha) NOT IN ${sql(Array.from(referencedSet))}
-      AND last_maintenance_date IS NULL
-      AND last_repair_date IS NULL
-    RETURNING id
-  `;
-  deletedObsolete = deleteResult.length;
-
-  // 4b. Sinkronkan namaDaisha dan seksi pada tiket & maintenance log dengan master daisha terbaru
   try {
-    await sql`
-      UPDATE "Ticket" t
-      SET 
-        "namaDaisha" = d.nama_daisha,
-        "seksi" = d.seksi
-      FROM "Daisha" d
-      WHERE UPPER(TRIM(t."noDaisha")) = UPPER(TRIM(d.nomor_daisha))
-        AND (t."namaDaisha" IS DISTINCT FROM d.nama_daisha OR t."seksi" IS DISTINCT FROM d.seksi)
+    const deleteResult = await sql`
+      DELETE FROM "Daisha"
+      WHERE (
+        UPPER(nomor_daisha) NOT IN ${sql(validKeys)}
+        OR LOWER(TRIM(COALESCE(nama_daisha, jenis))) NOT IN ${sql(activeCatalogNames)}
+      )
+      AND UPPER(nomor_daisha) NOT IN ${sql(Array.from(referencedSet))}
+      RETURNING id
     `;
+    deletedObsolete = deleteResult.length;
+  } catch (err) {
+    console.warn('Delete obsolete daisha error:', err);
+  }
+
+  // 4b. Sinkronkan seksi pada maintenance log dengan master daisha terbaru jika kolom tersedia
+  try {
     await sql`
       UPDATE "MaintenanceLog" m
       SET 
         "nama_daisha" = d.nama_daisha,
-        "jenis" = d.jenis,
-        "seksi" = d.seksi
+        "jenis" = d.jenis
       FROM "Daisha" d
       WHERE UPPER(TRIM(m.nomor_daisha)) = UPPER(TRIM(d.nomor_daisha))
-        AND (m.nama_daisha IS DISTINCT FROM d.nama_daisha OR m.seksi IS DISTINCT FROM d.seksi)
+        AND (m.nama_daisha IS DISTINCT FROM d.nama_daisha OR m.jenis IS DISTINCT FROM d.jenis)
     `;
   } catch (err) {
-    console.warn('Sync ticket/maintenanceLog nama_daisha warning:', err);
+    console.warn('Sync maintenanceLog nama_daisha warning:', err);
   }
 
   // 5. Invalidate cache agar API segera menampilkan data terbaru
