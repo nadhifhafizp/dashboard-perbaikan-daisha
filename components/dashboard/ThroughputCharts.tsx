@@ -17,7 +17,7 @@ import {
   LabelList,
   ReferenceLine,
 } from 'recharts';
-import { Info, Timer, TrendingUp, PieChart as PieIcon, Clock, Table as TableIcon, ArrowUpDown } from 'lucide-react';
+import { Info, Timer, TrendingUp, PieChart as PieIcon, Clock, ArrowUpDown } from 'lucide-react';
 import { CHART, DONUT } from '@/lib/chart-colors';
 
 interface ThroughputChartsProps {
@@ -63,8 +63,6 @@ export default function ThroughputCharts({
   const [timelineScale, setTimelineScale] = useState<'7days' | '14days' | 'monthly'>('7days');
   // Orientasi batang: 'opposing' (Masuk di atas, Selesai di bawah) vs 'sideBySide' (berdampingan)
   const [chartOrientation, setChartOrientation] = useState<'opposing' | 'sideBySide'>('opposing');
-  // Toggle visibilitas tabel rincian akumulasi backlog
-  const [showBacklogTable, setShowBacklogTable] = useState(true);
 
   // Siapkan data timeline bulanan jika mode bulanan dipilih
   const timelineMonthlyData = chartTrenBulanan.map((b) => ({
@@ -240,21 +238,6 @@ export default function ThroughputCharts({
                   Bulanan
                 </button>
               </div>
-
-              {/* Toggle Tampilkan Tabel Rincian */}
-              <button
-                type="button"
-                onClick={() => setShowBacklogTable((prev) => !prev)}
-                className={`h-8 px-2.5 rounded-lg border text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
-                  showBacklogTable
-                    ? 'bg-purple-50 text-purple-800 border-purple-200'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                }`}
-                title="Buka / Tutup tabel rincian data backlog"
-              >
-                <TableIcon className="w-3.5 h-3.5" />
-                <span>{showBacklogTable ? 'Tutup Tabel' : 'Lihat Tabel'}</span>
-              </button>
             </div>
           </div>
 
@@ -367,9 +350,8 @@ export default function ThroughputCharts({
                     const masukVal = item?.Masuk ?? 0;
                     const selesaiVal = item?.Selesai ?? 0;
                     const backlogVal = item?.backlogAkhir ?? 0;
-                    const balance = masukVal - selesaiVal;
                     return (
-                      <div className="bg-white/95 backdrop-blur-xs border border-slate-200 rounded-xl p-3.5 shadow-lg text-xs space-y-2 min-w-[230px]">
+                      <div className="bg-white/95 backdrop-blur-xs border border-slate-200 rounded-xl p-3 shadow-lg text-xs space-y-2 min-w-[200px]">
                         <p className="font-bold text-slate-800 border-b border-slate-100 pb-1 flex items-center justify-between">
                           <span className="text-sm">{label}</span>
                           <span className="text-xs text-slate-500 font-semibold">Arus & Backlog</span>
@@ -377,14 +359,14 @@ export default function ThroughputCharts({
                         <div className="flex items-center justify-between font-bold text-red-700">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-xs bg-red-600" />
-                            <span>Servis Masuk (A):</span>
+                            <span>Servis Masuk:</span>
                           </span>
                           <span className="text-sm font-black">{masukVal} Unit</span>
                         </div>
                         <div className="flex items-center justify-between font-bold text-emerald-700">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-xs bg-emerald-600" />
-                            <span>Servis Keluar/Selesai (B):</span>
+                            <span>Servis Selesai:</span>
                           </span>
                           <span className="text-sm font-black">{selesaiVal} Unit</span>
                         </div>
@@ -394,28 +376,6 @@ export default function ThroughputCharts({
                             <span>Backlog Akumulasi:</span>
                           </span>
                           <span className="text-sm font-black">{backlogVal} Mesin</span>
-                        </div>
-                        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-600">
-                          <span>Perhitungan:</span>
-                          <span className="font-mono font-bold text-slate-700">{item?.rumusBacklog || '-'}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-                          <span>Status Arus:</span>
-                          <span
-                            className={
-                              balance === 0
-                                ? 'text-emerald-600 font-bold'
-                                : balance > 0
-                                ? 'text-amber-600 font-bold'
-                                : 'text-emerald-700 font-bold'
-                            }
-                          >
-                            {balance === 0
-                              ? 'Seimbang (0 Unit)'
-                              : balance > 0
-                              ? `+${balance} Antrean Bertambah`
-                              : `${Math.abs(balance)} Surplus Selesai`}
-                          </span>
                         </div>
                       </div>
                     );
@@ -530,62 +490,6 @@ export default function ThroughputCharts({
             </div>
           )}
         </div>
-
-        {/* Tabel Rekapitulasi Servis Masuk, Keluar, dan Akumulasi Backlog (Konsep Gambar 1) */}
-        {showBacklogTable && processedTimelineData.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <TableIcon className="w-4 h-4 text-purple-600" />
-                <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                  Data Servis Masuk, Servis Keluar, dan Backlog (Akumulasi)
-                </h4>
-              </div>
-              <span className="text-xs text-slate-500 font-medium">
-                {timelineScale === '7days' ? 'Periode 7 Hari Terakhir' : timelineScale === '14days' ? 'Periode 14 Hari Terakhir' : 'Periode Bulanan'}
-              </span>
-            </div>
-
-            <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
-                  <tr>
-                    <th className="py-2.5 px-3">Bulan / Tanggal</th>
-                    <th className="py-2.5 px-3 text-center bg-red-50/60 text-red-900">Servis Masuk (A)</th>
-                    <th className="py-2.5 px-3 text-center bg-emerald-50/60 text-emerald-900">Servis Keluar (B)</th>
-                    <th className="py-2.5 px-3 text-center bg-slate-100/70 text-slate-700">Perhitungan Backlog Akhir</th>
-                    <th className="py-2.5 px-3 text-center bg-purple-50 text-purple-900 font-black">Backlog Akhir</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {processedTimelineData.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/80 transition font-medium">
-                      <td className="py-2.5 px-3 font-semibold text-slate-800">{row.tanggal}</td>
-                      <td className="py-2.5 px-3 text-center font-bold text-red-600">{row.Masuk}</td>
-                      <td className="py-2.5 px-3 text-center font-bold text-emerald-600">{row.Selesai}</td>
-                      <td className="py-2.5 px-3 text-center text-slate-600 font-mono text-[11px]">{row.rumusBacklog}</td>
-                      <td className="py-2.5 px-3 text-center font-black text-purple-700 bg-purple-50/30">
-                        <span className="px-2.5 py-0.5 rounded-md bg-purple-100 text-purple-900 font-black text-xs inline-block border border-purple-200">
-                          {row.backlogAkhir}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Keterangan Box (Sesuai Konsep Image 1) */}
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 text-[11px] text-slate-700 space-y-1">
-              <p className="font-bold text-slate-800">Keterangan:</p>
-              <ul className="list-disc list-inside space-y-0.5 text-slate-600">
-                <li>Batang atas (merah): <strong>Servis Masuk</strong> ke bengkel perbaikan.</li>
-                <li>Batang bawah (hijau): <strong>Servis Keluar</strong> selesai diperbaiki dan kembali ke operasional.</li>
-                <li>Garis ungu: <strong>Backlog Akumulasi</strong> = <em>Backlog awal + Servis Masuk (A) - Servis Keluar (B)</em>.</li>
-              </ul>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Baris kedua: Donut status & lead time */}
