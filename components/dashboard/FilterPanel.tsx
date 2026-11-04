@@ -15,6 +15,9 @@ interface FilterPanelProps {
   setFilterDaisha: (v: string) => void;
   filterStatus: string;
   setFilterStatus: (v: string) => void;
+  filterBulan?: string;
+  setFilterBulan?: (v: string) => void;
+  pilihanBulan?: { key: string; label: string }[];
   startDate: string;
   setStartDate: (v: string) => void;
   endDate: string;
@@ -38,6 +41,9 @@ export default function FilterPanel({
   setFilterDaisha,
   filterStatus,
   setFilterStatus,
+  filterBulan = '',
+  setFilterBulan,
+  pilihanBulan = [],
   startDate,
   setStartDate,
   endDate,
@@ -65,6 +71,7 @@ export default function FilterPanel({
     (filterDaisha ? 1 : 0) +
     (filterStatus ? 1 : 0) +
     (filterHanyaBerulang ? 1 : 0) +
+    (filterBulan ? 1 : 0) +
     (startDate ? 1 : 0) +
     (endDate ? 1 : 0);
 
@@ -156,8 +163,8 @@ export default function FilterPanel({
         </div>
       </div>
 
-      {/* Grid 6 Filter Controls */}
-      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 ${isMobileExpanded ? 'grid' : 'hidden md:grid'}`}>
+      {/* Grid Filter Controls */}
+      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 ${isMobileExpanded ? 'grid' : 'hidden md:grid'}`}>
         {/* 1. Global Search */}
         <div>
           <label htmlFor="filter-search" className="block text-xs font-medium text-slate-700 mb-1">
@@ -239,7 +246,27 @@ export default function FilterPanel({
           </select>
         </div>
 
-        {/* 5. Date Start */}
+        {/* 5. Periode Bulan */}
+        <div>
+          <label htmlFor="filter-bulan" className="block text-xs font-medium text-slate-700 mb-1">
+            Periode Bulan
+          </label>
+          <select
+            id="filter-bulan"
+            value={filterBulan}
+            onChange={(e) => setFilterBulan?.(e.target.value)}
+            className="w-full h-10 px-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition cursor-pointer"
+          >
+            <option value="">Semua Bulan</option>
+            {pilihanBulan.map(b => (
+              <option key={b.key} value={b.key}>
+                {b.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 6. Date Start */}
         <div>
           <label htmlFor="filter-start-date" className="block text-xs font-medium text-slate-700 mb-1">
             Dari Tanggal
@@ -252,7 +279,7 @@ export default function FilterPanel({
           />
         </div>
 
-        {/* 6. Date End */}
+        {/* 7. Date End */}
         <div>
           <label htmlFor="filter-end-date" className="block text-xs font-medium text-slate-700 mb-1">
             Sampai Tanggal

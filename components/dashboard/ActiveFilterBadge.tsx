@@ -8,6 +8,8 @@ export interface ActiveFiltersInfo {
   seksi?: string;
   daisha?: string;
   status?: string;
+  bulan?: string;
+  bulanLabel?: string;
   startDate?: string;
   endDate?: string;
   hanyaBerulang?: boolean;
@@ -22,12 +24,13 @@ interface ActiveFilterBadgeProps {
 export default function ActiveFilterBadge({ filters, className = '' }: ActiveFilterBadgeProps) {
   if (!filters) return null;
 
-  const { seksi, daisha, status, startDate, endDate, hanyaBerulang, search } = filters;
+  const { seksi, daisha, status, bulan, bulanLabel, startDate, endDate, hanyaBerulang, search } = filters;
 
   const hasAnyFilter = Boolean(
     (seksi && seksi !== 'all' && seksi !== 'Semua Seksi') ||
     (daisha && daisha !== 'all') ||
     (status && status !== 'all') ||
+    bulan ||
     startDate ||
     endDate ||
     hanyaBerulang ||
@@ -78,6 +81,15 @@ export default function ActiveFilterBadge({ filters, className = '' }: ActiveFil
           <Layers className="w-3 h-3 text-amber-600 shrink-0" />
           <span>
             Daisha: <strong className="text-amber-800 font-bold">{daisha}</strong>
+          </span>
+        </span>
+      )}
+
+      {(bulanLabel || bulan) && (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white text-slate-800 font-medium border border-amber-200 shadow-2xs">
+          <Calendar className="w-3 h-3 text-indigo-600 shrink-0" />
+          <span>
+            Bulan: <strong className="text-indigo-700 font-bold">{bulanLabel || bulan}</strong>
           </span>
         </span>
       )}

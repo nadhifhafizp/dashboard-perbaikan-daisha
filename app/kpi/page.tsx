@@ -138,6 +138,7 @@ function KpiDashboardContent() {
   const [filterDaisha, setFilterDaisha] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterHanyaBerulang, setFilterHanyaBerulang] = useState(false);
+  const [filterBulan, setFilterBulan] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -166,19 +167,25 @@ function KpiDashboardContent() {
     filterPelapor: '',
     filterStatus,
     filterHanyaBerulang,
+    filterBulan,
     startDate,
     endDate,
   });
 
-  const activeFilters = useMemo(() => ({
-    seksi: userSeksi || filterSeksi,
-    daisha: filterDaisha,
-    status: filterStatus,
-    startDate,
-    endDate,
-    hanyaBerulang: filterHanyaBerulang,
-    search,
-  }), [userSeksi, filterSeksi, filterDaisha, filterStatus, startDate, endDate, filterHanyaBerulang, search]);
+  const activeFilters = useMemo(() => {
+    const bObj = filterOptions.pilihanBulan?.find((b) => b.key === filterBulan);
+    return {
+      seksi: userSeksi || filterSeksi,
+      daisha: filterDaisha,
+      status: filterStatus,
+      bulan: filterBulan,
+      bulanLabel: bObj?.label,
+      startDate,
+      endDate,
+      hanyaBerulang: filterHanyaBerulang,
+      search,
+    };
+  }, [userSeksi, filterSeksi, filterDaisha, filterStatus, filterBulan, filterOptions.pilihanBulan, startDate, endDate, filterHanyaBerulang, search]);
 
   const handleQuickPreset = (days: number) => {
     const today = new Date();
@@ -202,6 +209,7 @@ function KpiDashboardContent() {
     setFilterDaisha('');
     setFilterStatus('');
     setFilterHanyaBerulang(false);
+    setFilterBulan('');
     setStartDate('');
     setEndDate('');
   };
@@ -702,6 +710,9 @@ function KpiDashboardContent() {
                 setFilterDaisha={setFilterDaisha}
                 filterStatus={filterStatus}
                 setFilterStatus={setFilterStatus}
+                filterBulan={filterBulan}
+                setFilterBulan={setFilterBulan}
+                pilihanBulan={filterOptions.pilihanBulan}
                 startDate={startDate}
                 setStartDate={setStartDate}
                 endDate={endDate}

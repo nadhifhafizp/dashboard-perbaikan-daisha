@@ -20,7 +20,7 @@ let repairCache: Record<string, unknown>[] | null = null;
 let repairCacheTimestamp = 0;
 const REPAIR_CACHE_TTL_MS = 10 * 1000; // 10 detik
 
-export function invalidateRepairCache(): void {
+function invalidateRepairCache(): void {
   repairCache = null;
   repairCacheTimestamp = 0;
 }

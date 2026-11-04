@@ -22,7 +22,7 @@ interface SectionUnitsCacheItem {
 const unitsCache = new Map<string, SectionUnitsCacheItem>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-export function invalidateSectionUnitsCache(seksi?: string) {
+function invalidateSectionUnitsCache(seksi?: string) {
   if (seksi) {
     unitsCache.delete(seksi.toLowerCase());
   } else {

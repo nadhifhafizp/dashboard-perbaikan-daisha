@@ -15,6 +15,7 @@ export interface DashboardFilters {
   filterPelapor: string;
   filterStatus: string;
   filterHanyaBerulang: boolean;
+  filterBulan?: string;
   startDate: string;
   endDate: string;
 }
@@ -86,6 +87,7 @@ export interface FilterOptions {
   pilihanDetail: string[];
   pilihanNoDaisha: string[];
   pilihanPelapor: string[];
+  pilihanBulan: { key: string; label: string }[];
 }
 
 export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilters) {
@@ -101,6 +103,7 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     filterPelapor,
     filterStatus,
     filterHanyaBerulang,
+    filterBulan,
     startDate,
     endDate,
   } = filters;
@@ -147,6 +150,7 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       }
 
       const itemDate = parseToISODate(item.tglMasuk);
+      if (filterBulan && itemDate && !itemDate.startsWith(filterBulan)) return false;
       if (startDate && itemDate && itemDate < startDate) return false;
       if (endDate && itemDate && itemDate > endDate) return false;
 
@@ -173,6 +177,7 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     filterPelapor, 
     filterStatus, 
     filterHanyaBerulang, 
+    filterBulan,
     startDate, 
     endDate, 
     search, 
@@ -183,6 +188,7 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
   const filterOptions: FilterOptions = useMemo(() => {
     const setUnit = new Set<string>();
     const setPelapor = new Set<string>();
+    const monthsSet = new Set<string>();
 
     dataRaw.forEach(d => {
       if (d.noDaisha && d.noDaisha !== '-') {
@@ -193,7 +199,28 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
         }
       }
       if (d.pelapor && d.pelapor !== '-') setPelapor.add(d.pelapor);
+
+      const iso = parseToISODate(d.tglMasuk);
+      if (iso && iso.length >= 7) {
+        monthsSet.add(iso.slice(0, 7));
+      }
     });
+
+    const fullMonthNames: Record<string, string> = {
+      '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
+      '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
+      '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember',
+    };
+
+    const pilihanBulan = Array.from(monthsSet)
+      .sort((a, b) => b.localeCompare(a))
+      .map(mKey => {
+        const [yyyy, mm] = mKey.split('-');
+        return {
+          key: mKey,
+          label: `${fullMonthNames[mm] || mm} ${yyyy}`,
+        };
+      });
 
     const dynamicDaisha = getDaishaBySeksi(filterSeksi);
     const dynamicKomponen = getKomponenKerusakan(filterDaisha);
@@ -205,6 +232,7 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       pilihanDetail: dynamicDetail.length > 0 ? dynamicDetail : [],
       pilihanNoDaisha: Array.from(setUnit).sort(),
       pilihanPelapor: Array.from(setPelapor).sort(),
+      pilihanBulan,
     };
   }, [dataRaw, filterSeksi, filterDaisha, filterKerusakan, getDaishaBySeksi, getKomponenKerusakan, getDetailKerusakan]);
 

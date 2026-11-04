@@ -61,7 +61,7 @@ const CATALOG_CACHE_TTL_MS = 60 * 1000;
 
 const toJsonb = (data: unknown) => sql.json(data as never);
 
-export function invalidateCatalogCache(): void {
+function invalidateCatalogCache(): void {
   cachedCatalogResponse = null;
   cachedCatalogTimestamp = 0;
 }

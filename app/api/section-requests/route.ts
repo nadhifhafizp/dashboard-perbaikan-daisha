@@ -65,7 +65,7 @@ export interface SectionRequestRow {
 }
 
 // Helper untuk memastikan format data materials selalu array of object bersih
-export function normalizeMaterials(raw: unknown): Array<{
+function normalizeMaterials(raw: unknown): Array<{
   id: number;
   sectionRequestId?: number;
   namaKomponen: string;
