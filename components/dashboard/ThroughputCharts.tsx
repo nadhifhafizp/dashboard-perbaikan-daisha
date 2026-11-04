@@ -2,8 +2,10 @@
 
 import React, { useState, useMemo } from 'react';
 import {
+  ComposedChart,
   BarChart,
   Bar,
+  Line,
   PieChart,
   Pie,
   Cell,
@@ -15,7 +17,7 @@ import {
   LabelList,
   ReferenceLine,
 } from 'recharts';
-import { Info, Timer, TrendingUp, PieChart as PieIcon, Clock } from 'lucide-react';
+import { Info, Timer, TrendingUp, PieChart as PieIcon, Clock, Table as TableIcon, ArrowUpDown } from 'lucide-react';
 import { CHART, DONUT } from '@/lib/chart-colors';
 
 interface ThroughputChartsProps {
@@ -59,6 +61,10 @@ export default function ThroughputCharts({
 }: ThroughputChartsProps) {
   // Mode rentang waktu: '7days' (1 minggu terakhir - default), '14days' (2 minggu), 'monthly' (bulanan)
   const [timelineScale, setTimelineScale] = useState<'7days' | '14days' | 'monthly'>('7days');
+  // Orientasi batang: 'opposing' (Masuk di atas, Selesai di bawah) vs 'sideBySide' (berdampingan)
+  const [chartOrientation, setChartOrientation] = useState<'opposing' | 'sideBySide'>('opposing');
+  // Toggle visibilitas tabel rincian akumulasi backlog
+  const [showBacklogTable, setShowBacklogTable] = useState(true);
 
   // Siapkan data timeline bulanan jika mode bulanan dipilih
   const timelineMonthlyData = chartTrenBulanan.map((b) => ({
@@ -78,6 +84,30 @@ export default function ThroughputCharts({
     return timelineMonthlyData;
   }, [timelineScale, chartTrenHarian, timelineMonthlyData]);
 
+  // Hitung akumulasi backlog dinamis & nilai bar negatif untuk orientasi atas vs bawah
+  const processedTimelineData = useMemo(() => {
+    let runningBacklog = 0;
+    return activeTimelineData.map((d) => {
+      const masuk = Number(d.Masuk) || 0;
+      const selesai = Number(d.Selesai) || 0;
+      const awal = runningBacklog;
+      const net = masuk - selesai;
+      const akhir = Math.max(0, awal + net);
+      runningBacklog = akhir;
+
+      return {
+        ...d,
+        Masuk: masuk,
+        Selesai: selesai,
+        SelesaiNeg: -selesai,
+        net,
+        backlogAwal: awal,
+        backlogAkhir: akhir,
+        rumusBacklog: `${awal} + ${masuk} - ${selesai} = ${akhir}`,
+      };
+    });
+  }, [activeTimelineData]);
+
   // Hitung batas maksimum sumbu Y dengan headroom agar label angka tidak terpotong
   const yMaxDomain = useMemo(() => {
     let max = 4;
@@ -87,6 +117,25 @@ export default function ThroughputCharts({
     }
     return Math.ceil(max * 1.3);
   }, [activeTimelineData]);
+
+  // Batas domain simetris untuk batang atas (masuk) vs bawah (selesai)
+  const yOpposingDomain = useMemo(() => {
+    let max = 3;
+    for (const d of processedTimelineData) {
+      if (d.Masuk > max) max = d.Masuk;
+      if (d.Selesai > max) max = d.Selesai;
+    }
+    return Math.ceil(max * 1.4);
+  }, [processedTimelineData]);
+
+  // Batas domain untuk sumbu backlog (garis ungu di sisi kanan)
+  const yBacklogDomain = useMemo(() => {
+    let max = 4;
+    for (const d of processedTimelineData) {
+      if (d.backlogAkhir > max) max = d.backlogAkhir;
+    }
+    return Math.ceil(max * 1.35);
+  }, [processedTimelineData]);
 
   const totalMasukTimeline = useMemo(
     () => activeTimelineData.reduce((acc, d) => acc + (d.Masuk || 0), 0),
@@ -105,74 +154,129 @@ export default function ThroughputCharts({
 
   return (
     <div className="space-y-6">
-      {/* 1. Grafik Utama: Komparasi volume masuk vs selesai */}
-      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60">
+      {/* 1. Grafik Utama: Komparasi volume masuk vs selesai & Backlog Akumulasi */}
+      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 shadow-2xs">
         <div>
           <div className="flex flex-wrap justify-between items-center gap-3 mb-2">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-slate-500" />
               <div>
                 <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-                  Masuk vs Selesai
+                  Data Servis Masuk, Servis Selesai, dan Backlog (Akumulasi)
                 </h3>
                 <span className="text-xs text-slate-400 font-normal">
-                  {timelineScale === '7days' ? '7 Hari Terakhir' : timelineScale === '14days' ? '14 Hari Terakhir' : 'Akumulasi Bulanan'}
+                  {timelineScale === '7days' ? '7 Hari Terakhir' : timelineScale === '14days' ? '14 Hari Terakhir' : 'Akumulasi Bulanan'} • Grafik Masuk (Atas) vs Selesai (Bawah)
                 </span>
               </div>
             </div>
 
-            {/* Toggle Rentang Waktu: 7 Hari (1 Minggu) vs 14 Hari vs Bulanan */}
-            <div className="flex items-center p-0.5 bg-slate-100/90 rounded-lg text-xs font-semibold w-full sm:w-auto overflow-x-auto shrink-0 justify-between sm:justify-start">
+            {/* Kontrol Toolbar: Pilihan Periode, Orientasi Grafik, dan Toggle Tabel */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Toggle Orientasi: Atas-Bawah (Default) vs Berdampingan */}
+              <div className="flex items-center p-0.5 bg-slate-100 rounded-lg text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setChartOrientation('opposing')}
+                  className={`px-2.5 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1 ${
+                    chartOrientation === 'opposing'
+                      ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                  title="Batang Masuk di Atas, Selesai di Bawah"
+                >
+                  <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Masuk ↑ / Selesai ↓</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartOrientation('sideBySide')}
+                  className={`px-2.5 py-1.5 rounded-md transition cursor-pointer ${
+                    chartOrientation === 'sideBySide'
+                      ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                  title="Batang Masuk dan Selesai Berdampingan"
+                >
+                  <span>Berdampingan</span>
+                </button>
+              </div>
+
+              {/* Toggle Rentang Waktu: 7 Hari (1 Minggu) vs 14 Hari vs Bulanan */}
+              <div className="flex items-center p-0.5 bg-slate-100/90 rounded-lg text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setTimelineScale('7days')}
+                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
+                    timelineScale === '7days'
+                      ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                  title="Tampilkan rentang 7 hari kerja terakhir (1 minggu)"
+                >
+                  7 Hari
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTimelineScale('14days')}
+                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
+                    timelineScale === '14days'
+                      ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                  title="Tampilkan rentang 14 hari kerja terakhir"
+                >
+                  14 Hari
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTimelineScale('monthly')}
+                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
+                    timelineScale === 'monthly'
+                      ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                  title="Tampilkan agregasi data per bulan"
+                >
+                  Bulanan
+                </button>
+              </div>
+
+              {/* Toggle Tampilkan Tabel Rincian */}
               <button
                 type="button"
-                onClick={() => setTimelineScale('7days')}
-                className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
-                  timelineScale === '7days'
-                    ? 'bg-white text-slate-900'
-                    : 'text-slate-600 hover:text-slate-900'
+                onClick={() => setShowBacklogTable((prev) => !prev)}
+                className={`h-8 px-2.5 rounded-lg border text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
+                  showBacklogTable
+                    ? 'bg-purple-50 text-purple-800 border-purple-200'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                 }`}
-                title="Tampilkan rentang 7 hari kerja terakhir (1 minggu)"
+                title="Buka / Tutup tabel rincian data backlog"
               >
-                7 Hari (1 Minggu)
-              </button>
-              <button
-                type="button"
-                onClick={() => setTimelineScale('14days')}
-                className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
-                  timelineScale === '14days'
-                    ? 'bg-white text-slate-900'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-                title="Tampilkan rentang 14 hari kerja terakhir"
-              >
-                14 Hari
-              </button>
-              <button
-                type="button"
-                onClick={() => setTimelineScale('monthly')}
-                className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
-                  timelineScale === 'monthly'
-                    ? 'bg-white text-slate-900'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-                title="Tampilkan agregasi data per bulan"
-              >
-                Bulanan
+                <TableIcon className="w-3.5 h-3.5" />
+                <span>{showBacklogTable ? 'Tutup Tabel' : 'Lihat Tabel'}</span>
               </button>
             </div>
           </div>
 
-          {/* Legenda Indikator Makna Warna & Simbol (Tanpa Kotak Berlebih) */}
+          {/* Legenda Indikator Makna Warna & Simbol */}
           <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-slate-600 my-2 pt-1 pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block" />
-              <span>Unit Masuk:</span>
-              <span className="text-slate-900 font-semibold">{totalMasukTimeline}</span>
+              <span className="w-3 h-3 rounded-xs bg-red-600 inline-block" />
+              <span>Servis Masuk (Di Atas):</span>
+              <span className="text-slate-900 font-bold">{totalMasukTimeline}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-              <span>Unit Selesai:</span>
-              <span className="text-slate-900 font-semibold">{totalSelesaiTimeline}</span>
+              <span className="w-3 h-3 rounded-xs bg-emerald-600 inline-block" />
+              <span>Servis Keluar/Selesai (Di Bawah):</span>
+              <span className="text-slate-900 font-bold">{totalSelesaiTimeline}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-1 bg-purple-600 rounded-full inline-block" />
+              <span className="w-2 h-2 rounded-full bg-purple-600 inline-block -ml-2" />
+              <span>Backlog Akumulasi:</span>
+              <span className="text-purple-700 font-black">
+                {processedTimelineData.length > 0 ? processedTimelineData[processedTimelineData.length - 1].backlogAkhir : 0} Mesin
+              </span>
             </div>
 
             {/* Indikator Net Balance Arus */}
@@ -203,63 +307,98 @@ export default function ThroughputCharts({
             })()}
 
             <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-400 font-normal ml-auto">
-              <span>Sumbu Horizontal: Tanggal</span>
+              <span>Sumbu Kiri: Unit (Masuk ↑ / Selesai ↓) • Sumbu Kanan: Backlog (Mesin)</span>
             </div>
           </div>
         </div>
 
-        {/* 1 Grafik: Komparasi Volume Masuk vs Selesai (DIPERBESAR & DIPERLEBAR) */}
-        <div className="w-full my-2 h-[370px] sm:h-[420px]">
-          {activeTimelineData.length > 0 ? (
+        {/* 1 Grafik: Komparasi Volume Masuk vs Selesai & Backlog (ComposedChart) */}
+        <div className="w-full my-2 h-[400px] sm:h-[450px]">
+          {processedTimelineData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={activeTimelineData}
-                margin={{ top: 25, right: 25, left: -10, bottom: 20 }}
+              <ComposedChart
+                data={processedTimelineData}
+                margin={{ top: 25, right: 35, left: -5, bottom: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis
                   dataKey="tanggal"
-                  tick={{ fontSize: 13, fill: '#0f172a', fontWeight: 800 }}
+                  tick={{ fontSize: 12, fill: '#0f172a', fontWeight: 800 }}
                   axisLine={{ stroke: '#cbd5e1' }}
                   tickLine={false}
                   dy={6}
                 />
+                {/* Sumbu Y Kiri: Volume Daisha (Atas Masuk ↑, Bawah Selesai ↓) */}
                 <YAxis
+                  yAxisId="left"
                   type="number"
-                  domain={[0, yMaxDomain]}
-                  tick={{ fontSize: 13, fill: '#334155', fontWeight: 700 }}
+                  domain={chartOrientation === 'opposing' ? [-yOpposingDomain, yOpposingDomain] : [0, yMaxDomain]}
+                  tick={{ fontSize: 12, fill: '#334155', fontWeight: 700 }}
                   allowDecimals={false}
                   axisLine={{ stroke: '#e2e8f0' }}
                   tickLine={false}
+                  tickFormatter={(val: number) => String(Math.abs(val))}
+                />
+                {/* Sumbu Y Kanan: Backlog Mesin Akumulasi */}
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  type="number"
+                  domain={[0, yBacklogDomain]}
+                  tick={{ fontSize: 12, fill: '#7c3aed', fontWeight: 800 }}
+                  allowDecimals={false}
+                  axisLine={{ stroke: '#e9d5ff' }}
+                  tickLine={false}
+                  tickFormatter={(val: number) => String(val)}
+                />
+                {/* Garis Tengah Baseline 0 */}
+                <ReferenceLine
+                  y={0}
+                  yAxisId="left"
+                  stroke="#64748b"
+                  strokeWidth={1.5}
                 />
                 <Tooltip
                   cursor={{ fill: 'rgba(241, 245, 249, 0.6)' }}
                   content={({ active, payload, label }) => {
                     if (!active || !payload || !payload.length) return null;
-                    const masukVal = Number(payload.find((p) => p.dataKey === 'Masuk')?.value || 0);
-                    const selesaiVal = Number(payload.find((p) => p.dataKey === 'Selesai')?.value || 0);
+                    const item = payload[0]?.payload;
+                    const masukVal = item?.Masuk ?? 0;
+                    const selesaiVal = item?.Selesai ?? 0;
+                    const backlogVal = item?.backlogAkhir ?? 0;
                     const balance = masukVal - selesaiVal;
                     return (
-                      <div className="bg-white/95 backdrop-blur-xs border border-slate-200 rounded-xl p-3.5 shadow-lg text-xs space-y-2 min-w-[210px]">
+                      <div className="bg-white/95 backdrop-blur-xs border border-slate-200 rounded-xl p-3.5 shadow-lg text-xs space-y-2 min-w-[230px]">
                         <p className="font-bold text-slate-800 border-b border-slate-100 pb-1 flex items-center justify-between">
                           <span className="text-sm">{label}</span>
-                          <span className="text-xs text-slate-500 font-semibold">Komparasi Harian</span>
+                          <span className="text-xs text-slate-500 font-semibold">Arus & Backlog</span>
                         </p>
                         <div className="flex items-center justify-between font-bold text-red-700">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-xs bg-red-600" />
-                            <span>Unit Masuk:</span>
+                            <span>Servis Masuk (A):</span>
                           </span>
                           <span className="text-sm font-black">{masukVal} Unit</span>
                         </div>
                         <div className="flex items-center justify-between font-bold text-emerald-700">
                           <span className="flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500" />
-                            <span>Unit Selesai:</span>
+                            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-600" />
+                            <span>Servis Keluar/Selesai (B):</span>
                           </span>
                           <span className="text-sm font-black">{selesaiVal} Unit</span>
                         </div>
+                        <div className="flex items-center justify-between font-bold text-purple-700 border-t border-slate-100 pt-1.5">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-purple-600" />
+                            <span>Backlog Akumulasi:</span>
+                          </span>
+                          <span className="text-sm font-black">{backlogVal} Mesin</span>
+                        </div>
                         <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-600">
+                          <span>Perhitungan:</span>
+                          <span className="font-mono font-bold text-slate-700">{item?.rumusBacklog || '-'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
                           <span>Status Arus:</span>
                           <span
                             className={
@@ -273,7 +412,7 @@ export default function ThroughputCharts({
                             {balance === 0
                               ? 'Seimbang (0 Unit)'
                               : balance > 0
-                              ? `+${balance} Unit Pending`
+                              ? `+${balance} Antrean Bertambah`
                               : `${Math.abs(balance)} Surplus Selesai`}
                           </span>
                         </div>
@@ -281,35 +420,61 @@ export default function ThroughputCharts({
                     );
                   }}
                 />
+
+                {/* Batang Daisha Masuk (Di Atas Garis 0) */}
                 <Bar
+                  yAxisId="left"
                   dataKey="Masuk"
-                  name="Unit Masuk"
+                  name="Servis Masuk"
                   fill="#dc2626"
-                  radius={[5, 5, 0, 0]}
-                  maxBarSize={85}
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={65}
                 >
                   <LabelList
                     dataKey="Masuk"
                     position="top"
                     formatter={(val: unknown) => (Number(val) > 0 ? String(val) : '')}
-                    style={{ fontSize: 14, fontWeight: 900, fill: '#dc2626' }}
+                    style={{ fontSize: 13, fontWeight: 900, fill: '#dc2626' }}
                   />
                 </Bar>
+
+                {/* Batang Selesai Perbaikan (Di Bawah Garis 0 saat opposing, atau Berdampingan saat sideBySide) */}
                 <Bar
-                  dataKey="Selesai"
-                  name="Unit Selesai"
+                  yAxisId="left"
+                  dataKey={chartOrientation === 'opposing' ? 'SelesaiNeg' : 'Selesai'}
+                  name="Servis Keluar"
                   fill="#059669"
-                  radius={[5, 5, 0, 0]}
-                  maxBarSize={85}
+                  radius={chartOrientation === 'opposing' ? [0, 0, 4, 4] : [4, 4, 0, 0]}
+                  maxBarSize={65}
                 >
                   <LabelList
-                    dataKey="Selesai"
-                    position="top"
-                    formatter={(val: unknown) => (Number(val) > 0 ? String(val) : '')}
-                    style={{ fontSize: 14, fontWeight: 900, fill: '#059669' }}
+                    dataKey={chartOrientation === 'opposing' ? 'SelesaiNeg' : 'Selesai'}
+                    position={chartOrientation === 'opposing' ? 'bottom' : 'top'}
+                    formatter={(val: unknown) => (Math.abs(Number(val)) > 0 ? String(Math.abs(Number(val))) : '')}
+                    style={{ fontSize: 13, fontWeight: 900, fill: '#059669' }}
                   />
                 </Bar>
-              </BarChart>
+
+                {/* Garis Backlog Akumulasi (Akhir Bulan/Hari) */}
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="backlogAkhir"
+                  name="Backlog Akumulasi"
+                  stroke="#7c3aed"
+                  strokeWidth={3}
+                  dot={{ r: 5, fill: '#7c3aed', stroke: '#ffffff', strokeWidth: 2 }}
+                  activeDot={{ r: 7, stroke: '#7c3aed', strokeWidth: 2, fill: '#ffffff' }}
+                >
+                  <LabelList
+                    dataKey="backlogAkhir"
+                    position="top"
+                    offset={8}
+                    formatter={(val: unknown) => (Number(val) > 0 ? String(val) : '0')}
+                    style={{ fontSize: 12, fontWeight: 900, fill: '#6d28d9' }}
+                  />
+                </Line>
+              </ComposedChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center text-xs text-slate-400">
@@ -317,6 +482,62 @@ export default function ThroughputCharts({
             </div>
           )}
         </div>
+
+        {/* Tabel Rekapitulasi Servis Masuk, Keluar, dan Akumulasi Backlog (Konsep Gambar 1) */}
+        {showBacklogTable && processedTimelineData.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <TableIcon className="w-4 h-4 text-purple-600" />
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                  Data Servis Masuk, Servis Keluar, dan Backlog (Akumulasi)
+                </h4>
+              </div>
+              <span className="text-xs text-slate-500 font-medium">
+                {timelineScale === '7days' ? 'Periode 7 Hari Terakhir' : timelineScale === '14days' ? 'Periode 14 Hari Terakhir' : 'Periode Bulanan'}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
+                  <tr>
+                    <th className="py-2.5 px-3">Bulan / Tanggal</th>
+                    <th className="py-2.5 px-3 text-center bg-red-50/60 text-red-900">Servis Masuk (A)</th>
+                    <th className="py-2.5 px-3 text-center bg-emerald-50/60 text-emerald-900">Servis Keluar (B)</th>
+                    <th className="py-2.5 px-3 text-center bg-slate-100/70 text-slate-700">Perhitungan Backlog Akhir</th>
+                    <th className="py-2.5 px-3 text-center bg-purple-50 text-purple-900 font-black">Backlog Akhir</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {processedTimelineData.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/80 transition font-medium">
+                      <td className="py-2.5 px-3 font-semibold text-slate-800">{row.tanggal}</td>
+                      <td className="py-2.5 px-3 text-center font-bold text-red-600">{row.Masuk}</td>
+                      <td className="py-2.5 px-3 text-center font-bold text-emerald-600">{row.Selesai}</td>
+                      <td className="py-2.5 px-3 text-center text-slate-600 font-mono text-[11px]">{row.rumusBacklog}</td>
+                      <td className="py-2.5 px-3 text-center font-black text-purple-700 bg-purple-50/30">
+                        <span className="px-2.5 py-0.5 rounded-md bg-purple-100 text-purple-900 font-black text-xs inline-block border border-purple-200">
+                          {row.backlogAkhir}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Keterangan Box (Sesuai Konsep Image 1) */}
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 text-[11px] text-slate-700 space-y-1">
+              <p className="font-bold text-slate-800">Keterangan:</p>
+              <ul className="list-disc list-inside space-y-0.5 text-slate-600">
+                <li>Batang atas (merah): <strong>Servis Masuk</strong> ke bengkel perbaikan.</li>
+                <li>Batang bawah (hijau): <strong>Servis Keluar</strong> selesai diperbaiki dan kembali ke operasional.</li>
+                <li>Garis ungu: <strong>Backlog Akumulasi</strong> = <em>Backlog awal + Servis Masuk (A) - Servis Keluar (B)</em>.</li>
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Baris kedua: Donut status & lead time */}
