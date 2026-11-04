@@ -468,12 +468,13 @@ export default function ThroughputCharts({
                       const centerX = rawX + rawW / 2;
 
                       if (chartOrientation === 'opposing') {
-                        // Posisi label angka berada tepat di BAWAH ujung batang hijau yang menjulur ke bawah
-                        const bottomEdgeY = Math.max(rawY, rawY + rawH);
+                        // Di Recharts, props.y / vx.y pada bar negatif sudah merupakan koordinat ujung paling bawah batang
+                        // Tambahkan 16px ke bawah agar label angka tepat berada di bawah ujung batang hijau
+                        const targetY = rawY + 16;
                         return (
                           <text
                             x={centerX}
-                            y={bottomEdgeY + 16}
+                            y={targetY}
                             fill="#059669"
                             textAnchor="middle"
                             fontSize={13}
@@ -485,11 +486,10 @@ export default function ThroughputCharts({
                       }
 
                       // Mode Berdampingan (naik ke atas): posisi label di atas batang
-                      const topEdgeY = Math.min(rawY, rawY + rawH);
                       return (
                         <text
                           x={centerX}
-                          y={topEdgeY - 6}
+                          y={rawY - 6}
                           fill="#059669"
                           textAnchor="middle"
                           fontSize={13}
