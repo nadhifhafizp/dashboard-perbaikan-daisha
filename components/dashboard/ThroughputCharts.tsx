@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import { Info, Timer, TrendingUp, PieChart as PieIcon, Clock, ArrowUpDown } from 'lucide-react';
 import { CHART, DONUT } from '@/lib/chart-colors';
+import ActiveFilterBadge, { ActiveFiltersInfo } from './ActiveFilterBadge';
 
 interface ThroughputChartsProps {
   chartTrenHarian: { tanggal: string; Masuk: number; Selesai: number; Pcs?: number }[];
@@ -27,6 +28,7 @@ interface ThroughputChartsProps {
   avgLeadTimeHours: number;
   statusData?: { name: string; value: number; color: string }[];
   chartSeksiStacked?: { seksi: string; Open: number; Progress: number; Done: number; Scrap: number; Total: number }[];
+  activeFilters?: ActiveFiltersInfo;
 }
 
 interface DonutTooltipProps {
@@ -58,6 +60,7 @@ export default function ThroughputCharts({
   chartLeadTime,
   avgLeadTimeHours,
   statusData = [],
+  activeFilters,
 }: ThroughputChartsProps) {
   // Mode rentang waktu: '7days' (1 minggu terakhir - default), '14days' (2 minggu), 'monthly' (bulanan)
   const [timelineScale, setTimelineScale] = useState<'7days' | '14days' | 'monthly'>('7days');
@@ -165,6 +168,7 @@ export default function ThroughputCharts({
                 <span className="text-xs text-slate-400 font-normal">
                   {timelineScale === '7days' ? '7 Hari Terakhir' : timelineScale === '14days' ? '14 Hari Terakhir' : 'Akumulasi Bulanan'} • Grafik Masuk (Atas) vs Selesai (Bawah)
                 </span>
+                <ActiveFilterBadge filters={activeFilters} />
               </div>
             </div>
 
@@ -497,11 +501,14 @@ export default function ThroughputCharts({
         
         {/* 2. Diagram Donat: Status pipeline */}
         <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
-            <PieIcon className="w-4 h-4 text-slate-500" />
-            <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-              Status Tiket
-            </h3>
+          <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <PieIcon className="w-4 h-4 text-slate-500" />
+              <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+                Status Tiket
+              </h3>
+            </div>
+            <ActiveFilterBadge filters={activeFilters} />
           </div>
 
           {totalStatus > 0 ? (
@@ -604,11 +611,14 @@ export default function ThroughputCharts({
         <div className="lg:col-span-7 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
           <div>
             <div className="flex flex-wrap justify-between items-start gap-3 mb-2 pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-slate-500" />
-                <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-                  Durasi Perbaikan
-                </h3>
+              <div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-slate-500" />
+                  <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+                    Durasi Perbaikan
+                  </h3>
+                </div>
+                <ActiveFilterBadge filters={activeFilters} />
               </div>
 
               {avgLeadTimeHours > 0 ? (

@@ -14,15 +14,18 @@ import {
 } from 'recharts';
 import { Info, Truck, Layers } from 'lucide-react';
 import { CHART } from '@/lib/chart-colors';
+import ActiveFilterBadge, { ActiveFiltersInfo } from './ActiveFilterBadge';
 
 interface DaishaChartsProps {
   chartUnitFreq: { unit: string; total: number; jenis: string; displayName?: string }[];
   chartSemuaDaisha: { jenis: string; total: number }[];
+  activeFilters?: ActiveFiltersInfo;
 }
 
 export default function DaishaCharts({
   chartUnitFreq,
   chartSemuaDaisha,
+  activeFilters,
 }: DaishaChartsProps) {
   const [activeMode, setActiveMode] = useState<'unit' | 'jenis'>('unit');
   const [isMobile, setIsMobile] = useState(false);
@@ -55,48 +58,51 @@ export default function DaishaCharts({
   return (
     <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 flex flex-col h-full">
       {/* 1. Header Card */}
-      <div className="flex flex-wrap justify-between items-center gap-3 mb-3 pb-2 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          {activeMode === 'unit' ? <Truck className="w-4 h-4 text-slate-500" /> : <Layers className="w-4 h-4 text-slate-500" />}
-          <div>
-            <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-              {activeMode === 'unit'
-                ? 'Unit Sering Masuk'
-                : 'Model Sering Masuk'}
-            </h3>
-            <span className="text-xs text-slate-400 font-normal">
-              {activeMode === 'unit' ? 'Top 10 Nomor Unit Fisik' : 'Top 10 Kategori Model'}
-            </span>
+      <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-slate-100">
+        <div className="flex flex-wrap justify-between items-center gap-3">
+          <div className="flex items-center gap-2">
+            {activeMode === 'unit' ? <Truck className="w-4 h-4 text-slate-500" /> : <Layers className="w-4 h-4 text-slate-500" />}
+            <div>
+              <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+                {activeMode === 'unit'
+                  ? 'Unit Sering Masuk'
+                  : 'Model Sering Masuk'}
+              </h3>
+              <span className="text-xs text-slate-400 font-normal">
+                {activeMode === 'unit' ? 'Top 10 Nomor Unit Fisik' : 'Top 10 Kategori Model'}
+              </span>
+            </div>
+          </div>
+
+          {/* Toggle Mode */}
+          <div className="flex items-center p-0.5 bg-slate-100/90 rounded-lg text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => setActiveMode('unit')}
+              className={`px-2.5 py-1 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
+                activeMode === 'unit'
+                  ? 'bg-white text-slate-900 font-semibold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Truck className="w-3 h-3 text-red-600" />
+              <span>Per Unit</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveMode('jenis')}
+              className={`px-2.5 py-1 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
+                activeMode === 'jenis'
+                  ? 'bg-white text-slate-900 font-semibold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Layers className="w-3 h-3 text-red-600" />
+              <span>Per Model</span>
+            </button>
           </div>
         </div>
-
-        {/* Toggle Mode */}
-        <div className="flex items-center p-0.5 bg-slate-100/90 rounded-lg text-xs font-medium">
-          <button
-            type="button"
-            onClick={() => setActiveMode('unit')}
-            className={`px-2.5 py-1 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
-              activeMode === 'unit'
-                ? 'bg-white text-slate-900 font-semibold'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Truck className="w-3 h-3 text-red-600" />
-            <span>Per Unit</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveMode('jenis')}
-            className={`px-2.5 py-1 rounded-md transition flex items-center gap-1.5 cursor-pointer ${
-              activeMode === 'jenis'
-                ? 'bg-white text-slate-900 font-semibold'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Layers className="w-3 h-3 text-red-600" />
-            <span>Per Model</span>
-          </button>
-        </div>
+        <ActiveFilterBadge filters={activeFilters} />
       </div>
 
       {/* 2. Horizontal Ranked Bar Chart - DIPERBESAR & DIPADATKAN */}

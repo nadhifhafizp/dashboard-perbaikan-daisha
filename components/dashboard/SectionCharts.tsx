@@ -11,6 +11,7 @@ import {
 import { Calendar, Building2, Filter, X } from 'lucide-react';
 import type { SeksiJenisBreakdown } from '@/hooks/useDashboardAnalytics';
 import { CHART, DONUT } from '@/lib/chart-colors';
+import ActiveFilterBadge, { ActiveFiltersInfo } from './ActiveFilterBadge';
 
 interface SectionChartsProps {
   chartSeksiStacked: {
@@ -28,6 +29,7 @@ interface SectionChartsProps {
   chartPelapor?: { pelapor: string; seksi: string; total: number }[];
   onSelectSeksi?: (seksi: string) => void;
   selectedSeksi?: string;
+  activeFilters?: ActiveFiltersInfo;
 }
 
 const SEKSI_COLORS = [
@@ -94,6 +96,7 @@ export default function SectionCharts({
   availableMonths = [],
   onSelectSeksi,
   selectedSeksi = '',
+  activeFilters,
 }: SectionChartsProps) {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
@@ -144,15 +147,16 @@ export default function SectionCharts({
   return (
     <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 flex flex-col h-full justify-between">
       {/* 1. Header Minimalis */}
-      <div className="flex flex-wrap justify-between items-center gap-3 mb-2 pb-2 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-slate-500" />
-          <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-            Masuk per Seksi
-          </h3>
-        </div>
+      <div className="flex flex-col gap-1 mb-2 pb-2 border-b border-slate-100">
+        <div className="flex flex-wrap justify-between items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-slate-500" />
+            <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+              Masuk per Seksi
+            </h3>
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
           {selectedSeksi && (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 rounded-lg text-xs font-medium text-red-700 border border-red-200">
               <Filter className="w-3 h-3" />
@@ -190,6 +194,8 @@ export default function SectionCharts({
           </div>
         </div>
       </div>
+      <ActiveFilterBadge filters={activeFilters} />
+    </div>
 
       {/* 2. Diagram Donat Simpel & Bersih */}
       <div className="my-auto py-2">

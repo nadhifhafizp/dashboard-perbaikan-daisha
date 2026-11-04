@@ -170,6 +170,16 @@ function KpiDashboardContent() {
     endDate,
   });
 
+  const activeFilters = useMemo(() => ({
+    seksi: userSeksi || filterSeksi,
+    daisha: filterDaisha,
+    status: filterStatus,
+    startDate,
+    endDate,
+    hanyaBerulang: filterHanyaBerulang,
+    search,
+  }), [userSeksi, filterSeksi, filterDaisha, filterStatus, startDate, endDate, filterHanyaBerulang, search]);
+
   const handleQuickPreset = (days: number) => {
     const today = new Date();
     const formatDate = (d: Date) => d.toISOString().slice(0, 10);
@@ -719,12 +729,14 @@ function KpiDashboardContent() {
                     chartPelapor={charts.pelapor}
                     selectedSeksi={userSeksi || filterSeksi}
                     onSelectSeksi={isSeksi ? () => { } : (s) => setFilterSeksi(filterSeksi === s ? '' : s)}
+                    activeFilters={activeFilters}
                   />
                 </div>
                 <div className="lg:col-span-5">
                   <DaishaCharts
                     chartUnitFreq={charts.unitFreq}
                     chartSemuaDaisha={charts.semuaDaisha}
+                    activeFilters={activeFilters}
                   />
                 </div>
               </div>
@@ -736,6 +748,7 @@ function KpiDashboardContent() {
                 avgLeadTimeHours={kpi.avgLeadTimeHours}
                 statusData={charts.statusData}
                 chartSeksiStacked={charts.seksiStacked}
+                activeFilters={activeFilters}
               />
 
               <DamageCharts
@@ -744,6 +757,7 @@ function KpiDashboardContent() {
                 tindakanStats={charts.tindakanStats}
                 sparepartKebutuhan={charts.sparepartKebutuhan}
                 sparepartKebutuhanSemua={charts.sparepartKebutuhanSemua}
+                activeFilters={activeFilters}
               />
             </div>
           </div>
