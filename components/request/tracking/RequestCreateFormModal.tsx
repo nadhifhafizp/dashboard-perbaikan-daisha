@@ -1,7 +1,24 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { X, Send, Upload, Trash2, User, Mail, Camera } from 'lucide-react';
+import {
+  X,
+  Send,
+  Upload,
+  Trash2,
+  User,
+  Mail,
+  Camera,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Sparkles,
+  Info,
+  ShieldCheck,
+  Phone,
+  Layers,
+  Wrench,
+} from 'lucide-react';
 import { compressImageFile } from '@/lib/imageCompressor';
 import { RequestFormData, DAFTAR_SEKSI_REQUEST, DAFTAR_TUJUAN } from './types';
 import { getSeksiCode } from '@/lib/nomorSurat';
@@ -57,256 +74,388 @@ export default function RequestCreateFormModal({
     }
   };
 
+  const handleSeksiChange = (seksi: string) => {
+    const autoCode = getSeksiCode(seksi);
+    setFormData((p) => ({
+      ...p,
+      seksiPemohon: seksi,
+      kodeSeksi: autoCode !== 'SEKSI' && autoCode !== 'GEN' ? autoCode : p.kodeSeksi,
+    }));
+  };
+
+  const presetSatuan = ['set', 'pcs', 'unit', 'roll', 'batang'];
+
   return (
     <form
       onSubmit={onSubmit}
-      className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 space-y-4 animate-scale-up"
+      className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-scale-up space-y-0"
     >
-      <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-        <div>
-          <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block" />
-            <span>Formulir Permohonan Pekerjaan Antar Seksi (ENG-KP-011)</span>
+      {/* 1. Header Modal Form */}
+      <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex justify-between items-start gap-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-600/30 text-red-300 border border-red-500/30 text-xs font-semibold">
+            <Wrench className="w-3 h-3 text-red-400" />
+            <span>Formulir Resmi ENG-KP-011</span>
+          </div>
+          <h2 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
+            Permohonan Pekerjaan Antar Seksi
           </h2>
-          <p className="text-xs text-slate-500">
-            Format resmi Special Project & Maintenance Bengkel PT Bridgestone Tire Indonesia
+          <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
+            Pengajuan pembuatan baru, perbaikan, atau modifikasi alat/mesin ke Bengkel Special Project &amp; Maintenance PT Bridgestone Tire Indonesia.
           </p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+          title="Tutup formulir"
         >
           <X className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="space-y-4">
-        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-red-600" />
-          <span className="text-xs font-semibold text-slate-700">
-            Langkah 1 Flowchart: Pengisian data permohonan oleh PIC Pemohon
-          </span>
+      {/* 2. Alur Proses Singkat (Breadcrumb Flow) */}
+      <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-3">
+        <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5">
+          <Info className="w-3.5 h-3.5 text-slate-500" />
+          <span>Alur Permohonan Permintaan Kerja:</span>
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-red-200 text-red-700 font-bold shadow-2xs">
+            <span className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs shrink-0">1</span>
+            <span className="truncate">Isi Form (Anda)</span>
+          </div>
+          <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-medium">
+            <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs shrink-0 font-bold">2</span>
+            <span className="truncate">Approval Atasan</span>
+          </div>
+          <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-medium">
+            <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs shrink-0 font-bold">3</span>
+            <span className="truncate">Evaluasi Bengkel</span>
+          </div>
+          <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-medium">
+            <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs shrink-0 font-bold">4</span>
+            <span className="truncate">Pengerjaan Selesai</span>
+          </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Seksi Pemohon *
-            </label>
-            {currentUser?.role === 'USER_SEKSI' ? (
-              <div className="h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 flex items-center justify-between">
-                <span>{formData.seksiPemohon || currentUser.seksi}</span>
-                <span className="text-xs text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-semibold border border-emerald-200">
-                  Terkunci Otomatis
-                </span>
+      <div className="p-4 sm:p-6 space-y-6">
+        {/* BAGIAN 1: Identitas Pemohon */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+            <div className="w-6 h-6 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs">
+              1
+            </div>
+            <h3 className="text-sm font-bold text-slate-900">
+              Identitas Pemohon (Seksi &amp; PIC)
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            {/* Seksi Pemohon */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Seksi Pemohon <span className="text-red-500">*</span>
+              </label>
+              {currentUser?.role === 'USER_SEKSI' ? (
+                <div className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 flex items-center justify-between">
+                  <span>{formData.seksiPemohon || currentUser.seksi}</span>
+                  <span className="text-xs text-slate-600 bg-slate-200/80 px-2 py-0.5 rounded font-mono font-bold">
+                    {formData.kodeSeksi || getSeksiCode(currentUser.seksi)}
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <select
+                    value={formData.seksiPemohon}
+                    onChange={(e) => handleSeksiChange(e.target.value)}
+                    className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 bg-white focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none cursor-pointer"
+                    required
+                  >
+                    <option value="">Pilih Seksi Pemohon...</option>
+                    {DAFTAR_SEKSI_REQUEST.map((s) => (
+                      <option key={s} value={s}>
+                        {s} ({getSeksiCode(s)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <p className="text-xs text-slate-600 mt-1">
+                Kode Seksi: <span className="font-mono font-bold text-slate-700">{formData.kodeSeksi || '-'}</span> (Otomatis)
+              </p>
+            </div>
+
+            {/* Nama Pemohon (PIC) */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Nama PIC Pemohon <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.drafter}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      drafter: e.target.value,
+                      picPemohon: e.target.value,
+                    }))
+                  }
+                  className="w-full h-10 pl-3 pr-8 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none font-medium"
+                  placeholder="Nama pembuat request (mis: Osep M)"
+                  required
+                />
+                <User className="w-4 h-4 text-slate-400 absolute right-2.5 top-3" />
               </div>
-            ) : (
-              <select
-                value={formData.seksiPemohon}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  const autoCode = getSeksiCode(val);
-                  setFormData((p) => ({
-                    ...p,
-                    seksiPemohon: val,
-                    kodeSeksi: autoCode !== 'SEKSI' && autoCode !== 'GEN' ? autoCode : p.kodeSeksi,
-                  }));
-                }}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
-                required
-              >
-                <option value="">Pilih Seksi...</option>
-                {DAFTAR_SEKSI_REQUEST.map((s) => (
-                  <option key={s} value={s}>
-                    {s} ({getSeksiCode(s)})
-                  </option>
-                ))}
-              </select>
-            )}
+              <p className="text-xs text-slate-600 mt-1">
+                Nama Anda sebagai penanggung jawab pengajuan
+              </p>
+            </div>
+
+            {/* No. Kontak / Ext */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                No. Telepon / Extension <span className="text-slate-400 font-normal">(Opsional)</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.kontakPemohon}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, kontakPemohon: e.target.value }))
+                  }
+                  className="w-full h-10 pl-3 pr-8 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                  placeholder="Mis: Ext. 178 atau 0812xxxx"
+                />
+                <Phone className="w-4 h-4 text-slate-400 absolute right-2.5 top-3" />
+              </div>
+              <p className="text-xs text-slate-600 mt-1">
+                Untuk koordinasi teknis oleh tim bengkel
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* BAGIAN 2: Persetujuan Atasan Seksi */}
+        <section className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-red-100 text-red-700 flex items-center justify-center font-bold text-xs">
+              2
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-red-600" />
+                <span>Persetujuan Atasan Seksi (Approval Digital)</span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                Tautan persetujuan tanda tangan digital akan dibuat otomatis untuk Atasan Seksi Anda (Foreman / Ka. Sie).
+              </p>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Kode Seksi / Singkatan
-            </label>
-            <input
-              type="text"
-              value={formData.kodeSeksi}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, kodeSeksi: e.target.value.toUpperCase() }))
-              }
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs font-bold uppercase bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
-              placeholder="Mis: TECH, EXTD, B/B"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Nama PIC Pemohon (Drafter) *
-            </label>
-            <input
-              type="text"
-              value={formData.drafter}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  drafter: e.target.value,
-                  picPemohon: e.target.value,
-                }))
-              }
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
-              placeholder="Nama pembuat request (Osep M)"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Telp. (Extension)
-            </label>
-            <input
-              type="text"
-              value={formData.kontakPemohon}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, kontakPemohon: e.target.value }))
-              }
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
-              placeholder="Mis: 178"
-            />
-          </div>
-        </div>
-
-        {/* Email Atasan Seksi */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
-          <div>
-            <label className="block text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
-              <User className="w-3.5 h-3.5 text-red-600" />
-              <span>Nama Atasan Seksi (Foreman / K.Sie)</span>
-            </label>
-            <input
-              type="text"
-              value={formData.namaAtasanSeksi}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  namaAtasanSeksi: e.target.value,
-                  foreman: e.target.value,
-                }))
-              }
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
-              placeholder="Mis: Bpk. Budi Santoso"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
-              <Mail className="w-3.5 h-3.5 text-red-600" />
-              <span>Email Atasan Seksi (Untuk Kirim Tautan Persetujuan) *</span>
-            </label>
-            <input
-              type="email"
-              value={formData.emailAtasanSeksi}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, emailAtasanSeksi: e.target.value }))
-              }
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
-              placeholder="atasan.seksi@bridgestone.com"
-              required
-            />
-          </div>
-        </div>
-
-        {/* Detail Pekerjaan */}
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2 border-t border-slate-200">
-          <div className="sm:col-span-8">
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Perihal Permohonan / Uraian Singkat *
-            </label>
-            <input
-              type="text"
-              value={formData.perihal}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  perihal: e.target.value,
-                  namaBarang: e.target.value,
-                }))
-              }
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none font-medium"
-              placeholder="Contoh: Pembuatan Stopper Material Calender"
-              required
-            />
-          </div>
-
-          <div className="sm:col-span-4">
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              No. Daisha / Nama Machine
-            </label>
-            <div className="flex gap-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Nama Atasan Seksi <span className="text-slate-400 font-normal">(Foreman / Ka. Sie)</span>
+              </label>
               <input
                 type="text"
-                value={formData.namaMachine}
+                value={formData.namaAtasanSeksi}
                 onChange={(e) =>
-                  setFormData((p) => ({ ...p, namaMachine: e.target.value }))
+                  setFormData((p) => ({
+                    ...p,
+                    namaAtasanSeksi: e.target.value,
+                    foreman: e.target.value,
+                  }))
                 }
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none uppercase font-bold"
-                placeholder="Mis: S-045, CALENDER-02..."
+                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                placeholder="Contoh: Bpk. Budi Santoso (Foreman)"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Email Atasan Seksi <span className="text-slate-400 font-normal">(Untuk Notifikasi Approval)</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="email"
+                  value={formData.emailAtasanSeksi}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, emailAtasanSeksi: e.target.value }))
+                  }
+                  className="w-full h-10 pl-3 pr-8 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                  placeholder="atasan.seksi@bridgestone.com"
+                />
+                <Mail className="w-4 h-4 text-slate-400 absolute right-2.5 top-3" />
+              </div>
+              <p className="text-xs text-slate-600 mt-1">
+                Tautan persetujuan juga dapat disalin atau dibagikan via WhatsApp setelah form disimpan.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* BAGIAN 3: Detail Permohonan Pekerjaan */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+            <div className="w-6 h-6 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs">
+              3
+            </div>
+            <h3 className="text-sm font-bold text-slate-900">
+              Detail Permohonan &amp; Kebutuhan Pekerjaan
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+            {/* Perihal */}
+            <div className="sm:col-span-8">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Perihal Permohonan / Uraian Singkat <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.perihal}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    perihal: e.target.value,
+                    namaBarang: e.target.value,
+                  }))
+                }
+                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none font-semibold"
+                placeholder="Contoh: Pembuatan Stopper Material Calender / Modifikasi Roda Troli"
+                required
+              />
+              <p className="text-xs text-slate-600 mt-1">
+                Tuliskan nama barang atau pekerjaan yang diminta dengan jelas
+              </p>
+            </div>
+
+            {/* No Daisha / Machine */}
+            <div className="sm:col-span-4">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                No. Daisha / Nama Mesin <span className="text-slate-400 font-normal">(Jika ada)</span>
+              </label>
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={formData.namaMachine}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, namaMachine: e.target.value }))
+                  }
+                  className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none uppercase font-bold"
+                  placeholder="Mis: S-045, CAL-02"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsScannerOpen(true)}
+                  className="h-10 px-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
+                  title="Scan barcode atau QR fisik menggunakan kamera"
+                >
+                  <Camera className="w-3.5 h-3.5 text-red-400" />
+                  <span className="hidden sm:inline">Scan</span>
+                </button>
+              </div>
+              <p className="text-xs text-slate-600 mt-1">
+                Scan barcode atau ketik manual unit terkait
+              </p>
+            </div>
+          </div>
+
+          {/* Urgensi Pekerjaan: Pilihan Visual Interaktif */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-slate-700">
+              Tingkat Urgensi Pekerjaan <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <button
                 type="button"
-                onClick={() => setIsScannerOpen(true)}
-                className="h-9 px-2.5 bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
-                title="Scan barcode atau QR fisik Daisha menggunakan kamera"
+                onClick={() => setFormData((p) => ({ ...p, urgensi: 'Normal' }))}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
+                  formData.urgensi === 'Normal'
+                    ? 'border-blue-500 bg-blue-50/70 ring-1 ring-blue-500'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
               >
-                <Camera className="w-3.5 h-3.5 text-red-400" />
-                <span className="hidden sm:inline">Scan</span>
+                <div className={`w-4 h-4 rounded-full mt-0.5 border flex items-center justify-center shrink-0 ${
+                  formData.urgensi === 'Normal' ? 'border-blue-600 bg-blue-600' : 'border-slate-300'
+                }`}>
+                  {formData.urgensi === 'Normal' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900">Normal (Reguler)</div>
+                  <div className="text-xs text-slate-600">Pekerjaan rutin atau perbaikan terjadwal bengkel</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFormData((p) => ({ ...p, urgensi: 'Urgent' }))}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
+                  formData.urgensi === 'Urgent'
+                    ? 'border-amber-500 bg-amber-50/70 ring-1 ring-amber-500'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full mt-0.5 border flex items-center justify-center shrink-0 ${
+                  formData.urgensi === 'Urgent' ? 'border-amber-600 bg-amber-600' : 'border-slate-300'
+                }`}>
+                  {formData.urgensi === 'Urgent' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-amber-900">Urgent (Segera)</div>
+                  <div className="text-xs text-slate-600">Mempengaruhi efisiensi, butuh selesai dalam 1-3 hari</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFormData((p) => ({ ...p, urgensi: 'Critical' }))}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
+                  formData.urgensi === 'Critical'
+                    ? 'border-red-500 bg-red-50/70 ring-1 ring-red-500'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full mt-0.5 border flex items-center justify-center shrink-0 ${
+                  formData.urgensi === 'Critical' ? 'border-red-600 bg-red-600' : 'border-slate-300'
+                }`}>
+                  {formData.urgensi === 'Critical' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-red-900">Critical (Darurat)</div>
+                  <div className="text-xs text-slate-600">Line stop, bahaya safety, atau pencegahan kecelakaan kerja</div>
+                </div>
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Urgensi & Tujuan */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Tingkat Urgensi
-            </label>
-            <select
-              value={formData.urgensi}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, urgensi: e.target.value }))
-              }
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
-            >
-              <option value="Normal">Normal (Reguler)</option>
-              <option value="Urgent">Urgent (Segera)</option>
-              <option value="Critical">Critical (Stop Produksi/Safety)</option>
-            </select>
-          </div>
+          {/* Tujuan & Kuantitas */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 pt-1">
+            <div className="sm:col-span-6">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Tujuan Pekerjaan
+              </label>
+              <select
+                value={formData.tujuan}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, tujuan: e.target.value }))
+                }
+                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 bg-white focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none cursor-pointer"
+              >
+                {DAFTAR_TUJUAN.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Tujuan Pekerjaan
-            </label>
-            <select
-              value={formData.tujuan}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, tujuan: e.target.value }))
-              }
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
-            >
-              {DAFTAR_TUJUAN.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+            <div className="sm:col-span-3">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Jumlah
               </label>
               <input
@@ -319,11 +468,12 @@ export default function RequestCreateFormModal({
                     jumlah: parseInt(e.target.value, 10) || 1,
                   }))
                 }
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
+                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none font-bold"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+
+            <div className="sm:col-span-3">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Satuan
               </label>
               <input
@@ -332,145 +482,216 @@ export default function RequestCreateFormModal({
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, satuan: e.target.value }))
                 }
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
-                placeholder="pcs / unit / set"
+                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none font-medium"
+                placeholder="set / pcs / unit"
               />
+              <div className="flex gap-1 mt-1">
+                {presetSatuan.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, satuan: s }))}
+                    className={`text-xs px-1.5 py-0.5 rounded cursor-pointer ${
+                      formData.satuan === s
+                        ? 'bg-slate-900 text-white font-bold'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Foto Sebelum & Sesudah */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
-          <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-xs text-slate-900">
-                Keadaan Sekarang (Problem / Kondisi Aktual)
-              </span>
-              <span className="text-xs text-slate-500 font-medium">Foto Before</span>
+        {/* BAGIAN 4: Dokumentasi Kondisi & Usulan Rencana (DIPERJELAS) */}
+        <section className="space-y-3 pt-2 border-t border-slate-100">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs">
+              4
             </div>
-            <textarea
-              value={formData.keadaanSekarang}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  keadaanSekarang: e.target.value,
-                  alasan: e.target.value,
-                }))
-              }
-              rows={3}
-              className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none resize-none leading-relaxed"
-              placeholder="Jelaskan kendala posisi saat ini, potensi bahaya, atau bottleneck..."
-            />
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputSebelumRef}
-              onChange={(e) => handlePhotoUpload(e, 'fotoSebelum')}
-              className="hidden"
-            />
-            {formData.fotoSebelum ? (
-              <div className="relative rounded-lg overflow-hidden border border-slate-300 bg-white">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={formData.fotoSebelum}
-                  alt="Before"
-                  className="w-full h-40 object-contain p-1"
-                />
-                <button
-                  type="button"
-                  onClick={() => setFormData((p) => ({ ...p, fotoSebelum: '' }))}
-                  className="absolute top-2 right-2 bg-rose-600 text-white p-1 rounded-md text-xs hover:bg-rose-700 transition shadow"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileInputSebelumRef.current?.click()}
-                className="w-full h-20 border-2 border-dashed border-slate-300 hover:border-red-500 rounded-lg flex flex-col items-center justify-center text-slate-500 hover:text-red-600 transition cursor-pointer bg-white"
-              >
-                <Upload className="w-4 h-4 mb-0.5 text-slate-400" />
-                <span className="text-xs font-medium">
-                  Upload Foto Keadaan Sekarang
-                </span>
-              </button>
-            )}
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Dokumentasi &amp; Penjelasan Masalah
+              </h3>
+              <p className="text-xs text-slate-500">
+                Bantu teknisi bengkel memahami masalah aktual dan usulan yang Anda inginkan.
+              </p>
+            </div>
           </div>
 
-          <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-xs text-slate-900">
-                Rencana Tindakan (Yang Diminta)
-              </span>
-              <span className="text-xs text-slate-500 font-medium">Foto After / Plan</span>
-            </div>
-            <textarea
-              value={formData.rencanaTindakan}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, rencanaTindakan: e.target.value }))
-              }
-              rows={3}
-              className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none resize-none leading-relaxed"
-              placeholder="Jelaskan rencana pemindahan posisi atau modifikasi..."
-            />
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputSesudahRef}
-              onChange={(e) => handlePhotoUpload(e, 'fotoSesudah')}
-              className="hidden"
-            />
-            {formData.fotoSesudah ? (
-              <div className="relative rounded-lg overflow-hidden border border-slate-300 bg-white">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={formData.fotoSesudah}
-                  alt="After"
-                  className="w-full h-40 object-contain p-1"
-                />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Kartu Kiri: Kondisi Aktual Saat Ini (Problem) */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-red-600" />
+                    <span>Kondisi Aktual Saat Ini (Problem)</span>
+                  </span>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Jelaskan kendala, posisi aus/patah, atau potensi bahaya saat ini
+                  </p>
+                </div>
+                <span className="text-xs text-red-700 bg-red-50 border border-red-200 font-bold px-1.5 py-0.5 rounded">
+                  Foto Before
+                </span>
+              </div>
+
+              <textarea
+                value={formData.keadaanSekarang}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    keadaanSekarang: e.target.value,
+                    alasan: e.target.value,
+                  }))
+                }
+                rows={3}
+                className="w-full p-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none resize-none leading-relaxed"
+                placeholder="Contoh: Pengait troli aus dan sering macet saat ditarik, berisiko jatuh saat membawa material..."
+              />
+
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputSebelumRef}
+                onChange={(e) => handlePhotoUpload(e, 'fotoSebelum')}
+                className="hidden"
+              />
+
+              {formData.fotoSebelum ? (
+                <div className="relative rounded-lg overflow-hidden border border-slate-300 bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={formData.fotoSebelum}
+                    alt="Kondisi Aktual (Before)"
+                    className="w-full h-44 object-contain p-1.5 bg-slate-50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, fotoSebelum: '' }))}
+                    className="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg text-xs hover:bg-rose-700 transition shadow-sm cursor-pointer"
+                    title="Hapus foto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
                 <button
                   type="button"
-                  onClick={() => setFormData((p) => ({ ...p, fotoSesudah: '' }))}
-                  className="absolute top-2 right-2 bg-rose-600 text-white p-1 rounded-md text-xs hover:bg-rose-700 transition shadow"
+                  onClick={() => fileInputSebelumRef.current?.click()}
+                  className="w-full h-24 border-2 border-dashed border-slate-300 hover:border-red-500 rounded-xl flex flex-col items-center justify-center text-slate-600 hover:text-red-600 transition cursor-pointer bg-white group p-3 text-center"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Upload className="w-5 h-5 mb-1 text-slate-400 group-hover:text-red-500 transition" />
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-red-600">
+                    Upload Foto Kondisi Saat Ini (Before)
+                  </span>
+                  <span className="text-xs text-slate-600 mt-0.5">
+                    Ambil dari kamera ponsel atau unggah galeri
+                  </span>
                 </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileInputSesudahRef.current?.click()}
-                className="w-full h-20 border-2 border-dashed border-slate-300 hover:border-red-500 rounded-lg flex flex-col items-center justify-center text-slate-500 hover:text-red-600 transition cursor-pointer bg-white"
-              >
-                <Upload className="w-4 h-4 mb-0.5 text-slate-400" />
-                <span className="text-xs font-medium">
-                  Upload Foto Rencana Tindakan
+              )}
+            </div>
+
+            {/* Kartu Kanan: Rencana / Sketsa Rencana (Usulan) */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                    <span>Usulan Solusi / Rencana Permintaan</span>
+                  </span>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Jelaskan bentuk perbaikan, dimensi, atau modifikasi yang diharapkan
+                  </p>
+                </div>
+                <span className="text-xs text-slate-600 bg-slate-100 border border-slate-200 font-semibold px-1.5 py-0.5 rounded">
+                  Sketsa / Desain
                 </span>
-              </button>
-            )}
+              </div>
+
+              <textarea
+                value={formData.rencanaTindakan}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, rencanaTindakan: e.target.value }))
+                }
+                rows={3}
+                className="w-full p-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none resize-none leading-relaxed"
+                placeholder="Contoh: Dibuatkan stopper ganda dari plat baja tebal 5mm dan dicat kuning keselamatan..."
+              />
+
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputSesudahRef}
+                onChange={(e) => handlePhotoUpload(e, 'fotoSesudah')}
+                className="hidden"
+              />
+
+              {formData.fotoSesudah ? (
+                <div className="relative rounded-lg overflow-hidden border border-slate-300 bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={formData.fotoSesudah}
+                    alt="Sketsa / Referensi Rencana"
+                    className="w-full h-44 object-contain p-1.5 bg-slate-50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, fotoSesudah: '' }))}
+                    className="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg text-xs hover:bg-rose-700 transition shadow-sm cursor-pointer"
+                    title="Hapus foto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputSesudahRef.current?.click()}
+                  className="w-full h-24 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-xl flex flex-col items-center justify-center text-slate-600 hover:text-emerald-700 transition cursor-pointer bg-white group p-3 text-center"
+                >
+                  <Upload className="w-5 h-5 mb-1 text-slate-400 group-hover:text-emerald-600 transition" />
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-emerald-700">
+                    Upload Sketsa / Foto Contoh Referensi
+                  </span>
+                  <span className="text-xs text-slate-600 mt-0.5">
+                    Opsional: gambar coretan tangan, foto acuan barang, atau gambar CAD
+                  </span>
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        </section>
       </div>
 
-      <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
-        <button
-          type="button"
-          onClick={onClose}
-          className="h-10 min-h-[40px] px-4 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-lg transition cursor-pointer"
-        >
-          Batal
-        </button>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="h-10 min-h-[40px] px-5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-lg transition inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-        >
-          <Send className="w-3.5 h-3.5" />
-          <span>
-            {submitting ? 'Mengirim Formulir...' : 'Kirim Formulir ke Atasan Seksi'}
-          </span>
-        </button>
+      {/* 3. Footer Action Buttons */}
+      <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <p className="text-xs text-slate-500 font-medium text-center sm:text-left">
+          Nomor request resmi (ENG-KP-011) dan link tanda tangan atasan akan diterbitkan setelah dikirim.
+        </p>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 sm:flex-initial h-11 min-h-[44px] px-5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="flex-1 sm:flex-initial h-11 min-h-[44px] px-6 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-black text-xs rounded-xl transition inline-flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-md shadow-red-600/20"
+          >
+            <Send className="w-4 h-4" />
+            <span>
+              {submitting ? 'Mengirim Formulir...' : 'Kirim Permohonan Request (ENG-KP-011)'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Modal Scanner Barcode / QR Daisha Fisik */}
