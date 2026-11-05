@@ -72,6 +72,9 @@ export interface SectionRequestFull {
   kebutuhanMaterial?: string;
   flowStep?: string;
   alasanPending?: string;
+  ttdAtasanSeksi?: string;
+  ttdAdminWorkshop?: string;
+  ttdAtasanSpecialProject?: string;
   materials?: Array<{
     id: number;
     namaKomponen: string;
@@ -279,7 +282,11 @@ export default function BridgestoneRequestPrintModal({
             <strong>TANGGAL :</strong> ${formatDateIndo(requestData.waktuDibuat)}
           </div>
           <div style="font-size: 11px;">
-            <strong>REQ. NO. :</strong> <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #000; font-feature-settings: 'tnum';">${(requestData.nomorRequest?.startsWith('REQ-') && requestData.nomorSurat) ? requestData.nomorSurat : requestData.nomorRequest}</span>
+            <strong>REQ. NO. :</strong> ${
+              requestData.nomorSurat && !requestData.nomorSurat.startsWith('REQ-')
+                ? `<span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #b91c1c;">${requestData.nomorSurat}</span>`
+                : `<span style="font-style: italic; color: #64748b; font-size: 9.5px;">(Belum Terbit - Menunggu ACC S.Project)</span> <small style="display:block; font-size: 8.5px; color: #475569; font-family: monospace;">ID Tracking: ${requestData.nomorRequest}</small>`
+            }
           </div>
         </td>
 
@@ -296,7 +303,10 @@ export default function BridgestoneRequestPrintModal({
             </tr>
             <tr class="signature-space">
               <td style="border-right: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">${requestData.drafter || requestData.picPemohon || ''}</td>
-              <td style="border-right: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">${requestData.foreman || ''}</td>
+              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; font-size: 8.5px; padding: 2px;">
+                ${requestData.ttdAtasanSeksi ? `<img src="${requestData.ttdAtasanSeksi}" style="max-height: 32px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+                <div style="font-size: 8px;">${requestData.foreman || ''}</div>
+              </td>
               <td style="vertical-align: bottom; font-size: 8.5px; padding: 2px;">${requestData.seksiPemohon || ''}</td>
             </tr>
           </table>
@@ -316,12 +326,18 @@ export default function BridgestoneRequestPrintModal({
             <tr style="font-size: 9px; font-weight: bold; background: #fafafa;">
               <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">PWS</td>
               <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">K.SIE</td>
-              <td style="width: 34%; padding: 2px;">MGR</td>
+              <td style="width: 34%; padding: 2px;">8210/820</td>
             </tr>
             <tr class="signature-space">
-              <td style="border-right: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">${requestData.picBengkel || ''}</td>
-              <td style="border-right: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">${requestData.keputusan8210 || ''}</td>
-              <td style="vertical-align: bottom; font-size: 8.5px; padding: 2px;">${requestData.keputusan820 || ''}</td>
+              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; font-size: 8.5px; padding: 2px;">
+                ${requestData.ttdAdminWorkshop ? `<img src="${requestData.ttdAdminWorkshop}" style="max-height: 32px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+                <div style="font-size: 8px;">${requestData.picBengkel || ''}</div>
+              </td>
+              <td style="border-right: 1px solid #000; vertical-align: bottom; font-size: 8px; padding: 2px;">${requestData.keputusan8210 || ''}</td>
+              <td style="vertical-align: middle; text-align: center; font-size: 8.5px; padding: 2px;">
+                ${requestData.ttdAtasanSpecialProject ? `<img src="${requestData.ttdAtasanSpecialProject}" style="max-height: 32px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+                <div style="font-size: 8px;">${requestData.keputusan820 || ''}</div>
+              </td>
             </tr>
           </table>
         </td>
@@ -640,11 +656,20 @@ export default function BridgestoneRequestPrintModal({
                 </div>
                 <div>
                   <span className="font-bold">REQ. NO. : </span>
-                  <span className="font-mono font-bold">
-                    {requestData.nomorRequest?.startsWith('REQ-') && requestData.nomorSurat
-                      ? requestData.nomorSurat
-                      : requestData.nomorRequest}
-                  </span>
+                  {requestData.nomorSurat && !requestData.nomorSurat.startsWith('REQ-') ? (
+                    <span className="font-mono font-bold text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">
+                      {requestData.nomorSurat}
+                    </span>
+                  ) : (
+                    <div>
+                      <span className="text-slate-400 italic text-xs block">
+                        (Belum Terbit - Menunggu ACC S.Project)
+                      </span>
+                      <span className="font-mono text-xs font-semibold text-slate-600">
+                        ID: {requestData.nomorRequest}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -658,9 +683,16 @@ export default function BridgestoneRequestPrintModal({
                   <div className="py-0.5">FOREMAN</div>
                   <div className="py-0.5">{requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)}</div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-11 items-end pb-1">
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-center pb-1">
                   <div className="truncate px-1 font-medium">{requestData.drafter || requestData.picPemohon || '-'}</div>
-                  <div className="truncate px-1 font-medium">{requestData.foreman || '-'}</div>
+                  <div className="px-1 font-medium flex flex-col items-center justify-center">
+                    {requestData.ttdAtasanSeksi ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={requestData.ttdAtasanSeksi} alt="TTD Foreman" className="h-8 max-w-full object-contain" />
+                    ) : (
+                      <span className="truncate">{requestData.foreman || '-'}</span>
+                    )}
+                  </div>
                   <div className="truncate px-1 font-medium">{requestData.seksiPemohon}</div>
                 </div>
               </div>
@@ -673,12 +705,26 @@ export default function BridgestoneRequestPrintModal({
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
                   <div className="py-0.5">PWS</div>
                   <div className="py-0.5">K.SIE</div>
-                  <div className="py-0.5">8210</div>
+                  <div className="py-0.5">8210/820</div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-11 items-end pb-1">
-                  <div className="truncate px-1 font-medium">{requestData.picBengkel || '-'}</div>
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-center pb-1">
+                  <div className="px-1 font-medium flex flex-col items-center justify-center">
+                    {requestData.ttdAdminWorkshop ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={requestData.ttdAdminWorkshop} alt="TTD PWS" className="h-8 max-w-full object-contain" />
+                    ) : (
+                      <span className="truncate">{requestData.picBengkel || '-'}</span>
+                    )}
+                  </div>
                   <div className="truncate px-1 font-medium">{requestData.keputusan8210 || '-'}</div>
-                  <div className="truncate px-1 font-medium">{requestData.keputusan820 || '-'}</div>
+                  <div className="px-1 font-medium flex flex-col items-center justify-center">
+                    {requestData.ttdAtasanSpecialProject ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={requestData.ttdAtasanSpecialProject} alt="TTD 820" className="h-8 max-w-full object-contain" />
+                    ) : (
+                      <span className="truncate">{requestData.keputusan820 || '-'}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

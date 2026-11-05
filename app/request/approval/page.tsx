@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { SectionRequestFull } from '@/components/request/BridgestoneRequestPrintModal';
 import { getSeksiCode } from '@/lib/nomorSurat';
+import SignaturePad from '@/components/request/SignaturePad';
 
 function ApprovalContent() {
   const searchParams = useSearchParams();
@@ -45,6 +46,8 @@ function ApprovalContent() {
   const [namaAtasan, setNamaAtasan] = useState('');
   const [namaDeptHead, setNamaDeptHead] = useState('');
   const [catatan, setCatatan] = useState('');
+  const [ttdAtasanSeksi, setTtdAtasanSeksi] = useState('');
+  const [ttdAtasanSpecialProject, setTtdAtasanSpecialProject] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [actionDone, setActionDone] = useState<'APPROVED' | 'REJECTED' | null>(null);
   const [adminEmailData, setAdminEmailData] = useState<{
@@ -177,12 +180,14 @@ function ApprovalContent() {
             namaAtasan: namaAtasan || 'Manager Special Project (8210)',
             namaDeptHead: namaDeptHead || 'Dept Head Special Project (820)',
             catatan,
+            ttdAtasanSpecialProject: ttdAtasanSpecialProject || undefined,
           }
         : {
             token,
             action: 'APPROVE',
             namaAtasan: namaAtasan || 'Atasan Seksi',
             catatan,
+            ttdAtasanSeksi: ttdAtasanSeksi || undefined,
           };
 
       const res = await fetch('/api/section-requests/approval', {
@@ -203,6 +208,8 @@ function ApprovalContent() {
               ...requestData,
               keputusan8210: namaAtasan || 'Manager Special Project (8210)',
               keputusan820: namaDeptHead || 'Dept Head Special Project (820)',
+              ttdAtasanSpecialProject: ttdAtasanSpecialProject || requestData.ttdAtasanSpecialProject,
+              nomorSurat: data.request?.nomorSurat || requestData.nomorSurat,
               status: 'Dikerjakan',
               flowStep: 'STEP_6_DALAM_PENGERJAAN',
             });
@@ -210,8 +217,10 @@ function ApprovalContent() {
             setRequestData({
               ...requestData,
               statusApprovalAtasanSeksi: 'APPROVED',
-              foreman: namaAtasan || requestData.foreman || 'Atasan Seksi',
-              status: 'Diterima Workshop',
+              foreman: namaAtasan || requestData.foreman,
+              ttdAtasanSeksi: ttdAtasanSeksi || requestData.ttdAtasanSeksi,
+              status: 'Pending: Menunggu Evaluasi Workshop',
+              flowStep: 'STEP_3_DITERIMA_WORKSHOP',
             });
           }
         }
@@ -674,32 +683,54 @@ function ApprovalContent() {
                     placeholder="Misal: Prioritas pengerjaan shift 1, perhatikan presisi bubut roda..."
                   />
                 </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    Nama Lengkap / Paraf Atasan *
-                  </label>
-                  <input
-                    type="text"
-                    value={namaAtasan}
-                    onChange={(e) => setNamaAtasan(e.target.value)}
-                    className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none font-medium"
-                    placeholder="Nama atasan (akan dicantumkan di kotak Foreman)"
-                    required
+
+                {/* Signature Pad Atasan Special Project */}
+                <div className="pt-2 border-t border-purple-100">
+                  <SignaturePad
+                    value={ttdAtasanSpecialProject}
+                    onChange={setTtdAtasanSpecialProject}
+                    signerName={namaAtasan || 'Manager Special Project (8210)'}
+                    roleLabel="Tanda Tangan / Paraf Atasan Special Project"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    Catatan Tambahan (Opsional)
-                  </label>
-                  <input
-                    type="text"
-                    value={catatan}
-                    onChange={(e) => setCatatan(e.target.value)}
-                    className="w-full h-9 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
-                    placeholder="Catatan persetujuan untuk PIC Workshop"
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Nama Lengkap / Paraf Atasan *
+                    </label>
+                    <input
+                      type="text"
+                      value={namaAtasan}
+                      onChange={(e) => setNamaAtasan(e.target.value)}
+                      className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none font-medium"
+                      placeholder="Nama atasan (akan dicantumkan di kotak Foreman)"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Catatan Tambahan (Opsional)
+                    </label>
+                    <input
+                      type="text"
+                      value={catatan}
+                      onChange={(e) => setCatatan(e.target.value)}
+                      className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
+                      placeholder="Catatan persetujuan untuk PIC Workshop"
+                    />
+                  </div>
+                </div>
+
+                {/* Signature Pad Atasan Seksi */}
+                <div className="pt-2 border-t border-slate-100">
+                  <SignaturePad
+                    value={ttdAtasanSeksi}
+                    onChange={setTtdAtasanSeksi}
+                    signerName={namaAtasan || 'Foreman Seksi'}
+                    roleLabel="Tanda Tangan / Paraf Atasan Seksi (Foreman)"
                   />
                 </div>
               </div>
@@ -776,11 +807,20 @@ function ApprovalContent() {
                 </div>
                 <div>
                   <span className="font-bold">REQ. NO. : </span>
-                  <span className="font-mono font-bold">
-                    {requestData.nomorRequest?.startsWith('REQ-') && requestData.nomorSurat
-                      ? requestData.nomorSurat
-                      : requestData.nomorRequest}
-                  </span>
+                  {requestData.nomorSurat && !requestData.nomorSurat.startsWith('REQ-') ? (
+                    <span className="font-mono font-bold text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">
+                      {requestData.nomorSurat}
+                    </span>
+                  ) : (
+                    <div>
+                      <span className="text-slate-400 italic text-xs block">
+                        (Nomor Surat Terbit Setelah Assign S.Project)
+                      </span>
+                      <span className="font-mono text-xs font-semibold text-slate-600">
+                        ID: {requestData.nomorRequest}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -796,14 +836,25 @@ function ApprovalContent() {
                     {requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)}
                   </div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-end pb-1">
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-center pb-1">
                   <div className="truncate px-1 font-medium">
                     {requestData.drafter || requestData.picPemohon || '-'}
                   </div>
-                  <div className="truncate px-1 font-bold text-emerald-800 bg-emerald-50/50 py-0.5">
-                    {!isSpecialProject && actionDone === 'APPROVED'
-                      ? namaAtasan || requestData.foreman || 'Approved'
-                      : requestData.foreman || '(Pending)'}
+                  <div className="px-1 font-bold text-emerald-800 flex flex-col items-center justify-center">
+                    {(ttdAtasanSeksi || requestData.ttdAtasanSeksi) ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={ttdAtasanSeksi || requestData.ttdAtasanSeksi}
+                        alt="TTD Foreman"
+                        className="h-8 max-w-full object-contain"
+                      />
+                    ) : (
+                      <span className="truncate">
+                        {!isSpecialProject && actionDone === 'APPROVED'
+                          ? namaAtasan || requestData.foreman || 'Approved'
+                          : requestData.foreman || '(Pending)'}
+                      </span>
+                    )}
                   </div>
                   <div className="truncate px-1 font-medium">{requestData.seksiPemohon}</div>
                 </div>
@@ -817,19 +868,39 @@ function ApprovalContent() {
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
                   <div className="py-0.5">PWS</div>
                   <div className="py-0.5">K.SIE</div>
-                  <div className="py-0.5">8210</div>
+                  <div className="py-0.5">8210/820</div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-end pb-1">
-                  <div className="truncate px-1 font-medium">{requestData.picBengkel || '-'}</div>
-                  <div className="truncate px-1 font-bold text-purple-900 bg-purple-50/50 py-0.5">
-                    {isSpecialProject && actionDone === 'APPROVED'
-                      ? namaAtasan || requestData.keputusan8210 || 'Approved'
-                      : requestData.keputusan8210 || (isSpecialProject ? '(Pending)' : '-')}
+                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-center pb-1">
+                  <div className="px-1 font-medium flex flex-col items-center justify-center">
+                    {requestData.ttdAdminWorkshop ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={requestData.ttdAdminWorkshop}
+                        alt="TTD Workshop"
+                        className="h-8 max-w-full object-contain"
+                      />
+                    ) : (
+                      <span className="truncate">{requestData.picBengkel || '-'}</span>
+                    )}
                   </div>
                   <div className="truncate px-1 font-bold text-purple-900 bg-purple-50/50 py-0.5">
-                    {isSpecialProject && actionDone === 'APPROVED'
-                      ? namaDeptHead || requestData.keputusan820 || 'Approved'
-                      : requestData.keputusan820 || (isSpecialProject ? '(Pending)' : '-')}
+                    {requestData.keputusan8210 || '-'}
+                  </div>
+                  <div className="px-1 font-bold text-purple-900 flex flex-col items-center justify-center">
+                    {(ttdAtasanSpecialProject || requestData.ttdAtasanSpecialProject) ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={ttdAtasanSpecialProject || requestData.ttdAtasanSpecialProject}
+                        alt="TTD S.Project"
+                        className="h-8 max-w-full object-contain"
+                      />
+                    ) : (
+                      <span className="truncate">
+                        {isSpecialProject && actionDone === 'APPROVED'
+                          ? namaDeptHead || requestData.keputusan820 || 'Approved'
+                          : requestData.keputusan820 || (isSpecialProject ? '(Pending)' : '-')}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

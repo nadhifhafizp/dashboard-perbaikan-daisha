@@ -86,13 +86,19 @@ export default function RequestTable({
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <span className="font-mono font-bold text-red-700 text-xs tabular-nums bg-red-50 px-2 py-0.5 rounded border border-red-200">
-                    {r.nomorRequest?.startsWith('REQ-') && r.nomorSurat ? r.nomorSurat : r.nomorRequest}
-                  </span>
-                  {r.nomorSurat && r.nomorRequest && r.nomorSurat !== r.nomorRequest && !r.nomorRequest.startsWith('REQ-') && (
-                    <span className="font-mono text-xs text-slate-500 tabular-nums ml-1.5">
-                      ({r.nomorSurat})
+                  {r.nomorSurat && !r.nomorSurat.startsWith('REQ-') ? (
+                    <span className="font-mono font-bold text-red-700 text-xs tabular-nums bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                      {r.nomorSurat}
                     </span>
+                  ) : (
+                    <div className="inline-flex items-center gap-1.5 flex-wrap">
+                      <span className="font-mono font-bold text-slate-700 text-xs tabular-nums bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        {r.nomorRequest}
+                      </span>
+                      <span className="text-xs text-slate-400 italic">
+                        (No. Surat terbit setelah ACC S.Project)
+                      </span>
+                    </div>
                   )}
                   <span className="text-xs text-slate-500 font-medium ml-1.5 tabular-nums">
                     • {formatDate(r.waktuDibuat)}
@@ -210,14 +216,26 @@ export default function RequestTable({
                 </button>
                 {isAdmin && (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => onOpenEval(r)}
-                      className="h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      <Wrench className="w-3.5 h-3.5" />
-                      <span>Evaluasi</span>
-                    </button>
+                    {r.statusApprovalAtasanSeksi !== 'APPROVED' ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="h-11 sm:h-10 px-3 bg-slate-100 text-slate-400 border border-slate-200 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 cursor-not-allowed opacity-75"
+                        title="Terkunci: Menunggu persetujuan & tanda tangan Atasan Seksi Pemohon sebelum dapat dievaluasi"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Menunggu Atasan</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onOpenEval(r)}
+                        className="h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                      >
+                        <Wrench className="w-3.5 h-3.5 text-red-400" />
+                        <span>Evaluasi</span>
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => onRequestDelete(r)}
@@ -287,13 +305,24 @@ export default function RequestTable({
                 <tr key={r.id} className="hover:bg-slate-50/70 transition">
                   <td className="p-3.5 tabular-nums">
                     <div>
-                      <span className="font-mono font-bold text-red-700 text-xs bg-red-50/80 px-2 py-0.5 rounded border border-red-200 block w-fit mb-0.5">
-                        {r.nomorRequest?.startsWith('REQ-') && r.nomorSurat ? r.nomorSurat : r.nomorRequest}
-                      </span>
-                      {r.nomorSurat && r.nomorRequest && r.nomorSurat !== r.nomorRequest && !r.nomorRequest.startsWith('REQ-') && (
-                        <span className="font-mono text-xs text-slate-400 block">
-                          Ref: {r.nomorSurat}
-                        </span>
+                      {r.nomorSurat && !r.nomorSurat.startsWith('REQ-') ? (
+                        <>
+                          <span className="font-mono font-bold text-red-700 text-xs bg-red-50/80 px-2 py-0.5 rounded border border-red-200 block w-fit mb-0.5">
+                            {r.nomorSurat}
+                          </span>
+                          <span className="font-mono text-xs text-slate-400 block">
+                            ID: {r.nomorRequest}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-mono font-bold text-slate-700 text-xs bg-slate-100 px-2 py-0.5 rounded border border-slate-200 block w-fit mb-0.5">
+                            {r.nomorRequest}
+                          </span>
+                          <span className="text-xs text-slate-400 italic block">
+                            (Belum Terbit - Menunggu ACC S.Project)
+                          </span>
+                        </>
                       )}
                     </div>
                   </td>
@@ -411,15 +440,27 @@ export default function RequestTable({
                   {isAdmin && (
                     <td className="p-3.5 text-center">
                       <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => onOpenEval(r)}
-                          className="h-10 min-h-[40px] px-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition cursor-pointer flex items-center gap-1 text-xs font-semibold"
-                          title="Evaluasi Pekerjaan & Follow-up Flowchart"
-                        >
-                          <Wrench className="w-3 h-3" />
-                          <span>Evaluasi</span>
-                        </button>
+                        {r.statusApprovalAtasanSeksi !== 'APPROVED' ? (
+                          <button
+                            type="button"
+                            disabled
+                            className="h-10 min-h-[40px] px-3 bg-slate-100 text-slate-400 border border-slate-200 rounded-lg flex items-center gap-1.5 text-xs font-semibold cursor-not-allowed opacity-75"
+                            title="Terkunci: Menunggu persetujuan & tanda tangan Atasan Seksi Pemohon sebelum dapat dievaluasi"
+                          >
+                            <Clock className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Menunggu Atasan</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onOpenEval(r)}
+                            className="h-10 min-h-[40px] px-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition cursor-pointer flex items-center gap-1 text-xs font-semibold shadow-2xs"
+                            title="Evaluasi Pekerjaan & Follow-up Flowchart"
+                          >
+                            <Wrench className="w-3 h-3 text-red-400" />
+                            <span>Evaluasi</span>
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => onRequestDelete(r)}

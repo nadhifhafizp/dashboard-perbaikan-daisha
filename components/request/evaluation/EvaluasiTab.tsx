@@ -15,6 +15,7 @@ import {
 import { SectionRequestFull } from '../BridgestoneRequestPrintModal';
 import { EvaluationFormData } from './types';
 import { getSeksiCode } from '@/lib/nomorSurat';
+import SignaturePad from '@/components/request/SignaturePad';
 
 interface EvaluasiTabProps {
   requestData: SectionRequestFull;
@@ -333,6 +334,16 @@ export default function EvaluasiTab({
             onChange={(e) => setFormData((p) => ({ ...p, alasanTolak: e.target.value }))}
             placeholder="Contoh: Keterbatasan mesin bubut workshop / spesifikasi di luar wewenang bengkel"
             className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs"
+          />
+        </div>
+
+        {/* Tanda Tangan / Paraf PIC Workshop */}
+        <div className="pt-2 border-t border-slate-200">
+          <SignaturePad
+            value={formData.ttdAdminWorkshop}
+            onChange={(val) => setFormData((p) => ({ ...p, ttdAdminWorkshop: val }))}
+            signerName={formData.picBengkel || 'PIC Workshop'}
+            roleLabel="Tanda Tangan / Paraf PIC Workshop (PWS / K.SIE)"
           />
         </div>
 

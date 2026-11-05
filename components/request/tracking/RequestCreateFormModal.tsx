@@ -670,7 +670,7 @@ export default function RequestCreateFormModal({
       {/* 3. Footer Action Buttons */}
       <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
         <p className="text-xs text-slate-500 font-medium text-center sm:text-left">
-          Nomor request resmi (ENG-KP-011) dan link tanda tangan atasan akan diterbitkan setelah dikirim.
+          Setelah formulir dikirim, link tanda tangan akan diteruskan ke Atasan Seksi. Nomor surat resmi terbit setelah di-assign Atasan Special Project.
         </p>
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">

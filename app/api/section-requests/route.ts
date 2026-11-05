@@ -235,6 +235,9 @@ export async function GET(request: Request) {
         sr."kebutuhanMaterial",
         sr."flowStep",
         sr."alasanPending",
+        sr."ttdAtasanSeksi",
+        sr."ttdAdminWorkshop",
+        sr."ttdAtasanSpecialProject",
         COALESCE(sr."materials", '[]'::jsonb) as materials
       FROM "SectionRequest" sr
       WHERE (${filterByUser}::text IS NULL OR sr."dibuatOleh" = ${filterByUser} OR (${userSeksi}::text IS NOT NULL AND LOWER(sr."seksiPemohon") = LOWER(${userSeksi})))
@@ -318,23 +321,30 @@ export async function POST(request: Request) {
         );
       }
 
-      // Gunakan nomor request custom jika ada atau generate otomatis (Format: 001/SEKSI/ROMAWI/TAHUN)
-      let nomorRequest = sanitizeText(body.nomorRequest, 50);
-      if (!nomorRequest || nomorRequest.startsWith('REQ-')) {
-        nomorRequest = await generateRequestNumber(seksiPemohon);
-      } else {
-        const [existing] = await sql<Array<{ id: number }>>`
-          SELECT id FROM "SectionRequest" WHERE "nomorRequest" = ${nomorRequest} LIMIT 1
-        `;
-        if (existing) {
-          nomorRequest = await generateRequestNumber(seksiPemohon);
-        }
+      // 1. Alur Tahap 1: Pembuatan request awal oleh Seksi Pemohon.
+      // Sesuai alur resmi: Pada tahap submit awal, tiket HANYA mendapatkan kode tracking request sementara (REQ-YYMMDD-XXX).
+      // Nomor Surat resmi (Format: 001/SEKSI/ROMAWI/TAHUN) BELUM DITERBITKAN dan masih bernilai NULL.
+      // Nomor surat resmi baru terbit saat Atasan Special Project menyetujui (Tahap 4).
+      const now = new Date();
+      const datePrefix = `REQ-${now.getFullYear().toString().slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      
+      const [latestReq] = await sql<Array<{ nomorRequest: string }>>`
+        SELECT "nomorRequest" FROM "SectionRequest"
+        WHERE "nomorRequest" LIKE ${datePrefix + '-%'}
+        ORDER BY id DESC LIMIT 1
+      `;
+      let seq = 1;
+      if (latestReq?.nomorRequest) {
+        const parts = latestReq.nomorRequest.split('-');
+        const lastSeq = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(lastSeq)) seq = lastSeq + 1;
       }
+      const nomorRequest = `${datePrefix}-${String(seq).padStart(3, '0')}`;
 
       // Buat token persetujuan aman untuk email atasan seksi
       const approvalToken = crypto.randomUUID().replace(/-/g, '') + Date.now().toString(36);
 
-      const [created] = await sql<Array<{ id: number; nomorRequest: string }>>`
+      const [created] = await sql<Array<{ id: number; nomorRequest: string; nomorSurat: string | null }>>`
         INSERT INTO "SectionRequest" (
           "nomorRequest", "seksiPemohon", "picPemohon", "kontakPemohon",
           "namaBarang", spesifikasi, jumlah, satuan, urgensi, catatan,
@@ -376,7 +386,7 @@ export async function POST(request: Request) {
           'PENDING',
           'STEP_2_WAITING_ATASAN_SEKSI',
           'Menunggu Assign Atasan Seksi',
-          ${body.nomorSurat ? sanitizeText(body.nomorSurat, 100) : nomorRequest},
+          null,
           ${auth.user!.username},
           NOW(),
           NOW()
@@ -463,6 +473,24 @@ export async function POST(request: Request) {
       if (!current) {
         return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
       }
+
+      // Guard: Admin Bengkel belum bisa melakukan evaluasi/ACC jika atasan requestor belum assign!
+      if (
+        (keputusan === 'GO' || body.assignAtasanSpecialProject || action === 'ASSIGN_ATASAN_SPROJECT') &&
+        current.statusApprovalAtasanSeksi !== 'APPROVED'
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              'Permohonan ini belum disetujui / di-assign oleh Atasan Seksi Pemohon. Harap menunggu persetujuan Atasan Seksi terlebih dahulu.',
+          },
+          { status: 400 }
+        );
+      }
+
+      // Tanda tangan
+      const ttdAdminWorkshop = body.ttdAdminWorkshop ? sanitizeText(body.ttdAdminWorkshop, 500000) : undefined;
+      const ttdAtasanSpecialProject = body.ttdAtasanSpecialProject ? sanitizeText(body.ttdAtasanSpecialProject, 500000) : undefined;
 
       // Tentukan step flowchart berikutnya
       let nextFlowStep = current.flowStep;
@@ -571,20 +599,22 @@ export async function POST(request: Request) {
         nextFlowStep = sanitizeText(body.flowStep, 50);
       }
 
-      // Update nomor request / surat resmi jika disetujui atau diubah manual (Format: 001/SEKSI/ROMAWI/TAHUN)
-      let finalNomorSurat = current.nomorSurat || current.nomorRequest || null;
+      // Update nomor request / surat resmi:
+      // Menurut aturan resmi: Nomor surat resmi (Format: 001/SEKSI/ROMAWI/TAHUN) BARU terbit saat
+      // Atasan Special Project meng-assign (Tahap 4). Saat evaluasi workshop, nomor surat tetap belum diterbitkan (null).
+      let finalNomorSurat = current.nomorSurat || null;
       if (body.nomorSurat && typeof body.nomorSurat === 'string' && body.nomorSurat.trim().length > 0) {
         finalNomorSurat = sanitizeText(body.nomorSurat, 100);
       } else if (
-        !finalNomorSurat ||
-        finalNomorSurat.startsWith('REQ-')
+        (body.assignAtasanSpecialProject || action === 'ASSIGN_ATASAN_SPROJECT') &&
+        (!finalNomorSurat || finalNomorSurat.startsWith('REQ-'))
       ) {
         finalNomorSurat = await generateNextNomorSurat(current.seksiPemohon, new Date());
       }
 
-      const nextNomorRequest = (current.nomorRequest && !current.nomorRequest.startsWith('REQ-'))
-        ? current.nomorRequest
-        : (finalNomorSurat || current.nomorRequest);
+      const nextNomorRequest = current.nomorRequest;
+      const prevTtdWorkshop = ((current as Record<string, unknown>).ttdAdminWorkshop as string) || null;
+      const prevTtdSpecialProject = ((current as Record<string, unknown>).ttdAtasanSpecialProject as string) || null;
 
       const [updated] = await sql<SectionRequestRow[]>`
         UPDATE "SectionRequest"
@@ -593,6 +623,8 @@ export async function POST(request: Request) {
           "flowStep" = ${nextFlowStep},
           "nomorSurat" = ${finalNomorSurat},
           "nomorRequest" = ${nextNomorRequest},
+          "ttdAdminWorkshop" = ${ttdAdminWorkshop !== undefined ? (ttdAdminWorkshop || null) : prevTtdWorkshop},
+          "ttdAtasanSpecialProject" = ${ttdAtasanSpecialProject !== undefined ? (ttdAtasanSpecialProject || null) : prevTtdSpecialProject},
           "alasanTolak" = ${alasanTolak !== undefined ? (alasanTolak || null) : (current.alasanTolak ?? null)},
           "picBengkel" = ${picBengkel !== undefined ? (picBengkel || null) : (current.picBengkel ?? null)},
           "estimasi" = ${estimasi !== undefined ? (estimasi || null) : (current.estimasi ?? null)},

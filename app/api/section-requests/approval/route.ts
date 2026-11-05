@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import sql, { withTransaction } from '@/lib/db';
 import { sanitizeText, recordAuditLog, getClientIp } from '@/lib/security';
 import { createInAppNotification, buildAdminWorkshopEmailContent, sendEmailAsync } from '@/lib/emailNotification';
+import { generateNextNomorSurat } from '@/lib/nomorSuratServer';
 
 // GET: Verifikasi token dan kembalikan data request untuk Atasan Seksi
 export async function GET(request: Request) {
@@ -47,6 +48,8 @@ export async function POST(request: Request) {
     const namaDeptHead = sanitizeText(body.namaDeptHead, 100);
     const catatan = sanitizeText(body.catatan, 1000);
     const alasanTolak = sanitizeText(body.alasanTolak, 1000);
+    const ttdAtasanSeksi = body.ttdAtasanSeksi || body.ttd ? sanitizeText(body.ttdAtasanSeksi || body.ttd, 500000) : null;
+    const ttdAtasanSpecialProject = body.ttdAtasanSpecialProject || body.ttd ? sanitizeText(body.ttdAtasanSpecialProject || body.ttd, 500000) : null;
 
     if (!token) {
       return NextResponse.json({ error: 'Token persetujuan tidak valid.' }, { status: 400 });
@@ -55,6 +58,7 @@ export async function POST(request: Request) {
     const [current] = await sql<Array<{
       id: number;
       nomorRequest: string;
+      nomorSurat: string | null;
       seksiPemohon: string;
       picPemohon: string;
       perihal: string;
@@ -66,7 +70,7 @@ export async function POST(request: Request) {
       namaAtasanSeksi: string | null;
     }>>`
       SELECT 
-        id, "nomorRequest", "seksiPemohon", "picPemohon",
+        id, "nomorRequest", "nomorSurat", "seksiPemohon", "picPemohon",
         perihal, "namaBarang", "statusApprovalAtasanSeksi",
         "flowStep", status,
         "emailMentorWorkshop", "namaAtasanSeksi"
@@ -101,14 +105,25 @@ export async function POST(request: Request) {
 
       if (action === 'APPROVE' || action === 'APPROVE_SPROJECT') {
         const updated = await withTransaction(async (tx) => {
-          const [upd] = await tx<Array<{ nomorRequest: string }>>`
+          // Alur Tahap 4: Penerbitan Nomor Surat Resmi (Format: 001/SEKSI/ROMAWI/TAHUN)
+          // Nomor surat resmi HANYA dan BARU terbit setelah Atasan Special Project meng-assign request!
+          let finalNomorSurat = current.nomorSurat;
+          if (!finalNomorSurat || finalNomorSurat.startsWith('REQ-')) {
+            finalNomorSurat = await generateNextNomorSurat(current.seksiPemohon, new Date(), tx as unknown as typeof sql);
+          }
+
+          const [upd] = await tx<Array<{ nomorRequest: string; nomorSurat: string }>>`
             UPDATE "SectionRequest"
             SET
               "keputusan8210" = ${spReviewer},
               "keputusan820" = ${deptHeadReviewer},
+              "statusApprovalAtasanSpecialProject" = 'APPROVED',
               "statusApprovalAtasanSeksi" = 'APPROVED',
+              "ttdAtasanSpecialProject" = ${ttdAtasanSpecialProject || null},
+              "nomorSurat" = ${finalNomorSurat},
               status = 'Dikerjakan',
               "flowStep" = 'STEP_6_DALAM_PENGERJAAN',
+              "waktuApprovalAtasanSpecialProject" = NOW(),
               "catatanAdmin" = CASE 
                 WHEN "catatanAdmin" IS NULL OR "catatanAdmin" = '' THEN ${catatan ? `[Catatan S.Project: ${catatan}]` : null}
                 ELSE "catatanAdmin" || ${catatan ? ` [Catatan S.Project: ${catatan}]` : ''}
@@ -122,11 +137,11 @@ export async function POST(request: Request) {
           await createInAppNotification(
             {
               requestId: current.id,
-              nomorRequest: current.nomorRequest,
+              nomorRequest: finalNomorSurat || current.nomorRequest,
               targetRole: 'ADMIN',
               tipe: 'ASSIGN_ATASAN_SPROJECT',
-              judul: `Request ${current.nomorRequest} Disetujui Atasan S.Project`,
-              pesan: `Atasan Special Project (${spReviewer}) telah menyetujui & meng-assign request ${current.nomorRequest}. Pengerjaan fisik siap dimulai oleh teknisi bengkel.`,
+              judul: `Request ${finalNomorSurat || current.nomorRequest} Disetujui Atasan S.Project`,
+              pesan: `Atasan Special Project (${spReviewer}) telah menyetujui & meng-assign request. Nomor Surat resmi "${finalNomorSurat}" telah diterbitkan dan pengerjaan fisik siap dimulai oleh teknisi bengkel.`,
               link: `/request`,
             },
             tx
@@ -136,12 +151,12 @@ export async function POST(request: Request) {
           await createInAppNotification(
             {
               requestId: current.id,
-              nomorRequest: current.nomorRequest,
+              nomorRequest: finalNomorSurat || current.nomorRequest,
               targetRole: 'USER_SEKSI',
               targetUser: current.picPemohon,
               tipe: 'ASSIGN_ATASAN_SPROJECT',
-              judul: `Request ${current.nomorRequest} Disetujui Special Project`,
-              pesan: `Permohonan Anda (${current.perihal || current.namaBarang}) telah disetujui Atasan Special Project dan langsung masuk tahap pengerjaan bengkel.`,
+              judul: `Request ${finalNomorSurat || current.nomorRequest} Disetujui Special Project`,
+              pesan: `Permohonan Anda (${current.perihal || current.namaBarang}) telah resmi disetujui Atasan Special Project dengan Nomor Surat ${finalNomorSurat}. Pekerjaan bengkel segera diproses.`,
               link: `/request`,
             },
             tx
@@ -244,6 +259,7 @@ export async function POST(request: Request) {
             "waktuApprovalAtasanSeksi" = NOW(),
             "foreman" = ${reviewerName},
             "namaAtasanSeksi" = ${reviewerName},
+            "ttdAtasanSeksi" = ${ttdAtasanSeksi || null},
             "catatanAtasanSeksi" = ${catatan || null},
             status = 'Pending: Menunggu Evaluasi Workshop',
             "flowStep" = 'STEP_3_DITERIMA_WORKSHOP',

@@ -64,6 +64,16 @@ function formatTimelineDate(val: string): string {
     const parts = val.split('/');
     if (parts.length >= 2) return `${parts[0]}/${parts[1]}`;
   }
+  if (val.includes('-')) {
+    const parts = val.split('-');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        // YYYY-MM-DD -> DD/MM
+        return `${parts[2]}/${parts[1]}`;
+      }
+      return `${parts[0]}/${parts[1]}`;
+    }
+  }
   return val;
 }
 

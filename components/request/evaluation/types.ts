@@ -41,6 +41,7 @@ export interface EvaluationFormData {
   hasilCheckPemohon: string;
   schedulePlanning: string;
   scheduleActual: string;
+  ttdAdminWorkshop?: string;
 }
 
 export interface EvaluationModalProps {
