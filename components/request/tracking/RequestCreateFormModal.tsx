@@ -17,7 +17,6 @@ import {
   ShieldCheck,
   Phone,
   Layers,
-  Wrench,
 } from 'lucide-react';
 import { compressImageFile } from '@/lib/imageCompressor';
 import { RequestFormData, DAFTAR_SEKSI_REQUEST, DAFTAR_TUJUAN } from './types';
@@ -90,54 +89,40 @@ export default function RequestCreateFormModal({
       onSubmit={onSubmit}
       className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-scale-up space-y-0"
     >
-      {/* 1. Header Modal Form */}
-      <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex justify-between items-start gap-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-600/30 text-red-300 border border-red-500/30 text-xs font-semibold">
-            <Wrench className="w-3 h-3 text-red-400" />
-            <span>Formulir Resmi ENG-KP-011</span>
-          </div>
-          <h2 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
-            Permohonan Pekerjaan Antar Seksi
-          </h2>
-          <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
-            Pengajuan pembuatan baru, perbaikan, atau modifikasi alat/mesin ke Bengkel Special Project &amp; Maintenance PT Bridgestone Tire Indonesia.
+      {/* Alur Proses Singkat (Breadcrumb Flow) */}
+      <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        <div className="flex-1">
+          <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5">
+            <Info className="w-3.5 h-3.5 text-slate-500" />
+            <span>Alur Permohonan Permintaan Kerja (ENG-KP-011):</span>
           </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-red-200 text-red-700 font-bold shadow-2xs">
+              <span className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs shrink-0">1</span>
+              <span className="truncate">Isi Form (Anda)</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-medium">
+              <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs shrink-0 font-bold">2</span>
+              <span className="truncate">Approval Atasan</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-medium">
+              <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs shrink-0 font-bold">3</span>
+              <span className="truncate">Evaluasi Bengkel</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-medium">
+              <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs shrink-0 font-bold">4</span>
+              <span className="truncate">Pengerjaan Selesai</span>
+            </div>
+          </div>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer shrink-0 self-start sm:self-center"
           title="Tutup formulir"
         >
           <X className="w-5 h-5" />
         </button>
-      </div>
-
-      {/* 2. Alur Proses Singkat (Breadcrumb Flow) */}
-      <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-3">
-        <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5">
-          <Info className="w-3.5 h-3.5 text-slate-500" />
-          <span>Alur Permohonan Permintaan Kerja:</span>
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-red-200 text-red-700 font-bold shadow-2xs">
-            <span className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs shrink-0">1</span>
-            <span className="truncate">Isi Form (Anda)</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-medium">
-            <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs shrink-0 font-bold">2</span>
-            <span className="truncate">Approval Atasan</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-medium">
-            <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs shrink-0 font-bold">3</span>
-            <span className="truncate">Evaluasi Bengkel</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-medium">
-            <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs shrink-0 font-bold">4</span>
-            <span className="truncate">Pengerjaan Selesai</span>
-          </div>
-        </div>
       </div>
 
       <div className="p-4 sm:p-6 space-y-6">
