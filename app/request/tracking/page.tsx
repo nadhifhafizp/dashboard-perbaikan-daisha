@@ -61,80 +61,76 @@ function RequestTrackingContent() {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto space-y-5">
-      {/* 1. Page Header (Flat Layout) */}
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-3 border-b border-slate-200">
-        <div className="space-y-1">
-          {isAdmin && (
-            <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-1 text-xs">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1 font-medium text-slate-500 hover:text-slate-900 transition"
+      {/* 1. Page Header & 2. Top Navigation Tabs - Disembunyikan saat sedang membuka formulir Buat Request */}
+      {!showForm && (
+        <>
+          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-3 border-b border-slate-200">
+            <div className="space-y-1">
+              {isAdmin && (
+                <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-1 text-xs">
+                  <Link
+                    href="/"
+                    className="inline-flex items-center gap-1 font-medium text-slate-500 hover:text-slate-900 transition"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Portal</span>
+                  </Link>
+                  <span className="text-slate-300">/</span>
+                  <span className="font-semibold text-slate-900">Request Seksi</span>
+                </nav>
+              )}
+              <h1 className="t-title text-slate-900 tracking-tight">Antrean Request</h1>
+              <p className="t-caption text-slate-500">
+                Status formulir pekerjaan antar seksi
+              </p>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+              {!isAdmin && (
+                <Link
+                  href="/lapor-rusak"
+                  className="h-11 sm:h-10 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Lapor Rusak</span>
+                </Link>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowForm(true)}
+                className="h-11 sm:h-10 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Portal</span>
-              </Link>
-              <span className="text-slate-300">/</span>
-              <span className="font-semibold text-slate-900">Request Seksi</span>
-            </nav>
-          )}
-          <h1 className="t-title text-slate-900 tracking-tight">Antrean Request</h1>
-          <p className="t-caption text-slate-500">
-            Status formulir pekerjaan antar seksi
-          </p>
-        </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-          {!isAdmin && (
+                <Plus className="w-4 h-4" />
+                <span>Buat Request</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => fetchRequests(true)}
+                disabled={loading}
+                className="h-11 sm:h-10 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                <span>{loading ? 'Memuat...' : 'Segarkan'}</span>
+              </button>
+            </div>
+          </header>
+
+          {/* 2. Top Navigation Tabs (Pills: Dashboard vs Tracking) */}
+          <div className="flex items-center gap-2 border-b border-slate-200 pt-1">
             <Link
-              href="/lapor-rusak"
-              className="h-11 sm:h-10 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              href="/kpi?tab=request"
+              className="pb-2.5 px-3 text-xs font-semibold text-slate-500 hover:text-slate-800 transition flex items-center gap-1.5 border-b-2 border-transparent"
             >
-              <AlertTriangle className="w-3.5 h-3.5 text-slate-500" />
-              <span>Lapor Rusak</span>
+              <BarChart3 className="w-3.5 h-3.5 text-red-600" />
+              <span>KPI Request</span>
             </Link>
-          )}
-
-          <button
-            type="button"
-            onClick={() => {
-              const nextVal = !showForm;
-              setShowForm(nextVal);
-              if (!nextVal && typeof window !== 'undefined' && window.location.search.includes('new=true')) {
-                const url = new URL(window.location.href);
-                url.searchParams.delete('new');
-                window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
-              }
-            }}
-            className="h-11 sm:h-10 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{showForm ? 'Tutup Formulir' : 'Buat Request'}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => fetchRequests(true)}
-            disabled={loading}
-            className="h-11 sm:h-10 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>{loading ? 'Memuat...' : 'Segarkan'}</span>
-          </button>
-        </div>
-      </header>
-
-      {/* 2. Top Navigation Tabs (Pills: Dashboard vs Tracking) */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pt-1">
-        <Link
-          href="/kpi?tab=request"
-          className="pb-2.5 px-3 text-xs font-semibold text-slate-500 hover:text-slate-800 transition flex items-center gap-1.5 border-b-2 border-transparent"
-        >
-          <BarChart3 className="w-3.5 h-3.5 text-red-600" />
-          <span>KPI Request</span>
-        </Link>
-        <div className="pb-2.5 px-3 text-xs font-bold text-red-600 border-b-2 border-red-600 flex items-center gap-1.5">
-          <ClipboardList className="w-3.5 h-3.5" />
-          <span>Antrean Request ({requests.length})</span>
-        </div>
-      </div>
+            <div className="pb-2.5 px-3 text-xs font-bold text-red-600 border-b-2 border-red-600 flex items-center gap-1.5">
+              <ClipboardList className="w-3.5 h-3.5" />
+              <span>Antrean Request ({requests.length})</span>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* 3. Formulir Input Request Baru (ENG-KP-011) */}
       {showForm && (
@@ -156,26 +152,28 @@ function RequestTrackingContent() {
         />
       )}
 
-      {/* 4. Filter Tabs & Table/Cards */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <RequestFilterBar
-          filterFlow={filterFlow}
-          setFilterFlow={setFilterFlow}
-          search={search}
-          setSearch={setSearch}
-        />
-        <RequestTable
-          requests={requests}
-          filtered={filtered}
-          loading={loading}
-          isAdmin={isAdmin}
-          onResetFilter={() => setFilterFlow('all')}
-          onOpenPrint={(req) => void openPrintModal(req)}
-          onOpenEval={(req) => void openEvalModal(req)}
-          onOpenShareApproval={openShareApproval}
-          onRequestDelete={(req) => setRequestToDelete(req)}
-        />
-      </div>
+      {/* 4. Filter Tabs & Table/Cards - Hanya tampil saat tidak sedang membuka formulir */}
+      {!showForm && (
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <RequestFilterBar
+            filterFlow={filterFlow}
+            setFilterFlow={setFilterFlow}
+            search={search}
+            setSearch={setSearch}
+          />
+          <RequestTable
+            requests={requests}
+            filtered={filtered}
+            loading={loading}
+            isAdmin={isAdmin}
+            onResetFilter={() => setFilterFlow('all')}
+            onOpenPrint={(req) => void openPrintModal(req)}
+            onOpenEval={(req) => void openEvalModal(req)}
+            onOpenShareApproval={openShareApproval}
+            onRequestDelete={(req) => setRequestToDelete(req)}
+          />
+        </div>
+      )}
 
       {/* 5. Modals */}
       <SubmittedSuccessModal
