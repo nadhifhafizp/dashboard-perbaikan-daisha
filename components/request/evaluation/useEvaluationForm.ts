@@ -86,7 +86,10 @@ export function useEvaluationForm(
       setNotifSuccessData(null);
       setShowPendingDialog(false);
 
-      if (requestData.status?.includes('Material Habis') || requestData.status === 'Dikerjakan') {
+      const isSProjectApproved = requestData.statusApprovalAtasanSpecialProject === 'APPROVED';
+      if (!isSProjectApproved) {
+        setActiveTab('evaluasi');
+      } else if (requestData.status?.includes('Material Habis') || requestData.status === 'Dikerjakan') {
         setActiveTab('pengerjaan');
       } else if (requestData.status === 'Pekerjaan Fisik Selesai' || requestData.status === 'Selesai') {
         setActiveTab('penyelesaian');
@@ -200,6 +203,10 @@ export function useEvaluationForm(
 
   const handleSetPendingMaterial = async () => {
     if (!requestData) return;
+    if (requestData.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+      setErrorMsg('Pengerjaan belum aktif karena belum disetujui / di-assign oleh Atasan Special Project.');
+      return;
+    }
     if (!alasanPendingInput.trim()) {
       alert('Mohon tulis alasan material/sparepart yang habis.');
       return;
@@ -240,6 +247,10 @@ export function useEvaluationForm(
 
   const handleResumeProgress = async () => {
     if (!requestData) return;
+    if (requestData.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+      setErrorMsg('Pengerjaan belum aktif karena belum disetujui / di-assign oleh Atasan Special Project.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/section-requests', {
@@ -273,6 +284,10 @@ export function useEvaluationForm(
   };
 
   const handleOperatorSelesai = () => {
+    if (requestData?.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+      setErrorMsg('Pekerjaan belum dapat diselesaikan karena permohonan ini belum disetujui / di-assign oleh Atasan Special Project.');
+      return;
+    }
     void handleSaveAction('EVALUASI_WORKSHOP', {
       status: 'Pekerjaan Fisik Selesai',
       flowStep: 'STEP_7_PEKERJAAN_SELESAI',
@@ -281,6 +296,10 @@ export function useEvaluationForm(
   };
 
   const handleFinalFinish = () => {
+    if (requestData?.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+      setErrorMsg('Request belum dapat diselesaikan karena permohonan ini belum disetujui / di-assign oleh Atasan Special Project.');
+      return;
+    }
     void handleSaveAction('FINISH_REQUEST', {
       status: 'Selesai',
       flowStep: 'STEP_8_SELESAI',
@@ -292,6 +311,7 @@ export function useEvaluationForm(
     setActiveTab,
     loading,
     errorMsg,
+    setErrorMsg,
     formData,
     setFormData,
     showPendingDialog,

@@ -488,6 +488,23 @@ export async function POST(request: Request) {
         );
       }
 
+      // Guard: Admin TIDAK DAPAT menyelesaikan pekerjaan jika Atasan Special Project belum assign!
+      const isCompletingWork =
+        newStatus === 'Pekerjaan Fisik Selesai' ||
+        newStatus === 'Selesai' ||
+        body.flowStep === 'STEP_7_PEKERJAAN_SELESAI' ||
+        body.flowStep === 'STEP_8_SELESAI';
+
+      if (isCompletingWork && current.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+        return NextResponse.json(
+          {
+            error:
+              'Pekerjaan belum dapat diselesaikan karena permohonan ini belum disetujui / di-assign oleh Atasan Special Project.',
+          },
+          { status: 400 }
+        );
+      }
+
       // Tanda tangan
       const ttdAdminWorkshop = body.ttdAdminWorkshop ? sanitizeText(body.ttdAdminWorkshop, 500000) : undefined;
       const ttdAtasanSpecialProject = body.ttdAtasanSpecialProject ? sanitizeText(body.ttdAtasanSpecialProject, 500000) : undefined;
@@ -689,6 +706,24 @@ export async function POST(request: Request) {
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
       const hasilCheck = sanitizeText(body.hasilCheck, 2000);
       const hasilCheckPemohon = sanitizeText(body.hasilCheckPemohon, 100);
+
+      const [current] = await sql<SectionRequestRow[]>`
+        SELECT * FROM "SectionRequest" WHERE id = ${id} LIMIT 1
+      `;
+      if (!current) {
+        return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
+      }
+
+      // Guard: Atasan Special Project WAJIB assign terlebih dahulu sebelum request dapat diselesaikan!
+      if (current.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+        return NextResponse.json(
+          {
+            error:
+              'Pekerjaan belum dapat diselesaikan karena permohonan ini belum disetujui / di-assign oleh Atasan Special Project.',
+          },
+          { status: 400 }
+        );
+      }
 
       const [updated] = await withTransaction(async (tx) => {
         const [upd] = await tx<SectionRequestRow[]>`
@@ -919,6 +954,23 @@ export async function POST(request: Request) {
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
       const alasan = sanitizeText(body.alasan || 'Menunggu ketersediaan sparepart / material di gudang', 500);
 
+      const [current] = await sql<SectionRequestRow[]>`
+        SELECT * FROM "SectionRequest" WHERE id = ${id} LIMIT 1
+      `;
+      if (!current) {
+        return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
+      }
+
+      if (current.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+        return NextResponse.json(
+          {
+            error:
+              'Pengerjaan belum aktif karena belum disetujui / di-assign oleh Atasan Special Project.',
+          },
+          { status: 400 }
+        );
+      }
+
       const [updated] = await sql<SectionRequestRow[]>`
         UPDATE "SectionRequest"
         SET
@@ -953,6 +1005,23 @@ export async function POST(request: Request) {
       }
 
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
+
+      const [current] = await sql<SectionRequestRow[]>`
+        SELECT * FROM "SectionRequest" WHERE id = ${id} LIMIT 1
+      `;
+      if (!current) {
+        return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
+      }
+
+      if (current.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+        return NextResponse.json(
+          {
+            error:
+              'Pengerjaan belum aktif karena belum disetujui / di-assign oleh Atasan Special Project.',
+          },
+          { status: 400 }
+        );
+      }
 
       const [updated] = await sql<SectionRequestRow[]>`
         UPDATE "SectionRequest"

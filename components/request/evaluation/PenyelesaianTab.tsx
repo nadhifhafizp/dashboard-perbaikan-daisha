@@ -1,10 +1,11 @@
 import React from 'react';
-import { CheckCircle2, Send, Clock, Users, DollarSign, CalendarCheck } from 'lucide-react';
+import { CheckCircle2, Send, Clock, Users, DollarSign, CalendarCheck, Lock } from 'lucide-react';
 import { EvaluationFormData } from './types';
 
 interface PenyelesaianTabProps {
   formData: EvaluationFormData;
   loading: boolean;
+  isApprovedBySpecialProject?: boolean;
   setFormData: React.Dispatch<React.SetStateAction<EvaluationFormData>>;
   onFinalFinish: () => void;
 }
@@ -12,11 +13,22 @@ interface PenyelesaianTabProps {
 export default function PenyelesaianTab({
   formData,
   loading,
+  isApprovedBySpecialProject = false,
   setFormData,
   onFinalFinish,
 }: PenyelesaianTabProps) {
   return (
     <div className="space-y-4 animate-fade-in">
+      {/* Alert jika belum disetujui Atasan Special Project */}
+      {!isApprovedBySpecialProject && (
+        <div className="p-3.5 rounded-lg bg-amber-50 border border-amber-300 flex items-center gap-2.5 text-amber-900 text-xs">
+          <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+          <span>
+            <strong>Tahap Penyelesaian Terkunci:</strong> Permohonan belum disetujui / di-assign oleh Atasan Special Project (8210 / 820). Admin bengkel belum dapat menyelesaikan request ini.
+          </span>
+        </div>
+      )}
+
       {/* 1. Input Realisasi Pengerjaan Fisik (Actual di Akhir Pengerjaan) */}
       <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 shadow-2xs">
         <div className="flex items-center gap-2">
@@ -145,10 +157,23 @@ export default function PenyelesaianTab({
           <button
             type="button"
             onClick={onFinalFinish}
-            disabled={loading}
-            className="h-10 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+            disabled={loading || !isApprovedBySpecialProject}
+            className={`h-10 px-5 font-bold text-xs rounded-lg transition flex items-center gap-1.5 ${
+              !isApprovedBySpecialProject
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
+            } disabled:opacity-50`}
+            title={
+              !isApprovedBySpecialProject
+                ? 'Terkunci: Menunggu persetujuan Atasan Special Project sebelum dapat menyelesaikan request'
+                : undefined
+            }
           >
-            <Send className="w-3.5 h-3.5" />
+            {!isApprovedBySpecialProject ? (
+              <Lock className="w-3.5 h-3.5" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
             <span>Selesaikan Request</span>
           </button>
         </div>

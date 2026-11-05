@@ -1,11 +1,11 @@
 import React from 'react';
 import {
   Hammer,
-  Check,
   PauseCircle,
   PlayCircle,
   CheckCircle2,
   ExternalLink,
+  Lock,
 } from 'lucide-react';
 import { EvaluationFormData } from './types';
 import PendingConfirmationModal from './PendingConfirmationModal';
@@ -13,6 +13,7 @@ import PendingConfirmationModal from './PendingConfirmationModal';
 interface PengerjaanTabProps {
   formData: EvaluationFormData;
   loading: boolean;
+  isApprovedBySpecialProject?: boolean;
   isPendingMaterial: boolean;
   showPendingDialog: boolean;
   alasanPendingInput: string;
@@ -29,6 +30,7 @@ interface PengerjaanTabProps {
 export default function PengerjaanTab({
   formData,
   loading,
+  isApprovedBySpecialProject = false,
   isPendingMaterial,
   showPendingDialog,
   alasanPendingInput,
@@ -56,16 +58,15 @@ export default function PengerjaanTab({
         </div>
 
         {/* 1. Kondisi jika belum disetujui Special Project */}
-        {(formData.status === 'Pending: Menunggu Assign S.Project' ||
-          formData.status === 'Menunggu Assign S.Project' ||
-          formData.flowStep === 'STEP_5_MENUNGGU_ATASAN_SPROJECT') && (
+        {!isApprovedBySpecialProject && (
           <div className="p-3.5 rounded-lg bg-purple-50 border border-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <p className="font-bold text-xs text-purple-950">
-                Menunggu Tanda Tangan & Assign Atasan Special Project (8210 / 820)
+              <p className="font-bold text-xs text-purple-950 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-purple-600" />
+                <span>Menunggu Tanda Tangan & Assign Atasan Special Project (8210 / 820)</span>
               </p>
               <p className="text-xs text-purple-800 mt-0.5">
-                Begitu disetujui, request akan <strong>otomatis langsung berstatus &quot;Dikerjakan&quot;</strong>.
+                Pekerjaan fisik belum boleh dimulai atau diselesaikan. Begitu disetujui, request akan <strong>otomatis langsung berstatus &quot;Dikerjakan&quot;</strong> dan nomor surat resmi akan terbit.
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -77,18 +78,9 @@ export default function PengerjaanTab({
                   className="h-10 px-3.5 bg-white hover:bg-purple-100 text-purple-900 border border-purple-300 font-bold text-xs rounded-lg transition inline-flex items-center gap-1.5"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Buka Lembar Approval</span>
+                  <span>Buka Lembar Approval (Tanda Tangan)</span>
                 </a>
               )}
-              <button
-                type="button"
-                onClick={onAssignAtasanSpecialProject}
-                disabled={loading}
-                className="h-10 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-lg transition cursor-pointer shrink-0 flex items-center gap-1.5 disabled:opacity-50"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Setujui Proyek</span>
-              </button>
             </div>
           </div>
         )}
@@ -158,10 +150,23 @@ export default function PengerjaanTab({
           <button
             type="button"
             onClick={onOperatorSelesai}
-            disabled={loading}
-            className="h-10 px-4 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+            disabled={loading || !isApprovedBySpecialProject}
+            className={`h-10 px-4 font-bold text-xs rounded-lg transition flex items-center gap-1.5 ${
+              !isApprovedBySpecialProject
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : 'bg-teal-600 hover:bg-teal-700 text-white cursor-pointer'
+            } disabled:opacity-50`}
+            title={
+              !isApprovedBySpecialProject
+                ? 'Terkunci: Pekerjaan belum dapat diselesaikan karena belum disetujui Atasan Special Project'
+                : undefined
+            }
           >
-            <CheckCircle2 className="w-4 h-4" />
+            {!isApprovedBySpecialProject ? (
+              <Lock className="w-4 h-4" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4" />
+            )}
             <span>Pekerjaan Selesai</span>
           </button>
         </div>

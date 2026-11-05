@@ -12,6 +12,7 @@ import {
   Timer,
   Hammer,
   ShieldCheck,
+  Lock,
 } from 'lucide-react';
 import FlowchartTracker from './FlowchartTracker';
 import { FlowStepCode } from '@/lib/workflowConstants';
@@ -58,6 +59,7 @@ export default function EvaluationModal({
 
   const currentStep = (form.formData.flowStep || 'STEP_4_EVALUASI_WORKSHOP') as FlowStepCode;
   const isPendingMaterial = form.formData.status?.toLowerCase().includes('material habis');
+  const isApprovedBySpecialProject = requestData.statusApprovalAtasanSpecialProject === 'APPROVED';
 
   return (
     <div
@@ -140,15 +142,29 @@ export default function EvaluationModal({
 
           <button
             type="button"
-            onClick={() => form.setActiveTab('pengerjaan')}
-            className={`py-2.5 px-3.5 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer whitespace-nowrap ${
-              form.activeTab === 'pengerjaan'
-                ? 'border-red-600 text-red-700 bg-red-50/40'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+            onClick={() => {
+              if (!isApprovedBySpecialProject) {
+                form.setErrorMsg('Tahap pengerjaan fisik masih terkunci. Menunggu persetujuan & assign resmi dari Atasan Special Project (8210 / 820).');
+                return;
+              }
+              form.setActiveTab('pengerjaan');
+            }}
+            disabled={!isApprovedBySpecialProject}
+            className={`py-2.5 px-3.5 text-xs font-bold transition flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
+              !isApprovedBySpecialProject
+                ? 'border-transparent text-slate-400 bg-slate-100/60 cursor-not-allowed opacity-70'
+                : form.activeTab === 'pengerjaan'
+                ? 'border-red-600 text-red-700 bg-red-50/40 cursor-pointer'
+                : 'border-transparent text-slate-600 hover:text-slate-900 cursor-pointer'
             }`}
+            title={!isApprovedBySpecialProject ? 'Terkunci: Menunggu persetujuan & assign dari Atasan Special Project (8210 / 820)' : undefined}
           >
-            <Hammer className="w-3.5 h-3.5" />
-            <span>3. Status Pengerjaan & Pending</span>
+            {!isApprovedBySpecialProject ? (
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+            ) : (
+              <Hammer className="w-3.5 h-3.5" />
+            )}
+            <span>3. Status Pengerjaan {isApprovedBySpecialProject ? '' : '(Terkunci)'}</span>
             {isPendingMaterial && (
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
             )}
@@ -156,15 +172,29 @@ export default function EvaluationModal({
 
           <button
             type="button"
-            onClick={() => form.setActiveTab('penyelesaian')}
-            className={`py-2.5 px-3.5 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer whitespace-nowrap ${
-              form.activeTab === 'penyelesaian'
-                ? 'border-red-600 text-red-700 bg-red-50/40'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+            onClick={() => {
+              if (!isApprovedBySpecialProject) {
+                form.setErrorMsg('Tahap penyelesaian permohonan terkunci. Menunggu persetujuan & assign resmi dari Atasan Special Project (8210 / 820).');
+                return;
+              }
+              form.setActiveTab('penyelesaian');
+            }}
+            disabled={!isApprovedBySpecialProject}
+            className={`py-2.5 px-3.5 text-xs font-bold transition flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
+              !isApprovedBySpecialProject
+                ? 'border-transparent text-slate-400 bg-slate-100/60 cursor-not-allowed opacity-70'
+                : form.activeTab === 'penyelesaian'
+                ? 'border-red-600 text-red-700 bg-red-50/40 cursor-pointer'
+                : 'border-transparent text-slate-600 hover:text-slate-900 cursor-pointer'
             }`}
+            title={!isApprovedBySpecialProject ? 'Terkunci: Menunggu persetujuan & assign dari Atasan Special Project (8210 / 820)' : undefined}
           >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>4. Hasil Check & Selesai</span>
+            {!isApprovedBySpecialProject ? (
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+            ) : (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            )}
+            <span>4. Hasil Check & Selesai {isApprovedBySpecialProject ? '' : '(Terkunci)'}</span>
           </button>
         </div>
 
@@ -180,52 +210,43 @@ export default function EvaluationModal({
 
           {/* Alert Notifikasi Sukses ke S.Project */}
           {form.notifSuccessData && (
-            <div className="p-4 rounded-xl bg-emerald-50 border-2 border-emerald-300 space-y-2 animate-scale-up">
-              <div className="flex items-center gap-2 text-emerald-950 font-bold text-xs">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="p-4 rounded-xl bg-purple-50 border-2 border-purple-300 space-y-2 animate-scale-up">
+              <div className="flex items-center gap-2 text-purple-950 font-bold text-xs">
+                <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
                 <span>{form.notifSuccessData.message}</span>
               </div>
-              <p className="text-xs text-emerald-800">
-                Notifikasi otomatis telah dikirimkan ke <strong>Atasan Special Project (8210 / 820)</strong> via sistem dan email default ({form.notifSuccessData.emailData?.toEmail}).
+              <p className="text-xs text-purple-900 leading-relaxed">
+                Evaluasi workshop telah disimpan. Permohonan kini <strong>menunggu persetujuan dan tanda tangan resmi dari Atasan Special Project (8210 / 820)</strong>. Tahap pengerjaan fisik serta penyelesaian baru dapat dilakukan setelah Atasan Special Project memberikan persetujuan (Assign).
               </p>
-              {form.notifSuccessData.emailData && (
-                <div className="flex flex-wrap items-center gap-2 pt-1">
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                {form.notifSuccessData.emailData && (
                   <a
                     href={form.notifSuccessData.emailData.mailtoUrl}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-semibold transition"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-purple-100 text-purple-900 border border-purple-300 rounded-lg text-xs font-semibold transition"
                   >
                     <Mail className="w-3.5 h-3.5" />
                     <span>Buka Email ke Atasan Special Project</span>
                   </a>
-                  <button
-                    type="button"
-                    onClick={() => form.handleAssignAtasanSpecialProject()}
-                    disabled={form.loading}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                )}
+                {requestData.approvalToken && (
+                  <a
+                    href={`/request/approval?token=${encodeURIComponent(requestData.approvalToken)}&role=special_project`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
                   >
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>{form.loading ? 'Menyimpan...' : 'ACC / Setujui Assign S.Project Sekarang'}</span>
-                  </button>
-                  {requestData.approvalToken && (
-                    <a
-                      href={`/request/approval?token=${encodeURIComponent(requestData.approvalToken)}&role=special_project`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-100 text-purple-700 border border-purple-300 rounded-lg text-xs font-semibold transition"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Buka Lembar Approval Terpisah</span>
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => form.setNotifSuccessData(null)}
-                    className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition cursor-pointer"
-                  >
-                    Tutup Pesan
-                  </button>
-                </div>
-              )}
+                    <span>Buka Lembar Approval (Tanda Tangan S.Project)</span>
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => form.setNotifSuccessData(null)}
+                  className="px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-medium transition cursor-pointer"
+                >
+                  Tutup Pesan
+                </button>
+              </div>
             </div>
           )}
 
@@ -308,6 +329,7 @@ export default function EvaluationModal({
             <PengerjaanTab
               formData={form.formData}
               loading={form.loading}
+              isApprovedBySpecialProject={isApprovedBySpecialProject}
               isPendingMaterial={Boolean(isPendingMaterial)}
               showPendingDialog={form.showPendingDialog}
               alasanPendingInput={form.alasanPendingInput}
@@ -327,6 +349,7 @@ export default function EvaluationModal({
             <PenyelesaianTab
               formData={form.formData}
               loading={form.loading}
+              isApprovedBySpecialProject={isApprovedBySpecialProject}
               setFormData={form.setFormData}
               onFinalFinish={form.handleFinalFinish}
             />
