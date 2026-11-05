@@ -54,6 +54,19 @@ function DonutTooltip({ active, payload, totalStatus = 0 }: DonutTooltipProps) {
   return null;
 }
 
+/**
+ * Format label tanggal pada sumbu visual grafik timeline:
+ * Menampilkan Tanggal / Bulan saja (DD/MM) tanpa tahun jika format asli DD/MM/YYYY.
+ */
+function formatTimelineDate(val: string): string {
+  if (!val) return '';
+  if (val.includes('/')) {
+    const parts = val.split('/');
+    if (parts.length >= 2) return `${parts[0]}/${parts[1]}`;
+  }
+  return val;
+}
+
 export default function ThroughputCharts({
   chartTrenHarian,
   chartTrenBulanan = [],
@@ -311,7 +324,13 @@ export default function ThroughputCharts({
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis
                   dataKey="tanggal"
-                  tick={{ fontSize: 12, fill: '#0f172a', fontWeight: 800 }}
+                  interval={0}
+                  tickFormatter={formatTimelineDate}
+                  tick={{
+                    fontSize: timelineScale === '14days' ? 11 : 12,
+                    fill: '#0f172a',
+                    fontWeight: 800,
+                  }}
                   axisLine={{ stroke: '#cbd5e1' }}
                   tickLine={false}
                   dy={chartOrientation === 'opposing' ? 14 : 6}
@@ -357,7 +376,7 @@ export default function ThroughputCharts({
                     return (
                       <div className="bg-white/95 backdrop-blur-xs border border-slate-200 rounded-xl p-3 shadow-lg text-xs space-y-2 min-w-[200px]">
                         <p className="font-bold text-slate-800 border-b border-slate-100 pb-1 flex items-center justify-between">
-                          <span className="text-sm">{label}</span>
+                          <span className="text-sm">{formatTimelineDate(String(label))}</span>
                           <span className="text-xs text-slate-500 font-semibold">Arus & Backlog</span>
                         </p>
                         <div className="flex items-center justify-between font-bold text-red-700">
