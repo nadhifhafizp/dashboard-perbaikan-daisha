@@ -57,7 +57,7 @@ export default function MobileNav({
       navItems.push(
         { href: '/', icon: Home, label: 'Portal' },
         { href: '/request/tracking', icon: ClipboardList, label: 'Pelacakan' },
-        { href: '/request', icon: PenSquare, label: 'Buat' },
+        { href: '/request/tracking?new=true', icon: PenSquare, label: 'Buat' },
         { href: '/kpi?tab=request', icon: BarChart2, label: 'KPI Req' },
       );
     } else if (pathname.startsWith('/spareparts')) {
@@ -90,7 +90,7 @@ export default function MobileNav({
       { href: '/', icon: Home, label: 'Portal' },
       { href: '/lapor-rusak', icon: AlertTriangle, label: 'Lapor' },
       { href: '/maintenance', icon: Target, label: 'PM Seksi' },
-      { href: '/request', icon: LayoutDashboard, label: 'Request' },
+      { href: '/request/tracking', icon: LayoutDashboard, label: 'Request' },
     );
   }
 
@@ -133,6 +133,11 @@ export default function MobileNav({
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => {
+                if (item.href.includes('new=true') && typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('open-request-create-form'));
+                }
+              }}
               aria-current={isActive ? 'page' : undefined}
               className={`flex flex-col items-center justify-center min-h-[44px] py-1 px-3 rounded-lg transition relative ${
                 isActive ? 'text-red-600 font-semibold' : 'text-slate-500 font-medium hover:text-slate-800'

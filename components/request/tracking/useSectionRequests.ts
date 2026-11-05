@@ -74,6 +74,24 @@ export function useSectionRequests() {
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<RequestFormData>(INITIAL_FORM_DATA);
 
+  // Buka form otomatis saat URL memiliki param ?new=true atau ?create=true
+  useEffect(() => {
+    if (searchParams?.get('new') === 'true' || searchParams?.get('create') === 'true') {
+      setShowForm(true);
+    }
+  }, [searchParams]);
+
+  // Listener event buka form langsung dari navigasi / sidebar
+  useEffect(() => {
+    const handleOpenCreateForm = () => {
+      setShowForm(true);
+    };
+    window.addEventListener('open-request-create-form', handleOpenCreateForm);
+    return () => {
+      window.removeEventListener('open-request-create-form', handleOpenCreateForm);
+    };
+  }, []);
+
   // Inisialisasi otomatis seksi dan nama drafter dari akun login
   useEffect(() => {
     if (currentUser?.seksi) {

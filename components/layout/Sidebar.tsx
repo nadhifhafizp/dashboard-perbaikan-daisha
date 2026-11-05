@@ -151,7 +151,7 @@ function SidebarInner({
       icon: SendHorizonal,
       items: [
         { href: '/request/tracking', label: 'Daftar Request', icon: ClipboardList },
-        { href: '/request', label: 'Buat Request', icon: PlusCircle },
+        { href: '/request/tracking?new=true', label: 'Buat Request', icon: PlusCircle },
       ],
     },
     {
@@ -399,11 +399,23 @@ function SidebarInner({
                           if (subItem.href.includes('?')) {
                             const [itemPath, itemQuery] = subItem.href.split('?');
                             if (pathname !== itemPath) return false;
-                            const itemTab = new URLSearchParams(itemQuery).get('tab');
-                            const currentTab = searchParams.get('tab') || 'dashboard';
-                            return itemTab === currentTab;
+                            const itemParams = new URLSearchParams(itemQuery);
+                            const itemTab = itemParams.get('tab');
+                            const itemNew = itemParams.get('new');
+                            if (itemTab) {
+                              const currentTab = searchParams.get('tab') || 'dashboard';
+                              return itemTab === currentTab;
+                            }
+                            if (itemNew) {
+                              return searchParams.get('new') === itemNew;
+                            }
+                            return false;
                           }
-                          return pathname === subItem.href && (!searchParams.get('tab') || searchParams.get('tab') === 'dashboard');
+                          return (
+                            pathname === subItem.href &&
+                            (!searchParams.get('tab') || searchParams.get('tab') === 'dashboard') &&
+                            !searchParams.get('new')
+                          );
                         })();
                         const SubIcon = subItem.icon;
 
@@ -411,7 +423,14 @@ function SidebarInner({
                           <Link
                             key={subItem.href}
                             href={subItem.href}
-                            onClick={onCloseMobileMenu}
+                            onClick={() => {
+                              onCloseMobileMenu();
+                              if (subItem.href.includes('new=true')) {
+                                if (typeof window !== 'undefined') {
+                                  window.dispatchEvent(new CustomEvent('open-request-create-form'));
+                                }
+                              }
+                            }}
                             className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
                               isSubActive
                                 ? 'bg-red-600 text-white font-semibold'

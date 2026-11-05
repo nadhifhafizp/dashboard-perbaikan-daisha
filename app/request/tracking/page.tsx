@@ -95,7 +95,15 @@ function RequestTrackingContent() {
 
           <button
             type="button"
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              const nextVal = !showForm;
+              setShowForm(nextVal);
+              if (!nextVal && typeof window !== 'undefined' && window.location.search.includes('new=true')) {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('new');
+                window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+              }
+            }}
             className="h-11 sm:h-10 px-4 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -136,7 +144,14 @@ function RequestTrackingContent() {
           onSubmit={handleSubmit}
           submitting={submitting}
           currentUser={currentUser}
-          onClose={() => setShowForm(false)}
+          onClose={() => {
+            setShowForm(false);
+            if (typeof window !== 'undefined' && window.location.search.includes('new=true')) {
+              const url = new URL(window.location.href);
+              url.searchParams.delete('new');
+              window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+            }
+          }}
           onError={(title, message) => showFeedback('error', title, message)}
         />
       )}
