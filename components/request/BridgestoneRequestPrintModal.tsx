@@ -73,7 +73,10 @@ export interface SectionRequestFull {
   flowStep?: string;
   alasanPending?: string;
   ttdAtasanSeksi?: string;
+  ttdDrafter?: string;
+  ttdManajerSeksi?: string;
   ttdAdminWorkshop?: string;
+  ttdSpvWorkshop?: string;
   ttdAtasanSpecialProject?: string;
   materials?: Array<{
     id: number;
@@ -290,53 +293,67 @@ export default function BridgestoneRequestPrintModal({
           </div>
         </td>
 
-        <!-- Seksi Pemohon -->
-        <td style="width: 33%; padding: 0;">
+        <!-- Seksi Pemohon & Special Project Approval Box -->
+        <td style="width: 68%; padding: 0; vertical-align: top;">
           <table style="width: 100%; border-collapse: collapse; text-align: center;">
+            <!-- Header Grup -->
             <tr>
-              <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 2px;">Seksi Pemohon</th>
+              <th colspan="3" class="bg-sub" style="width: 50%; border: none; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px; font-size: 10px; font-weight: bold;">
+                Seksi Pemohon
+              </th>
+              <th colspan="3" class="bg-sub" style="width: 50%; border: none; border-bottom: 1px solid #000; padding: 2.5px; font-size: 10px; font-weight: bold;">
+                Special Project
+              </th>
             </tr>
-            <tr style="font-size: 9px; font-weight: bold; background: #fafafa;">
-              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">Staff</td>
-              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">Spv</td>
-              <td style="width: 34%; padding: 2px;">Manajer (${requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)})</td>
+            <!-- Baris 1: Jabatan -->
+            <tr style="font-size: 9px; font-weight: bold; background: #fafafa; border-bottom: 1px solid #000;">
+              <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Staff</td>
+              <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Spv</td>
+              <td style="width: 16.68%; border-right: 1px solid #000; padding: 2.5px 1px; font-size: 8.5px;">Manajer (${requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)})</td>
+              <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Staff</td>
+              <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Spv</td>
+              <td style="width: 16.68%; padding: 2.5px 1px; font-size: 8.5px;">Manajer (8236)</td>
             </tr>
-            <tr class="signature-space">
-              <td style="border-right: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">${requestData.drafter || requestData.picPemohon || ''}</td>
-              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; font-size: 8.5px; padding: 2px;">
-                ${requestData.ttdAtasanSeksi ? `<img src="${requestData.ttdAtasanSeksi}" style="max-height: 32px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
-                <div style="font-size: 8px;">${requestData.foreman || ''}</div>
+            <!-- Baris 2: Tanda Tangan -->
+            <tr style="height: 44px; border-bottom: 1px solid #000; background: #ffffff;">
+              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
+                ${requestData.ttdDrafter ? `<img src="${requestData.ttdDrafter}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
               </td>
-              <td style="vertical-align: bottom; font-size: 8.5px; padding: 2px;">${requestData.seksiPemohon || ''}</td>
-            </tr>
-          </table>
-        </td>
-
-        <!-- Arrow -->
-        <td style="width: 4%; text-align: center; vertical-align: middle; font-size: 16px; font-weight: bold;">
-          &#10140;
-        </td>
-
-        <!-- Special Project -->
-        <td style="width: 31%; padding: 0;">
-          <table style="width: 100%; border-collapse: collapse; text-align: center;">
-            <tr>
-              <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 2px;">Special Project</th>
-            </tr>
-            <tr style="font-size: 9px; font-weight: bold; background: #fafafa;">
-              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">Staff</td>
-              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">Spv</td>
-              <td style="width: 34%; padding: 2px;">Manajer (8236)</td>
-            </tr>
-            <tr class="signature-space">
-              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; font-size: 8.5px; padding: 2px;">
-                ${requestData.ttdAdminWorkshop ? `<img src="${requestData.ttdAdminWorkshop}" style="max-height: 32px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
-                <div style="font-size: 8px;">${requestData.picBengkel || ''}</div>
+              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
+                ${requestData.ttdAtasanSeksi ? `<img src="${requestData.ttdAtasanSeksi}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
               </td>
-              <td style="border-right: 1px solid #000; vertical-align: bottom; font-size: 8px; padding: 2px;">${requestData.keputusan8210 || ''}</td>
-              <td style="vertical-align: middle; text-align: center; font-size: 8.5px; padding: 2px;">
-                ${requestData.ttdAtasanSpecialProject ? `<img src="${requestData.ttdAtasanSpecialProject}" style="max-height: 32px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
-                <div style="font-size: 8px;">${requestData.keputusan820 || ''}</div>
+              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
+                ${requestData.ttdManajerSeksi ? `<img src="${requestData.ttdManajerSeksi}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+              </td>
+              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
+                ${requestData.ttdAdminWorkshop ? `<img src="${requestData.ttdAdminWorkshop}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+              </td>
+              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
+                ${requestData.ttdSpvWorkshop ? `<img src="${requestData.ttdSpvWorkshop}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+              </td>
+              <td style="vertical-align: middle; text-align: center; padding: 2px;">
+                ${requestData.ttdAtasanSpecialProject ? `<img src="${requestData.ttdAtasanSpecialProject}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+              </td>
+            </tr>
+            <!-- Baris 3: Nama Orangnya -->
+            <tr style="font-size: 8px; font-weight: bold; background: #fafafa;">
+              <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${requestData.drafter || requestData.picPemohon || '-'}
+              </td>
+              <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${requestData.foreman || requestData.namaAtasanSeksi || '-'}
+              </td>
+              <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${requestData.seksiPemohon || '-'}
+              </td>
+              <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${requestData.picBengkel || '-'}
+              </td>
+              <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${requestData.keputusan8210 || '-'}
+              </td>
+              <td style="padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${requestData.keputusan820 || '-'}
               </td>
             </tr>
           </table>
@@ -673,57 +690,85 @@ export default function BridgestoneRequestPrintModal({
                 </div>
               </div>
 
-              {/* Seksi Pemohon Signatures */}
-              <div className="col-span-12 sm:col-span-4 p-0 border-b sm:border-b-0 sm:border-r border-slate-900">
-                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-xs">
-                  Seksi Pemohon
+              {/* Seksi Pemohon & Special Project Approval Box */}
+              <div className="col-span-12 sm:col-span-8 p-0 flex flex-col justify-between">
+                {/* Header Grup Seksi */}
+                <div className="grid grid-cols-2 text-center text-xs font-bold divide-x divide-slate-900 bg-slate-100 border-b border-slate-900">
+                  <div className="py-1">Seksi Pemohon</div>
+                  <div className="py-1">Special Project</div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
-                  <div className="py-0.5">Staff</div>
-                  <div className="py-0.5">Spv</div>
-                  <div className="py-0.5">Manajer ({requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)})</div>
+
+                {/* Baris 1: Jabatan */}
+                <div className="grid grid-cols-6 text-center text-[10px] sm:text-[10.5px] font-bold divide-x divide-slate-900 bg-slate-50 border-b border-slate-900">
+                  <div className="py-1 px-0.5 truncate">Staff</div>
+                  <div className="py-1 px-0.5 truncate">Spv</div>
+                  <div className="py-1 px-0.5 truncate leading-tight">
+                    Manajer ({requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)})
+                  </div>
+                  <div className="py-1 px-0.5 truncate">Staff</div>
+                  <div className="py-1 px-0.5 truncate">Spv</div>
+                  <div className="py-1 px-0.5 truncate leading-tight">Manajer (8236)</div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-center pb-1">
-                  <div className="truncate px-1 font-medium">{requestData.drafter || requestData.picPemohon || '-'}</div>
-                  <div className="px-1 font-medium flex flex-col items-center justify-center">
+
+                {/* Baris 2: Tanda Tangan */}
+                <div className="grid grid-cols-6 text-center divide-x divide-slate-900 h-14 bg-white">
+                  <div className="h-full flex items-center justify-center p-1">
+                    {requestData.ttdDrafter ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={requestData.ttdDrafter} alt="TTD Staff" className="max-h-12 max-w-full object-contain" />
+                    ) : null}
+                  </div>
+                  <div className="h-full flex items-center justify-center p-1">
                     {requestData.ttdAtasanSeksi ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdAtasanSeksi} alt="TTD Spv" className="h-8 max-w-full object-contain" />
-                    ) : (
-                      <span className="truncate">{requestData.foreman || '-'}</span>
-                    )}
+                      <img src={requestData.ttdAtasanSeksi} alt="TTD Spv" className="max-h-12 max-w-full object-contain" />
+                    ) : null}
                   </div>
-                  <div className="truncate px-1 font-medium">{requestData.seksiPemohon}</div>
-                </div>
-              </div>
-
-              {/* Special Project */}
-              <div className="col-span-12 sm:col-span-4 p-0">
-                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-xs">
-                  Special Project
-                </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
-                  <div className="py-0.5">Staff</div>
-                  <div className="py-0.5">Spv</div>
-                  <div className="py-0.5">Manajer (8236)</div>
-                </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-center pb-1">
-                  <div className="px-1 font-medium flex flex-col items-center justify-center">
+                  <div className="h-full flex items-center justify-center p-1">
+                    {requestData.ttdManajerSeksi ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={requestData.ttdManajerSeksi} alt="TTD Manajer" className="max-h-12 max-w-full object-contain" />
+                    ) : null}
+                  </div>
+                  <div className="h-full flex items-center justify-center p-1">
                     {requestData.ttdAdminWorkshop ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdAdminWorkshop} alt="TTD Staff" className="h-8 max-w-full object-contain" />
-                    ) : (
-                      <span className="truncate">{requestData.picBengkel || '-'}</span>
-                    )}
+                      <img src={requestData.ttdAdminWorkshop} alt="TTD Staff Workshop" className="max-h-12 max-w-full object-contain" />
+                    ) : null}
                   </div>
-                  <div className="truncate px-1 font-medium">{requestData.keputusan8210 || '-'}</div>
-                  <div className="px-1 font-medium flex flex-col items-center justify-center">
+                  <div className="h-full flex items-center justify-center p-1">
+                    {requestData.ttdSpvWorkshop ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={requestData.ttdSpvWorkshop} alt="TTD Spv SP" className="max-h-12 max-w-full object-contain" />
+                    ) : null}
+                  </div>
+                  <div className="h-full flex items-center justify-center p-1">
                     {requestData.ttdAtasanSpecialProject ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdAtasanSpecialProject} alt="TTD Manajer 8236" className="h-8 max-w-full object-contain" />
-                    ) : (
-                      <span className="truncate">{requestData.keputusan820 || '-'}</span>
-                    )}
+                      <img src={requestData.ttdAtasanSpecialProject} alt="TTD Manajer 8236" className="max-h-12 max-w-full object-contain" />
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Baris 3: Nama Orangnya */}
+                <div className="grid grid-cols-6 text-center text-[9.5px] sm:text-[10px] font-semibold divide-x divide-slate-900 bg-slate-50 border-t border-slate-900">
+                  <div className="py-1 px-1 truncate" title={requestData.drafter || requestData.picPemohon}>
+                    {requestData.drafter || requestData.picPemohon || '-'}
+                  </div>
+                  <div className="py-1 px-1 truncate font-bold text-emerald-800" title={requestData.foreman || requestData.namaAtasanSeksi}>
+                    {requestData.foreman || requestData.namaAtasanSeksi || '-'}
+                  </div>
+                  <div className="py-1 px-1 truncate" title={requestData.seksiPemohon}>
+                    {requestData.seksiPemohon || '-'}
+                  </div>
+                  <div className="py-1 px-1 truncate" title={requestData.picBengkel}>
+                    {requestData.picBengkel || '-'}
+                  </div>
+                  <div className="py-1 px-1 truncate font-bold text-purple-900" title={requestData.keputusan8210}>
+                    {requestData.keputusan8210 || '-'}
+                  </div>
+                  <div className="py-1 px-1 truncate font-bold text-purple-900" title={requestData.keputusan820}>
+                    {requestData.keputusan820 || '-'}
                   </div>
                 </div>
               </div>

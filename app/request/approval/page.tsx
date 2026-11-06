@@ -824,83 +824,104 @@ function ApprovalContent() {
                 </div>
               </div>
 
-              {/* Seksi Pemohon */}
-              <div className="col-span-12 sm:col-span-4 p-0 border-b sm:border-b-0 sm:border-r border-slate-900">
-                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-xs">
-                  Seksi Pemohon
+              {/* Seksi Pemohon & Special Project Approval Box */}
+              <div className="col-span-12 sm:col-span-8 p-0 flex flex-col justify-between">
+                {/* Header Grup Seksi */}
+                <div className="grid grid-cols-2 text-center text-xs font-bold divide-x divide-slate-900 bg-slate-100 border-b border-slate-900">
+                  <div className="py-1">Seksi Pemohon</div>
+                  <div className="py-1">Special Project</div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
-                  <div className="py-0.5">Staff</div>
-                  <div className="py-0.5">Spv</div>
-                  <div className="py-0.5">
+
+                {/* Baris 1: Jabatan */}
+                <div className="grid grid-cols-6 text-center text-[10px] sm:text-[10.5px] font-bold divide-x divide-slate-900 bg-slate-50 border-b border-slate-900">
+                  <div className="py-1 px-0.5 truncate">Staff</div>
+                  <div className="py-1 px-0.5 truncate">Spv</div>
+                  <div className="py-1 px-0.5 truncate leading-tight">
                     Manajer ({requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)})
                   </div>
+                  <div className="py-1 px-0.5 truncate">Staff</div>
+                  <div className="py-1 px-0.5 truncate">Spv</div>
+                  <div className="py-1 px-0.5 truncate leading-tight">Manajer (8236)</div>
                 </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-center pb-1">
-                  <div className="truncate px-1 font-medium">
-                    {requestData.drafter || requestData.picPemohon || '-'}
+
+                {/* Baris 2: Tanda Tangan */}
+                <div className="grid grid-cols-6 text-center divide-x divide-slate-900 h-14 bg-white">
+                  <div className="h-full flex items-center justify-center p-1">
+                    {/* Staff Seksi Pemohon */}
+                    {requestData.picPemohon || requestData.drafter ? (
+                      <span className="text-[10px] text-slate-400 font-mono italic">Paraf Staff</span>
+                    ) : null}
                   </div>
-                  <div className="px-1 font-bold text-emerald-800 flex flex-col items-center justify-center">
+                  <div className="h-full flex items-center justify-center p-1">
+                    {/* Spv Seksi Pemohon */}
                     {(ttdAtasanSeksi || requestData.ttdAtasanSeksi) ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
                         src={ttdAtasanSeksi || requestData.ttdAtasanSeksi}
                         alt="TTD Spv"
-                        className="h-8 max-w-full object-contain"
+                        className="max-h-12 max-w-full object-contain"
                       />
-                    ) : (
-                      <span className="truncate">
-                        {!isSpecialProject && actionDone === 'APPROVED'
-                          ? namaAtasan || requestData.foreman || 'Approved'
-                          : requestData.foreman || '(Pending)'}
-                      </span>
-                    )}
+                    ) : null}
                   </div>
-                  <div className="truncate px-1 font-medium">{requestData.seksiPemohon}</div>
-                </div>
-              </div>
-
-              {/* Special Project */}
-              <div className="col-span-12 sm:col-span-4 p-0">
-                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-xs">
-                  Special Project
-                </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
-                  <div className="py-0.5">Staff</div>
-                  <div className="py-0.5">Spv</div>
-                  <div className="py-0.5">Manajer (8236)</div>
-                </div>
-                <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-center pb-1">
-                  <div className="px-1 font-medium flex flex-col items-center justify-center">
+                  <div className="h-full flex items-center justify-center p-1">
+                    {/* Manajer Pemohon */}
+                    {requestData.kodeSeksi ? (
+                      <span className="text-[10px] text-slate-400 font-mono italic">ACC {requestData.kodeSeksi}</span>
+                    ) : null}
+                  </div>
+                  <div className="h-full flex items-center justify-center p-1">
+                    {/* Staff Special Project */}
                     {requestData.ttdAdminWorkshop ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
                         src={requestData.ttdAdminWorkshop}
                         alt="TTD Staff Workshop"
-                        className="h-8 max-w-full object-contain"
+                        className="max-h-12 max-w-full object-contain"
                       />
-                    ) : (
-                      <span className="truncate">{requestData.picBengkel || '-'}</span>
-                    )}
+                    ) : null}
                   </div>
-                  <div className="truncate px-1 font-bold text-purple-900 bg-purple-50/50 py-0.5">
-                    {requestData.keputusan8210 || '-'}
+                  <div className="h-full flex items-center justify-center p-1">
+                    {/* Spv Special Project */}
+                    {requestData.keputusan8210 && requestData.keputusan8210 !== 'DITOLAK' ? (
+                      <span className="text-[10px] text-purple-500 font-mono italic">Verified</span>
+                    ) : null}
                   </div>
-                  <div className="px-1 font-bold text-purple-900 flex flex-col items-center justify-center">
+                  <div className="h-full flex items-center justify-center p-1">
+                    {/* Manajer Special Project (8236) */}
                     {(ttdAtasanSpecialProject || requestData.ttdAtasanSpecialProject) ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
                         src={ttdAtasanSpecialProject || requestData.ttdAtasanSpecialProject}
                         alt="TTD Manajer 8236"
-                        className="h-8 max-w-full object-contain"
+                        className="max-h-12 max-w-full object-contain"
                       />
-                    ) : (
-                      <span className="truncate">
-                        {isSpecialProject && actionDone === 'APPROVED'
-                          ? namaDeptHead || requestData.keputusan820 || 'Approved'
-                          : requestData.keputusan820 || (isSpecialProject ? '(Pending)' : '-')}
-                      </span>
-                    )}
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Baris 3: Nama Orangnya */}
+                <div className="grid grid-cols-6 text-center text-[9.5px] sm:text-[10px] font-semibold divide-x divide-slate-900 bg-slate-50 border-t border-slate-900">
+                  <div className="py-1 px-1 truncate" title={requestData.drafter || requestData.picPemohon}>
+                    {requestData.drafter || requestData.picPemohon || '-'}
+                  </div>
+                  <div className="py-1 px-1 truncate font-bold text-emerald-800" title={requestData.foreman || requestData.namaAtasanSeksi}>
+                    {!isSpecialProject && actionDone === 'APPROVED'
+                      ? namaAtasan || requestData.foreman || 'Approved'
+                      : requestData.foreman || requestData.namaAtasanSeksi || (requestData.statusApprovalAtasanSeksi === 'APPROVED' ? 'Approved' : '-')}
+                  </div>
+                  <div className="py-1 px-1 truncate" title={requestData.seksiPemohon}>
+                    {requestData.seksiPemohon || '-'}
+                  </div>
+                  <div className="py-1 px-1 truncate" title={requestData.picBengkel}>
+                    {requestData.picBengkel || '-'}
+                  </div>
+                  <div className="py-1 px-1 truncate font-bold text-purple-900" title={requestData.keputusan8210}>
+                    {requestData.keputusan8210 || '-'}
+                  </div>
+                  <div className="py-1 px-1 truncate font-bold text-purple-900" title={requestData.keputusan820}>
+                    {isSpecialProject && actionDone === 'APPROVED'
+                      ? namaDeptHead || requestData.keputusan820 || 'Approved'
+                      : requestData.keputusan820 || (isSpecialProject ? '(Pending)' : '-')}
                   </div>
                 </div>
               </div>
