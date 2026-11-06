@@ -524,10 +524,10 @@ export default function RequestCreateFormModal({
                   setFormData((p) => ({ ...p, tujuan: e.target.value }))
                 }
                 className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
-                placeholder="Contoh: Mencegah ceceran compound saat proses transfer material"
+                placeholder="Contoh: Untuk mencegah lantai rusak"
               />
               <p className="text-xs text-slate-500 mt-1">
-                Tuliskan target atau tujuan spesifik dari perihal permohonan
+                Tuliskan kalimat tujuan / alasan permohonan (misal: Untuk mencegah lantai rusak)
               </p>
             </div>
 

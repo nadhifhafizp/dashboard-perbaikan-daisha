@@ -968,38 +968,23 @@ function ApprovalContent() {
               </div>
             </div>
 
-            {/* Alasan Permohonan & Kuantitas / Urgensi - Kotak Terpisah */}
+            {/* Seksi, PIC, Kontak & Kuantitas/Urgensi */}
             <div className="grid grid-cols-1 sm:grid-cols-12 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-xs">
-              <div className="sm:col-span-8 p-2">
-                <span className="font-bold">(alasan) : </span>
-                <span className="text-slate-800">{requestData.alasan || requestData.spesifikasi || '-'}</span>
+              <div className="sm:col-span-4 p-2">
+                <span className="font-bold">SEKSI : </span>
+                <span>{requestData.seksiPemohon}</span>
+              </div>
+              <div className="sm:col-span-4 p-2 flex justify-between gap-1">
+                <span><strong className="font-bold">NAMA : </strong>{requestData.picPemohon || requestData.drafter || '-'}</span>
+                <span><strong className="font-bold">TELP. (Ext) : </strong>{requestData.kontakPemohon || '-'}</span>
               </div>
               <div className="sm:col-span-4 p-2 flex items-center justify-end gap-1.5 flex-wrap">
-                <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs uppercase bg-slate-50">
-                  {requestData.faktor || 'SAFETY'}
-                </span>
                 <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs uppercase bg-slate-50">
                   {requestData.urgensi || 'NORMAL'}
                 </span>
                 <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs bg-slate-50">
                   QTY: {requestData.jumlah} {requestData.satuan}
                 </span>
-              </div>
-            </div>
-
-            {/* Seksi, Nama, Telp - Kotak Terpisah */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-xs">
-              <div className="p-2">
-                <span className="font-bold">SEKSI : </span>
-                <span>{requestData.seksiPemohon}</span>
-              </div>
-              <div className="p-2">
-                <span className="font-bold">NAMA : </span>
-                <span>{requestData.picPemohon || requestData.drafter || '-'}</span>
-              </div>
-              <div className="p-2">
-                <span className="font-bold">TELP. (Ext) : </span>
-                <span>{requestData.kontakPemohon || '-'}</span>
               </div>
             </div>
 
