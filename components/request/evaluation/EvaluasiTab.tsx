@@ -472,14 +472,29 @@ export default function EvaluasiTab({
           />
         </div>
 
-        {/* Tanda Tangan / Paraf PIC Workshop */}
+        {/* Tanda Tangan Digital Resmi PIC Workshop (Checklist Verified) */}
         <div className="pt-2 border-t border-slate-200">
-          <SignaturePad
-            value={formData.ttdAdminWorkshop}
-            onChange={(val) => setFormData((p) => ({ ...p, ttdAdminWorkshop: val }))}
-            signerName={formData.picBengkel || 'PIC Workshop'}
-            roleLabel="Tanda Tangan / Paraf PIC Workshop (Staff / Spv)"
-          />
+          <label className="flex items-start gap-3 p-3.5 bg-emerald-50/70 border-2 border-emerald-300 rounded-xl cursor-pointer hover:bg-emerald-50 transition">
+            <input
+              type="checkbox"
+              checked={formData.ttdAdminWorkshop !== 'NONE'}
+              onChange={(e) =>
+                setFormData((p) => ({
+                  ...p,
+                  ttdAdminWorkshop: e.target.checked ? 'VERIFIED_DIGITAL' : 'NONE',
+                }))
+              }
+              className="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 mt-0.5 cursor-pointer"
+            />
+            <div className="text-xs">
+              <span className="font-bold text-emerald-950 block">
+                ✓ Tanda Tangan Digital PIC Workshop (Verified)
+              </span>
+              <span className="text-emerald-800 text-[11px] block mt-0.5 leading-relaxed">
+                Evaluasi pekerjaan, estimasi biaya &amp; orang/jam disetujui secara digital oleh <strong>{formData.picBengkel || 'PIC Workshop'}</strong>.
+              </span>
+            </div>
+          </label>
         </div>
 
         <div className="flex items-center gap-2 pt-1 flex-wrap">

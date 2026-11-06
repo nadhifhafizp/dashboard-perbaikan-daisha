@@ -188,6 +188,19 @@ export default function BridgestoneRequestPrintModal({
     const isPending = (requestData.keputusan || '').toUpperCase() === 'PENDING';
     const isReject = (requestData.keputusan || '').toUpperCase() === 'REJECT';
 
+    const makePrintBadge = (isVerified: boolean, manualImg?: string | null) => {
+      if (manualImg && manualImg.startsWith('data:image')) {
+        return `<img src="${manualImg}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />`;
+      }
+      if (isVerified) {
+        return `<div style="border: 1px solid #15803d; background: #f0fdf4; border-radius: 3px; padding: 2px 4px; text-align: center; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 52px; margin: 0 auto;">
+          <span style="font-size: 8px; font-weight: 800; color: #15803d; line-height: 1.1; letter-spacing: 0.3px;">&#10003; VERIFIED</span>
+          <span style="font-size: 6px; font-weight: 700; color: #166534; font-family: monospace;">DIGITAL SIGN</span>
+        </div>`;
+      }
+      return `<span style="font-size: 8px; color: #94a3b8; font-style: italic;">(Pending)</span>`;
+    };
+
     const fullPrintHTML = `<!DOCTYPE html>
 <html>
 <head>
@@ -347,25 +360,25 @@ export default function BridgestoneRequestPrintModal({
               <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Spv</td>
               <td style="width: 16.68%; padding: 2.5px 1px; font-size: 8.5px;">Manajer (8236)</td>
             </tr>
-            <!-- Baris 2: Tanda Tangan -->
+            <!-- Baris 2: Tanda Tangan Digital Resmi -->
             <tr style="height: 44px; border-bottom: 1px solid #000; background: #ffffff;">
               <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
-                ${requestData.ttdDrafter ? `<img src="${requestData.ttdDrafter}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+                ${makePrintBadge(Boolean(requestData.drafter || requestData.picPemohon), requestData.ttdDrafter)}
               </td>
               <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
-                ${requestData.ttdAtasanSeksi ? `<img src="${requestData.ttdAtasanSeksi}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+                ${makePrintBadge(requestData.statusApprovalAtasanSeksi === 'APPROVED' || Boolean(requestData.ttdAtasanSeksi), requestData.ttdAtasanSeksi)}
               </td>
               <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
-                ${requestData.ttdManajerSeksi ? `<img src="${requestData.ttdManajerSeksi}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+                ${makePrintBadge(requestData.statusApprovalManajerSeksi === 'APPROVED' || Boolean(requestData.ttdManajerSeksi), requestData.ttdManajerSeksi)}
               </td>
               <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
-                ${requestData.ttdAdminWorkshop ? `<img src="${requestData.ttdAdminWorkshop}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+                ${makePrintBadge(Boolean(requestData.picBengkel || requestData.ttdAdminWorkshop || (requestData.flowStep && requestData.flowStep !== 'STEP_1_PENGAJUAN' && requestData.flowStep !== 'STEP_2_WAITING_ATASAN_SEKSI' && requestData.flowStep !== 'STEP_2B_WAITING_MANAJER_SEKSI')), requestData.ttdAdminWorkshop)}
               </td>
               <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
-                ${requestData.ttdSpvWorkshop ? `<img src="${requestData.ttdSpvWorkshop}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+                ${makePrintBadge(Boolean(requestData.keputusan8210 || requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' || requestData.status === 'Dikerjakan' || requestData.status === 'Selesai'), requestData.ttdSpvWorkshop)}
               </td>
               <td style="vertical-align: middle; text-align: center; padding: 2px;">
-                ${requestData.ttdAtasanSpecialProject ? `<img src="${requestData.ttdAtasanSpecialProject}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />` : ''}
+                ${makePrintBadge(Boolean(requestData.keputusan === 'GO' || requestData.ttdAtasanSpecialProject || requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' || requestData.status === 'Dikerjakan' || requestData.status === 'Selesai'), requestData.ttdAtasanSpecialProject)}
               </td>
             </tr>
             <!-- Baris 3: Nama Orangnya -->
@@ -695,40 +708,22 @@ export default function BridgestoneRequestPrintModal({
                 {/* Baris 2: Tanda Tangan */}
                 <div className="grid grid-cols-6 text-center divide-x divide-slate-900 h-14 bg-white">
                   <div className="h-full flex items-center justify-center p-1">
-                    {requestData.ttdDrafter ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdDrafter} alt="TTD Staff" className="max-h-12 max-w-full object-contain" />
-                    ) : null}
+                    {renderPreviewSignBox(Boolean(requestData.drafter || requestData.picPemohon), requestData.ttdDrafter)}
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
-                    {requestData.ttdAtasanSeksi ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdAtasanSeksi} alt="TTD Spv" className="max-h-12 max-w-full object-contain" />
-                    ) : null}
+                    {renderPreviewSignBox(requestData.statusApprovalAtasanSeksi === 'APPROVED' || Boolean(requestData.ttdAtasanSeksi), requestData.ttdAtasanSeksi)}
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
-                    {requestData.ttdManajerSeksi ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdManajerSeksi} alt="TTD Manajer" className="max-h-12 max-w-full object-contain" />
-                    ) : null}
+                    {renderPreviewSignBox(requestData.statusApprovalManajerSeksi === 'APPROVED' || Boolean(requestData.ttdManajerSeksi), requestData.ttdManajerSeksi)}
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
-                    {requestData.ttdAdminWorkshop ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdAdminWorkshop} alt="TTD Staff Workshop" className="max-h-12 max-w-full object-contain" />
-                    ) : null}
+                    {renderPreviewSignBox(Boolean(requestData.picBengkel || requestData.ttdAdminWorkshop || (requestData.flowStep && requestData.flowStep !== 'STEP_1_PENGAJUAN' && requestData.flowStep !== 'STEP_2_WAITING_ATASAN_SEKSI' && requestData.flowStep !== 'STEP_2B_WAITING_MANAJER_SEKSI')), requestData.ttdAdminWorkshop)}
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
-                    {requestData.ttdSpvWorkshop ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdSpvWorkshop} alt="TTD Spv SP" className="max-h-12 max-w-full object-contain" />
-                    ) : null}
+                    {renderPreviewSignBox(Boolean(requestData.keputusan8210 || requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' || requestData.status === 'Dikerjakan' || requestData.status === 'Selesai'), requestData.ttdSpvWorkshop)}
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
-                    {requestData.ttdAtasanSpecialProject ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdAtasanSpecialProject} alt="TTD Manajer 8236" className="max-h-12 max-w-full object-contain" />
-                    ) : null}
+                    {renderPreviewSignBox(Boolean(requestData.keputusan === 'GO' || requestData.ttdAtasanSpecialProject || requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' || requestData.status === 'Dikerjakan' || requestData.status === 'Selesai'), requestData.ttdAtasanSpecialProject)}
                   </div>
                 </div>
 
@@ -1030,4 +1025,26 @@ export default function BridgestoneRequestPrintModal({
       </div>
     </div>
   );
+}
+
+export function renderPreviewSignBox(isVerified: boolean, manualImg?: string | null) {
+  if (manualImg && manualImg.startsWith('data:image')) {
+    return (
+      /* eslint-disable-next-line @next/next/no-img-element */
+      <img src={manualImg} alt="TTD" className="max-h-12 max-w-full object-contain" />
+    );
+  }
+  if (isVerified) {
+    return (
+      <div className="border border-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5 text-center inline-flex flex-col items-center justify-center shadow-2xs">
+        <span className="text-[8px] font-black text-emerald-700 tracking-wider flex items-center gap-0.5">
+          <span>✓</span> VERIFIED
+        </span>
+        <span className="text-[6px] font-mono font-bold text-emerald-800">
+          DIGITAL SIGN
+        </span>
+      </div>
+    );
+  }
+  return <span className="text-[8.5px] text-slate-400 italic font-mono">(Pending)</span>;
 }

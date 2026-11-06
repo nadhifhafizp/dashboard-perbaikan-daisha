@@ -23,7 +23,7 @@ import {
   DollarSign,
   Package,
 } from 'lucide-react';
-import BridgestoneRequestPrintModal, { SectionRequestFull, FAKTOR_OPTIONS } from '@/components/request/BridgestoneRequestPrintModal';
+import BridgestoneRequestPrintModal, { SectionRequestFull, FAKTOR_OPTIONS, renderPreviewSignBox } from '@/components/request/BridgestoneRequestPrintModal';
 import { getSeksiCode } from '@/lib/nomorSurat';
 import SignaturePad from '@/components/request/SignaturePad';
 
@@ -67,6 +67,9 @@ function ApprovalContent() {
 
   // Print Modal
   const [showPrintModal, setShowPrintModal] = useState(false);
+
+  // Digital Signature Verified Checklist (No canvas drawing needed)
+  const [isDigitalSigned, setIsDigitalSigned] = useState(true);
 
   // Fetch data
   useEffect(() => {
@@ -204,6 +207,9 @@ function ApprovalContent() {
     const isSpecialProject = activeRole === 'special_project';
 
     try {
+      const signVal = isDigitalSigned ? (ttdAtasanSeksi || 'VERIFIED_DIGITAL') : undefined;
+      const spSignVal = isDigitalSigned ? (ttdAtasanSpecialProject || 'VERIFIED_DIGITAL') : undefined;
+
       const payload = isSpecialProject
         ? {
             token,
@@ -212,7 +218,7 @@ function ApprovalContent() {
             namaAtasan: namaAtasan || 'Manager Special Project (8236)',
             namaDeptHead: namaDeptHead || 'Dept Head Special Project (8236)',
             catatan,
-            ttdAtasanSpecialProject: ttdAtasanSpecialProject || undefined,
+            ttdAtasanSpecialProject: spSignVal,
           }
         : activeRole === 'manajer_seksi'
         ? {
@@ -221,7 +227,7 @@ function ApprovalContent() {
             action: 'APPROVE',
             namaManajerSeksi: namaAtasan || requestData?.namaManajerSeksi || 'Manajer Seksi',
             catatan,
-            ttdManajerSeksi: ttdAtasanSeksi || undefined,
+            ttdManajerSeksi: signVal,
           }
         : {
             token,
@@ -229,7 +235,7 @@ function ApprovalContent() {
             action: 'APPROVE',
             namaAtasan: namaAtasan || requestData?.namaAtasanSeksi || 'Spv Seksi',
             catatan,
-            ttdAtasanSeksi: ttdAtasanSeksi || undefined,
+            ttdAtasanSeksi: signVal,
           };
 
       const res = await fetch('/api/section-requests/approval', {
@@ -796,14 +802,24 @@ function ApprovalContent() {
                   />
                 </div>
 
-                {/* Signature Pad Atasan Special Project */}
+                {/* Tanda Tangan Digital Checklist (Verified) */}
                 <div className="pt-2 border-t border-purple-100">
-                  <SignaturePad
-                    value={ttdAtasanSpecialProject}
-                    onChange={setTtdAtasanSpecialProject}
-                    signerName={namaAtasan || 'Spv Special Project'}
-                    roleLabel="Tanda Tangan / Paraf Atasan Special Project"
-                  />
+                  <label className="flex items-start gap-3 p-3.5 bg-purple-50/70 border-2 border-purple-300 rounded-xl cursor-pointer hover:bg-purple-50 transition">
+                    <input
+                      type="checkbox"
+                      checked={isDigitalSigned}
+                      onChange={(e) => setIsDigitalSigned(e.target.checked)}
+                      className="w-5 h-5 text-purple-600 rounded border-slate-300 focus:ring-purple-500 mt-0.5 cursor-pointer"
+                    />
+                    <div className="text-xs">
+                      <span className="font-bold text-purple-950 block">
+                        ✓ Tanda Tangan Digital Resmi Atasan Special Project (Verified)
+                      </span>
+                      <span className="text-purple-800 text-[11px] block mt-0.5 leading-relaxed">
+                        Menyetujui (GO) permohonan modifikasi/perbaikan ini secara digital atas nama <strong>{namaAtasan || 'Supervisor'}</strong> &amp; <strong>{namaDeptHead || 'Dept Head (8236)'}</strong>.
+                      </span>
+                    </div>
+                  </label>
                 </div>
               </div>
             ) : activeRole === 'manajer_seksi' ? (
@@ -836,14 +852,24 @@ function ApprovalContent() {
                   </div>
                 </div>
 
-                {/* Signature Pad Manajer Seksi */}
+                {/* Tanda Tangan Digital Checklist (Verified) */}
                 <div className="pt-2 border-t border-slate-100">
-                  <SignaturePad
-                    value={ttdAtasanSeksi}
-                    onChange={setTtdAtasanSeksi}
-                    signerName={namaAtasan || 'Manajer Seksi'}
-                    roleLabel={`Tanda Tangan / Paraf Manajer Seksi (${requestData?.kodeSeksi || 'Pemohon'})`}
-                  />
+                  <label className="flex items-start gap-3 p-3.5 bg-emerald-50/70 border-2 border-emerald-300 rounded-xl cursor-pointer hover:bg-emerald-50 transition">
+                    <input
+                      type="checkbox"
+                      checked={isDigitalSigned}
+                      onChange={(e) => setIsDigitalSigned(e.target.checked)}
+                      className="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 mt-0.5 cursor-pointer"
+                    />
+                    <div className="text-xs">
+                      <span className="font-bold text-emerald-950 block">
+                        ✓ Tanda Tangan Digital Resmi Manajer Seksi (Verified)
+                      </span>
+                      <span className="text-emerald-800 text-[11px] block mt-0.5 leading-relaxed">
+                        Menyetujui permohonan perbaikan/modifikasi ini secara digital atas nama Manajer Seksi ({requestData?.kodeSeksi || 'Pemohon'}).
+                      </span>
+                    </div>
+                  </label>
                 </div>
               </div>
             ) : (
@@ -876,14 +902,24 @@ function ApprovalContent() {
                   </div>
                 </div>
 
-                {/* Signature Pad Atasan Seksi */}
+                {/* Tanda Tangan Digital Checklist (Verified) */}
                 <div className="pt-2 border-t border-slate-100">
-                  <SignaturePad
-                    value={ttdAtasanSeksi}
-                    onChange={setTtdAtasanSeksi}
-                    signerName={namaAtasan || 'Spv Seksi'}
-                    roleLabel="Tanda Tangan / Paraf Spv Seksi (Supervisor)"
-                  />
+                  <label className="flex items-start gap-3 p-3.5 bg-amber-50/70 border-2 border-amber-300 rounded-xl cursor-pointer hover:bg-amber-50 transition">
+                    <input
+                      type="checkbox"
+                      checked={isDigitalSigned}
+                      onChange={(e) => setIsDigitalSigned(e.target.checked)}
+                      className="w-5 h-5 text-amber-600 rounded border-slate-300 focus:ring-amber-500 mt-0.5 cursor-pointer"
+                    />
+                    <div className="text-xs">
+                      <span className="font-bold text-amber-950 block">
+                        ✓ Tanda Tangan Digital Resmi Spv Seksi (Verified)
+                      </span>
+                      <span className="text-amber-800 text-[11px] block mt-0.5 leading-relaxed">
+                        Menyetujui formulir permohonan perbaikan/modifikasi ini secara digital oleh Spv Seksi Pemohon.
+                      </span>
+                    </div>
+                  </label>
                 </div>
               </div>
             )}
@@ -991,79 +1027,61 @@ function ApprovalContent() {
                   <div className="py-1 px-0.5 truncate leading-tight">Manajer (8236)</div>
                 </div>
 
-                {/* Baris 2: Tanda Tangan */}
+                {/* Baris 2: Tanda Tangan Digital Resmi */}
                 <div className="grid grid-cols-6 text-center divide-x divide-slate-900 h-14 bg-white">
                   <div className="h-full flex items-center justify-center p-1">
-                    {/* Staff Seksi Pemohon */}
-                    {requestData.picPemohon || requestData.drafter ? (
-                      <span className="text-[10px] text-slate-400 font-mono italic">Paraf Staff</span>
-                    ) : null}
+                    {renderPreviewSignBox(Boolean(requestData.picPemohon || requestData.drafter), requestData.ttdDrafter)}
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
-                    {/* Spv Seksi Pemohon */}
-                    {activeRole === 'spv_seksi' && ttdAtasanSeksi ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={ttdAtasanSeksi}
-                        alt="TTD Spv"
-                        className="max-h-12 max-w-full object-contain"
-                      />
-                    ) : requestData.ttdAtasanSeksi ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={requestData.ttdAtasanSeksi}
-                        alt="TTD Spv"
-                        className="max-h-12 max-w-full object-contain"
-                      />
-                    ) : null}
+                    {renderPreviewSignBox(
+                      (activeRole === 'spv_seksi' && actionDone === 'APPROVED') ||
+                        requestData.statusApprovalAtasanSeksi === 'APPROVED' ||
+                        Boolean(requestData.ttdAtasanSeksi),
+                      requestData.ttdAtasanSeksi
+                    )}
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
-                    {/* Manajer Pemohon */}
-                    {activeRole === 'manajer_seksi' && ttdAtasanSeksi ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={ttdAtasanSeksi}
-                        alt="TTD Manajer Seksi"
-                        className="max-h-12 max-w-full object-contain"
-                      />
-                    ) : requestData.ttdManajerSeksi ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={requestData.ttdManajerSeksi}
-                        alt="TTD Manajer Seksi"
-                        className="max-h-12 max-w-full object-contain"
-                      />
-                    ) : requestData.kodeSeksi ? (
-                      <span className="text-[10px] text-slate-400 font-mono italic">ACC {requestData.kodeSeksi}</span>
-                    ) : null}
+                    {renderPreviewSignBox(
+                      (activeRole === 'manajer_seksi' && actionDone === 'APPROVED') ||
+                        requestData.statusApprovalManajerSeksi === 'APPROVED' ||
+                        Boolean(requestData.ttdManajerSeksi),
+                      requestData.ttdManajerSeksi
+                    )}
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
-                    {/* Staff Special Project */}
-                    {requestData.ttdAdminWorkshop ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={requestData.ttdAdminWorkshop}
-                        alt="TTD Staff Workshop"
-                        className="max-h-12 max-w-full object-contain"
-                      />
-                    ) : null}
+                    {renderPreviewSignBox(
+                      Boolean(
+                        requestData.picBengkel ||
+                          requestData.ttdAdminWorkshop ||
+                          (requestData.flowStep &&
+                            requestData.flowStep !== 'STEP_1_PENGAJUAN' &&
+                            requestData.flowStep !== 'STEP_2_WAITING_ATASAN_SEKSI' &&
+                            requestData.flowStep !== 'STEP_2B_WAITING_MANAJER_SEKSI')
+                      ),
+                      requestData.ttdAdminWorkshop
+                    )}
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
-                    {/* Spv Special Project */}
-                    {requestData.keputusan8210 && requestData.keputusan8210 !== 'DITOLAK' ? (
-                      <span className="text-[10px] text-purple-500 font-mono italic">Verified</span>
-                    ) : null}
+                    {renderPreviewSignBox(
+                      Boolean(
+                        requestData.keputusan8210 ||
+                          requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' ||
+                          requestData.status === 'Dikerjakan' ||
+                          requestData.status === 'Selesai'
+                      ),
+                      requestData.ttdSpvWorkshop
+                    )}
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
-                    {/* Manajer Special Project (8236) */}
-                    {(ttdAtasanSpecialProject || requestData.ttdAtasanSpecialProject) ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={ttdAtasanSpecialProject || requestData.ttdAtasanSpecialProject}
-                        alt="TTD Manajer 8236"
-                        className="max-h-12 max-w-full object-contain"
-                      />
-                    ) : null}
+                    {renderPreviewSignBox(
+                      (isSpecialProject && actionDone === 'APPROVED') ||
+                        requestData.keputusan === 'GO' ||
+                        Boolean(requestData.ttdAtasanSpecialProject) ||
+                        requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' ||
+                        requestData.status === 'Dikerjakan' ||
+                        requestData.status === 'Selesai',
+                      requestData.ttdAtasanSpecialProject
+                    )}
                   </div>
                 </div>
 
