@@ -555,35 +555,31 @@ export default function BridgestoneRequestPrintModal({
             &#10140;
           </td>
 
-          <!-- Keputusan 8210 / 820 -->
+          <!-- Keputusan Manajer (8236) -->
           <td style="width: 39%; padding: 0; vertical-align: top;">
             <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 9.5px;">
               <tr>
-                <th colspan="2" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px;">
+                <th class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px;">
                   KEPUTUSAN
                 </th>
               </tr>
               <tr style="font-size: 9px; font-weight: bold; background: #fafafa;">
-                <td style="width: 50%; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px;">Spv</td>
-                <td style="width: 50%; border-bottom: 1px solid #000; padding: 2.5px;">Manajer (8236)</td>
+                <td style="border-bottom: 1px solid #000; padding: 2.5px;">Manajer (8236)</td>
               </tr>
               <tr style="height: 48px;">
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">
-                  ${cleanPersonName(requestData.keputusan8210)}
-                </td>
                 <td style="border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">
                   ${cleanPersonName(requestData.keputusan820)}
                 </td>
               </tr>
               <tr>
-                <td colspan="2" style="padding: 5px 4px; font-size: 10px;">
+                <td style="padding: 5px 4px; font-size: 10px;">
                   <span class="decision-box ${isGo ? 'decision-active' : ''}">GO</span>
                   <span class="decision-box ${isPending ? 'decision-active' : ''}">PENDING</span>
                   <span class="decision-box ${isReject ? 'decision-active' : ''}">REJECT</span>
                 </td>
               </tr>
               <tr>
-                <td colspan="2" style="font-size: 8.5px; color: #4b5563; padding: 3.5px 2px; border-top: 1px dashed #000;">
+                <td style="font-size: 8.5px; color: #4b5563; padding: 3.5px 2px; border-top: 1px dashed #000;">
                   Selesai Bekerja &#10140; COPY KE SEKSI PEMOHON
                 </td>
               </tr>
@@ -982,12 +978,10 @@ export default function BridgestoneRequestPrintModal({
                   <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900">
                     KEPUTUSAN
                   </div>
-                  <div className="grid grid-cols-2 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
-                    <div className="py-1">Spv</div>
-                    <div className="py-1">Manajer (8236)</div>
+                  <div className="text-center text-xs border-b border-slate-900 font-semibold bg-slate-50 py-1">
+                    Manajer (8236)
                   </div>
-                  <div className="grid grid-cols-2 text-center text-xs divide-x divide-slate-900 h-12 items-end pb-1 border-b border-slate-900">
-                    <div className="truncate px-1 font-medium">{cleanPersonName(requestData.keputusan8210)}</div>
+                  <div className="text-center text-xs h-12 flex items-end justify-center pb-1 border-b border-slate-900">
                     <div className="truncate px-1 font-medium">{cleanPersonName(requestData.keputusan820)}</div>
                   </div>
                   <div className="p-3 flex items-center justify-center gap-2 flex-wrap">
