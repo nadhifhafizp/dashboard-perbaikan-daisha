@@ -177,12 +177,12 @@ export default function BridgestoneRequestPrintModal({
     }).join(' &nbsp;|&nbsp; ');
 
     const fotoSebelumHTML = requestData.fotoSebelum
-      ? `<img src="${requestData.fotoSebelum}" alt="Keadaan Sekarang" style="width: 100%; height: 320px; max-height: 325px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
-      : `<div style="height: 320px; border: 1.5px dashed #9ca3af; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #64748b; background: #fbfbfb; border-radius: 4px; gap: 4px;"><strong style="color: #475569; font-size: 12px;">(Area Foto / Sketsa Kondisi)</strong><span style="font-size: 9.5px; color: #94a3b8;">Belum ada foto terlampir</span></div>`;
+      ? `<img src="${requestData.fotoSebelum}" alt="Keadaan Sekarang" style="width: 100%; height: 350px; max-height: 355px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
+      : `<div style="height: 350px; border: 1.5px dashed #9ca3af; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #64748b; background: #fbfbfb; border-radius: 4px; gap: 4px;"><strong style="color: #475569; font-size: 12.5px;">(Area Foto / Sketsa Kondisi)</strong><span style="font-size: 10px; color: #94a3b8;">Belum ada foto terlampir</span></div>`;
 
     const fotoSesudahHTML = requestData.fotoSesudah
-      ? `<img src="${requestData.fotoSesudah}" alt="Rencana Tindakan" style="width: 100%; height: 320px; max-height: 325px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
-      : `<div style="height: 320px; border: 1.5px dashed #9ca3af; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #64748b; background: #fbfbfb; border-radius: 4px; gap: 4px;"><strong style="color: #475569; font-size: 12px;">(Area Foto / Sketsa Rencana)</strong><span style="font-size: 9.5px; color: #94a3b8;">Belum ada foto terlampir</span></div>`;
+      ? `<img src="${requestData.fotoSesudah}" alt="Rencana Tindakan" style="width: 100%; height: 350px; max-height: 355px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
+      : `<div style="height: 350px; border: 1.5px dashed #9ca3af; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #64748b; background: #fbfbfb; border-radius: 4px; gap: 4px;"><strong style="color: #475569; font-size: 12.5px;">(Area Foto / Sketsa Rencana)</strong><span style="font-size: 10px; color: #94a3b8;">Belum ada foto terlampir</span></div>`;
 
     const isGo = (requestData.keputusan || '').toUpperCase() === 'GO';
     const isPending = (requestData.keputusan || '').toUpperCase() === 'PENDING';
@@ -233,7 +233,7 @@ export default function BridgestoneRequestPrintModal({
 <style>
   @page {
     size: A4 portrait;
-    margin: 4mm 6mm;
+    margin: 4mm 5mm;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
@@ -243,8 +243,8 @@ export default function BridgestoneRequestPrintModal({
     font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
     color: #000;
     background: #fff;
-    font-size: 10.5px;
-    line-height: 1.3;
+    font-size: 11px;
+    line-height: 1.35;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -256,7 +256,7 @@ export default function BridgestoneRequestPrintModal({
   }
   .outer-id {
     font-family: monospace;
-    font-size: 10px;
+    font-size: 10.5px;
     color: #475569;
     font-weight: 600;
     margin-bottom: 1.5mm;
@@ -266,7 +266,7 @@ export default function BridgestoneRequestPrintModal({
     width: 100%;
     box-sizing: border-box;
     border: 2px solid #000;
-    padding: 2mm 2.5mm;
+    padding: 2.5mm 3mm;
     page-break-inside: avoid;
     break-inside: avoid;
     page-break-after: avoid;
@@ -279,61 +279,61 @@ export default function BridgestoneRequestPrintModal({
   }
   .table-box th, .table-box td {
     border: 1px solid #000;
-    padding: 3.5px 5px;
+    padding: 4px 6px;
     vertical-align: top;
   }
   .header-reg {
-    font-size: 9px;
+    font-size: 9.5px;
     font-weight: normal;
   }
   .main-title {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 900;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
     text-align: center;
-    padding: 2px 0;
+    padding: 2.5px 0;
   }
   .logo-img {
-    height: 24px;
+    height: 26px;
     vertical-align: middle;
   }
   .bg-sub {
     background-color: #f3f4f6;
     font-weight: bold;
     text-align: center;
-    font-size: 10px;
+    font-size: 10.5px;
   }
   .badge-tag {
     display: inline-block;
     border: 1.5px solid #000;
     font-weight: bold;
-    padding: 1.5px 5px;
-    font-size: 9.5px;
+    padding: 2px 6px;
+    font-size: 10px;
     text-align: center;
   }
   .decision-box {
     display: inline-block;
-    padding: 3px 8px;
+    padding: 3.5px 9px;
     border: 1.5px solid #000;
     font-weight: bold;
     margin: 1.5px;
-    font-size: 10px;
+    font-size: 10.5px;
   }
   .decision-active {
     background: #000;
     color: #fff;
   }
   .asbes-notice {
-    font-size: 9px;
+    font-size: 9.5px;
     font-weight: bold;
     font-style: italic;
     text-align: center;
-    padding: 3.5px;
+    padding: 4px;
     border-top: 1px solid #000;
     margin-top: 2px;
   }
   .signature-space {
-    height: 48px;
+    height: 56px;
   }
 </style>
 </head>
@@ -402,7 +402,7 @@ export default function BridgestoneRequestPrintModal({
                 <td style="width: 16.68%; padding: 2.5px 1px; font-size: 8.5px;">Manajer (8236)</td>
               </tr>
               <!-- Baris 2: Tanda Tangan Digital Resmi -->
-              <tr style="height: 48px; border-bottom: 1px solid #000; background: #ffffff;">
+              <tr style="height: 54px; border-bottom: 1px solid #000; background: #ffffff;">
                 <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
                   ${makePrintBadge(Boolean(requestData.drafter || requestData.picPemohon), requestData.ttdDrafter)}
                 </td>
@@ -423,23 +423,23 @@ export default function BridgestoneRequestPrintModal({
                 </td>
               </tr>
               <!-- Baris 3: Nama Orangnya -->
-              <tr style="font-size: 8px; font-weight: bold; background: #fafafa;">
-                <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <tr style="font-size: 8.5px; font-weight: bold; background: #fafafa;">
+                <td style="border-right: 1px solid #000; padding: 3px 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   ${requestData.drafter || requestData.picPemohon || '-'}
                 </td>
-                <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <td style="border-right: 1px solid #000; padding: 3px 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   ${requestData.foreman || requestData.namaAtasanSeksi || '-'}
                 </td>
-                <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <td style="border-right: 1px solid #000; padding: 3px 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   ${requestData.namaManajerSeksi || requestData.seksiPemohon || '-'}
                 </td>
-                <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <td style="border-right: 1px solid #000; padding: 3px 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   ${requestData.picBengkel || '-'}
                 </td>
-                <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <td style="border-right: 1px solid #000; padding: 3px 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   ${cleanPersonName(requestData.keputusan8210)}
                 </td>
-                <td style="padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <td style="padding: 3px 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   ${cleanPersonName(requestData.keputusan820)}
                 </td>
               </tr>
@@ -451,18 +451,18 @@ export default function BridgestoneRequestPrintModal({
       <!-- 3A. Perihal, Nama Machine, Tujuan, Faktor (2 Kolom Penuh 50% - 50%) -->
       <table class="table-box" style="margin-top: -1px;">
         <tr>
-          <td style="width: 50%; padding: 4px 6px;">
+          <td style="width: 50%; padding: 5px 8px;">
             <strong>PERIHAL :</strong> ${requestData.perihal || requestData.namaBarang || '-'}
           </td>
-          <td style="width: 50%; padding: 4px 6px;">
+          <td style="width: 50%; padding: 5px 8px;">
             <strong>NAMA MACHINE :</strong> ${requestData.namaMachine || '-'}
           </td>
         </tr>
         <tr>
-          <td style="width: 50%; vertical-align: top; padding: 4px 6px;">
+          <td style="width: 50%; vertical-align: top; padding: 5px 8px;">
             <strong>TUJUAN :</strong> ${requestData.tujuan || '-'}
           </td>
-          <td style="width: 50%; vertical-align: top; padding: 4px 6px;">
+          <td style="width: 50%; vertical-align: top; padding: 5px 8px;">
             <strong>FAKTOR :</strong> ${faktorHTML}
           </td>
         </tr>
@@ -471,16 +471,16 @@ export default function BridgestoneRequestPrintModal({
       <!-- 3B. Seksi, PIC, Kontak & Urgensi / Qty (3 Kolom 35% - 35% - 30%) -->
       <table class="table-box" style="margin-top: -1px;">
         <tr>
-          <td style="width: 35%; padding: 4px 6px;">
+          <td style="width: 35%; padding: 5px 8px;">
             <strong>SEKSI :</strong> ${requestData.seksiPemohon || '-'}
           </td>
-          <td style="width: 35%; padding: 4px 6px;">
+          <td style="width: 35%; padding: 5px 8px;">
             <div style="display: flex; justify-content: space-between;">
               <span><strong>NAMA :</strong> ${requestData.picPemohon || requestData.drafter || '-'}</span>
               <span><strong>TELP. (Ext) :</strong> ${requestData.kontakPemohon || '-'}</span>
             </div>
           </td>
-          <td style="width: 30%; text-align: right; white-space: nowrap; padding: 4px 6px;">
+          <td style="width: 30%; text-align: right; white-space: nowrap; padding: 5px 8px;">
             <span class="badge-tag">${(requestData.urgensi || 'Normal').toUpperCase()}</span>
             <span class="badge-tag" style="margin-left: 4px;">QTY: ${requestData.jumlah} ${requestData.satuan}</span>
           </td>
@@ -491,28 +491,28 @@ export default function BridgestoneRequestPrintModal({
       <table class="table-box" style="margin-top: -1px;">
         <tr>
           <!-- Col 1: Keadaan Sekarang (Lebar 42%) -->
-          <td style="width: 42%; padding: 5px; vertical-align: top;">
-            <div style="font-weight: bold; margin-bottom: 2px; font-size: 10.5px;">Keadaan Sekarang :</div>
-            <div style="font-size: 10px; min-height: 28px; color: #111; line-height: 1.35; margin-bottom: 3px;">
+          <td style="width: 42%; padding: 6px; vertical-align: top;">
+            <div style="font-weight: bold; margin-bottom: 3px; font-size: 11px;">Keadaan Sekarang :</div>
+            <div style="font-size: 10.5px; min-height: 28px; color: #111; line-height: 1.35; margin-bottom: 3px;">
               ${requestData.keadaanSekarang || requestData.catatan || '(Belum ada uraian kondisi)'}
             </div>
             ${fotoSebelumHTML}
           </td>
 
           <!-- Col 2: Rencana Tindakan (Lebar 42%) -->
-          <td style="width: 42%; padding: 5px; vertical-align: top;">
-            <div style="font-weight: bold; margin-bottom: 2px; font-size: 10.5px;">Rencana Tindakan :</div>
-            <div style="font-size: 10px; min-height: 28px; color: #111; line-height: 1.35; margin-bottom: 3px;">
+          <td style="width: 42%; padding: 6px; vertical-align: top;">
+            <div style="font-weight: bold; margin-bottom: 3px; font-size: 11px;">Rencana Tindakan :</div>
+            <div style="font-size: 10.5px; min-height: 28px; color: #111; line-height: 1.35; margin-bottom: 3px;">
               ${requestData.rencanaTindakan || requestData.spesifikasi || '(Belum ada uraian rencana tindakan)'}
             </div>
             ${fotoSesudahHTML}
           </td>
 
           <!-- Col 3: Target Hasil (Ramping 16%) -->
-          <td style="width: 16%; padding: 5px 4px; vertical-align: top;">
-            <div style="font-weight: bold; margin-bottom: 1px; font-size: 10px;">Target Hasil :</div>
-            <div style="font-size: 8px; color: #64748b; margin-bottom: 4px; line-height: 1.1;">(Pcs/Day, Rp./Month, etc)</div>
-            <div style="font-size: 9.5px; color: #111; line-height: 1.35; word-break: break-word; min-height: 340px;">
+          <td style="width: 16%; padding: 6px 4px; vertical-align: top;">
+            <div style="font-weight: bold; margin-bottom: 1px; font-size: 10.5px;">Target Hasil :</div>
+            <div style="font-size: 8.5px; color: #64748b; margin-bottom: 4px; line-height: 1.1;">(Pcs/Day, Rp./Month, etc)</div>
+            <div style="font-size: 10px; color: #111; line-height: 1.35; word-break: break-word; min-height: 360px;">
               ${requestData.targetHasil || '-'}
             </div>
           </td>
@@ -522,32 +522,38 @@ export default function BridgestoneRequestPrintModal({
       <!-- 5. Tabel Kebutuhan Sparepart & Material (Rencana vs Realisasi) -->
       <table class="table-box" style="margin-top: -1px;">
         <tr>
-          <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px; font-size: 10px; font-weight: bold; text-align: center;">
+          <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 4px; font-size: 10.5px; font-weight: bold; text-align: center;">
             KEBUTUHAN SPAREPART &amp; MATERIAL
           </th>
         </tr>
-        <tr style="text-align: center; font-size: 9px; font-weight: bold; background: #fafafa;">
-          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 22%; padding: 2.5px 5px;">KATEGORI</td>
-          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 42%; padding: 2.5px 5px;">RENCANA (ESTIMASI)</td>
-          <td style="border-bottom: 1px solid #000; width: 36%; padding: 2.5px 5px;">REALISASI (AKTUAL)</td>
+        <tr style="text-align: center; font-size: 9.5px; font-weight: bold; background: #fafafa;">
+          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 22%; padding: 3px 6px;">KATEGORI</td>
+          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 42%; padding: 3px 6px;">RENCANA (ESTIMASI)</td>
+          <td style="border-bottom: 1px solid #000; width: 36%; padding: 3px 6px;">REALISASI (AKTUAL)</td>
         </tr>
         <tr>
-          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; padding: 3.5px 6px; vertical-align: middle;">
+          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; padding: 4.5px 7px; vertical-align: middle;">
             Sparepart
           </td>
-          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3.5px 6px; line-height: 1.35;">
+          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4.5px 7px; line-height: 1.35;">
             ${requestData.kebutuhanSparepart || '-'}
           </td>
-          <td style="border-bottom: 1px solid #000; padding: 3.5px 6px; line-height: 1.35;">
+          <td style="border-bottom: 1px solid #000; padding: 4.5px 7px; line-height: 1.35;">
             ${realisasiSparepartStr}
           </td>
         </tr>
         <tr>
-          <td style="border-right: 1px solid #000; font-weight: bold; padding: 3.5px 6px; vertical-align: middle;">
+          <td style="border-right: 1px solid #000; font-weight: bold; padding: 4.5px 7px; vertical-align: middle;">
             Material
           </td>
-          <td style="border-right: 1px solid #000; padding: 3.5px 6px; line-height: 1.35;">
+          <td style="border-right: 1px solid #000; padding: 4.5px 7px; line-height: 1.35;">
             ${requestData.kebutuhanMaterial || '-'}
+          </td>
+          <td style="padding: 4.5px 7px; line-height: 1.35;">
+            ${realisasiMaterialStr}
+          </td>
+        </tr>
+      </table>
           </td>
           <td style="padding: 3.5px 6px; line-height: 1.35;">
             ${realisasiMaterialStr}
@@ -560,75 +566,75 @@ export default function BridgestoneRequestPrintModal({
         <tr>
           <!-- Evaluasi Pekerjaan Table -->
           <td style="width: 55%; padding: 0; vertical-align: top;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 9.5px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 10px;">
               <tr>
-                <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px;">
+                <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3.5px 4px;">
                   EVALUASI PEKERJAAN
                 </th>
               </tr>
-              <tr style="text-align: center; font-size: 9px; background: #fafafa;">
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 40%; padding: 2.5px;">ITEM</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 30%; padding: 2.5px;">ESTIMATE</td>
-                <td style="border-bottom: 1px solid #000; font-weight: bold; width: 30%; padding: 2.5px;">ACTUAL</td>
+              <tr style="text-align: center; font-size: 9.5px; background: #fafafa;">
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 40%; padding: 3px;">ITEM</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 30%; padding: 3px;">ESTIMATE</td>
+                <td style="border-bottom: 1px solid #000; font-weight: bold; width: 30%; padding: 3px;">ACTUAL</td>
               </tr>
               <tr>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px;">Biaya</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.biayaEstimate || '-'}</td>
-                <td style="border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.biayaActual || '-'}</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px;">Biaya</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px; text-align: right;">${requestData.biayaEstimate || '-'}</td>
+                <td style="border-bottom: 1px solid #000; padding: 4px 6px; text-align: right;">${requestData.biayaActual || '-'}</td>
               </tr>
               <tr>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px;">Orang/Jam</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.orangJamEstimate || '-'}</td>
-                <td style="border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.orangJamActual || '-'}</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px;">Orang/Jam</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px; text-align: right;">${requestData.orangJamEstimate || '-'}</td>
+                <td style="border-bottom: 1px solid #000; padding: 4px 6px; text-align: right;">${requestData.orangJamActual || '-'}</td>
               </tr>
               <tr>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px;">Waktu</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.waktuEstimate || '-'}</td>
-                <td style="border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.waktuActual || '-'}</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px;">Waktu</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px; text-align: right;">${requestData.waktuEstimate || '-'}</td>
+                <td style="border-bottom: 1px solid #000; padding: 4px 6px; text-align: right;">${requestData.waktuActual || '-'}</td>
               </tr>
               <tr>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px;">Tgl Pelaksanaan</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.tglPelaksanaanEstimate || '-'}</td>
-                <td style="border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.tglPelaksanaanActual || '-'}</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px;">Tgl Pelaksanaan</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px; text-align: right;">${requestData.tglPelaksanaanEstimate || '-'}</td>
+                <td style="border-bottom: 1px solid #000; padding: 4px 6px; text-align: right;">${requestData.tglPelaksanaanActual || '-'}</td>
               </tr>
               <tr>
-                <td style="border-right: 1px solid #000; padding: 3px 5px;">Komentar</td>
-                <td style="border-right: 1px solid #000; padding: 3px 5px;">${requestData.komentarEstimate || '-'}</td>
-                <td style="padding: 3px 5px;">${requestData.komentarActual || '-'}</td>
+                <td style="border-right: 1px solid #000; padding: 4px 6px;">Komentar</td>
+                <td style="border-right: 1px solid #000; padding: 4px 6px;">${requestData.komentarEstimate || '-'}</td>
+                <td style="padding: 4px 6px;">${requestData.komentarActual || '-'}</td>
               </tr>
             </table>
           </td>
 
           <!-- Arrow -->
-          <td style="width: 6%; text-align: center; vertical-align: middle; font-size: 18px; font-weight: bold;">
+          <td style="width: 6%; text-align: center; vertical-align: middle; font-size: 22px; font-weight: bold;">
             &#10140;
           </td>
 
           <!-- Keputusan Manajer (8236) -->
           <td style="width: 39%; padding: 0; vertical-align: top;">
-            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 9.5px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 10px;">
               <tr>
-                <th class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px;">
+                <th class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3.5px 4px;">
                   KEPUTUSAN
                 </th>
               </tr>
-              <tr style="font-size: 9px; font-weight: bold; background: #fafafa;">
-                <td style="border-bottom: 1px solid #000; padding: 2.5px;">Manajer (8236)</td>
+              <tr style="font-size: 9.5px; font-weight: bold; background: #fafafa;">
+                <td style="border-bottom: 1px solid #000; padding: 3px;">Manajer (8236)</td>
               </tr>
-              <tr style="height: 48px;">
-                <td style="border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">
+              <tr style="height: 56px;">
+                <td style="border-bottom: 1px solid #000; vertical-align: bottom; font-size: 9px; padding: 3px;">
                   ${cleanPersonName(requestData.keputusan820)}
                 </td>
               </tr>
               <tr>
-                <td style="padding: 5px 4px; font-size: 10px;">
+                <td style="padding: 6px 4px; font-size: 10.5px;">
                   <span class="decision-box ${isGo ? 'decision-active' : ''}">GO</span>
                   <span class="decision-box ${isPending ? 'decision-active' : ''}">PENDING</span>
                   <span class="decision-box ${isReject ? 'decision-active' : ''}">REJECT</span>
                 </td>
               </tr>
               <tr>
-                <td style="font-size: 8.5px; color: #4b5563; padding: 3.5px 2px; border-top: 1px dashed #000;">
+                <td style="font-size: 9px; color: #4b5563; padding: 4px 2px; border-top: 1px dashed #000;">
                   Selesai Bekerja &#10140; COPY KE SEKSI PEMOHON
                 </td>
               </tr>
@@ -916,13 +922,13 @@ export default function BridgestoneRequestPrintModal({
                     {requestData.keadaanSekarang || requestData.catatan || '(Belum ada penjelasan keadaan sekarang)'}
                   </p>
                 </div>
-                <div className="border border-slate-300 rounded bg-slate-50 min-h-[320px] flex items-center justify-center overflow-hidden">
+                <div className="border border-slate-300 rounded bg-slate-50 min-h-[350px] flex items-center justify-center overflow-hidden">
                   {requestData.fotoSebelum ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={requestData.fotoSebelum}
                       alt="Keadaan Sekarang"
-                      className="max-h-[330px] w-full object-contain p-1"
+                      className="max-h-[355px] w-full object-contain p-1"
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center p-3 text-center gap-1.5">
@@ -941,13 +947,13 @@ export default function BridgestoneRequestPrintModal({
                     {requestData.rencanaTindakan || requestData.spesifikasi || '(Belum ada rencana tindakan)'}
                   </p>
                 </div>
-                <div className="border border-slate-300 rounded bg-slate-50 min-h-[320px] flex items-center justify-center overflow-hidden">
+                <div className="border border-slate-300 rounded bg-slate-50 min-h-[350px] flex items-center justify-center overflow-hidden">
                   {requestData.fotoSesudah ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={requestData.fotoSesudah}
                       alt="Rencana Tindakan"
-                      className="max-h-[330px] w-full object-contain p-1"
+                      className="max-h-[355px] w-full object-contain p-1"
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center p-3 text-center gap-1.5">
