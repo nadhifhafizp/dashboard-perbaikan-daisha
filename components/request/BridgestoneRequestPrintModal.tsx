@@ -177,12 +177,12 @@ export default function BridgestoneRequestPrintModal({
     }).join(' &nbsp;|&nbsp; ');
 
     const fotoSebelumHTML = requestData.fotoSebelum
-      ? `<img src="${requestData.fotoSebelum}" alt="Keadaan Sekarang" style="width: 100%; max-height: 125px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
-      : `<div style="height: 52px; border: 1px dashed #9ca3af; display: flex; align-items: center; justify-content: center; font-size: 9.5px; color: #6b7280; background: #f9fafb;">(Tidak ada foto terlampir)</div>`;
+      ? `<img src="${requestData.fotoSebelum}" alt="Keadaan Sekarang" style="width: 100%; max-height: 140px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
+      : `<div style="height: 125px; border: 1.5px dashed #9ca3af; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #64748b; background: #fbfbfb; border-radius: 4px; gap: 3px;"><strong style="color: #475569;">(Foto / Sketsa Kondisi)</strong><span style="font-size: 9px; color: #94a3b8;">Tidak ada foto terlampir</span></div>`;
 
     const fotoSesudahHTML = requestData.fotoSesudah
-      ? `<img src="${requestData.fotoSesudah}" alt="Rencana Tindakan" style="width: 100%; max-height: 125px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
-      : `<div style="height: 52px; border: 1px dashed #9ca3af; display: flex; align-items: center; justify-content: center; font-size: 9.5px; color: #6b7280; background: #f9fafb;">(Tidak ada foto terlampir)</div>`;
+      ? `<img src="${requestData.fotoSesudah}" alt="Rencana Tindakan" style="width: 100%; max-height: 140px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
+      : `<div style="height: 125px; border: 1.5px dashed #9ca3af; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #64748b; background: #fbfbfb; border-radius: 4px; gap: 3px;"><strong style="color: #475569;">(Foto / Sketsa Kondisi)</strong><span style="font-size: 9px; color: #94a3b8;">Tidak ada foto terlampir</span></div>`;
 
     const isGo = (requestData.keputusan || '').toUpperCase() === 'GO';
     const isPending = (requestData.keputusan || '').toUpperCase() === 'PENDING';
@@ -190,15 +190,15 @@ export default function BridgestoneRequestPrintModal({
 
     const makePrintBadge = (isVerified: boolean, manualImg?: string | null) => {
       if (manualImg && manualImg.startsWith('data:image')) {
-        return `<img src="${manualImg}" style="max-height: 38px; max-width: 90%; display: block; margin: 0 auto;" />`;
+        return `<img src="${manualImg}" style="max-height: 44px; max-width: 90%; display: block; margin: 0 auto;" />`;
       }
       if (isVerified) {
-        return `<div style="border: 1px solid #15803d; background: #f0fdf4; border-radius: 3px; padding: 2px 4px; text-align: center; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 52px; margin: 0 auto;">
-          <span style="font-size: 8px; font-weight: 800; color: #15803d; line-height: 1.1; letter-spacing: 0.3px;">&#10003; VERIFIED</span>
-          <span style="font-size: 6px; font-weight: 700; color: #166534; font-family: monospace;">DIGITAL SIGN</span>
+        return `<div style="border: 1.5px solid #15803d; background: #f0fdf4; border-radius: 4px; padding: 3px 6px; text-align: center; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 60px; margin: 0 auto;">
+          <span style="font-size: 8.5px; font-weight: 800; color: #15803d; line-height: 1.1; letter-spacing: 0.4px;">&#10003; VERIFIED</span>
+          <span style="font-size: 6.5px; font-weight: 700; color: #166534; font-family: monospace;">DIGITAL SIGN</span>
         </div>`;
       }
-      return `<span style="font-size: 8px; color: #94a3b8; font-style: italic;">(Pending)</span>`;
+      return `<span style="font-size: 9px; color: #94a3b8; font-style: italic;">(Pending)</span>`;
     };
 
     const fullPrintHTML = `<!DOCTYPE html>
@@ -209,7 +209,7 @@ export default function BridgestoneRequestPrintModal({
 <style>
   @page {
     size: A4 portrait;
-    margin: 6mm 8mm;
+    margin: 5mm 7mm;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
@@ -219,17 +219,35 @@ export default function BridgestoneRequestPrintModal({
     font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
     color: #000;
     background: #fff;
-    font-size: 10px;
-    line-height: 1.25;
+    font-size: 10.5px;
+    line-height: 1.3;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+  .page-wrapper {
+    width: 100%;
+    max-width: 196mm;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+  .outer-id {
+    font-family: monospace;
+    font-size: 10px;
+    color: #475569;
+    font-weight: 600;
+    margin-bottom: 1.5mm;
+    text-align: left;
+  }
   .form-container {
     width: 100%;
-    max-width: 194mm;
-    margin: 0 auto;
+    height: 274mm;
+    max-height: 274mm;
+    box-sizing: border-box;
     border: 2px solid #000;
-    padding: 2.5mm;
+    padding: 2.5mm 3mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     page-break-inside: avoid;
     break-inside: avoid;
     page-break-after: avoid;
@@ -242,342 +260,347 @@ export default function BridgestoneRequestPrintModal({
   }
   .table-box th, .table-box td {
     border: 1px solid #000;
-    padding: 2.5px 4.5px;
+    padding: 3.5px 5px;
     vertical-align: top;
   }
   .header-reg {
-    font-size: 8.5px;
+    font-size: 9px;
     font-weight: normal;
   }
   .main-title {
-    font-size: 17px;
+    font-size: 20px;
     font-weight: 900;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     text-align: center;
-    padding: 1.5px 0;
+    padding: 2px 0;
   }
   .logo-img {
-    height: 22px;
+    height: 24px;
     vertical-align: middle;
   }
   .bg-sub {
     background-color: #f3f4f6;
     font-weight: bold;
     text-align: center;
-    font-size: 9.5px;
+    font-size: 10px;
   }
   .badge-tag {
     display: inline-block;
     border: 1.5px solid #000;
     font-weight: bold;
-    padding: 1px 5px;
+    padding: 1.5px 5px;
     font-size: 9.5px;
     text-align: center;
   }
   .decision-box {
     display: inline-block;
-    padding: 2px 5px;
+    padding: 3px 8px;
     border: 1.5px solid #000;
     font-weight: bold;
-    margin: 1px;
-    font-size: 9.5px;
+    margin: 1.5px;
+    font-size: 10px;
   }
   .decision-active {
     background: #000;
     color: #fff;
   }
   .asbes-notice {
-    font-size: 8.5px;
+    font-size: 9px;
     font-weight: bold;
     font-style: italic;
     text-align: center;
-    padding: 3px;
+    padding: 3.5px;
     border-top: 1px solid #000;
     margin-top: 2px;
   }
   .signature-space {
-    height: 38px;
+    height: 48px;
   }
 </style>
 </head>
 <body>
-  <div class="form-container">
-    <!-- Top Header -->
-    <table class="table-box" style="border: none;">
-      <tr style="border-bottom: 1px solid #000;">
-        <td style="width: 50%; border: none; vertical-align: middle; padding-bottom: 4px; text-align: left;">
-          <span style="font-family: monospace; font-size: 10px; color: #64748b; font-weight: normal;">ID: ${requestData.nomorRequest}</span>
-        </td>
-        <td style="width: 50%; text-align: right; border: none; padding-bottom: 4px;">
-          <div style="display: inline-flex; align-items: center; gap: 6px;">
-            <img src="${logoSrc}" class="logo-img" alt="Bridgestone" onerror="this.style.display='none'" />
-            <strong style="font-size: 14px; font-weight: 900; letter-spacing: 1px; color: #000;">BRIDGESTONE</strong>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <td colspan="2" class="main-title" style="border: none;">
-          R E Q U E S T
-        </td>
-      </tr>
-    </table>
+  <div class="page-wrapper">
+    <div class="outer-id">
+      ID: ${requestData.nomorRequest}
+    </div>
+    <div class="form-container">
+      <!-- 1. Top Header -->
+      <table class="table-box" style="border: none;">
+        <tr style="border-bottom: 1px solid #000;">
+          <td style="width: 50%; border: none; vertical-align: middle; padding-bottom: 2px; text-align: left;">
+            <span style="font-size: 9px; color: #64748b;">PT BRIDGESTONE TIRE INDONESIA</span>
+          </td>
+          <td style="width: 50%; text-align: right; border: none; padding-bottom: 2px;">
+            <div style="display: inline-flex; align-items: center; gap: 6px;">
+              <img src="${logoSrc}" class="logo-img" alt="Bridgestone" onerror="this.style.display='none'" />
+              <strong style="font-size: 14px; font-weight: 900; letter-spacing: 1px; color: #000;">BRIDGESTONE</strong>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2" class="main-title" style="border: none;">
+            R E Q U E S T
+          </td>
+        </tr>
+      </table>
 
-    <!-- Routing / Seksi Box Header -->
-    <table class="table-box" style="margin-top: 2px;">
-      <tr>
-        <!-- Tanggal & Req No / Nomor Surat -->
-        <td style="width: 32%; vertical-align: middle;">
-          <div style="font-size: 11px; margin-bottom: 3px;">
-            <strong>TANGGAL :</strong> ${formatDateIndo(requestData.waktuDibuat)}
-          </div>
-          <div style="font-size: 11px;">
-            <strong>REQ. NO. :</strong> ${
-              requestData.nomorSurat && !requestData.nomorSurat.startsWith('REQ-')
-                ? `<span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #b91c1c;">${requestData.nomorSurat}</span>`
-                : `<span style="font-style: italic; color: #64748b; font-size: 9.5px;">(Belum Terbit)</span>`
-            }
-          </div>
-        </td>
+      <!-- 2. Routing / Seksi Box Header -->
+      <table class="table-box" style="margin-top: 2px;">
+        <tr>
+          <!-- Tanggal & Req No / Nomor Surat -->
+          <td style="width: 32%; vertical-align: middle; padding: 5px 6px;">
+            <div style="font-size: 11px; margin-bottom: 3.5px;">
+              <strong>TANGGAL :</strong> ${formatDateIndo(requestData.waktuDibuat)}
+            </div>
+            <div style="font-size: 11px;">
+              <strong>REQ. NO. :</strong> ${
+                requestData.nomorSurat && !requestData.nomorSurat.startsWith('REQ-')
+                  ? `<span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #b91c1c;">${requestData.nomorSurat}</span>`
+                  : `<span style="font-style: italic; color: #64748b; font-size: 9.5px;">(Belum Terbit)</span>`
+              }
+            </div>
+          </td>
 
-        <!-- Seksi Pemohon & Special Project Approval Box -->
-        <td style="width: 68%; padding: 0; vertical-align: top;">
-          <table style="width: 100%; border-collapse: collapse; text-align: center;">
-            <!-- Header Grup -->
-            <tr>
-              <th colspan="3" class="bg-sub" style="width: 50%; border: none; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px; font-size: 10px; font-weight: bold;">
-                Seksi Pemohon
-              </th>
-              <th colspan="3" class="bg-sub" style="width: 50%; border: none; border-bottom: 1px solid #000; padding: 2.5px; font-size: 10px; font-weight: bold;">
-                Special Project
-              </th>
-            </tr>
-            <!-- Baris 1: Jabatan -->
-            <tr style="font-size: 9px; font-weight: bold; background: #fafafa; border-bottom: 1px solid #000;">
-              <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Staff</td>
-              <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Spv</td>
-              <td style="width: 16.68%; border-right: 1px solid #000; padding: 2.5px 1px; font-size: 8.5px;">Manajer (${requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)})</td>
-              <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Staff</td>
-              <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Spv</td>
-              <td style="width: 16.68%; padding: 2.5px 1px; font-size: 8.5px;">Manajer (8236)</td>
-            </tr>
-            <!-- Baris 2: Tanda Tangan Digital Resmi -->
-            <tr style="height: 44px; border-bottom: 1px solid #000; background: #ffffff;">
-              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
-                ${makePrintBadge(Boolean(requestData.drafter || requestData.picPemohon), requestData.ttdDrafter)}
-              </td>
-              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
-                ${makePrintBadge(requestData.statusApprovalAtasanSeksi === 'APPROVED' || Boolean(requestData.ttdAtasanSeksi), requestData.ttdAtasanSeksi)}
-              </td>
-              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
-                ${makePrintBadge(requestData.statusApprovalManajerSeksi === 'APPROVED' || Boolean(requestData.ttdManajerSeksi), requestData.ttdManajerSeksi)}
-              </td>
-              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
-                ${makePrintBadge(Boolean(requestData.picBengkel || requestData.ttdAdminWorkshop || (requestData.flowStep && requestData.flowStep !== 'STEP_1_PENGAJUAN' && requestData.flowStep !== 'STEP_2_WAITING_ATASAN_SEKSI' && requestData.flowStep !== 'STEP_2B_WAITING_MANAJER_SEKSI')), requestData.ttdAdminWorkshop)}
-              </td>
-              <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
-                ${makePrintBadge(Boolean(requestData.keputusan8210 || requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' || requestData.status === 'Dikerjakan' || requestData.status === 'Selesai'), requestData.ttdSpvWorkshop)}
-              </td>
-              <td style="vertical-align: middle; text-align: center; padding: 2px;">
-                ${makePrintBadge(Boolean(requestData.keputusan === 'GO' || requestData.ttdAtasanSpecialProject || requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' || requestData.status === 'Dikerjakan' || requestData.status === 'Selesai'), requestData.ttdAtasanSpecialProject)}
-              </td>
-            </tr>
-            <!-- Baris 3: Nama Orangnya -->
-            <tr style="font-size: 8px; font-weight: bold; background: #fafafa;">
-              <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${requestData.drafter || requestData.picPemohon || '-'}
-              </td>
-              <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${requestData.foreman || requestData.namaAtasanSeksi || '-'}
-              </td>
-              <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${requestData.namaManajerSeksi || requestData.seksiPemohon || '-'}
-              </td>
-              <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${requestData.picBengkel || '-'}
-              </td>
-              <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${cleanPersonName(requestData.keputusan8210)}
-              </td>
-              <td style="padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${cleanPersonName(requestData.keputusan820)}
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
+          <!-- Seksi Pemohon & Special Project Approval Box -->
+          <td style="width: 68%; padding: 0; vertical-align: top;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+              <!-- Header Grup -->
+              <tr>
+                <th colspan="3" class="bg-sub" style="width: 50%; border: none; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px; font-size: 10px; font-weight: bold;">
+                  Seksi Pemohon
+                </th>
+                <th colspan="3" class="bg-sub" style="width: 50%; border: none; border-bottom: 1px solid #000; padding: 2.5px; font-size: 10px; font-weight: bold;">
+                  Special Project
+                </th>
+              </tr>
+              <!-- Baris 1: Jabatan -->
+              <tr style="font-size: 9px; font-weight: bold; background: #fafafa; border-bottom: 1px solid #000;">
+                <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Staff</td>
+                <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Spv</td>
+                <td style="width: 16.68%; border-right: 1px solid #000; padding: 2.5px 1px; font-size: 8.5px;">Manajer (${requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)})</td>
+                <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Staff</td>
+                <td style="width: 16.66%; border-right: 1px solid #000; padding: 2.5px 1px;">Spv</td>
+                <td style="width: 16.68%; padding: 2.5px 1px; font-size: 8.5px;">Manajer (8236)</td>
+              </tr>
+              <!-- Baris 2: Tanda Tangan Digital Resmi -->
+              <tr style="height: 48px; border-bottom: 1px solid #000; background: #ffffff;">
+                <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
+                  ${makePrintBadge(Boolean(requestData.drafter || requestData.picPemohon), requestData.ttdDrafter)}
+                </td>
+                <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
+                  ${makePrintBadge(requestData.statusApprovalAtasanSeksi === 'APPROVED' || Boolean(requestData.ttdAtasanSeksi), requestData.ttdAtasanSeksi)}
+                </td>
+                <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
+                  ${makePrintBadge(requestData.statusApprovalManajerSeksi === 'APPROVED' || Boolean(requestData.ttdManajerSeksi), requestData.ttdManajerSeksi)}
+                </td>
+                <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
+                  ${makePrintBadge(Boolean(requestData.picBengkel || requestData.ttdAdminWorkshop || (requestData.flowStep && requestData.flowStep !== 'STEP_1_PENGAJUAN' && requestData.flowStep !== 'STEP_2_WAITING_ATASAN_SEKSI' && requestData.flowStep !== 'STEP_2B_WAITING_MANAJER_SEKSI')), requestData.ttdAdminWorkshop)}
+                </td>
+                <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; padding: 2px;">
+                  ${makePrintBadge(Boolean(requestData.keputusan8210 || requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' || requestData.status === 'Dikerjakan' || requestData.status === 'Selesai'), requestData.ttdSpvWorkshop)}
+                </td>
+                <td style="vertical-align: middle; text-align: center; padding: 2px;">
+                  ${makePrintBadge(Boolean(requestData.keputusan === 'GO' || requestData.ttdAtasanSpecialProject || requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' || requestData.status === 'Dikerjakan' || requestData.status === 'Selesai'), requestData.ttdAtasanSpecialProject)}
+                </td>
+              </tr>
+              <!-- Baris 3: Nama Orangnya -->
+              <tr style="font-size: 8px; font-weight: bold; background: #fafafa;">
+                <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${requestData.drafter || requestData.picPemohon || '-'}
+                </td>
+                <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${requestData.foreman || requestData.namaAtasanSeksi || '-'}
+                </td>
+                <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${requestData.namaManajerSeksi || requestData.seksiPemohon || '-'}
+                </td>
+                <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${requestData.picBengkel || '-'}
+                </td>
+                <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${cleanPersonName(requestData.keputusan8210)}
+                </td>
+                <td style="padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${cleanPersonName(requestData.keputusan820)}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
 
-    <!-- Main Detail Table: Kotak-kotak Terpisah Rapi -->
-    <table class="table-box" style="margin-top: -1px;">
-      <tr>
-        <td style="width: 50%;">
-          <strong>PERIHAL :</strong> ${requestData.perihal || requestData.namaBarang || '-'}
-        </td>
-        <td style="width: 50%;">
-          <strong>NAMA MACHINE :</strong> ${requestData.namaMachine || '-'}
-        </td>
-      </tr>
-      <tr>
-        <td style="width: 50%; vertical-align: top;">
-          <strong>TUJUAN :</strong> ${requestData.tujuan || '-'}
-        </td>
-        <td style="width: 50%; vertical-align: top;">
-          <strong>FAKTOR :</strong> ${faktorHTML}
-        </td>
-      </tr>
-      <tr>
-        <td style="width: 35%;">
-          <strong>SEKSI :</strong> ${requestData.seksiPemohon || '-'}
-        </td>
-        <td style="width: 35%;">
-          <div style="display: flex; justify-content: space-between;">
-            <span><strong>NAMA :</strong> ${requestData.picPemohon || requestData.drafter || '-'}</span>
-            <span><strong>TELP. (Ext) :</strong> ${requestData.kontakPemohon || '-'}</span>
-          </div>
-        </td>
-        <td style="width: 30%; text-align: right; white-space: nowrap;">
-          <span class="badge-tag">${(requestData.urgensi || 'Normal').toUpperCase()}</span>
-          <span class="badge-tag" style="margin-left: 4px;">QTY: ${requestData.jumlah} ${requestData.satuan}</span>
-        </td>
-      </tr>
-    </table>
+      <!-- 3. Main Detail Table: Kotak-kotak Terpisah Rapi -->
+      <table class="table-box" style="margin-top: -1px;">
+        <tr>
+          <td style="width: 50%; padding: 4px 6px;">
+            <strong>PERIHAL :</strong> ${requestData.perihal || requestData.namaBarang || '-'}
+          </td>
+          <td style="width: 50%; padding: 4px 6px;">
+            <strong>NAMA MACHINE :</strong> ${requestData.namaMachine || '-'}
+          </td>
+        </tr>
+        <tr>
+          <td style="width: 50%; vertical-align: top; padding: 4px 6px;">
+            <strong>TUJUAN :</strong> ${requestData.tujuan || '-'}
+          </td>
+          <td style="width: 50%; vertical-align: top; padding: 4px 6px;">
+            <strong>FAKTOR :</strong> ${faktorHTML}
+          </td>
+        </tr>
+        <tr>
+          <td style="width: 35%; padding: 4px 6px;">
+            <strong>SEKSI :</strong> ${requestData.seksiPemohon || '-'}
+          </td>
+          <td style="width: 35%; padding: 4px 6px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span><strong>NAMA :</strong> ${requestData.picPemohon || requestData.drafter || '-'}</span>
+              <span><strong>TELP. (Ext) :</strong> ${requestData.kontakPemohon || '-'}</span>
+            </div>
+          </td>
+          <td style="width: 30%; text-align: right; white-space: nowrap; padding: 4px 6px;">
+            <span class="badge-tag">${(requestData.urgensi || 'Normal').toUpperCase()}</span>
+            <span class="badge-tag" style="margin-left: 4px;">QTY: ${requestData.jumlah} ${requestData.satuan}</span>
+          </td>
+        </tr>
+      </table>
 
-    <!-- Keadaan Sekarang, Rencana Tindakan & Target Hasil (3 Kolom Sejajar) -->
-    <table class="table-box" style="margin-top: -1px;">
-      <tr>
-        <!-- Col 1: Keadaan Sekarang -->
-        <td style="width: 35%; padding: 4px; vertical-align: top;">
-          <div style="font-weight: bold; margin-bottom: 2px;">Keadaan Sekarang :</div>
-          <div style="font-size: 10px; min-height: 28px; color: #111;">
-            ${requestData.keadaanSekarang || requestData.catatan || '(Belum ada uraian kondisi)'}
-          </div>
-          ${fotoSebelumHTML}
-        </td>
+      <!-- 4. Keadaan Sekarang, Rencana Tindakan & Target Hasil (3 Kolom Sejajar) -->
+      <table class="table-box" style="margin-top: -1px; flex: 1;">
+        <tr>
+          <!-- Col 1: Keadaan Sekarang -->
+          <td style="width: 35%; padding: 5px; vertical-align: top;">
+            <div style="font-weight: bold; margin-bottom: 2px;">Keadaan Sekarang :</div>
+            <div style="font-size: 10px; min-height: 35px; color: #111; line-height: 1.35;">
+              ${requestData.keadaanSekarang || requestData.catatan || '(Belum ada uraian kondisi)'}
+            </div>
+            ${fotoSebelumHTML}
+          </td>
 
-        <!-- Col 2: Rencana Tindakan -->
-        <td style="width: 35%; padding: 4px; vertical-align: top;">
-          <div style="font-weight: bold; margin-bottom: 2px;">Rencana Tindakan :</div>
-          <div style="font-size: 10px; min-height: 28px; color: #111;">
-            ${requestData.rencanaTindakan || requestData.spesifikasi || '(Belum ada uraian rencana tindakan)'}
-          </div>
-          ${fotoSesudahHTML}
-        </td>
+          <!-- Col 2: Rencana Tindakan -->
+          <td style="width: 35%; padding: 5px; vertical-align: top;">
+            <div style="font-weight: bold; margin-bottom: 2px;">Rencana Tindakan :</div>
+            <div style="font-size: 10px; min-height: 35px; color: #111; line-height: 1.35;">
+              ${requestData.rencanaTindakan || requestData.spesifikasi || '(Belum ada uraian rencana tindakan)'}
+            </div>
+            ${fotoSesudahHTML}
+          </td>
 
-        <!-- Col 3: Target Hasil -->
-        <td style="width: 30%; padding: 4px; vertical-align: top;">
-          <div style="font-weight: bold; margin-bottom: 2px;">Target Hasil :</div>
-          <div style="font-size: 8.5px; color: #555; margin-bottom: 3px;">(Pcs/Day, Rp./Month, etc)</div>
-          <div style="font-size: 10px; min-height: 28px; color: #111; line-height: 1.4;">
-            ${requestData.targetHasil || '-'}
-          </div>
-        </td>
-      </tr>
-    </table>
+          <!-- Col 3: Target Hasil -->
+          <td style="width: 30%; padding: 5px; vertical-align: top;">
+            <div style="font-weight: bold; margin-bottom: 2px;">Target Hasil :</div>
+            <div style="font-size: 8.5px; color: #555; margin-bottom: 3px;">(Pcs/Day, Rp./Month, etc)</div>
+            <div style="font-size: 10px; min-height: 155px; color: #111; line-height: 1.4; background: #fafafa; border: 1px solid #e5e7eb; padding: 5px; border-radius: 3px;">
+              ${requestData.targetHasil || '-'}
+            </div>
+          </td>
+        </tr>
+      </table>
 
-    <!-- Penjelasan Pelaksanaan -->
-    <table class="table-box" style="margin-top: -1px;">
-      <tr>
-        <td style="min-height: 38px;">
-          <strong>Penjelasan tentang pelaksanaan : Evaluasi, Design, Pembelian Barang</strong>
-          <div style="font-size: 10.5px; margin-top: 3px; min-height: 24px;">
-            ${requestData.penjelasanPelaksanaan || requestData.catatanAdmin || '-'}
-            ${requestData.kebutuhanSparepart ? `<br/><strong>Rencana Sparepart:</strong> ${requestData.kebutuhanSparepart}` : ''}
-            ${requestData.kebutuhanMaterial ? `<br/><strong>Rencana Material:</strong> ${requestData.kebutuhanMaterial}` : ''}
-            ${requestData.materials && requestData.materials.length > 0 ? `<div style="margin-top: 4px; font-size: 9.5px; padding-top: 2px; border-top: 1px dashed #ccc;"><strong>Realisasi Barang Terpakai:</strong> ${requestData.materials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')}</div>` : ''}
-          </div>
-        </td>
-      </tr>
-    </table>
+      <!-- 5. Penjelasan Pelaksanaan -->
+      <table class="table-box" style="margin-top: -1px;">
+        <tr>
+          <td style="min-height: 40px; padding: 5px 6px;">
+            <strong>Penjelasan tentang pelaksanaan : Evaluasi, Design, Pembelian Barang</strong>
+            <div style="font-size: 10.5px; margin-top: 3px; min-height: 24px; line-height: 1.35;">
+              ${requestData.penjelasanPelaksanaan || requestData.catatanAdmin || '-'}
+              ${requestData.kebutuhanSparepart ? `<br/><strong>Rencana Sparepart:</strong> ${requestData.kebutuhanSparepart}` : ''}
+              ${requestData.kebutuhanMaterial ? `<br/><strong>Rencana Material:</strong> ${requestData.kebutuhanMaterial}` : ''}
+              ${requestData.materials && requestData.materials.length > 0 ? `<div style="margin-top: 4px; font-size: 9.5px; padding-top: 2px; border-top: 1px dashed #ccc;"><strong>Realisasi Barang Terpakai:</strong> ${requestData.materials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')}</div>` : ''}
+            </div>
+          </td>
+        </tr>
+      </table>
 
-    <!-- Evaluasi & Keputusan Section (Centering & Full Width) -->
-    <table class="table-box" style="margin-top: -1px;">
-      <tr>
-        <!-- Evaluasi Pekerjaan Table -->
-        <td style="width: 55%; padding: 0; vertical-align: top;">
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 9.5px;">
-            <tr>
-              <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px;">
-                EVALUASI PEKERJAAN
-              </th>
-            </tr>
-            <tr style="text-align: center; font-size: 9px; background: #fafafa;">
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 40%; padding: 2px;">ITEM</td>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 30%; padding: 2px;">ESTIMATE</td>
-              <td style="border-bottom: 1px solid #000; font-weight: bold; width: 30%; padding: 2px;">ACTUAL</td>
-            </tr>
-            <tr>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px;">Biaya</td>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.biayaEstimate || '-'}</td>
-              <td style="border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.biayaActual || '-'}</td>
-            </tr>
-            <tr>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px;">Orang/Jam</td>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.orangJamEstimate || '-'}</td>
-              <td style="border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.orangJamActual || '-'}</td>
-            </tr>
-            <tr>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px;">Waktu</td>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.waktuEstimate || '-'}</td>
-              <td style="border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.waktuActual || '-'}</td>
-            </tr>
-            <tr>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px;">Tgl Pelaksanaan</td>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.tglPelaksanaanEstimate || '-'}</td>
-              <td style="border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.tglPelaksanaanActual || '-'}</td>
-            </tr>
-            <tr>
-              <td style="border-right: 1px solid #000; padding: 3px 4px;">Komentar</td>
-              <td style="border-right: 1px solid #000; padding: 3px 4px;">${requestData.komentarEstimate || '-'}</td>
-              <td style="padding: 3px 4px;">${requestData.komentarActual || '-'}</td>
-            </tr>
-          </table>
-        </td>
+      <!-- 6. Evaluasi & Keputusan Section -->
+      <table class="table-box" style="margin-top: -1px;">
+        <tr>
+          <!-- Evaluasi Pekerjaan Table -->
+          <td style="width: 55%; padding: 0; vertical-align: top;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 9.5px;">
+              <tr>
+                <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px;">
+                  EVALUASI PEKERJAAN
+                </th>
+              </tr>
+              <tr style="text-align: center; font-size: 9px; background: #fafafa;">
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 40%; padding: 2.5px;">ITEM</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 30%; padding: 2.5px;">ESTIMATE</td>
+                <td style="border-bottom: 1px solid #000; font-weight: bold; width: 30%; padding: 2.5px;">ACTUAL</td>
+              </tr>
+              <tr>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px;">Biaya</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.biayaEstimate || '-'}</td>
+                <td style="border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.biayaActual || '-'}</td>
+              </tr>
+              <tr>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px;">Orang/Jam</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.orangJamEstimate || '-'}</td>
+                <td style="border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.orangJamActual || '-'}</td>
+              </tr>
+              <tr>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px;">Waktu</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.waktuEstimate || '-'}</td>
+                <td style="border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.waktuActual || '-'}</td>
+              </tr>
+              <tr>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px;">Tgl Pelaksanaan</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.tglPelaksanaanEstimate || '-'}</td>
+                <td style="border-bottom: 1px solid #000; padding: 3px 5px; text-align: right;">${requestData.tglPelaksanaanActual || '-'}</td>
+              </tr>
+              <tr>
+                <td style="border-right: 1px solid #000; padding: 3px 5px;">Komentar</td>
+                <td style="border-right: 1px solid #000; padding: 3px 5px;">${requestData.komentarEstimate || '-'}</td>
+                <td style="padding: 3px 5px;">${requestData.komentarActual || '-'}</td>
+              </tr>
+            </table>
+          </td>
 
-        <!-- Arrow -->
-        <td style="width: 6%; text-align: center; vertical-align: middle; font-size: 18px; font-weight: bold;">
-          &#10140;
-        </td>
+          <!-- Arrow -->
+          <td style="width: 6%; text-align: center; vertical-align: middle; font-size: 18px; font-weight: bold;">
+            &#10140;
+          </td>
 
-        <!-- Keputusan 8210 / 820 -->
-        <td style="width: 39%; padding: 0; vertical-align: top;">
-          <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 9.5px;">
-            <tr>
-              <th colspan="2" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px;">
-                KEPUTUSAN
-              </th>
-            </tr>
-            <tr style="font-size: 9px; font-weight: bold; background: #fafafa;">
-              <td style="width: 50%; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px;">Spv</td>
-              <td style="width: 50%; border-bottom: 1px solid #000; padding: 2px;">Manajer (8236)</td>
-            </tr>
-            <tr style="height: 44px;">
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">
-                ${cleanPersonName(requestData.keputusan8210)}
-              </td>
-              <td style="border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">
-                ${cleanPersonName(requestData.keputusan820)}
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2" style="padding: 6px 4px; font-size: 10px;">
-                <span class="decision-box ${isGo ? 'decision-active' : ''}">GO</span>
-                <span class="decision-box ${isPending ? 'decision-active' : ''}">PENDING</span>
-                <span class="decision-box ${isReject ? 'decision-active' : ''}">REJECT</span>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2" style="font-size: 8.5px; color: #4b5563; padding: 4px 2px; border-top: 1px dashed #000;">
-                Selesai Bekerja &#10140; COPY KE SEKSI PEMOHON
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
+          <!-- Keputusan 8210 / 820 -->
+          <td style="width: 39%; padding: 0; vertical-align: top;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 9.5px;">
+              <tr>
+                <th colspan="2" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px;">
+                  KEPUTUSAN
+                </th>
+              </tr>
+              <tr style="font-size: 9px; font-weight: bold; background: #fafafa;">
+                <td style="width: 50%; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px;">Spv</td>
+                <td style="width: 50%; border-bottom: 1px solid #000; padding: 2.5px;">Manajer (8236)</td>
+              </tr>
+              <tr style="height: 48px;">
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">
+                  ${cleanPersonName(requestData.keputusan8210)}
+                </td>
+                <td style="border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">
+                  ${cleanPersonName(requestData.keputusan820)}
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding: 5px 4px; font-size: 10px;">
+                  <span class="decision-box ${isGo ? 'decision-active' : ''}">GO</span>
+                  <span class="decision-box ${isPending ? 'decision-active' : ''}">PENDING</span>
+                  <span class="decision-box ${isReject ? 'decision-active' : ''}">REJECT</span>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2" style="font-size: 8.5px; color: #4b5563; padding: 3.5px 2px; border-top: 1px dashed #000;">
+                  Selesai Bekerja &#10140; COPY KE SEKSI PEMOHON
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
 
-    <!-- Asbes Disclaimer -->
-    <div class="asbes-notice">
-      Perhatian : Barang/Material yang dipergunakan di PT. Bridgestone Tire Indonesia tidak boleh mengandung ASBES
+      <!-- 7. Asbes Disclaimer -->
+      <div class="asbes-notice">
+        Perhatian : Barang/Material yang dipergunakan di PT. Bridgestone Tire Indonesia tidak boleh mengandung ASBES
+      </div>
     </div>
   </div>
 
@@ -644,19 +667,23 @@ export default function BridgestoneRequestPrintModal({
 
         {/* Paper Container Preview (Accurate visual document) */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/70 flex justify-center">
-          <div className="printable-request-area bg-white shadow-xl border-2 border-slate-900 p-3 sm:p-5 text-slate-900 text-xs font-sans w-full max-w-[210mm] box-border">
-            {/* Top Registration & Logo */}
-            <div className="flex justify-between items-center border-b border-slate-900 pb-1.5 mb-1.5">
-              <span className="font-mono text-[10.5px] text-slate-500 font-normal">
-                ID: {requestData.nomorRequest}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <div className="relative w-5 h-5">
-                  <Image src="/logo-bs.png" alt="BS" fill className="object-contain" />
-                </div>
-                <span className="font-black tracking-wider text-sm text-slate-900">BRIDGESTONE</span>
-              </div>
+          <div className="w-full max-w-[210mm] box-border">
+            {/* ID ditempatkan di luar kotak formulir per permintaan */}
+            <div className="text-left font-mono text-[11px] font-semibold text-slate-500 mb-1 pl-0.5">
+              ID: {requestData.nomorRequest}
             </div>
+
+            <div className="printable-request-area bg-white shadow-xl border-2 border-slate-900 p-3 sm:p-5 text-slate-900 text-xs font-sans w-full min-h-[265mm] flex flex-col justify-between box-border">
+              {/* Top Registration & Logo */}
+              <div className="flex justify-between items-center border-b border-slate-900 pb-1.5 mb-1.5">
+                <span className="text-[10px] text-slate-500 font-medium">PT BRIDGESTONE TIRE INDONESIA</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="relative w-5 h-5">
+                    <Image src="/logo-bs.png" alt="BS" fill className="object-contain" />
+                  </div>
+                  <span className="font-black tracking-wider text-sm text-slate-900">BRIDGESTONE</span>
+                </div>
+              </div>
 
             {/* Title */}
             <div className="text-center py-1">
@@ -998,6 +1025,7 @@ export default function BridgestoneRequestPrintModal({
             </div>
           </div>
         </div>
+      </div>
 
         {/* Modal Footer */}
         <div className="p-3.5 px-5 border-t border-slate-200 bg-white flex justify-between items-center">
