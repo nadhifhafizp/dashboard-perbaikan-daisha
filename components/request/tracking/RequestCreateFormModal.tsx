@@ -53,7 +53,6 @@ export default function RequestCreateFormModal({
       setFormData((p) => ({
         ...p,
         seksiPemohon: p.seksiPemohon || currentUser.seksi || '',
-        kodeSeksi: p.kodeSeksi || getSeksiCode(currentUser.seksi),
       }));
     }
   }, [currentUser, setFormData]);
@@ -75,11 +74,9 @@ export default function RequestCreateFormModal({
   };
 
   const handleSeksiChange = (seksi: string) => {
-    const autoCode = getSeksiCode(seksi);
     setFormData((p) => ({
       ...p,
       seksiPemohon: seksi,
-      kodeSeksi: autoCode !== 'SEKSI' && autoCode !== 'GEN' ? autoCode : p.kodeSeksi,
     }));
   };
 
