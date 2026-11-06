@@ -23,7 +23,7 @@ import {
   DollarSign,
   Package,
 } from 'lucide-react';
-import { SectionRequestFull, FAKTOR_OPTIONS } from '@/components/request/BridgestoneRequestPrintModal';
+import BridgestoneRequestPrintModal, { SectionRequestFull, FAKTOR_OPTIONS } from '@/components/request/BridgestoneRequestPrintModal';
 import { getSeksiCode } from '@/lib/nomorSurat';
 import SignaturePad from '@/components/request/SignaturePad';
 
@@ -64,6 +64,9 @@ function ApprovalContent() {
   // Reject Modal
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [alasanTolak, setAlasanTolak] = useState('');
+
+  // Print Modal
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   // Fetch data
   useEffect(() => {
@@ -461,6 +464,18 @@ function ApprovalContent() {
                 )}
               </button>
             </div>
+
+            {requestData && (
+              <button
+                type="button"
+                onClick={() => setShowPrintModal(true)}
+                className="h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition shadow-2xs cursor-pointer ml-1"
+                title="Cetak Formulir Standar Ukuran A4"
+              >
+                <Printer className="w-3.5 h-3.5 text-red-600" />
+                <span className="hidden sm:inline">Cetak A4</span>
+              </button>
+            )}
 
             <Link
               href="/request"
@@ -1258,6 +1273,15 @@ function ApprovalContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Print Modal Ukuran A4 */}
+      {showPrintModal && requestData && (
+        <BridgestoneRequestPrintModal
+          isOpen={showPrintModal}
+          onClose={() => setShowPrintModal(false)}
+          requestData={requestData}
+        />
       )}
     </div>
   );

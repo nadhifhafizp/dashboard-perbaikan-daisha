@@ -177,12 +177,12 @@ export default function BridgestoneRequestPrintModal({
     }).join(' &nbsp;|&nbsp; ');
 
     const fotoSebelumHTML = requestData.fotoSebelum
-      ? `<img src="${requestData.fotoSebelum}" alt="Keadaan Sekarang" style="width: 100%; max-height: 190px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 4px auto;" />`
-      : `<div style="height: 120px; border: 1px dashed #9ca3af; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #6b7280; background: #f9fafb;">(Tidak ada foto terlampir)</div>`;
+      ? `<img src="${requestData.fotoSebelum}" alt="Keadaan Sekarang" style="width: 100%; max-height: 125px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
+      : `<div style="height: 52px; border: 1px dashed #9ca3af; display: flex; align-items: center; justify-content: center; font-size: 9.5px; color: #6b7280; background: #f9fafb;">(Tidak ada foto terlampir)</div>`;
 
     const fotoSesudahHTML = requestData.fotoSesudah
-      ? `<img src="${requestData.fotoSesudah}" alt="Rencana Tindakan" style="width: 100%; max-height: 190px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 4px auto;" />`
-      : `<div style="height: 120px; border: 1px dashed #9ca3af; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #6b7280; background: #f9fafb;">(Tidak ada foto terlampir)</div>`;
+      ? `<img src="${requestData.fotoSesudah}" alt="Rencana Tindakan" style="width: 100%; max-height: 125px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
+      : `<div style="height: 52px; border: 1px dashed #9ca3af; display: flex; align-items: center; justify-content: center; font-size: 9.5px; color: #6b7280; background: #f9fafb;">(Tidak ada foto terlampir)</div>`;
 
     const isGo = (requestData.keputusan || '').toUpperCase() === 'GO';
     const isPending = (requestData.keputusan || '').toUpperCase() === 'PENDING';
@@ -196,79 +196,89 @@ export default function BridgestoneRequestPrintModal({
 <style>
   @page {
     size: A4 portrait;
-    margin: 8mm 10mm;
+    margin: 6mm 8mm;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
+  html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
     font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
     color: #000;
     background: #fff;
-    font-size: 11px;
+    font-size: 10px;
     line-height: 1.25;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   .form-container {
     width: 100%;
-    max-width: 190mm;
+    max-width: 194mm;
     margin: 0 auto;
     border: 2px solid #000;
-    padding: 2px;
+    padding: 2.5mm;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-after: avoid;
   }
   .table-box {
     width: 100%;
     border-collapse: collapse;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
   .table-box th, .table-box td {
     border: 1px solid #000;
-    padding: 3px 5px;
+    padding: 2.5px 4.5px;
     vertical-align: top;
   }
   .header-reg {
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: normal;
   }
   .main-title {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 900;
     letter-spacing: 2px;
     text-align: center;
-    padding: 2px 0;
+    padding: 1.5px 0;
   }
   .logo-img {
-    height: 24px;
+    height: 22px;
     vertical-align: middle;
   }
   .bg-sub {
     background-color: #f3f4f6;
     font-weight: bold;
     text-align: center;
-    font-size: 10px;
+    font-size: 9.5px;
   }
   .badge-tag {
     display: inline-block;
     border: 1.5px solid #000;
     font-weight: bold;
-    padding: 1px 6px;
-    font-size: 10px;
+    padding: 1px 5px;
+    font-size: 9.5px;
     text-align: center;
   }
   .decision-box {
     display: inline-block;
-    padding: 2px 6px;
+    padding: 2px 5px;
     border: 1.5px solid #000;
     font-weight: bold;
     margin: 1px;
-    font-size: 10px;
+    font-size: 9.5px;
   }
   .decision-active {
     background: #000;
     color: #fff;
   }
   .asbes-notice {
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: bold;
     font-style: italic;
     text-align: center;
-    padding: 4px;
+    padding: 3px;
     border-top: 1px solid #000;
     margin-top: 2px;
   }
@@ -620,8 +630,8 @@ export default function BridgestoneRequestPrintModal({
         </div>
 
         {/* Paper Container Preview (Accurate visual document) */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/70">
-          <div className="printable-request-area bg-white mx-auto shadow-md border-2 border-slate-900 p-3 sm:p-5 text-slate-900 text-xs font-sans max-w-3xl">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/70 flex justify-center">
+          <div className="printable-request-area bg-white shadow-xl border-2 border-slate-900 p-3 sm:p-5 text-slate-900 text-xs font-sans w-full max-w-[210mm] box-border">
             {/* Top Registration & Logo */}
             <div className="flex justify-between items-center border-b border-slate-900 pb-1.5 mb-1.5">
               <span className="font-mono text-[10.5px] text-slate-500 font-normal">
