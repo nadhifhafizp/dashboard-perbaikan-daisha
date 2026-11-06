@@ -188,6 +188,30 @@ export default function BridgestoneRequestPrintModal({
     const isPending = (requestData.keputusan || '').toUpperCase() === 'PENDING';
     const isReject = (requestData.keputusan || '').toUpperCase() === 'REJECT';
 
+    const sparepartMaterials = (requestData.materials || []).filter(
+      (m) => (m.tipe || '').toUpperCase() === 'SPAREPART'
+    );
+    const rawMaterials = (requestData.materials || []).filter(
+      (m) => (m.tipe || '').toUpperCase() === 'MATERIAL'
+    );
+    const otherMaterials = (requestData.materials || []).filter(
+      (m) => (m.tipe || '').toUpperCase() !== 'SPAREPART' && (m.tipe || '').toUpperCase() !== 'MATERIAL'
+    );
+
+    const realisasiSparepartStr = sparepartMaterials.length > 0
+      ? sparepartMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
+      : (requestData.kebutuhanSparepart && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan')
+          ? requestData.kebutuhanSparepart
+          : '-');
+
+    const realisasiMaterialStr = rawMaterials.length > 0
+      ? rawMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Unit'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')
+      : (otherMaterials.length > 0
+          ? otherMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
+          : (requestData.kebutuhanMaterial && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan')
+              ? requestData.kebutuhanMaterial
+              : '-'));
+
     const makePrintBadge = (isVerified: boolean, manualImg?: string | null) => {
       if (manualImg && manualImg.startsWith('data:image')) {
         return `<img src="${manualImg}" style="max-height: 44px; max-width: 90%; display: block; margin: 0 auto;" />`;
@@ -491,17 +515,38 @@ export default function BridgestoneRequestPrintModal({
         </tr>
       </table>
 
-      <!-- 5. Penjelasan Pelaksanaan -->
+      <!-- 5. Tabel Kebutuhan Sparepart & Material (Rencana vs Realisasi) -->
       <table class="table-box" style="margin-top: -1px;">
         <tr>
-          <td style="min-height: 48px; padding: 6px 7px;">
-            <strong>Penjelasan tentang pelaksanaan : Evaluasi, Design, Pembelian Barang</strong>
-            <div style="font-size: 10.5px; margin-top: 3px; min-height: 28px; line-height: 1.35;">
-              ${requestData.penjelasanPelaksanaan || requestData.catatanAdmin || '-'}
-              ${requestData.kebutuhanSparepart ? `<br/><strong>Rencana Sparepart:</strong> ${requestData.kebutuhanSparepart}` : ''}
-              ${requestData.kebutuhanMaterial ? `<br/><strong>Rencana Material:</strong> ${requestData.kebutuhanMaterial}` : ''}
-              ${requestData.materials && requestData.materials.length > 0 ? `<div style="margin-top: 4px; font-size: 9.5px; padding-top: 2px; border-top: 1px dashed #ccc;"><strong>Realisasi Barang Terpakai:</strong> ${requestData.materials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')}</div>` : ''}
-            </div>
+          <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px; font-size: 10px; font-weight: bold; text-align: center;">
+            KEBUTUHAN SPAREPART &amp; MATERIAL
+          </th>
+        </tr>
+        <tr style="text-align: center; font-size: 9px; font-weight: bold; background: #fafafa;">
+          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 22%; padding: 2.5px 5px;">KATEGORI</td>
+          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 42%; padding: 2.5px 5px;">RENCANA (ESTIMASI)</td>
+          <td style="border-bottom: 1px solid #000; width: 36%; padding: 2.5px 5px;">REALISASI (AKTUAL)</td>
+        </tr>
+        <tr>
+          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; padding: 3.5px 6px; vertical-align: middle;">
+            Sparepart
+          </td>
+          <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3.5px 6px; line-height: 1.35;">
+            ${requestData.kebutuhanSparepart || '-'}
+          </td>
+          <td style="border-bottom: 1px solid #000; padding: 3.5px 6px; line-height: 1.35;">
+            ${realisasiSparepartStr}
+          </td>
+        </tr>
+        <tr>
+          <td style="border-right: 1px solid #000; font-weight: bold; padding: 3.5px 6px; vertical-align: middle;">
+            Material
+          </td>
+          <td style="border-right: 1px solid #000; padding: 3.5px 6px; line-height: 1.35;">
+            ${requestData.kebutuhanMaterial || '-'}
+          </td>
+          <td style="padding: 3.5px 6px; line-height: 1.35;">
+            ${realisasiMaterialStr}
           </td>
         </tr>
       </table>
@@ -613,6 +658,30 @@ export default function BridgestoneRequestPrintModal({
   const isGo = (requestData.keputusan || '').toUpperCase() === 'GO';
   const isPending = (requestData.keputusan || '').toUpperCase() === 'PENDING';
   const isReject = (requestData.keputusan || '').toUpperCase() === 'REJECT';
+
+  const previewSparepartMaterials = (requestData.materials || []).filter(
+    (m) => (m.tipe || '').toUpperCase() === 'SPAREPART'
+  );
+  const previewRawMaterials = (requestData.materials || []).filter(
+    (m) => (m.tipe || '').toUpperCase() === 'MATERIAL'
+  );
+  const previewOtherMaterials = (requestData.materials || []).filter(
+    (m) => (m.tipe || '').toUpperCase() !== 'SPAREPART' && (m.tipe || '').toUpperCase() !== 'MATERIAL'
+  );
+
+  const realisasiSparepartPreview = previewSparepartMaterials.length > 0
+    ? previewSparepartMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
+    : (requestData.kebutuhanSparepart && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan')
+        ? requestData.kebutuhanSparepart
+        : '-');
+
+  const realisasiMaterialPreview = previewRawMaterials.length > 0
+    ? previewRawMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Unit'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')
+    : (previewOtherMaterials.length > 0
+        ? previewOtherMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
+        : (requestData.kebutuhanMaterial && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan')
+            ? requestData.kebutuhanMaterial
+            : '-'));
 
   return (
     <div
@@ -895,36 +964,40 @@ export default function BridgestoneRequestPrintModal({
               </div>
             </div>
 
-            {/* Penjelasan Pelaksanaan */}
-            <div className="border-x border-b border-slate-900 p-2 text-xs">
-              <span className="font-bold">Penjelasan tentang pelaksanaan : Evaluasi, Design, Pembelian Barang</span>
-              <p className="text-slate-800 mt-1 min-h-[22px]">
-                {requestData.penjelasanPelaksanaan || requestData.catatanAdmin || '-'}
-              </p>
-              {(requestData.kebutuhanSparepart || requestData.kebutuhanMaterial) && (
-                <div className="mt-1.5 pt-1.5 border-t border-dashed border-slate-300 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {requestData.kebutuhanSparepart && (
-                    <div>
-                      <span className="font-semibold text-slate-700">Rencana Sparepart: </span>
-                      <span className="text-slate-900">{requestData.kebutuhanSparepart}</span>
-                    </div>
-                  )}
-                  {requestData.kebutuhanMaterial && (
-                    <div>
-                      <span className="font-semibold text-slate-700">Rencana Material: </span>
-                      <span className="text-slate-900">{requestData.kebutuhanMaterial}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-              {requestData.materials && requestData.materials.length > 0 && (
-                <div className="mt-1.5 pt-1 border-t border-dashed border-slate-300 text-xs text-slate-700">
-                  <span className="font-bold">Realisasi Barang Terpakai: </span>
-                  <span>
-                    {requestData.materials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')}
-                  </span>
-                </div>
-              )}
+            {/* Tabel Kebutuhan Sparepart & Material (Rencana vs Realisasi) */}
+            <div className="border-x border-b border-slate-900 text-xs">
+              <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900">
+                KEBUTUHAN SPAREPART &amp; MATERIAL
+              </div>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-900 font-bold text-center">
+                    <th className="p-1.5 border-r border-slate-900 w-1/4">KATEGORI</th>
+                    <th className="p-1.5 border-r border-slate-900 w-5/12">RENCANA (ESTIMASI)</th>
+                    <th className="p-1.5 w-4/12">REALISASI (AKTUAL)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  <tr className="border-b border-slate-200">
+                    <td className="p-2 border-r border-slate-900 font-bold text-slate-800">Sparepart</td>
+                    <td className="p-2 border-r border-slate-900 text-slate-900 leading-relaxed">
+                      {requestData.kebutuhanSparepart || '-'}
+                    </td>
+                    <td className="p-2 text-slate-900 leading-relaxed">
+                      {realisasiSparepartPreview}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-2 border-r border-slate-900 font-bold text-slate-800">Material</td>
+                    <td className="p-2 border-r border-slate-900 text-slate-900 leading-relaxed">
+                      {requestData.kebutuhanMaterial || '-'}
+                    </td>
+                    <td className="p-2 text-slate-900 leading-relaxed">
+                      {realisasiMaterialPreview}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             {/* Evaluasi & Keputusan (Centered & Full Width) */}
