@@ -342,3 +342,5 @@ export function useMaterialsEditor(
     handleRemoveMaterial,
   };
 }
+
+export type MaterialsEditorType = ReturnType<typeof useMaterialsEditor>;

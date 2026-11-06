@@ -20,7 +20,6 @@ import { EvaluationModalProps } from './evaluation/types';
 import { useEvaluationForm } from './evaluation/useEvaluationForm';
 import { useMaterialsEditor } from './evaluation/useMaterialsEditor';
 import EvaluasiTab from './evaluation/EvaluasiTab';
-import MaterialsTab from './evaluation/MaterialsTab';
 import PengerjaanTab from './evaluation/PengerjaanTab';
 import PenyelesaianTab from './evaluation/PenyelesaianTab';
 
@@ -113,29 +112,16 @@ export default function EvaluationModal({
             type="button"
             onClick={() => form.setActiveTab('evaluasi')}
             className={`py-2.5 px-3.5 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer whitespace-nowrap ${
-              form.activeTab === 'evaluasi'
+              form.activeTab === 'evaluasi' || form.activeTab === 'materials'
                 ? 'border-red-600 text-red-700 bg-red-50/40'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             <Timer className="w-3.5 h-3.5" />
-            <span>1. Evaluasi & Keputusan</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => form.setActiveTab('materials')}
-            className={`py-2.5 px-3.5 text-xs font-bold transition flex items-center gap-1.5 border-b-2 cursor-pointer whitespace-nowrap ${
-              form.activeTab === 'materials'
-                ? 'border-red-600 text-red-700 bg-red-50/40'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Boxes className="w-3.5 h-3.5" />
-            <span>2. Sparepart & Material</span>
+            <span>1. Evaluasi &amp; Keputusan</span>
             {materials.materialsList.length > 0 && (
-              <span className="w-4 h-4 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">
-                {materials.materialsList.length}
+              <span className="px-1.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
+                {materials.materialsList.length} part
               </span>
             )}
           </button>
@@ -164,7 +150,7 @@ export default function EvaluationModal({
             ) : (
               <Hammer className="w-3.5 h-3.5" />
             )}
-            <span>3. Status Pengerjaan {isApprovedBySpecialProject ? '' : '(Terkunci)'}</span>
+            <span>2. Status Pengerjaan {isApprovedBySpecialProject ? '' : '(Terkunci)'}</span>
             {isPendingMaterial && (
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
             )}
@@ -194,7 +180,7 @@ export default function EvaluationModal({
             ) : (
               <CheckCircle2 className="w-3.5 h-3.5" />
             )}
-            <span>4. Hasil Check & Selesai {isApprovedBySpecialProject ? '' : '(Terkunci)'}</span>
+            <span>3. Hasil Check &amp; Selesai {isApprovedBySpecialProject ? '' : '(Terkunci)'}</span>
           </button>
         </div>
 
@@ -253,8 +239,8 @@ export default function EvaluationModal({
           {/* Tracker Alur Flowchart */}
           <FlowchartTracker currentStep={currentStep} />
 
-          {/* Tab 1: Evaluasi & Keputusan */}
-          {form.activeTab === 'evaluasi' && (
+          {/* Tab 1: Evaluasi & Keputusan (Termasuk Penginputan Suku Cadang & Material Fabrikasi) */}
+          {(form.activeTab === 'evaluasi' || form.activeTab === 'materials') && (
             <EvaluasiTab
               requestData={requestData}
               formData={form.formData}
@@ -263,64 +249,7 @@ export default function EvaluationModal({
               onDecisionLanjut={form.handleDecisionLanjut}
               onDecisionTolak={form.handleDecisionTolak}
               onAssignSpecialProject={form.handleAssignAtasanSpecialProject}
-            />
-          )}
-
-          {/* Tab 2: Sparepart & Material */}
-          {form.activeTab === 'materials' && (
-            <MaterialsTab
-              itemCategoryMode={materials.itemCategoryMode}
-              setItemCategoryMode={materials.setItemCategoryMode}
-              sparepartsCatalogList={materials.sparepartsCatalogList}
-              materialsCatalogList={materials.materialsCatalogList}
-              selectedSparepart={materials.selectedSparepart}
-              setSelectedSparepart={materials.setSelectedSparepart}
-              sparepartQty={materials.sparepartQty}
-              setSparepartQty={materials.setSparepartQty}
-              sparepartKeterangan={materials.sparepartKeterangan}
-              setSparepartKeterangan={materials.setSparepartKeterangan}
-              currentSparepartDetail={materials.currentSparepartDetail}
-              currentMaterialDetail={materials.currentMaterialDetail}
-              materialSourceMode={materials.materialSourceMode}
-              setMaterialSourceMode={materials.setMaterialSourceMode}
-              selectedMaterial={materials.selectedMaterial}
-              setSelectedMaterial={materials.setSelectedMaterial}
-              customMaterialName={materials.customMaterialName}
-              setCustomMaterialName={materials.setCustomMaterialName}
-              materialQty={materials.materialQty}
-              setMaterialQty={materials.setMaterialQty}
-              materialSatuan={materials.materialSatuan}
-              setMaterialSatuan={materials.setMaterialSatuan}
-              customSatuan={materials.customSatuan}
-              setCustomSatuan={materials.setCustomSatuan}
-              materialDimensi={materials.materialDimensi}
-              setMaterialDimensi={materials.setMaterialDimensi}
-              materialKeterangan={materials.materialKeterangan}
-              setMaterialKeterangan={materials.setMaterialKeterangan}
-              materialPotongStokGudang={materials.materialPotongStokGudang}
-              setMaterialPotongStokGudang={materials.setMaterialPotongStokGudang}
-              materialQtyPotongGudang={materials.materialQtyPotongGudang}
-              setMaterialQtyPotongGudang={materials.setMaterialQtyPotongGudang}
-              showPlateCalc={materials.showPlateCalc}
-              setShowPlateCalc={materials.setShowPlateCalc}
-              calcPanjang={materials.calcPanjang}
-              setCalcPanjang={materials.setCalcPanjang}
-              calcLebar={materials.calcLebar}
-              setCalcLebar={materials.setCalcLebar}
-              calcTebal={materials.calcTebal}
-              setCalcTebal={materials.setCalcTebal}
-              computedArea={materials.computedArea}
-              applyPlateArea={materials.applyPlateArea}
-              tableFilterType={materials.tableFilterType}
-              setTableFilterType={materials.setTableFilterType}
-              filteredMaterialsTable={materials.filteredMaterialsTable}
-              materialsList={materials.materialsList}
-              countSparepart={materials.countSparepart}
-              countMaterial={materials.countMaterial}
-              materialLoading={materials.materialLoading}
-              onAddSparepart={materials.handleAddSparepart}
-              onAddMaterial={materials.handleAddMaterial}
-              onRemoveMaterial={materials.handleRemoveMaterial}
+              materialsEditor={materials}
             />
           )}
 

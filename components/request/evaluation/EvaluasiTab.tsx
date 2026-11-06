@@ -11,11 +11,14 @@ import {
   FileText,
   ShieldCheck,
   CheckCircle2,
+  Boxes,
 } from 'lucide-react';
 import { SectionRequestFull } from '../BridgestoneRequestPrintModal';
 import { EvaluationFormData } from './types';
 import { getSeksiCode } from '@/lib/nomorSurat';
 import SignaturePad from '@/components/request/SignaturePad';
+import MaterialsTab from './MaterialsTab';
+import { MaterialsEditorType } from './useMaterialsEditor';
 
 interface EvaluasiTabProps {
   requestData: SectionRequestFull;
@@ -25,6 +28,7 @@ interface EvaluasiTabProps {
   onDecisionLanjut: () => void;
   onDecisionTolak: () => void;
   onAssignSpecialProject?: (sp8210?: string, sp820?: string, catatan?: string) => void;
+  materialsEditor?: MaterialsEditorType;
 }
 
 export default function EvaluasiTab({
@@ -35,6 +39,7 @@ export default function EvaluasiTab({
   onDecisionLanjut,
   onDecisionTolak,
   onAssignSpecialProject,
+  materialsEditor,
 }: EvaluasiTabProps) {
   const isWaitingSpecialProject =
     formData.flowStep === 'STEP_5_MENUNGGU_ATASAN_SPROJECT' ||
@@ -51,6 +56,27 @@ export default function EvaluasiTab({
     formData.status === 'Pekerjaan Fisik Selesai' ||
     formData.flowStep === 'STEP_8_SELESAI' ||
     formData.status === 'Selesai';
+
+  // Otomatis sinkronkan ringkasan kebutuhan part & material saat admin menambahkan/menghapus item
+  React.useEffect(() => {
+    if (!materialsEditor) return;
+    const spList = materialsEditor.materialsList
+      .filter((m) => m.tipe === 'SPAREPART')
+      .map((m) => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`)
+      .join(', ');
+    const matList = materialsEditor.materialsList
+      .filter((m) => m.tipe === 'MATERIAL')
+      .map((m) => `${m.namaKomponen}${m.dimensi ? ` [${m.dimensi}]` : ''} (${m.qty} ${m.satuan || 'Unit'})`)
+      .join(', ');
+
+    if (spList && spList !== formData.kebutuhanSparepart) {
+      setFormData((p) => ({ ...p, kebutuhanSparepart: spList }));
+    }
+    if (matList && matList !== formData.kebutuhanMaterial) {
+      setFormData((p) => ({ ...p, kebutuhanMaterial: matList }));
+    }
+  }, [materialsEditor?.materialsList, formData.kebutuhanSparepart, formData.kebutuhanMaterial, setFormData]);
+
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Ringkasan Permohonan Pemohon */}
@@ -160,41 +186,80 @@ export default function EvaluasiTab({
         </div>
       </div>
 
-      {/* Rencana Evaluasi 4 Aspek: Sparepart & Material */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="p-3.5 rounded-xl border border-indigo-200 bg-indigo-50/40 space-y-2">
-          <div className="flex items-center gap-1.5 font-bold text-indigo-900 text-xs">
-            <Wrench className="w-4 h-4 text-indigo-600" />
-            <span>3. Rencana Kebutuhan Sparepart</span>
+      {/* Penginputan Suku Cadang (Sparepart) & Material Fabrikasi Langsung di Panel Evaluasi */}
+      <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 shadow-2xs">
+        <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-2">
+            <Boxes className="w-4 h-4 text-blue-600" />
+            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+              Penggunaan Sparepart &amp; Material (Workshop)
+            </h4>
           </div>
-          <div>
-            <label className="text-xs text-slate-500 font-medium">Estimasi Sparepart Pengganti</label>
-            <input
-              type="text"
-              placeholder="Mis: Bearing 6204 Nachi (2 pcs), Roda 6 Inch (2 pcs)"
-              value={formData.kebutuhanSparepart}
-              onChange={(e) => setFormData((p) => ({ ...p, kebutuhanSparepart: e.target.value }))}
-              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs mt-1"
-            />
-          </div>
+          <span className="text-xs text-slate-500 font-medium">
+            Pilih suku cadang gudang (potong stok otomatis) atau input material/plat fabrikasi
+          </span>
         </div>
 
-        <div className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/40 space-y-2">
-          <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
-            <Package className="w-4 h-4 text-amber-600" />
-            <span>4. Rencana Kebutuhan Material & Plat</span>
+        {materialsEditor ? (
+          <MaterialsTab
+            itemCategoryMode={materialsEditor.itemCategoryMode}
+            setItemCategoryMode={materialsEditor.setItemCategoryMode}
+            sparepartsCatalogList={materialsEditor.sparepartsCatalogList}
+            materialsCatalogList={materialsEditor.materialsCatalogList}
+            selectedSparepart={materialsEditor.selectedSparepart}
+            setSelectedSparepart={materialsEditor.setSelectedSparepart}
+            sparepartQty={materialsEditor.sparepartQty}
+            setSparepartQty={materialsEditor.setSparepartQty}
+            sparepartKeterangan={materialsEditor.sparepartKeterangan}
+            setSparepartKeterangan={materialsEditor.setSparepartKeterangan}
+            currentSparepartDetail={materialsEditor.currentSparepartDetail}
+            currentMaterialDetail={materialsEditor.currentMaterialDetail}
+            materialSourceMode={materialsEditor.materialSourceMode}
+            setMaterialSourceMode={materialsEditor.setMaterialSourceMode}
+            selectedMaterial={materialsEditor.selectedMaterial}
+            setSelectedMaterial={materialsEditor.setSelectedMaterial}
+            customMaterialName={materialsEditor.customMaterialName}
+            setCustomMaterialName={materialsEditor.setCustomMaterialName}
+            materialQty={materialsEditor.materialQty}
+            setMaterialQty={materialsEditor.setMaterialQty}
+            materialSatuan={materialsEditor.materialSatuan}
+            setMaterialSatuan={materialsEditor.setMaterialSatuan}
+            customSatuan={materialsEditor.customSatuan}
+            setCustomSatuan={materialsEditor.setCustomSatuan}
+            materialDimensi={materialsEditor.materialDimensi}
+            setMaterialDimensi={materialsEditor.setMaterialDimensi}
+            materialKeterangan={materialsEditor.materialKeterangan}
+            setMaterialKeterangan={materialsEditor.setMaterialKeterangan}
+            materialPotongStokGudang={materialsEditor.materialPotongStokGudang}
+            setMaterialPotongStokGudang={materialsEditor.setMaterialPotongStokGudang}
+            materialQtyPotongGudang={materialsEditor.materialQtyPotongGudang}
+            setMaterialQtyPotongGudang={materialsEditor.setMaterialQtyPotongGudang}
+            showPlateCalc={materialsEditor.showPlateCalc}
+            setShowPlateCalc={materialsEditor.setShowPlateCalc}
+            calcPanjang={materialsEditor.calcPanjang}
+            setCalcPanjang={materialsEditor.setCalcPanjang}
+            calcLebar={materialsEditor.calcLebar}
+            setCalcLebar={materialsEditor.setCalcLebar}
+            calcTebal={materialsEditor.calcTebal}
+            setCalcTebal={materialsEditor.setCalcTebal}
+            computedArea={materialsEditor.computedArea}
+            applyPlateArea={materialsEditor.applyPlateArea}
+            tableFilterType={materialsEditor.tableFilterType}
+            setTableFilterType={materialsEditor.setTableFilterType}
+            filteredMaterialsTable={materialsEditor.filteredMaterialsTable}
+            materialsList={materialsEditor.materialsList}
+            countSparepart={materialsEditor.countSparepart}
+            countMaterial={materialsEditor.countMaterial}
+            materialLoading={materialsEditor.materialLoading}
+            onAddSparepart={materialsEditor.handleAddSparepart}
+            onAddMaterial={materialsEditor.handleAddMaterial}
+            onRemoveMaterial={materialsEditor.handleRemoveMaterial}
+          />
+        ) : (
+          <div className="p-3 bg-slate-50 text-slate-500 rounded-lg text-xs italic">
+            Memuat modul suku cadang &amp; material...
           </div>
-          <div>
-            <label className="text-xs text-slate-500 font-medium">Estimasi Bahan Fabrikasi / Plat / Las</label>
-            <input
-              type="text"
-              placeholder="Mis: Plat besi 3mm luas ±1500 cm², Kawat las LB-52 1 kg"
-              value={formData.kebutuhanMaterial}
-              onChange={(e) => setFormData((p) => ({ ...p, kebutuhanMaterial: e.target.value }))}
-              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs mt-1"
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* 4.5. Personel Special Project (Ketik Manual Nama Staff, Spv, & Manajer 8236) */}
