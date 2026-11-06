@@ -29,7 +29,7 @@ interface RequestTableProps {
   onResetFilter: () => void;
   onOpenPrint: (req: SectionRequestFull) => void;
   onOpenEval: (req: SectionRequestFull) => void;
-  onOpenShareApproval: (req: SectionRequestFull, role?: 'seksi' | 'special_project') => void;
+  onOpenShareApproval: (req: SectionRequestFull, role?: 'spv_seksi' | 'manajer_seksi' | 'special_project' | 'seksi') => void;
   onRequestDelete: (req: SectionRequestFull) => void;
 }
 
@@ -138,16 +138,46 @@ export default function RequestTable({
               {/* Status Approval Atasan Seksi & Special Project */}
               <div className="pt-1 space-y-1.5">
                 {r.statusApprovalAtasanSeksi === 'APPROVED' ? (
-                  <div className="text-xs text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-200 flex items-center gap-1.5 font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>
-                      Disetujui Foreman:{' '}
-                      <strong>{r.foreman || r.namaAtasanSeksi}</strong>
-                    </span>
+                  <div className="space-y-1">
+                    <div className="text-xs text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-200 flex items-center gap-1.5 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>
+                        Spv: <strong>{r.foreman || r.namaAtasanSeksi}</strong> (Disetujui)
+                      </span>
+                    </div>
+
+                    {/* Tahap 2: Manajer Seksi */}
+                    {(r.flowStep === 'STEP_2B_WAITING_MANAJER_SEKSI' ||
+                      (r.statusApprovalManajerSeksi !== 'APPROVED' && r.namaManajerSeksi)) && (
+                      <div className="text-xs text-emerald-950 bg-emerald-100/70 px-2 py-1 rounded border border-emerald-300 flex items-center justify-between gap-1.5">
+                        <span className="flex items-center gap-1 font-medium">
+                          <Clock className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                          <span>Menunggu Manajer ({r.namaManajerSeksi || 'Atasan'})</span>
+                        </span>
+                        {r.approvalToken && (
+                          <button
+                            type="button"
+                            onClick={() => onOpenShareApproval(r, 'manajer_seksi')}
+                            className="text-xs text-emerald-800 underline font-bold cursor-pointer"
+                          >
+                            Link Assign
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {r.statusApprovalManajerSeksi === 'APPROVED' && (
+                      <div className="text-xs text-emerald-900 bg-emerald-50 px-2 py-1 rounded border border-emerald-200 flex items-center gap-1.5 font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>
+                          Manajer: <strong>{r.namaManajerSeksi || 'Disetujui'}</strong>
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ) : r.statusApprovalAtasanSeksi === 'REJECTED' ? (
                   <div className="text-xs text-rose-800 bg-rose-50 px-2 py-1 rounded border border-rose-200 flex items-center gap-1.5 font-medium">
-                    <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                    <XCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                     <span>
                       Ditolak Atasan: <strong>{r.alasanTolak || '-'}</strong>
                     </span>
@@ -155,16 +185,16 @@ export default function RequestTable({
                 ) : (
                   <div className="text-xs text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-200 flex items-center justify-between gap-1.5">
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-amber-600" />
+                      <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                       <span>
-                        Menunggu persetujuan atasan (
-                        {r.emailAtasanSeksi || 'Atasan Seksi'})
+                        Menunggu Spv (
+                        {r.foreman || r.namaAtasanSeksi || 'Spv Seksi'})
                       </span>
                     </span>
                     {r.approvalToken && (
                       <button
                         type="button"
-                        onClick={() => onOpenShareApproval(r, 'seksi')}
+                        onClick={() => onOpenShareApproval(r, 'spv_seksi')}
                         className="text-xs text-red-600 underline font-bold cursor-pointer"
                       >
                         Link Assign
@@ -366,10 +396,42 @@ export default function RequestTable({
                   </td>
                   <td className="p-3.5">
                     {r.statusApprovalAtasanSeksi === 'APPROVED' ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>Foreman: {r.foreman || r.namaAtasanSeksi}</span>
-                      </span>
+                      <div className="space-y-1">
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Spv: {r.foreman || r.namaAtasanSeksi}</span>
+                        </span>
+
+                        {/* Tahap 2: Menunggu Manajer Seksi */}
+                        {(r.flowStep === 'STEP_2B_WAITING_MANAJER_SEKSI' ||
+                          (r.statusApprovalManajerSeksi !== 'APPROVED' && r.namaManajerSeksi)) && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1 text-xs text-emerald-950 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded border border-emerald-300">
+                              <Clock className="w-3 h-3 text-emerald-700" />
+                              <span>Menunggu Manajer</span>
+                            </span>
+                            {r.approvalToken && (
+                              <button
+                                type="button"
+                                onClick={() => onOpenShareApproval(r, 'manajer_seksi')}
+                                className="p-1 rounded hover:bg-slate-200 text-emerald-700 transition cursor-pointer"
+                                title="Buka / Salin Link Persetujuan Manajer Seksi"
+                              >
+                                <Share2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {r.statusApprovalManajerSeksi === 'APPROVED' && (
+                          <div>
+                            <span className="inline-flex items-center gap-1 text-xs text-emerald-900 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              <span>Manajer: {r.namaManajerSeksi || 'Disetujui'}</span>
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     ) : r.statusApprovalAtasanSeksi === 'REJECTED' ? (
                       <span className="inline-flex items-center gap-1 text-xs text-rose-800 font-semibold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                         <XCircle className="w-3 h-3 text-rose-600" />
@@ -379,14 +441,14 @@ export default function RequestTable({
                       <div className="flex items-center gap-1.5">
                         <span className="inline-flex items-center gap-1 text-xs text-amber-800 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                           <Clock className="w-3 h-3 text-amber-600" />
-                          <span>Menunggu Assign Seksi</span>
+                          <span>Menunggu Spv</span>
                         </span>
                         {r.approvalToken && (
                           <button
                             type="button"
-                            onClick={() => onOpenShareApproval(r, 'seksi')}
+                            onClick={() => onOpenShareApproval(r, 'spv_seksi')}
                             className="p-1 rounded hover:bg-slate-200 text-red-600 transition cursor-pointer"
-                            title="Salin / Buka Link Approval Atasan Seksi"
+                            title="Salin / Buka Link Approval Spv Seksi"
                           >
                             <Share2 className="w-3.5 h-3.5" />
                           </button>

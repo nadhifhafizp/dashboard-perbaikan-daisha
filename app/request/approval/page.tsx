@@ -18,6 +18,10 @@ import {
   Printer,
   ChevronLeft,
   Mail,
+  Copy,
+  Check,
+  Share2,
+  ExternalLink,
   Wrench,
   Users,
   DollarSign,
@@ -70,6 +74,13 @@ function ApprovalContent() {
 
   // Digital Signature Verified Checklist (No canvas drawing needed)
   const [isDigitalSigned, setIsDigitalSigned] = useState(true);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+  };
 
   // Fetch data
   useEffect(() => {
@@ -502,16 +513,20 @@ function ApprovalContent() {
             <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-5 h-5" />
             </div>
-            <div>
+            <div className="space-y-2 flex-1">
               <h2 className="text-sm font-bold text-emerald-950">
                 {isSpecialProject
                   ? 'Permohonan Telah Disetujui & Di-assign oleh Atasan Special Project!'
+                  : activeRole === 'manajer_seksi'
+                  ? 'Formulir Telah Disetujui Manajer Seksi! (Approval Seksi Lengkap)'
+                  : (requestData?.namaManajerSeksi || requestData?.emailManajerSeksi)
+                  ? 'Formulir Berhasil Disetujui Spv Seksi! (Lanjut ke Manajer Seksi)'
                   : 'Formulir Telah Berhasil Disetujui & Ditandatangani!'}
               </h2>
-              <p className="text-xs text-emerald-800 mt-0.5 leading-relaxed">
+              <p className="text-xs text-emerald-800 leading-relaxed">
                 {isSpecialProject ? (
                   <>
-                    Persetujuan Anda telah dicatat pada kotak <strong>Special Project (Spv / Manajer 8236)</strong>. Dokumen request{' '}
+                    Persetujuan resmi <strong>GO</strong> telah dicatat pada kotak <strong>Special Project (Spv / Manajer 8236)</strong>. Dokumen request{' '}
                     <strong className="font-mono">
                       {requestData?.nomorRequest?.startsWith('REQ-') && requestData?.nomorSurat
                         ? requestData.nomorSurat
@@ -519,40 +534,102 @@ function ApprovalContent() {
                     </strong>{' '}
                     kini berstatus <strong>&quot;Dikerjakan&quot; (STEP 6)</strong> dan teknisi workshop siap memulai pengerjaan fisik.
                   </>
-                ) : (
+                ) : activeRole === 'manajer_seksi' ? (
                   <>
-                    Tanda tangan Anda telah dicantumkan pada kotak <strong>Spv</strong>. Dokumen request{' '}
+                    Persetujuan digital Seksi Pemohon telah lengkap (<strong>Spv &amp; Manajer Seksi</strong>). Dokumen request{' '}
                     <strong className="font-mono">
                       {requestData?.nomorRequest?.startsWith('REQ-') && requestData?.nomorSurat
                         ? requestData.nomorSurat
                         : requestData?.nomorRequest}
                     </strong>{' '}
-                    otomatis diteruskan ke <strong>Admin & PIC Workshop Produksi</strong> untuk tahap Evaluasi Pekerjaan (Waktu, Men Power, Sparepart, Material).
+                    otomatis diteruskan ke <strong>Admin &amp; PIC Workshop Produksi</strong> untuk evaluasi pekerjaan (Waktu, Orang/Jam, Biaya, Sparepart, Material).
+                  </>
+                ) : (requestData?.namaManajerSeksi || requestData?.emailManajerSeksi) ? (
+                  <>
+                    Tanda tangan digital Anda telah dicatat pada kotak <strong>Spv Seksi</strong>. Dokumen request{' '}
+                    <strong className="font-mono">
+                      {requestData?.nomorRequest?.startsWith('REQ-') && requestData?.nomorSurat
+                        ? requestData.nomorSurat
+                        : requestData?.nomorRequest}
+                    </strong>{' '}
+                    kini berstatus <strong>&quot;Menunggu Assign Manajer Seksi&quot; (Tahap 2)</strong>. Mohon teruskan tautan persetujuan ke{' '}
+                    <strong>{requestData?.namaManajerSeksi || `Manajer Seksi (${requestData?.kodeSeksi || 'Pemohon'})`}</strong> agar dapat ditandatangani.
+                  </>
+                ) : (
+                  <>
+                    Tanda tangan digital Anda telah dicantumkan pada kotak <strong>Spv</strong>. Dokumen request{' '}
+                    <strong className="font-mono">
+                      {requestData?.nomorRequest?.startsWith('REQ-') && requestData?.nomorSurat
+                        ? requestData.nomorSurat
+                        : requestData?.nomorRequest}
+                    </strong>{' '}
+                    otomatis diteruskan ke <strong>Admin &amp; PIC Workshop Produksi</strong> untuk tahap Evaluasi Pekerjaan.
                   </>
                 )}
               </p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-100/90 px-2.5 py-1 rounded-md border border-emerald-300">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                  <span>
-                    {isSpecialProject
-                      ? 'Notifikasi otomatis telah terkirim ke Workshop Bengkel & Seksi Pemohon'
-                      : 'Notifikasi otomatis telah terkirim ke Admin Workshop (via Web Apps & Email)'}
+
+              <div className="pt-2 flex flex-wrap items-center gap-2">
+                {activeRole === 'spv_seksi' && (requestData?.namaManajerSeksi || requestData?.emailManajerSeksi) ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchRole('manajer_seksi')}
+                      className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Buka Persetujuan Manajer Seksi (Tahap 2)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copyToClipboard(
+                          typeof window !== 'undefined'
+                            ? `${window.location.origin}/request/approval?token=${token}&role=manajer_seksi`
+                            : `/request/approval?token=${token}&role=manajer_seksi`
+                        )
+                      }
+                      className="px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-semibold transition inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-700" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedLink ? 'Tautan Manajer Tersalin!' : 'Salin Tautan Manajer Seksi'}</span>
+                    </button>
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(
+                        `Halo Bapak/Ibu ${requestData?.namaManajerSeksi || 'Manajer Seksi'}, mohon tanda tangan & persetujuan digital untuk Formulir Request Perbaikan/Modifikasi No. ${requestData?.nomorRequest} (${requestData?.perihal || requestData?.namaBarang}) via tautan resmi berikut:\n${typeof window !== 'undefined' ? window.location.origin : ''}/request/approval?token=${token}&role=manajer_seksi`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition inline-flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>Bagikan ke Manajer via WhatsApp</span>
+                    </a>
+                  </>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-100/90 px-2.5 py-1 rounded-md border border-emerald-300">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    <span>
+                      {isSpecialProject
+                        ? 'Notifikasi otomatis telah terkirim ke Workshop Bengkel & Seksi Pemohon'
+                        : 'Notifikasi otomatis telah terkirim ke Admin Workshop (via Web Apps & Email)'}
+                    </span>
                   </span>
-                </span>
+                )}
+
                 {adminEmailData && (
                   <a
                     href={adminEmailData.mailtoUrl}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-semibold transition"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-semibold transition"
                   >
                     <Mail className="w-3.5 h-3.5" />
                     <span>Buka Email ke Admin Workshop</span>
                   </a>
                 )}
+
                 <button
                   type="button"
                   onClick={() => setActionDone(null)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition cursor-pointer"
                 >
                   <span>Ubah Data / Simulasi Ulang</span>
                 </button>

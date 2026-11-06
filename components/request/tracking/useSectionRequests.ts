@@ -112,13 +112,24 @@ export function useSectionRequests() {
   const [printModalRequest, setPrintModalRequest] = useState<SectionRequestFull | null>(null);
   const [evalModalRequest, setEvalModalRequest] = useState<SectionRequestFull | null>(null);
   const [shareApprovalRequest, setShareApprovalRequest] = useState<SectionRequestFull | null>(null);
-  const [shareApprovalRole, setShareApprovalRole] = useState<'seksi' | 'special_project'>('seksi');
+  const [shareApprovalRole, setShareApprovalRole] = useState<'spv_seksi' | 'manajer_seksi' | 'special_project' | 'seksi'>('spv_seksi');
   const [requestToDelete, setRequestToDelete] = useState<SectionRequestFull | null>(null);
 
   const openShareApproval = useCallback(
-    (req: SectionRequestFull, role: 'seksi' | 'special_project' = 'seksi') => {
+    (req: SectionRequestFull, role?: 'spv_seksi' | 'manajer_seksi' | 'special_project' | 'seksi') => {
       setShareApprovalRequest(req);
-      setShareApprovalRole(role);
+      if (role) {
+        setShareApprovalRole(role);
+      } else if (req.flowStep === 'STEP_2B_WAITING_MANAJER_SEKSI') {
+        setShareApprovalRole('manajer_seksi');
+      } else if (
+        req.flowStep === 'STEP_5_MENUNGGU_ATASAN_SPROJECT' ||
+        req.status === 'Menunggu Assign S.Project'
+      ) {
+        setShareApprovalRole('special_project');
+      } else {
+        setShareApprovalRole('spv_seksi');
+      }
     },
     []
   );
