@@ -949,10 +949,11 @@ function ApprovalContent() {
                 <span className="font-bold">FAKTOR : </span>
                 <span className="text-slate-700">
                   {FAKTOR_OPTIONS.map((f, idx) => {
-                    const activeFaktor = (requestData.faktor || requestData.tujuan || 'Safety').toLowerCase();
-                    const sel =
-                      activeFaktor.includes(f.toLowerCase()) ||
-                      (f === 'Safety' && activeFaktor.includes('safety'));
+                    const activeFaktors = (requestData.faktor || requestData.tujuan || 'Safety')
+                      .split(',')
+                      .map((s) => s.trim().toLowerCase())
+                      .filter(Boolean);
+                    const sel = activeFaktors.some((af) => af === f.toLowerCase() || af.includes(f.toLowerCase()));
                     return (
                       <span key={f}>
                         {sel ? (

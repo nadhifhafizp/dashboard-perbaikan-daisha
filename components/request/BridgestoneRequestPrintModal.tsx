@@ -161,11 +161,12 @@ export default function BridgestoneRequestPrintModal({
       return;
     }
 
-    const currentFaktor = (requestData.faktor || requestData.tujuan || 'Safety').toLowerCase();
+    const currentFaktors = (requestData.faktor || requestData.tujuan || 'Safety')
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
     const faktorHTML = FAKTOR_OPTIONS.map((f) => {
-      const isSelected =
-        currentFaktor.includes(f.toLowerCase()) ||
-        (f === 'Safety' && currentFaktor.includes('safety'));
+      const isSelected = currentFaktors.some((cf) => cf === f.toLowerCase() || cf.includes(f.toLowerCase()));
       return isSelected
         ? `<strong style="text-decoration: underline; background: #e5e7eb; padding: 1px 5px; border-radius: 2px; border: 1px solid #64748b;">${f}</strong>`
         : `<span style="color: #4b5563;">${f}</span>`;
@@ -815,10 +816,11 @@ export default function BridgestoneRequestPrintModal({
                 <span className="font-bold">FAKTOR : </span>
                 <span className="text-slate-700">
                   {FAKTOR_OPTIONS.map((f, idx) => {
-                    const activeFaktor = (requestData.faktor || requestData.tujuan || 'Safety').toLowerCase();
-                    const sel =
-                      activeFaktor.includes(f.toLowerCase()) ||
-                      (f === 'Safety' && activeFaktor.includes('safety'));
+                    const activeFaktors = (requestData.faktor || requestData.tujuan || 'Safety')
+                      .split(',')
+                      .map((s) => s.trim().toLowerCase())
+                      .filter(Boolean);
+                    const sel = activeFaktors.some((af) => af === f.toLowerCase() || af.includes(f.toLowerCase()));
                     return (
                       <span key={f}>
                         {sel ? (

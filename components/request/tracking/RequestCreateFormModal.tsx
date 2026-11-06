@@ -11,6 +11,7 @@ import {
   Camera,
   AlertTriangle,
   CheckCircle2,
+  Check,
   Clock,
   Sparkles,
   Info,
@@ -79,6 +80,31 @@ export default function RequestCreateFormModal({
       ...p,
       seksiPemohon: seksi,
       kodeSeksi: autoCode !== 'SEKSI' && autoCode !== 'GEN' ? autoCode : p.kodeSeksi,
+    }));
+  };
+
+  const toggleFaktor = (faktor: string) => {
+    const currentList = (formData.faktor || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    let updated: string[];
+    if (currentList.some((f) => f.toLowerCase() === faktor.toLowerCase())) {
+      updated = currentList.filter((f) => f.toLowerCase() !== faktor.toLowerCase());
+    } else {
+      updated = [...currentList, faktor];
+    }
+    // Pertahankan urutan standard SEQCD: Safety, Environment, Quality, Cost, Delivery
+    const standard = DAFTAR_FAKTOR.filter((f) =>
+      updated.some((u) => u.toLowerCase() === f.toLowerCase())
+    );
+    const custom = updated.filter(
+      (u) => !DAFTAR_FAKTOR.some((f) => f.toLowerCase() === u.toLowerCase())
+    );
+    const result = [...standard, ...custom].join(', ');
+    setFormData((p) => ({
+      ...p,
+      faktor: result || 'Safety',
     }));
   };
 
@@ -434,33 +460,54 @@ export default function RequestCreateFormModal({
             </div>
           </div>
 
-          {/* Pilihan Faktor Utama (SEQCD) */}
-          <div className="space-y-1.5 pt-1">
-            <div className="flex items-center justify-between">
+          {/* Pilihan Faktor Utama (SEQCD) - Multiple Choice & Manual Input */}
+          <div className="space-y-2 pt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
               <label className="block text-xs font-semibold text-slate-700">
                 Faktor Utama (SEQCD) <span className="text-red-500">*</span>
               </label>
-              <span className="text-xs text-slate-500">Pilih salah satu faktor pendorong pekerjaan</span>
+              <span className="text-xs text-slate-500">
+                Bisa pilih lebih dari satu (Multiple Choice) atau ketik faktor khusus
+              </span>
             </div>
+
+            {/* Pilihan Multiple Choice Pills */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               {DAFTAR_FAKTOR.map((faktor) => {
-                const isSelected = (formData.faktor || 'Safety').toLowerCase() === faktor.toLowerCase();
+                const currentFaktorList = (formData.faktor || '')
+                  .split(',')
+                  .map((s) => s.trim().toLowerCase())
+                  .filter(Boolean);
+                const isSelected = currentFaktorList.includes(faktor.toLowerCase());
                 return (
                   <button
                     key={faktor}
                     type="button"
-                    onClick={() => setFormData((p) => ({ ...p, faktor }))}
+                    onClick={() => toggleFaktor(faktor)}
                     className={`px-3 py-2.5 rounded-lg border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       isSelected
                         ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300'
                     }`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-emerald-400' : 'bg-slate-300'}`} />
+                    <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-emerald-400' : 'bg-slate-300'}`} />
                     <span>{faktor}</span>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400" />}
                   </button>
                 );
               })}
+            </div>
+
+            {/* Input Nilai Faktor Gabungan */}
+            <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
+              <span className="text-xs font-semibold text-slate-600 shrink-0">Input Faktor:</span>
+              <input
+                type="text"
+                value={formData.faktor || ''}
+                onChange={(e) => setFormData((p) => ({ ...p, faktor: e.target.value }))}
+                className="w-full h-8 px-2.5 border border-slate-300 rounded text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none font-semibold"
+                placeholder="Misal: Safety, Quality, Cost"
+              />
             </div>
           </div>
 
