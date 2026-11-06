@@ -38,6 +38,8 @@ export interface RequestFormData {
   foreman: string;
   namaAtasanSeksi: string;
   emailAtasanSeksi: string;
+  namaManajerSeksi: string;
+  emailManajerSeksi: string;
   emailMentorWorkshop: string;
   picPemohon: string;
   kontakPemohon: string;

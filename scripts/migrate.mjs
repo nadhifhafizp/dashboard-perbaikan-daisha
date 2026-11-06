@@ -122,7 +122,13 @@ async function migrate() {
         ADD COLUMN IF NOT EXISTS "hasilCheckPemohon" VARCHAR(100),
         ADD COLUMN IF NOT EXISTS "schedulePlanning" TEXT,
         ADD COLUMN IF NOT EXISTS "scheduleActual" TEXT,
-        ADD COLUMN IF NOT EXISTS "alasanPending" TEXT
+        ADD COLUMN IF NOT EXISTS "alasanPending" TEXT,
+        ADD COLUMN IF NOT EXISTS "namaManajerSeksi" VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS "emailManajerSeksi" VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS "statusApprovalManajerSeksi" VARCHAR(50) DEFAULT 'PENDING',
+        ADD COLUMN IF NOT EXISTS "ttdManajerSeksi" TEXT,
+        ADD COLUMN IF NOT EXISTS "waktuApprovalManajerSeksi" TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS "catatanManajerSeksi" TEXT
     `;
 
     // 4. Indeks Performa

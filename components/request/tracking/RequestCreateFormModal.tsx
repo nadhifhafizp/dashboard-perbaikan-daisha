@@ -264,8 +264,8 @@ export default function RequestCreateFormModal({
           </div>
         </section>
 
-        {/* BAGIAN 2: Persetujuan Atasan Seksi */}
-        <section className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+        {/* BAGIAN 2: Persetujuan Atasan Seksi (2 Tahap: Spv & Manajer) */}
+        <section className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3.5">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-red-100 text-red-700 flex items-center justify-center font-bold text-xs">
               2
@@ -273,56 +273,123 @@ export default function RequestCreateFormModal({
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-red-600" />
-                <span>2. Persetujuan Spv Seksi (Approval Digital)</span>
+                <span>2. Persetujuan Atasan Seksi (Approval Digital Bertingkat)</span>
               </h3>
               <p className="text-xs text-slate-500">
-                Tautan persetujuan tanda tangan digital akan dibuat otomatis untuk Spv (Supervisor) Seksi Anda.
+                Sesuai formulir standar, permohonan memerlukan 2 tanda tangan Atasan Seksi: Supervisor (Spv) dan Manajer Seksi.
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Nama Spv (Supervisor Seksi) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.namaAtasanSeksi}
-                onChange={(e) =>
-                  setFormData((p) => ({
-                    ...p,
-                    namaAtasanSeksi: e.target.value,
-                    foreman: e.target.value,
-                  }))
-                }
-                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
-                placeholder="Contoh: Bpk. Budi Santoso (Spv)"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Email Atasan Seksi <span className="text-slate-400 font-normal">(Untuk Notifikasi Approval)</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  value={formData.emailAtasanSeksi}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, emailAtasanSeksi: e.target.value }))
-                  }
-                  className="w-full h-10 pl-3 pr-8 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
-                  placeholder="atasan.seksi@bridgestone.com"
-                />
-                <Mail className="w-4 h-4 text-slate-400 absolute right-2.5 top-3" />
+          <div className="space-y-3">
+            {/* Card 1: Spv Seksi */}
+            <div className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-md bg-amber-100 text-amber-800 flex items-center justify-center text-[11px] font-bold">1</span>
+                  <span>Persetujuan 1: Supervisor (Spv) Seksi</span>
+                </span>
+                <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 font-bold px-1.5 py-0.5 rounded">
+                  Tahap 1
+                </span>
               </div>
-              <p className="text-xs text-slate-600 mt-1">
-                Tautan persetujuan juga dapat disalin atau dibagikan via WhatsApp setelah form disimpan.
-              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Nama Spv (Supervisor Seksi) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.namaAtasanSeksi}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        namaAtasanSeksi: e.target.value,
+                        foreman: e.target.value,
+                      }))
+                    }
+                    className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none font-medium"
+                    placeholder="Contoh: Bpk. Budi Santoso (Spv)"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Email Spv Seksi <span className="text-slate-400 font-normal">(Untuk Notifikasi Link)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={formData.emailAtasanSeksi}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, emailAtasanSeksi: e.target.value }))
+                      }
+                      className="w-full h-10 pl-3 pr-8 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                      placeholder="spv.seksi@bridgestone.com"
+                    />
+                    <Mail className="w-4 h-4 text-slate-400 absolute right-2.5 top-3" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Manajer Seksi */}
+            <div className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center text-[11px] font-bold">2</span>
+                  <span>Persetujuan 2: Manajer Seksi ({formData.kodeSeksi || 'Pemohon'})</span>
+                </span>
+                <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-1.5 py-0.5 rounded">
+                  Tahap 2
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Nama Manajer Seksi <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.namaManajerSeksi}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        namaManajerSeksi: e.target.value,
+                      }))
+                    }
+                    className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none font-medium"
+                    placeholder="Contoh: Bpk. Haryono (Manajer)"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Email Manajer Seksi <span className="text-slate-400 font-normal">(Untuk Notifikasi Link)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={formData.emailManajerSeksi}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, emailManajerSeksi: e.target.value }))
+                      }
+                      className="w-full h-10 pl-3 pr-8 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                      placeholder="manajer.seksi@bridgestone.com"
+                    />
+                    <Mail className="w-4 h-4 text-slate-400 absolute right-2.5 top-3" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+          <p className="text-xs text-slate-500 italic mt-1">
+            * Alur otomatis: Form pertama dikirim ke Spv Seksi. Setelah Spv menandatangani, link persetujuan otomatis diteruskan ke Manajer Seksi sebelum masuk ke bengkel.
+          </p>
         </section>
 
         {/* BAGIAN 3: Detail Permohonan Pekerjaan */}

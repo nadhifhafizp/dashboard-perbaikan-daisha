@@ -6,6 +6,7 @@
 export type FlowStepCode =
   | 'STEP_1_SUBMITTED'
   | 'STEP_2_WAITING_ATASAN_SEKSI'
+  | 'STEP_2B_WAITING_MANAJER_SEKSI'
   | 'STEP_3_DITERIMA_WORKSHOP'
   | 'STEP_4_EVALUASI_WORKSHOP'
   | 'STEP_5_MENUNGGU_ATASAN_SPROJECT'
@@ -37,11 +38,20 @@ export const WORKFLOW_STEPS: Record<FlowStepCode, FlowStepInfo> = {
   STEP_2_WAITING_ATASAN_SEKSI: {
     code: 'STEP_2_WAITING_ATASAN_SEKSI',
     order: 2,
-    label: 'Menunggu Assign Atasan Seksi',
-    actor: 'Atasan Seksi Pemohon',
-    description: 'Link persetujuan telah dikirim ke Atasan Seksi untuk ditandatangani.',
+    label: 'Menunggu Assign Spv Seksi',
+    actor: 'Spv Seksi Pemohon',
+    description: 'Link persetujuan telah dikirim ke Supervisor (Spv) Seksi untuk ditandatangani.',
     badgeBg: 'bg-amber-50 border border-amber-200',
     badgeColor: 'text-amber-800',
+  },
+  STEP_2B_WAITING_MANAJER_SEKSI: {
+    code: 'STEP_2B_WAITING_MANAJER_SEKSI',
+    order: 2,
+    label: 'Menunggu Assign Manajer Seksi',
+    actor: 'Manajer Seksi Pemohon',
+    description: 'Form telah disetujui Spv Seksi dan sedang menunggu persetujuan Manajer Seksi.',
+    badgeBg: 'bg-orange-50 border border-orange-200',
+    badgeColor: 'text-orange-800',
   },
   STEP_3_DITERIMA_WORKSHOP: {
     code: 'STEP_3_DITERIMA_WORKSHOP',

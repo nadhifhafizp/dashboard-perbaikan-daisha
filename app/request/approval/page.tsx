@@ -31,15 +31,19 @@ function ApprovalContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
-  const roleParam = searchParams.get('role'); // 'seksi' | 'special_project'
+  const roleParam = searchParams.get('role'); // 'spv_seksi' | 'manajer_seksi' | 'seksi' | 'special_project'
 
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [requestData, setRequestData] = useState<SectionRequestFull | null>(null);
 
-  // Active Role State ('seksi' vs 'special_project')
-  const [activeRole, setActiveRole] = useState<'seksi' | 'special_project'>(
-    roleParam === 'special_project' ? 'special_project' : 'seksi'
+  // Active Role State ('spv_seksi' vs 'manajer_seksi' vs 'special_project')
+  const [activeRole, setActiveRole] = useState<'spv_seksi' | 'manajer_seksi' | 'special_project'>(
+    roleParam === 'special_project'
+      ? 'special_project'
+      : roleParam === 'manajer_seksi'
+      ? 'manajer_seksi'
+      : 'spv_seksi'
   );
 
   // Form Approval Action
@@ -82,10 +86,18 @@ function ApprovalContent() {
           // Determine initial role
           const isSPTarget =
             roleParam === 'special_project' ||
-            (req.statusApprovalAtasanSeksi === 'APPROVED' &&
+            ((req.statusApprovalAtasanSeksi === 'APPROVED' &&
+              (req.statusApprovalManajerSeksi === 'APPROVED' || !req.namaManajerSeksi)) &&
               (req.flowStep === 'STEP_5_MENUNGGU_ATASAN_SPROJECT' ||
                 req.status === 'Menunggu Assign S.Project' ||
                 req.status === 'Pending: Menunggu Assign S.Project'));
+
+          const isManajerTarget =
+            roleParam === 'manajer_seksi' ||
+            (req.statusApprovalAtasanSeksi === 'APPROVED' &&
+              req.statusApprovalManajerSeksi !== 'APPROVED' &&
+              Boolean(req.namaManajerSeksi) &&
+              !isSPTarget);
 
           if (isSPTarget) {
             setActiveRole('special_project');
@@ -100,8 +112,16 @@ function ApprovalContent() {
             } else if (req.flowStep === 'STEP_5_DITOLAK') {
               setActionDone('REJECTED');
             }
+          } else if (isManajerTarget) {
+            setActiveRole('manajer_seksi');
+            setNamaAtasan(req.namaManajerSeksi || '');
+            if (req.statusApprovalManajerSeksi === 'APPROVED') {
+              setActionDone('APPROVED');
+            } else if (req.statusApprovalManajerSeksi === 'REJECTED') {
+              setActionDone('REJECTED');
+            }
           } else {
-            setActiveRole('seksi');
+            setActiveRole('spv_seksi');
             setNamaAtasan(req.namaAtasanSeksi || req.foreman || '');
             if (req.statusApprovalAtasanSeksi === 'APPROVED') {
               setActionDone('APPROVED');
@@ -123,7 +143,7 @@ function ApprovalContent() {
   }, [token, roleParam]);
 
   // Switch role handler for simulation
-  const handleSwitchRole = (newRole: 'seksi' | 'special_project') => {
+  const handleSwitchRole = (newRole: 'spv_seksi' | 'manajer_seksi' | 'special_project') => {
     setActiveRole(newRole);
     if (!requestData) return;
     if (newRole === 'special_project') {
@@ -136,6 +156,15 @@ function ApprovalContent() {
       ) {
         setActionDone('APPROVED');
       } else if (requestData.flowStep === 'STEP_5_DITOLAK') {
+        setActionDone('REJECTED');
+      } else {
+        setActionDone(null);
+      }
+    } else if (newRole === 'manajer_seksi') {
+      setNamaAtasan(requestData.namaManajerSeksi || '');
+      if (requestData.statusApprovalManajerSeksi === 'APPROVED') {
+        setActionDone('APPROVED');
+      } else if (requestData.statusApprovalManajerSeksi === 'REJECTED') {
         setActionDone('REJECTED');
       } else {
         setActionDone(null);
@@ -182,10 +211,20 @@ function ApprovalContent() {
             catatan,
             ttdAtasanSpecialProject: ttdAtasanSpecialProject || undefined,
           }
+        : activeRole === 'manajer_seksi'
+        ? {
+            token,
+            role: 'manajer_seksi',
+            action: 'APPROVE',
+            namaManajerSeksi: namaAtasan || requestData?.namaManajerSeksi || 'Manajer Seksi',
+            catatan,
+            ttdManajerSeksi: ttdAtasanSeksi || undefined,
+          }
         : {
             token,
+            role: 'spv_seksi',
             action: 'APPROVE',
-            namaAtasan: namaAtasan || 'Atasan Seksi',
+            namaAtasan: namaAtasan || requestData?.namaAtasanSeksi || 'Spv Seksi',
             catatan,
             ttdAtasanSeksi: ttdAtasanSeksi || undefined,
           };
@@ -213,14 +252,23 @@ function ApprovalContent() {
               status: 'Dikerjakan',
               flowStep: 'STEP_6_DALAM_PENGERJAAN',
             });
+          } else if (activeRole === 'manajer_seksi') {
+            setRequestData({
+              ...requestData,
+              statusApprovalManajerSeksi: 'APPROVED',
+              namaManajerSeksi: namaAtasan || requestData.namaManajerSeksi,
+              ttdManajerSeksi: ttdAtasanSeksi || requestData.ttdManajerSeksi,
+              status: 'Pending: Menunggu Evaluasi Workshop',
+              flowStep: 'STEP_3_DITERIMA_WORKSHOP',
+            });
           } else {
             setRequestData({
               ...requestData,
               statusApprovalAtasanSeksi: 'APPROVED',
               foreman: namaAtasan || requestData.foreman,
               ttdAtasanSeksi: ttdAtasanSeksi || requestData.ttdAtasanSeksi,
-              status: 'Pending: Menunggu Evaluasi Workshop',
-              flowStep: 'STEP_3_DITERIMA_WORKSHOP',
+              status: requestData.namaManajerSeksi ? 'Menunggu Assign Manajer Seksi' : 'Pending: Menunggu Evaluasi Workshop',
+              flowStep: requestData.namaManajerSeksi ? 'STEP_2B_WAITING_MANAJER_SEKSI' : 'STEP_3_DITERIMA_WORKSHOP',
             });
           }
         }
@@ -253,10 +301,19 @@ function ApprovalContent() {
             namaAtasan: namaAtasan || 'Manager Special Project (8236)',
             alasanTolak,
           }
+        : activeRole === 'manajer_seksi'
+        ? {
+            token,
+            role: 'manajer_seksi',
+            action: 'REJECT',
+            namaManajerSeksi: namaAtasan || requestData?.namaManajerSeksi || 'Manajer Seksi',
+            alasanTolak,
+          }
         : {
             token,
+            role: 'spv_seksi',
             action: 'REJECT',
-            namaAtasan: namaAtasan || 'Atasan Seksi',
+            namaAtasan: namaAtasan || requestData?.namaAtasanSeksi || 'Spv Seksi',
             alasanTolak,
           };
 
@@ -348,7 +405,9 @@ function ApprovalContent() {
               <span className="text-xs text-slate-500 font-mono">
                 {isSpecialProject
                   ? 'Persetujuan & Assign Atasan Special Project (8236)'
-                  : 'Persetujuan Formulir Permohonan Seksi Resmi'}
+                  : activeRole === 'manajer_seksi'
+                  ? `Persetujuan Manajer Seksi (${requestData?.kodeSeksi || 'Pemohon'})`
+                  : 'Persetujuan Supervisor (Spv) Seksi'}
               </span>
             </div>
           </div>
@@ -358,30 +417,45 @@ function ApprovalContent() {
             <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold shadow-2xs">
               <button
                 type="button"
-                onClick={() => handleSwitchRole('seksi')}
-                className={`px-2.5 py-1 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
-                  !isSpecialProject
+                onClick={() => handleSwitchRole('spv_seksi')}
+                className={`px-2 py-1 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
+                  activeRole === 'spv_seksi'
                     ? 'bg-white text-slate-900 shadow-2xs font-bold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <User className="w-3.5 h-3.5" />
-                <span>Atasan Seksi</span>
+                <User className="w-3.5 h-3.5 text-amber-600" />
+                <span>1. Spv Seksi</span>
                 {requestData?.statusApprovalAtasanSeksi === 'APPROVED' && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Sudah Disetujui Seksi" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Sudah Disetujui Spv" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSwitchRole('manajer_seksi')}
+                className={`px-2 py-1 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
+                  activeRole === 'manajer_seksi'
+                    ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>2. Manajer Seksi</span>
+                {requestData?.statusApprovalManajerSeksi === 'APPROVED' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Sudah Disetujui Manajer" />
                 )}
               </button>
               <button
                 type="button"
                 onClick={() => handleSwitchRole('special_project')}
-                className={`px-2.5 py-1 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2 py-1 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
                   isSpecialProject
                     ? 'bg-purple-600 text-white shadow-2xs font-bold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Atasan Special Project</span>
+                <span>3. Special Project</span>
                 {requestData?.keputusan8210 && requestData?.keputusan8210 !== 'DITOLAK' && (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="Sudah Di-assign S.Project" />
                 )}
@@ -504,6 +578,21 @@ function ApprovalContent() {
               </p>
             </div>
           </div>
+        ) : activeRole === 'manajer_seksi' ? (
+          <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-300 shadow-sm flex items-start gap-3.5">
+            <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-emerald-950">
+                Persetujuan Tahap 2: Manajer Seksi ({requestData?.kodeSeksi || 'Pemohon'})
+              </h2>
+              <p className="text-xs text-emerald-900 mt-0.5 leading-relaxed">
+                Supervisor Seksi (<strong className="text-slate-900">{requestData?.namaAtasanSeksi || requestData?.foreman}</strong>) telah menandatangani persetujuan awal.
+                Silakan tinjau lembar formulir di bawah ini, kemudian cantumkan tanda tangan digital Anda sebagai <strong>Manajer Seksi</strong> untuk meneruskan formulir ke Workshop Produksi.
+              </p>
+            </div>
+          </div>
         ) : (
           <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-300 shadow-sm flex items-start gap-3.5">
             <div className="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0">
@@ -511,10 +600,10 @@ function ApprovalContent() {
             </div>
             <div>
               <h2 className="text-sm font-bold text-amber-950">
-                Permintaan Persetujuan & Tanda Tangan (Assign) Formulir Seksi
+                Persetujuan Tahap 1: Supervisor (Spv) Seksi Pemohon
               </h2>
               <p className="text-xs text-amber-900 mt-0.5 leading-relaxed">
-                PIC Seksi pemohon (<strong className="text-slate-900">{requestData?.picPemohon}</strong>) meminta persetujuan Anda sebagai Atasan Seksi.
+                PIC Seksi pemohon (<strong className="text-slate-900">{requestData?.picPemohon}</strong>) meminta persetujuan Anda sebagai <strong>Supervisor Seksi</strong>.
                 Silakan tinjau lembar formulir di bawah ini, kemudian klik tombol <strong>&quot;Setujui &amp; Tanda Tangani (Assign)&quot;</strong>.
               </p>
             </div>
@@ -631,12 +720,20 @@ function ApprovalContent() {
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-300 shadow-md space-y-4">
             <div className="flex items-center gap-2">
               <ShieldCheck
-                className={`w-5 h-5 ${isSpecialProject ? 'text-purple-600' : 'text-red-600'}`}
+                className={`w-5 h-5 ${
+                  isSpecialProject
+                    ? 'text-purple-600'
+                    : activeRole === 'manajer_seksi'
+                    ? 'text-emerald-600'
+                    : 'text-amber-600'
+                }`}
               />
               <h3 className="text-sm font-bold text-slate-900">
                 {isSpecialProject
                   ? 'Tindakan Atasan Special Project (8236)'
-                  : 'Tindakan Atasan Seksi Pemohon'}
+                  : activeRole === 'manajer_seksi'
+                  ? `Tindakan Persetujuan Manajer Seksi (${requestData?.kodeSeksi || 'Pemohon'})`
+                  : 'Tindakan Persetujuan Supervisor (Spv) Seksi'}
               </h3>
             </div>
 
@@ -694,6 +791,46 @@ function ApprovalContent() {
                   />
                 </div>
               </div>
+            ) : activeRole === 'manajer_seksi' ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Nama Manajer Seksi ({requestData?.kodeSeksi || 'Pemohon'}) *
+                    </label>
+                    <input
+                      type="text"
+                      value={namaAtasan}
+                      onChange={(e) => setNamaAtasan(e.target.value)}
+                      className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-emerald-600 outline-none font-medium"
+                      placeholder="Nama Manajer Seksi Pemohon"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Catatan Manajer Seksi (Opsional)
+                    </label>
+                    <input
+                      type="text"
+                      value={catatan}
+                      onChange={(e) => setCatatan(e.target.value)}
+                      className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-emerald-600 outline-none"
+                      placeholder="Catatan persetujuan manajer untuk bengkel"
+                    />
+                  </div>
+                </div>
+
+                {/* Signature Pad Manajer Seksi */}
+                <div className="pt-2 border-t border-slate-100">
+                  <SignaturePad
+                    value={ttdAtasanSeksi}
+                    onChange={setTtdAtasanSeksi}
+                    signerName={namaAtasan || 'Manajer Seksi'}
+                    roleLabel={`Tanda Tangan / Paraf Manajer Seksi (${requestData?.kodeSeksi || 'Pemohon'})`}
+                  />
+                </div>
+              </div>
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -705,7 +842,7 @@ function ApprovalContent() {
                       type="text"
                       value={namaAtasan}
                       onChange={(e) => setNamaAtasan(e.target.value)}
-                      className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none font-medium"
+                      className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-amber-600 outline-none font-medium"
                       placeholder="Nama Spv seksi (akan dicantumkan di kotak Spv)"
                       required
                     />
@@ -718,7 +855,7 @@ function ApprovalContent() {
                       type="text"
                       value={catatan}
                       onChange={(e) => setCatatan(e.target.value)}
-                      className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-red-600 outline-none"
+                      className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-amber-600 outline-none"
                       placeholder="Catatan persetujuan untuk PIC Workshop"
                     />
                   </div>
@@ -849,10 +986,17 @@ function ApprovalContent() {
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
                     {/* Spv Seksi Pemohon */}
-                    {(ttdAtasanSeksi || requestData.ttdAtasanSeksi) ? (
+                    {activeRole === 'spv_seksi' && ttdAtasanSeksi ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
-                        src={ttdAtasanSeksi || requestData.ttdAtasanSeksi}
+                        src={ttdAtasanSeksi}
+                        alt="TTD Spv"
+                        className="max-h-12 max-w-full object-contain"
+                      />
+                    ) : requestData.ttdAtasanSeksi ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={requestData.ttdAtasanSeksi}
                         alt="TTD Spv"
                         className="max-h-12 max-w-full object-contain"
                       />
@@ -860,7 +1004,21 @@ function ApprovalContent() {
                   </div>
                   <div className="h-full flex items-center justify-center p-1">
                     {/* Manajer Pemohon */}
-                    {requestData.kodeSeksi ? (
+                    {activeRole === 'manajer_seksi' && ttdAtasanSeksi ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={ttdAtasanSeksi}
+                        alt="TTD Manajer Seksi"
+                        className="max-h-12 max-w-full object-contain"
+                      />
+                    ) : requestData.ttdManajerSeksi ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={requestData.ttdManajerSeksi}
+                        alt="TTD Manajer Seksi"
+                        className="max-h-12 max-w-full object-contain"
+                      />
+                    ) : requestData.kodeSeksi ? (
                       <span className="text-[10px] text-slate-400 font-mono italic">ACC {requestData.kodeSeksi}</span>
                     ) : null}
                   </div>
@@ -900,12 +1058,14 @@ function ApprovalContent() {
                     {requestData.drafter || requestData.picPemohon || '-'}
                   </div>
                   <div className="py-1 px-1 truncate font-bold text-emerald-800" title={requestData.foreman || requestData.namaAtasanSeksi}>
-                    {!isSpecialProject && actionDone === 'APPROVED'
+                    {activeRole === 'spv_seksi' && actionDone === 'APPROVED'
                       ? namaAtasan || requestData.foreman || 'Approved'
                       : requestData.foreman || requestData.namaAtasanSeksi || (requestData.statusApprovalAtasanSeksi === 'APPROVED' ? 'Approved' : '-')}
                   </div>
-                  <div className="py-1 px-1 truncate" title={requestData.seksiPemohon}>
-                    {requestData.seksiPemohon || '-'}
+                  <div className="py-1 px-1 truncate font-bold text-emerald-800" title={requestData.namaManajerSeksi || requestData.seksiPemohon}>
+                    {activeRole === 'manajer_seksi' && actionDone === 'APPROVED'
+                      ? namaAtasan || requestData.namaManajerSeksi || 'Approved'
+                      : requestData.namaManajerSeksi || (requestData.statusApprovalManajerSeksi === 'APPROVED' ? 'Approved' : (requestData.seksiPemohon || '-'))}
                   </div>
                   <div className="py-1 px-1 truncate" title={requestData.picBengkel}>
                     {requestData.picBengkel || '-'}

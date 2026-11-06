@@ -237,6 +237,12 @@ export async function GET(request: Request) {
         sr."flowStep",
         sr."alasanPending",
         sr."ttdAtasanSeksi",
+        sr."namaManajerSeksi",
+        sr."emailManajerSeksi",
+        sr."statusApprovalManajerSeksi",
+        sr."ttdManajerSeksi",
+        sr."waktuApprovalManajerSeksi",
+        sr."catatanManajerSeksi",
         sr."ttdAdminWorkshop",
         sr."ttdAtasanSpecialProject",
         COALESCE(sr."materials", '[]'::jsonb) as materials
@@ -314,6 +320,8 @@ export async function POST(request: Request) {
       // Data Atasan & Mentor
       const emailAtasanSeksi = sanitizeText(body.emailAtasanSeksi, 255);
       const namaAtasanSeksi = sanitizeText(body.namaAtasanSeksi || body.foreman, 100);
+      const emailManajerSeksi = sanitizeText(body.emailManajerSeksi, 255);
+      const namaManajerSeksi = sanitizeText(body.namaManajerSeksi, 100);
       const emailMentorWorkshop = sanitizeText(body.emailMentorWorkshop, 255) || 'mentor.workshop@bridgestone.com';
 
       if (!seksiPemohon || (!perihal && !namaBarang)) {
@@ -353,8 +361,8 @@ export async function POST(request: Request) {
           perihal, "namaMachine", faktor, tujuan, alasan, "kodeSeksi",
           drafter, foreman, "keadaanSekarang", "fotoSebelum",
           "rencanaTindakan", "fotoSesudah", "targetHasil", "penjelasanPelaksanaan",
-          "emailAtasanSeksi", "namaAtasanSeksi", "emailMentorWorkshop",
-          "approvalToken", "statusApprovalAtasanSeksi", "flowStep",
+          "emailAtasanSeksi", "namaAtasanSeksi", "emailManajerSeksi", "namaManajerSeksi", "emailMentorWorkshop",
+          "approvalToken", "statusApprovalAtasanSeksi", "statusApprovalManajerSeksi", "flowStep",
           status, "nomorSurat", "dibuatOleh", "waktuDibuat", "waktuUpdate"
         )
         VALUES (
@@ -384,11 +392,14 @@ export async function POST(request: Request) {
           ${penjelasanPelaksanaan || null},
           ${emailAtasanSeksi || null},
           ${namaAtasanSeksi || null},
+          ${emailManajerSeksi || null},
+          ${namaManajerSeksi || null},
           ${emailMentorWorkshop || null},
           ${approvalToken},
           'PENDING',
+          'PENDING',
           'STEP_2_WAITING_ATASAN_SEKSI',
-          'Menunggu Assign Atasan Seksi',
+          'Menunggu Assign Spv Seksi',
           null,
           ${auth.user!.username},
           NOW(),

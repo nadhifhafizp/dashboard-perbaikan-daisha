@@ -62,8 +62,12 @@ export interface SectionRequestFull {
   // Flowchart Workflow fields
   emailAtasanSeksi?: string;
   namaAtasanSeksi?: string;
+  emailManajerSeksi?: string;
+  namaManajerSeksi?: string;
   statusApprovalAtasanSeksi?: string;
+  statusApprovalManajerSeksi?: string;
   waktuApprovalAtasanSeksi?: string;
+  waktuApprovalManajerSeksi?: string;
   catatanAtasanSeksi?: string;
   approvalToken?: string;
   emailMentorWorkshop?: string;
@@ -363,7 +367,7 @@ export default function BridgestoneRequestPrintModal({
                 ${requestData.foreman || requestData.namaAtasanSeksi || '-'}
               </td>
               <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${requestData.seksiPemohon || '-'}
+                ${requestData.namaManajerSeksi || requestData.seksiPemohon || '-'}
               </td>
               <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 ${requestData.picBengkel || '-'}
@@ -726,8 +730,8 @@ export default function BridgestoneRequestPrintModal({
                   <div className="py-1 px-1 truncate font-bold text-emerald-800" title={requestData.foreman || requestData.namaAtasanSeksi}>
                     {requestData.foreman || requestData.namaAtasanSeksi || '-'}
                   </div>
-                  <div className="py-1 px-1 truncate" title={requestData.seksiPemohon}>
-                    {requestData.seksiPemohon || '-'}
+                  <div className="py-1 px-1 truncate font-bold text-emerald-800" title={requestData.namaManajerSeksi || requestData.seksiPemohon}>
+                    {requestData.namaManajerSeksi || requestData.seksiPemohon || '-'}
                   </div>
                   <div className="py-1 px-1 truncate" title={requestData.picBengkel}>
                     {requestData.picBengkel || '-'}

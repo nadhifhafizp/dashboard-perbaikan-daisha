@@ -9,11 +9,12 @@ import type postgres from 'postgres';
 export interface NotificationPayload {
   requestId: number;
   nomorRequest: string;
-  targetRole: 'ADMIN' | 'USER_SEKSI' | 'ATASAN_SEKSI' | 'MENTOR';
+  targetRole: 'ADMIN' | 'USER_SEKSI' | 'ATASAN_SEKSI' | 'MANAJER_SEKSI' | 'MENTOR';
   targetEmail?: string;
   targetUser?: string;
   tipe:
     | 'APPROVAL_ATASAN_SEKSI'
+    | 'APPROVAL_MANAJER_SEKSI'
     | 'ASSIGN_DITERIMA_WORKSHOP'
     | 'ASSIGN_ATASAN_SPROJECT'
     | 'INFO_TOLAK_SEKSI'

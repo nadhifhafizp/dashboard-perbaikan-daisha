@@ -34,6 +34,7 @@ const FLOW_ORDER: FlowStepCode[] = [
 const STEP_ICONS: Record<string, React.ReactNode> = {
   STEP_1_SUBMITTED: <FileText className="w-3.5 h-3.5" />,
   STEP_2_WAITING_ATASAN_SEKSI: <UserCheck className="w-3.5 h-3.5" />,
+  STEP_2B_WAITING_MANAJER_SEKSI: <UserCheck className="w-3.5 h-3.5" />,
   STEP_3_DITERIMA_WORKSHOP: <Inbox className="w-3.5 h-3.5" />,
   STEP_4_EVALUASI_WORKSHOP: <ClipboardCheck className="w-3.5 h-3.5" />,
   STEP_5_MENUNGGU_ATASAN_SPROJECT: <UserCheck className="w-3.5 h-3.5" />,

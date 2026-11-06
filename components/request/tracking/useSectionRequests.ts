@@ -16,6 +16,8 @@ const INITIAL_FORM_DATA: RequestFormData = {
   foreman: '',
   namaAtasanSeksi: '',
   emailAtasanSeksi: '',
+  namaManajerSeksi: '',
+  emailManajerSeksi: '',
   emailMentorWorkshop: 'mentor.workshop@bridgestone.com',
   picPemohon: '',
   kontakPemohon: '',

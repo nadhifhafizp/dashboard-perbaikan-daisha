@@ -43,12 +43,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const token = sanitizeText(body.token, 100);
     const action = sanitizeText(body.action, 30); // 'APPROVE' | 'REJECT' | 'APPROVE_SPROJECT' | 'REJECT_SPROJECT'
-    const role = sanitizeText(body.role, 30); // 'seksi' | 'special_project'
+    const role = sanitizeText(body.role, 30); // 'spv_seksi' | 'manajer_seksi' | 'seksi' | 'special_project'
     const namaAtasan = sanitizeText(body.namaAtasan, 100);
     const namaDeptHead = sanitizeText(body.namaDeptHead, 100);
+    const namaManajerSeksi = sanitizeText(body.namaManajerSeksi, 100);
     const catatan = sanitizeText(body.catatan, 1000);
     const alasanTolak = sanitizeText(body.alasanTolak, 1000);
     const ttdAtasanSeksi = body.ttdAtasanSeksi || body.ttd ? sanitizeText(body.ttdAtasanSeksi || body.ttd, 500000) : null;
+    const ttdManajerSeksi = body.ttdManajerSeksi ? sanitizeText(body.ttdManajerSeksi, 500000) : null;
     const ttdAtasanSpecialProject = body.ttdAtasanSpecialProject || body.ttd ? sanitizeText(body.ttdAtasanSpecialProject || body.ttd, 500000) : null;
 
     if (!token) {
@@ -64,19 +66,25 @@ export async function POST(request: Request) {
       perihal: string;
       namaBarang: string;
       statusApprovalAtasanSeksi: string;
+      statusApprovalManajerSeksi: string | null;
       flowStep: string;
       status: string;
       emailMentorWorkshop: string | null;
       namaAtasanSeksi: string | null;
+      emailAtasanSeksi: string | null;
+      namaManajerSeksi: string | null;
+      emailManajerSeksi: string | null;
       keputusan8210: string | null;
       keputusan820: string | null;
+      approvalToken: string;
     }>>`
       SELECT 
         id, "nomorRequest", "nomorSurat", "seksiPemohon", "picPemohon",
-        perihal, "namaBarang", "statusApprovalAtasanSeksi",
+        perihal, "namaBarang", "statusApprovalAtasanSeksi", "statusApprovalManajerSeksi",
         "flowStep", status,
-        "emailMentorWorkshop", "namaAtasanSeksi",
-        "keputusan8210", "keputusan820"
+        "emailMentorWorkshop", "namaAtasanSeksi", "emailAtasanSeksi",
+        "namaManajerSeksi", "emailManajerSeksi",
+        "keputusan8210", "keputusan820", "approvalToken"
       FROM "SectionRequest"
       WHERE "approvalToken" = ${token}
       LIMIT 1
@@ -249,90 +257,246 @@ export async function POST(request: Request) {
       }
     }
 
-    // Jalur B: Approval Atasan Seksi Pemohon
+    // Jalur B: Approval Manajer Seksi Pemohon (Tahap 2)
+    const isManajerSeksiApproval =
+      role === 'manajer_seksi' ||
+      (current.statusApprovalAtasanSeksi === 'APPROVED' &&
+        current.statusApprovalManajerSeksi !== 'APPROVED' &&
+        !isSpecialProjectApproval);
+
+    if (isManajerSeksiApproval) {
+      if (current.statusApprovalManajerSeksi === 'APPROVED') {
+        return NextResponse.json(
+          { error: 'Formulir ini sudah disetujui oleh Manajer Seksi sebelumnya.' },
+          { status: 400 }
+        );
+      }
+
+      const manajerName = namaManajerSeksi || namaAtasan || current.namaManajerSeksi || 'Manajer Seksi';
+
+      if (action === 'APPROVE') {
+        const updated = await withTransaction(async (tx) => {
+          const [upd] = await tx<Array<{ nomorRequest: string }>>`
+            UPDATE "SectionRequest"
+            SET
+              "statusApprovalManajerSeksi" = 'APPROVED',
+              "waktuApprovalManajerSeksi" = NOW(),
+              "namaManajerSeksi" = ${manajerName},
+              "ttdManajerSeksi" = ${ttdManajerSeksi || ttdAtasanSeksi || null},
+              "catatanManajerSeksi" = ${catatan || null},
+              status = 'Pending: Menunggu Evaluasi Workshop',
+              "flowStep" = 'STEP_3_DITERIMA_WORKSHOP',
+              "waktuUpdate" = NOW()
+            WHERE id = ${current.id}
+            RETURNING *
+          `;
+
+          // Buat notifikasi otomatis untuk Admin & PIC Workshop (In-App)
+          await createInAppNotification(
+            {
+              requestId: current.id,
+              nomorRequest: current.nomorRequest,
+              targetRole: 'ADMIN',
+              tipe: 'ASSIGN_DITERIMA_WORKSHOP',
+              judul: `Request Siap Evaluasi: ${current.nomorRequest}`,
+              pesan: `Request permohonan "${current.perihal || current.namaBarang}" dari Seksi ${current.seksiPemohon} telah disetujui lengkap oleh Spv (${current.namaAtasanSeksi}) & Manajer Seksi (${manajerName}). Siap dilakukan evaluasi pekerjaan bengkel.`,
+              link: `/request`,
+            },
+            tx
+          );
+
+          // Notifikasi untuk Seksi Pemohon
+          await createInAppNotification(
+            {
+              requestId: current.id,
+              nomorRequest: current.nomorRequest,
+              targetRole: 'USER_SEKSI',
+              targetUser: current.picPemohon,
+              tipe: 'APPROVAL_MANAJER_SEKSI',
+              judul: `Request ${current.nomorRequest} Disetujui Manajer Seksi`,
+              pesan: `Manajer Seksi Anda (${manajerName}) telah menyetujui formulir request. Permohonan resmi diteruskan ke Workshop Produksi.`,
+              link: `/request`,
+            },
+            tx
+          );
+
+          return upd;
+        });
+
+        // Email notifikasi ke Admin Workshop
+        const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const adminEmailContent = buildAdminWorkshopEmailContent({
+          nomorRequest: current.nomorRequest,
+          perihal: current.perihal || current.namaBarang,
+          seksiPemohon: current.seksiPemohon,
+          picPemohon: current.picPemohon,
+          namaAtasan: `${current.namaAtasanSeksi || 'Spv'} & ${manajerName}`,
+          detailLink: `${origin}/request`,
+        });
+
+        sendEmailAsync({
+          subject: adminEmailContent.subject,
+          bodyText: adminEmailContent.bodyText,
+        });
+
+        recordAuditLog({
+          action: 'SECTION_REQUEST_APPROVE_MANAJER_SEKSI',
+          ip,
+          status: 'SUCCESS',
+          targetId: current.nomorRequest,
+          details: `Disetujui oleh Manajer Seksi: ${manajerName}`,
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: `Formulir ${current.nomorRequest} berhasil disetujui oleh Manajer Seksi dan diteruskan ke Admin Workshop.`,
+          request: updated,
+          adminWorkshopEmail: adminEmailContent,
+        });
+      }
+
+      if (action === 'REJECT') {
+        const updated = await withTransaction(async (tx) => {
+          const [upd] = await tx<Array<{ nomorRequest: string }>>`
+            UPDATE "SectionRequest"
+            SET
+              "statusApprovalManajerSeksi" = 'REJECTED',
+              "waktuApprovalManajerSeksi" = NOW(),
+              "alasanTolak" = ${alasanTolak || catatan || 'Ditolak oleh Manajer Seksi Pemohon'},
+              status = 'Ditolak Manajer Seksi',
+              "flowStep" = 'STEP_5_DITOLAK',
+              "waktuUpdate" = NOW()
+            WHERE id = ${current.id}
+            RETURNING *
+          `;
+
+          await createInAppNotification(
+            {
+              requestId: current.id,
+              nomorRequest: current.nomorRequest,
+              targetRole: 'USER_SEKSI',
+              targetUser: current.picPemohon,
+              tipe: 'INFO_TOLAK_SEKSI',
+              judul: `Request ${current.nomorRequest} Ditolak Manajer Seksi`,
+              pesan: `Permohonan request ditolak oleh Manajer Seksi (${manajerName}). Alasan: ${alasanTolak || catatan || '-'}`,
+              link: `/request`,
+            },
+            tx
+          );
+
+          return upd;
+        });
+
+        recordAuditLog({
+          action: 'SECTION_REQUEST_REJECT_MANAJER_SEKSI',
+          ip,
+          status: 'SUCCESS',
+          targetId: current.nomorRequest,
+          details: `Ditolak oleh Manajer Seksi: ${manajerName}. Alasan: ${alasanTolak || catatan || '-'}`,
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: `Formulir ${current.nomorRequest} ditolak oleh Manajer Seksi.`,
+          request: updated,
+        });
+      }
+    }
+
+    // Jalur C: Approval Supervisor (Spv) Seksi Pemohon (Tahap 1)
     if (current.statusApprovalAtasanSeksi === 'APPROVED') {
       return NextResponse.json({
-        error: 'Formulir ini sudah disetujui sebelumnya dan sedang diproses di Workshop.',
+        error: 'Formulir ini sudah disetujui oleh Supervisor Seksi sebelumnya.',
       }, { status: 400 });
     }
 
-    const reviewerName = namaAtasan || current.namaAtasanSeksi || 'Atasan Seksi';
+    const spvName = namaAtasan || current.namaAtasanSeksi || 'Supervisor Seksi';
 
     if (action === 'APPROVE') {
-      // 1. Update status request & buat notifikasi dalam 1 transaksi atomik aman
+      const hasManajer = Boolean(current.namaManajerSeksi || current.emailManajerSeksi);
+
       const updated = await withTransaction(async (tx) => {
         const [upd] = await tx<Array<{ nomorRequest: string }>>`
           UPDATE "SectionRequest"
           SET
             "statusApprovalAtasanSeksi" = 'APPROVED',
             "waktuApprovalAtasanSeksi" = NOW(),
-            "foreman" = ${reviewerName},
-            "namaAtasanSeksi" = ${reviewerName},
+            "foreman" = ${spvName},
+            "namaAtasanSeksi" = ${spvName},
             "ttdAtasanSeksi" = ${ttdAtasanSeksi || null},
             "catatanAtasanSeksi" = ${catatan || null},
-            status = 'Pending: Menunggu Evaluasi Workshop',
-            "flowStep" = 'STEP_3_DITERIMA_WORKSHOP',
+            status = ${hasManajer ? 'Menunggu Assign Manajer Seksi' : 'Pending: Menunggu Evaluasi Workshop'},
+            "flowStep" = ${hasManajer ? 'STEP_2B_WAITING_MANAJER_SEKSI' : 'STEP_3_DITERIMA_WORKSHOP'},
             "waktuUpdate" = NOW()
           WHERE id = ${current.id}
           RETURNING *
         `;
 
-        // 2. Buat notifikasi otomatis untuk Admin & PIC Workshop (In-App)
-        await createInAppNotification({
-          requestId: current.id,
-          nomorRequest: current.nomorRequest,
-          targetRole: 'ADMIN',
-          tipe: 'ASSIGN_DITERIMA_WORKSHOP',
-          judul: `Request Baru Diterima: ${current.nomorRequest}`,
-          pesan: `Request permohonan "${current.perihal || current.namaBarang}" dari Seksi ${current.seksiPemohon} telah disetujui & ditandatangani oleh ${reviewerName}. Siap dilakukan evaluasi pekerjaan (Waktu, Men Power, Sparepart, Material).`,
-          link: `/request`,
-        }, tx);
+        if (hasManajer) {
+          // Notifikasi untuk Manajer Seksi (Tahap 2)
+          await createInAppNotification({
+            requestId: current.id,
+            nomorRequest: current.nomorRequest,
+            targetRole: 'MANAJER_SEKSI',
+            targetEmail: current.emailManajerSeksi || undefined,
+            tipe: 'APPROVAL_MANAJER_SEKSI',
+            judul: `Request ${current.nomorRequest} Menunggu Persetujuan Manajer Seksi`,
+            pesan: `Spv Seksi (${spvName}) telah menandatangani formulir request "${current.perihal || current.namaBarang}". Mohon tanda tangan persetujuan Manajer Seksi.`,
+            link: `/request/approval?token=${current.approvalToken}&role=manajer_seksi`,
+          }, tx);
 
-        // 3. Notifikasi juga untuk Seksi Pemohon
-        await createInAppNotification({
-          requestId: current.id,
-          nomorRequest: current.nomorRequest,
-          targetRole: 'USER_SEKSI',
-          targetUser: current.picPemohon,
-          tipe: 'APPROVAL_ATASAN_SEKSI',
-          judul: `Request ${current.nomorRequest} Disetujui Atasan`,
-          pesan: `Atasan Anda (${reviewerName}) telah menyetujui formulir request. Dokumen otomatis diteruskan ke Admin Workshop Produksi.`,
-          link: `/request`,
-        }, tx);
+          // Notifikasi untuk PIC Pemohon
+          await createInAppNotification({
+            requestId: current.id,
+            nomorRequest: current.nomorRequest,
+            targetRole: 'USER_SEKSI',
+            targetUser: current.picPemohon,
+            tipe: 'APPROVAL_ATASAN_SEKSI',
+            judul: `Request ${current.nomorRequest} Disetujui Spv Seksi`,
+            pesan: `Spv Seksi (${spvName}) telah menandatangani form. Dokumen saat ini diteruskan ke Manajer Seksi (${current.namaManajerSeksi || 'Atasan'}) untuk persetujuan akhir seksi.`,
+            link: `/request`,
+          }, tx);
+        } else {
+          // Jika tidak ada manajer seksi terdaftar, langsung teruskan ke Workshop
+          await createInAppNotification({
+            requestId: current.id,
+            nomorRequest: current.nomorRequest,
+            targetRole: 'ADMIN',
+            tipe: 'ASSIGN_DITERIMA_WORKSHOP',
+            judul: `Request Baru Diterima: ${current.nomorRequest}`,
+            pesan: `Request permohonan "${current.perihal || current.namaBarang}" dari Seksi ${current.seksiPemohon} telah disetujui & ditandatangani oleh ${spvName}. Siap dilakukan evaluasi pekerjaan bengkel.`,
+            link: `/request`,
+          }, tx);
+
+          await createInAppNotification({
+            requestId: current.id,
+            nomorRequest: current.nomorRequest,
+            targetRole: 'USER_SEKSI',
+            targetUser: current.picPemohon,
+            tipe: 'APPROVAL_ATASAN_SEKSI',
+            judul: `Request ${current.nomorRequest} Disetujui Atasan`,
+            pesan: `Atasan Anda (${spvName}) telah menyetujui formulir request. Dokumen otomatis diteruskan ke Admin Workshop Produksi.`,
+            link: `/request`,
+          }, tx);
+        }
 
         return upd;
       });
 
-      // 4. Siapkan template email notifikasi untuk Admin Workshop
-      const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const adminEmailContent = buildAdminWorkshopEmailContent({
-        nomorRequest: current.nomorRequest,
-        perihal: current.perihal || current.namaBarang,
-        seksiPemohon: current.seksiPemohon,
-        picPemohon: current.picPemohon,
-        namaAtasan: reviewerName,
-        detailLink: `${origin}/request`,
-      });
-
-      // Kirim email notifikasi secara non-blocking (fire-and-forget) setelah transaksi berhasil di-commit
-      sendEmailAsync({
-        subject: adminEmailContent.subject,
-        bodyText: adminEmailContent.bodyText,
-      });
-
       recordAuditLog({
-        action: 'SECTION_REQUEST_APPROVE_ATASAN_SEKSI',
+        action: 'SECTION_REQUEST_APPROVE_SPV_SEKSI',
         ip,
         status: 'SUCCESS',
         targetId: current.nomorRequest,
-        details: `Disetujui oleh: ${reviewerName}`,
+        details: `Disetujui oleh Spv: ${spvName}`,
       });
 
       return NextResponse.json({
         success: true,
-        message: `Formulir ${current.nomorRequest} berhasil ditandatangani dan diteruskan ke Admin Workshop Produksi.`,
+        message: hasManajer
+          ? `Formulir ${current.nomorRequest} berhasil ditandatangani oleh Spv dan diteruskan ke Manajer Seksi.`
+          : `Formulir ${current.nomorRequest} berhasil ditandatangani dan diteruskan ke Admin Workshop.`,
         request: updated,
-        adminWorkshopEmail: adminEmailContent,
       });
     }
 
@@ -343,8 +507,8 @@ export async function POST(request: Request) {
           SET
             "statusApprovalAtasanSeksi" = 'REJECTED',
             "waktuApprovalAtasanSeksi" = NOW(),
-            "alasanTolak" = ${alasanTolak || catatan || 'Ditolak oleh atasan seksi pemohon'},
-            status = 'Ditolak Atasan Seksi',
+            "alasanTolak" = ${alasanTolak || catatan || 'Ditolak oleh Spv Seksi pemohon'},
+            status = 'Ditolak Spv Seksi',
             "flowStep" = 'STEP_5_DITOLAK',
             "waktuUpdate" = NOW()
           WHERE id = ${current.id}
@@ -357,8 +521,8 @@ export async function POST(request: Request) {
           targetRole: 'USER_SEKSI',
           targetUser: current.picPemohon,
           tipe: 'INFO_TOLAK_SEKSI',
-          judul: `Request ${current.nomorRequest} Ditolak Atasan`,
-          pesan: `Permohonan request ditolak oleh ${reviewerName}. Alasan: ${alasanTolak || catatan || '-'}`,
+          judul: `Request ${current.nomorRequest} Ditolak Spv Seksi`,
+          pesan: `Permohonan request ditolak oleh Spv Seksi (${spvName}). Alasan: ${alasanTolak || catatan || '-'}`,
           link: `/request`,
         }, tx);
 
@@ -366,16 +530,16 @@ export async function POST(request: Request) {
       });
 
       recordAuditLog({
-        action: 'SECTION_REQUEST_REJECT_ATASAN_SEKSI',
+        action: 'SECTION_REQUEST_REJECT_SPV_SEKSI',
         ip,
         status: 'SUCCESS',
         targetId: current.nomorRequest,
-        details: `Ditolak oleh: ${reviewerName}. Alasan: ${alasanTolak || catatan || '-'}`,
+        details: `Ditolak oleh Spv: ${spvName}. Alasan: ${alasanTolak || catatan || '-'}`,
       });
 
       return NextResponse.json({
         success: true,
-        message: `Formulir ${current.nomorRequest} ditolak. Pemberitahuan telah dikirim ke pemohon.`,
+        message: `Formulir ${current.nomorRequest} ditolak oleh Spv Seksi. Pemberitahuan telah dikirim ke pemohon.`,
         request: updated,
       });
     }
