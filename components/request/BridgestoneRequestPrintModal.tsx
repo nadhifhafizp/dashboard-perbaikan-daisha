@@ -177,12 +177,12 @@ export default function BridgestoneRequestPrintModal({
     }).join(' &nbsp;|&nbsp; ');
 
     const fotoSebelumHTML = requestData.fotoSebelum
-      ? `<img src="${requestData.fotoSebelum}" alt="Keadaan Sekarang" style="width: 100%; height: 380px; max-height: 390px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
-      : `<div style="height: 380px; border: 1.5px dashed #9ca3af; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #64748b; background: #fbfbfb; border-radius: 4px; gap: 4px;"><strong style="color: #475569; font-size: 12px;">(Area Foto / Sketsa Kondisi)</strong><span style="font-size: 9.5px; color: #94a3b8;">Belum ada foto terlampir</span></div>`;
+      ? `<img src="${requestData.fotoSebelum}" alt="Keadaan Sekarang" style="width: 100%; height: 320px; max-height: 325px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
+      : `<div style="height: 320px; border: 1.5px dashed #9ca3af; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #64748b; background: #fbfbfb; border-radius: 4px; gap: 4px;"><strong style="color: #475569; font-size: 12px;">(Area Foto / Sketsa Kondisi)</strong><span style="font-size: 9.5px; color: #94a3b8;">Belum ada foto terlampir</span></div>`;
 
     const fotoSesudahHTML = requestData.fotoSesudah
-      ? `<img src="${requestData.fotoSesudah}" alt="Rencana Tindakan" style="width: 100%; height: 380px; max-height: 390px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
-      : `<div style="height: 380px; border: 1.5px dashed #9ca3af; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #64748b; background: #fbfbfb; border-radius: 4px; gap: 4px;"><strong style="color: #475569; font-size: 12px;">(Area Foto / Sketsa Rencana)</strong><span style="font-size: 9.5px; color: #94a3b8;">Belum ada foto terlampir</span></div>`;
+      ? `<img src="${requestData.fotoSesudah}" alt="Rencana Tindakan" style="width: 100%; height: 320px; max-height: 325px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 3px auto;" />`
+      : `<div style="height: 320px; border: 1.5px dashed #9ca3af; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #64748b; background: #fbfbfb; border-radius: 4px; gap: 4px;"><strong style="color: #475569; font-size: 12px;">(Area Foto / Sketsa Rencana)</strong><span style="font-size: 9.5px; color: #94a3b8;">Belum ada foto terlampir</span></div>`;
 
     const isGo = (requestData.keputusan || '').toUpperCase() === 'GO';
     const isPending = (requestData.keputusan || '').toUpperCase() === 'PENDING';
@@ -448,7 +448,7 @@ export default function BridgestoneRequestPrintModal({
         </tr>
       </table>
 
-      <!-- 3. Main Detail Table: Kotak-kotak Terpisah Rapi -->
+      <!-- 3A. Perihal, Nama Machine, Tujuan, Faktor (2 Kolom Penuh 50% - 50%) -->
       <table class="table-box" style="margin-top: -1px;">
         <tr>
           <td style="width: 50%; padding: 4px 6px;">
@@ -466,6 +466,10 @@ export default function BridgestoneRequestPrintModal({
             <strong>FAKTOR :</strong> ${faktorHTML}
           </td>
         </tr>
+      </table>
+
+      <!-- 3B. Seksi, PIC, Kontak & Urgensi / Qty (3 Kolom 35% - 35% - 30%) -->
+      <table class="table-box" style="margin-top: -1px;">
         <tr>
           <td style="width: 35%; padding: 4px 6px;">
             <strong>SEKSI :</strong> ${requestData.seksiPemohon || '-'}
@@ -508,7 +512,7 @@ export default function BridgestoneRequestPrintModal({
           <td style="width: 16%; padding: 5px 4px; vertical-align: top;">
             <div style="font-weight: bold; margin-bottom: 1px; font-size: 10px;">Target Hasil :</div>
             <div style="font-size: 8px; color: #64748b; margin-bottom: 4px; line-height: 1.1;">(Pcs/Day, Rp./Month, etc)</div>
-            <div style="font-size: 9.5px; color: #111; line-height: 1.35; word-break: break-word; min-height: 400px;">
+            <div style="font-size: 9.5px; color: #111; line-height: 1.35; word-break: break-word; min-height: 340px;">
               ${requestData.targetHasil || '-'}
             </div>
           </td>
@@ -912,13 +916,13 @@ export default function BridgestoneRequestPrintModal({
                     {requestData.keadaanSekarang || requestData.catatan || '(Belum ada penjelasan keadaan sekarang)'}
                   </p>
                 </div>
-                <div className="border border-slate-300 rounded bg-slate-50 min-h-[360px] flex items-center justify-center overflow-hidden">
+                <div className="border border-slate-300 rounded bg-slate-50 min-h-[320px] flex items-center justify-center overflow-hidden">
                   {requestData.fotoSebelum ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={requestData.fotoSebelum}
                       alt="Keadaan Sekarang"
-                      className="max-h-[380px] w-full object-contain p-1"
+                      className="max-h-[330px] w-full object-contain p-1"
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center p-3 text-center gap-1.5">
@@ -937,13 +941,13 @@ export default function BridgestoneRequestPrintModal({
                     {requestData.rencanaTindakan || requestData.spesifikasi || '(Belum ada rencana tindakan)'}
                   </p>
                 </div>
-                <div className="border border-slate-300 rounded bg-slate-50 min-h-[360px] flex items-center justify-center overflow-hidden">
+                <div className="border border-slate-300 rounded bg-slate-50 min-h-[320px] flex items-center justify-center overflow-hidden">
                   {requestData.fotoSesudah ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={requestData.fotoSesudah}
                       alt="Rencana Tindakan"
-                      className="max-h-[380px] w-full object-contain p-1"
+                      className="max-h-[330px] w-full object-contain p-1"
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center p-3 text-center gap-1.5">
