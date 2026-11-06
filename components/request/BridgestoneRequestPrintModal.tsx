@@ -278,10 +278,8 @@ export default function BridgestoneRequestPrintModal({
     <!-- Top Header -->
     <table class="table-box" style="border: none;">
       <tr style="border-bottom: 1px solid #000;">
-        <td style="width: 55%; border: none;" class="header-reg">
-          Regist. No. : ENG-KP-011 (2), Issue Date : 25 April 2012
-        </td>
-        <td style="width: 45%; text-align: right; border: none;">
+        <td style="width: 50%; border: none;"></td>
+        <td style="width: 50%; text-align: right; border: none; padding-bottom: 4px;">
           <div style="display: inline-flex; align-items: center; gap: 6px;">
             <img src="${logoSrc}" class="logo-img" alt="Bridgestone" onerror="this.style.display='none'" />
             <strong style="font-size: 14px; font-weight: 900; letter-spacing: 1px; color: #000;">BRIDGESTONE</strong>
@@ -594,9 +592,6 @@ export default function BridgestoneRequestPrintModal({
             <div>
               <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <span>Dokumen Output Formulir Request Seksi</span>
-                <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-800">
-                  ENG-KP-011 (2)
-                </span>
               </h2>
               <p className="text-xs text-slate-500">
                 Pratinjau resmi standar formulir permohonan pembuatan/modifikasi Bridgestone
@@ -627,10 +622,7 @@ export default function BridgestoneRequestPrintModal({
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/70">
           <div className="printable-request-area bg-white mx-auto shadow-md border-2 border-slate-900 p-3 sm:p-5 text-slate-900 text-xs font-sans max-w-3xl">
             {/* Top Registration & Logo */}
-            <div className="flex justify-between items-center border-b border-slate-900 pb-1.5 mb-1.5">
-              <span className="text-xs text-slate-600 font-mono">
-                Regist. No. : ENG-KP-011 (2), Issue Date : 25 April 2012
-              </span>
+            <div className="flex justify-end items-center border-b border-slate-900 pb-1.5 mb-1.5">
               <div className="flex items-center gap-1.5">
                 <div className="relative w-5 h-5">
                   <Image src="/logo-bs.png" alt="BS" fill className="object-contain" />

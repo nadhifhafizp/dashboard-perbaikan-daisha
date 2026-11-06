@@ -181,7 +181,7 @@ export default function WorkshopPortalPage() {
             </div>
           </div>
 
-          {/* Card 3: Request Pembuatan Unit (ENG-KP-011) */}
+          {/* Card 3: Request Pembuatan Unit */}
           <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-xs transition flex flex-col justify-between p-5">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -189,7 +189,7 @@ export default function WorkshopPortalPage() {
                   <SendHorizonal className="w-5 h-5" />
                 </div>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                  ENG-KP-011
+                  Antar Seksi
                 </span>
               </div>
               <div>

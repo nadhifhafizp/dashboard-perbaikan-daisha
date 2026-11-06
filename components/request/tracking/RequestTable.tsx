@@ -431,7 +431,7 @@ export default function RequestTable({
                       type="button"
                       onClick={() => onOpenPrint(r)}
                       className="inline-flex items-center gap-1.5 h-10 min-h-[40px] px-3.5 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-lg border border-slate-300 transition cursor-pointer"
-                      title="Pratinjau & Cetak Dokumen ENG-KP-011"
+                      title="Pratinjau & Cetak Dokumen Resmi"
                     >
                       <Printer className="w-3.5 h-3.5 text-slate-500" />
                       <span>Cetak Form</span>

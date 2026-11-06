@@ -258,7 +258,7 @@ export default function SignaturePad({
       </div>
 
       <p className="text-xs text-slate-600">
-        Tanda tangan ini akan dicantumkan secara digital pada lembar cetak formulir resmi <strong>ENG-KP-011</strong>.
+        Tanda tangan ini akan dicantumkan secara digital pada lembar cetak formulir resmi.
       </p>
     </div>
   );

@@ -396,7 +396,7 @@ export default function EvaluasiTab({
 
           <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-purple-200">
             <span className="text-xs text-purple-900">
-              * Perubahan tersimpan secara nyata ke database PostgreSQL dan tercatat di lembar cetak formulir ENG-KP-011.
+              * Perubahan tersimpan secara nyata ke database PostgreSQL dan tercatat di lembar cetak formulir resmi.
             </span>
             <div className="flex items-center gap-2 flex-wrap">
               {requestData.approvalToken && (

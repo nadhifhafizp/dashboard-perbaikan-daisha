@@ -348,7 +348,7 @@ function ApprovalContent() {
               <span className="text-xs text-slate-500 font-mono">
                 {isSpecialProject
                   ? 'Persetujuan & Assign Atasan Special Project (8236)'
-                  : 'Persetujuan Formulir Permohonan Seksi (ENG-KP-011)'}
+                  : 'Persetujuan Formulir Permohonan Seksi Resmi'}
               </span>
             </div>
           </div>
@@ -768,14 +768,11 @@ function ApprovalContent() {
           </div>
         )}
 
-        {/* Paper Document Preview (ENG-KP-011) */}
+        {/* Paper Document Preview */}
         {requestData && (
           <div className="bg-white rounded-2xl shadow-md border-2 border-slate-900 p-4 sm:p-6 text-slate-900 text-xs font-sans space-y-3">
-            {/* Top Registration & Logo */}
-            <div className="flex justify-between items-center border-b border-slate-900 pb-1.5">
-              <span className="text-xs text-slate-600 font-mono">
-                Regist. No. : ENG-KP-011 (2), Issue Date : 25 April 2012
-              </span>
+            {/* Top Logo */}
+            <div className="flex justify-end items-center border-b border-slate-900 pb-1.5">
               <div className="flex items-center gap-1.5">
                 <div className="relative w-5 h-5">
                   <Image src="/logo-bs.png" alt="BS" fill className="object-contain" />

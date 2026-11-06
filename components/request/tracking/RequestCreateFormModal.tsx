@@ -120,7 +120,7 @@ export default function RequestCreateFormModal({
         <div className="flex-1">
           <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5">
             <Info className="w-3.5 h-3.5 text-slate-500" />
-            <span>Alur Permohonan Permintaan Kerja (ENG-KP-011):</span>
+            <span>Alur Permohonan Permintaan Kerja:</span>
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
             <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-red-200 text-red-700 font-bold shadow-2xs">
@@ -765,7 +765,7 @@ export default function RequestCreateFormModal({
           >
             <Send className="w-4 h-4" />
             <span>
-              {submitting ? 'Mengirim Formulir...' : 'Kirim Permohonan Request (ENG-KP-011)'}
+              {submitting ? 'Mengirim Formulir...' : 'Kirim Permohonan Request'}
             </span>
           </button>
         </div>
