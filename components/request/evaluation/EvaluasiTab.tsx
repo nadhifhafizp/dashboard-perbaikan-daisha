@@ -197,6 +197,68 @@ export default function EvaluasiTab({
         </div>
       </div>
 
+      {/* 4.5. Personel Special Project (Ketik Manual Nama Staff, Spv, & Manajer 8236) */}
+      <div className="p-4 rounded-xl border border-purple-200 bg-purple-50/50 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2 border-b border-purple-100 pb-2">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-purple-700" />
+            <h4 className="text-xs font-bold text-purple-950 uppercase tracking-wide">
+              Penetapan Personel Special Project (Ketik Manual)
+            </h4>
+          </div>
+          <span className="text-[11px] text-purple-800">
+            Nama akan tercetak pada kolom Special Project (Staff, Spv, Manajer 8236)
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              1. Staff (PIC Workshop)
+            </label>
+            <input
+              type="text"
+              value={formData.picBengkel || ''}
+              onChange={(e) => setFormData((p) => ({ ...p, picBengkel: e.target.value }))}
+              placeholder="Ketik nama Staff / PIC Bengkel"
+              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:border-purple-600 outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              2. Spv Special Project
+            </label>
+            <input
+              type="text"
+              value={
+                formData.keputusan8210?.startsWith('Manager Special') || formData.keputusan8210 === '8210'
+                  ? ''
+                  : formData.keputusan8210 || ''
+              }
+              onChange={(e) => setFormData((p) => ({ ...p, keputusan8210: e.target.value }))}
+              placeholder="Ketik nama Spv Special Project"
+              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:border-purple-600 outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              3. Manajer Special Project (8236)
+            </label>
+            <input
+              type="text"
+              value={
+                formData.keputusan820?.startsWith('Dept Head') || formData.keputusan820 === '820'
+                  ? ''
+                  : formData.keputusan820 || ''
+              }
+              onChange={(e) => setFormData((p) => ({ ...p, keputusan820: e.target.value }))}
+              placeholder="Ketik nama Manajer (8236)"
+              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:border-purple-600 outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* 5. BOX UTAMA ACC & ASSIGN ATASAN SPECIAL PROJECT (8236) */}
       {isWaitingSpecialProject && (
         <div className="p-4 sm:p-5 rounded-2xl border-2 border-purple-500 bg-purple-50/90 space-y-4 shadow-sm animate-scale-up">
@@ -222,25 +284,33 @@ export default function EvaluasiTab({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-purple-950 mb-1">
-                Reviewer / Manager Special Project (8236) *
+                Nama Spv Special Project *
               </label>
               <input
                 type="text"
-                value={formData.keputusan8210 || 'Manager Special Project (8236)'}
+                value={
+                  formData.keputusan8210?.startsWith('Manager Special') || formData.keputusan8210 === '8210'
+                    ? ''
+                    : formData.keputusan8210 || ''
+                }
                 onChange={(e) => setFormData((p) => ({ ...p, keputusan8210: e.target.value }))}
-                placeholder="Manager Special Project (8236)"
+                placeholder="Ketik manual nama Spv Special Project"
                 className="w-full h-10 px-3 bg-white border border-purple-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 shadow-2xs"
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-purple-950 mb-1">
-                Dept Head (8236) *
+                Nama Manajer Special Project (8236) *
               </label>
               <input
                 type="text"
-                value={formData.keputusan820 || 'Dept Head Special Project (8236)'}
+                value={
+                  formData.keputusan820?.startsWith('Dept Head') || formData.keputusan820 === '820'
+                    ? ''
+                    : formData.keputusan820 || ''
+                }
                 onChange={(e) => setFormData((p) => ({ ...p, keputusan820: e.target.value }))}
-                placeholder="Dept Head Special Project (8236)"
+                placeholder="Ketik manual nama Manajer 8236"
                 className="w-full h-10 px-3 bg-white border border-purple-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 shadow-2xs"
               />
             </div>
@@ -295,7 +365,7 @@ export default function EvaluasiTab({
           <div className="flex items-center gap-2 text-emerald-950 font-semibold">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>
-              Telah di-ACC oleh Atasan Special Project: <strong>{formData.keputusan8210 || '8236'}</strong> &amp; <strong>{formData.keputusan820 || '8236'}</strong> (Status: Dikerjakan / Tahap 6).
+              Telah di-ACC oleh Atasan Special Project: <strong>{formData.keputusan8210 || '-'}</strong> (Spv) &amp; <strong>{formData.keputusan820 || '-'}</strong> (Manajer 8236) - (Status: Dikerjakan / Tahap 6).
             </span>
           </div>
           <button

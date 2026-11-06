@@ -89,8 +89,8 @@ function ApprovalContent() {
 
           if (isSPTarget) {
             setActiveRole('special_project');
-            setNamaAtasan(req.keputusan8210 || 'Manager Special Project (8236)');
-            setNamaDeptHead(req.keputusan820 || 'Dept Head Special Project (8236)');
+            setNamaAtasan(cleanPersonName(req.keputusan8210));
+            setNamaDeptHead(cleanPersonName(req.keputusan820));
             if (
               req.flowStep === 'STEP_6_DALAM_PENGERJAAN' ||
               req.status === 'Dikerjakan' ||
@@ -127,8 +127,8 @@ function ApprovalContent() {
     setActiveRole(newRole);
     if (!requestData) return;
     if (newRole === 'special_project') {
-      setNamaAtasan(requestData.keputusan8210 || 'Manager Special Project (8236)');
-      setNamaDeptHead(requestData.keputusan820 || 'Dept Head Special Project (8236)');
+      setNamaAtasan(cleanPersonName(requestData.keputusan8210));
+      setNamaDeptHead(cleanPersonName(requestData.keputusan820));
       if (
         requestData.flowStep === 'STEP_6_DALAM_PENGERJAAN' ||
         requestData.status === 'Dikerjakan' ||
@@ -645,27 +645,27 @@ function ApprovalContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">
-                      Nama Reviewer / Manager Special Project (8236) *
+                      Nama Spv Special Project (Ketik Manual) *
                     </label>
                     <input
                       type="text"
                       value={namaAtasan}
                       onChange={(e) => setNamaAtasan(e.target.value)}
                       className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-purple-600 outline-none font-medium"
-                      placeholder="Mis: Manager Special Project (8236)"
+                      placeholder="Ketik manual nama Spv (misal: Bpk. Haryono)"
                       required
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">
-                      Nama Dept Head (8236) *
+                      Nama Manajer Special Project 8236 (Ketik Manual) *
                     </label>
                     <input
                       type="text"
                       value={namaDeptHead}
                       onChange={(e) => setNamaDeptHead(e.target.value)}
                       className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-1 focus:ring-purple-600 outline-none font-medium"
-                      placeholder="Mis: Dept Head Special Project (8236)"
+                      placeholder="Ketik manual nama Manajer (misal: Bpk. Bambang)"
                       required
                     />
                   </div>
@@ -689,7 +689,7 @@ function ApprovalContent() {
                   <SignaturePad
                     value={ttdAtasanSpecialProject}
                     onChange={setTtdAtasanSpecialProject}
-                    signerName={namaAtasan || 'Manager Special Project (8236)'}
+                    signerName={namaAtasan || 'Spv Special Project'}
                     roleLabel="Tanda Tangan / Paraf Atasan Special Project"
                   />
                 </div>
@@ -915,13 +915,13 @@ function ApprovalContent() {
                   <div className="py-1 px-1 truncate" title={requestData.picBengkel}>
                     {requestData.picBengkel || '-'}
                   </div>
-                  <div className="py-1 px-1 truncate font-bold text-purple-900" title={requestData.keputusan8210}>
-                    {requestData.keputusan8210 || '-'}
+                  <div className="py-1 px-1 truncate font-medium text-slate-800" title={cleanPersonName(requestData.keputusan8210)}>
+                    {cleanPersonName(requestData.keputusan8210) || '-'}
                   </div>
-                  <div className="py-1 px-1 truncate font-bold text-purple-900" title={requestData.keputusan820}>
+                  <div className="py-1 px-1 truncate font-medium text-slate-800" title={cleanPersonName(requestData.keputusan820)}>
                     {isSpecialProject && actionDone === 'APPROVED'
-                      ? namaDeptHead || requestData.keputusan820 || 'Approved'
-                      : requestData.keputusan820 || (isSpecialProject ? '(Pending)' : '-')}
+                      ? namaDeptHead || cleanPersonName(requestData.keputusan820) || 'Approved'
+                      : cleanPersonName(requestData.keputusan820) || (isSpecialProject ? '(Pending)' : '-')}
                   </div>
                 </div>
               </div>
@@ -1069,6 +1069,21 @@ function ApprovalContent() {
       )}
     </div>
   );
+}
+
+function cleanPersonName(val?: string | null): string {
+  if (!val) return '';
+  const trimmed = val.trim();
+  if (
+    trimmed.startsWith('Manager Special') ||
+    trimmed.startsWith('Dept Head Special') ||
+    trimmed === '8210' ||
+    trimmed === '820' ||
+    trimmed === '8236'
+  ) {
+    return '';
+  }
+  return trimmed;
 }
 
 export default function RequestApprovalPage() {

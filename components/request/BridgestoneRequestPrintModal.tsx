@@ -104,6 +104,21 @@ const TUJUAN_OPTIONS = [
   'Lain-lain',
 ];
 
+function cleanPersonName(val?: string | null): string {
+  if (!val) return '-';
+  const trimmed = val.trim();
+  if (
+    trimmed.startsWith('Manager Special') ||
+    trimmed.startsWith('Dept Head Special') ||
+    trimmed === '8210' ||
+    trimmed === '820' ||
+    trimmed === '8236'
+  ) {
+    return '-';
+  }
+  return trimmed;
+}
+
 export default function BridgestoneRequestPrintModal({
   isOpen,
   requestData,
@@ -350,10 +365,10 @@ export default function BridgestoneRequestPrintModal({
                 ${requestData.picBengkel || '-'}
               </td>
               <td style="border-right: 1px solid #000; padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${requestData.keputusan8210 || '-'}
+                ${cleanPersonName(requestData.keputusan8210)}
               </td>
               <td style="padding: 2px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${requestData.keputusan820 || '-'}
+                ${cleanPersonName(requestData.keputusan820)}
               </td>
             </tr>
           </table>
@@ -510,10 +525,10 @@ export default function BridgestoneRequestPrintModal({
             </tr>
             <tr style="height: 40px;">
               <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8px;">
-                ${requestData.keputusan8210 || ''}
+                ${cleanPersonName(requestData.keputusan8210)}
               </td>
               <td style="border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8px;">
-                ${requestData.keputusan820 || ''}
+                ${cleanPersonName(requestData.keputusan820)}
               </td>
             </tr>
             <tr>
@@ -764,11 +779,11 @@ export default function BridgestoneRequestPrintModal({
                   <div className="py-1 px-1 truncate" title={requestData.picBengkel}>
                     {requestData.picBengkel || '-'}
                   </div>
-                  <div className="py-1 px-1 truncate font-bold text-purple-900" title={requestData.keputusan8210}>
-                    {requestData.keputusan8210 || '-'}
+                  <div className="py-1 px-1 truncate font-medium text-slate-800" title={cleanPersonName(requestData.keputusan8210)}>
+                    {cleanPersonName(requestData.keputusan8210)}
                   </div>
-                  <div className="py-1 px-1 truncate font-bold text-purple-900" title={requestData.keputusan820}>
-                    {requestData.keputusan820 || '-'}
+                  <div className="py-1 px-1 truncate font-medium text-slate-800" title={cleanPersonName(requestData.keputusan820)}>
+                    {cleanPersonName(requestData.keputusan820)}
                   </div>
                 </div>
               </div>
@@ -982,8 +997,8 @@ export default function BridgestoneRequestPrintModal({
                     <div className="py-0.5">Manajer (8236)</div>
                   </div>
                   <div className="grid grid-cols-2 text-center text-xs divide-x divide-slate-900 h-10 items-end pb-1 border-b border-slate-900">
-                    <div className="truncate px-1">{requestData.keputusan8210 || '-'}</div>
-                    <div className="truncate px-1">{requestData.keputusan820 || '-'}</div>
+                    <div className="truncate px-1">{cleanPersonName(requestData.keputusan8210)}</div>
+                    <div className="truncate px-1">{cleanPersonName(requestData.keputusan820)}</div>
                   </div>
                   <div className="p-2 flex items-center justify-center gap-1.5 flex-wrap">
                     <span

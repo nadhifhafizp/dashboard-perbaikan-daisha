@@ -68,12 +68,15 @@ export async function POST(request: Request) {
       status: string;
       emailMentorWorkshop: string | null;
       namaAtasanSeksi: string | null;
+      keputusan8210: string | null;
+      keputusan820: string | null;
     }>>`
       SELECT 
         id, "nomorRequest", "nomorSurat", "seksiPemohon", "picPemohon",
         perihal, "namaBarang", "statusApprovalAtasanSeksi",
         "flowStep", status,
-        "emailMentorWorkshop", "namaAtasanSeksi"
+        "emailMentorWorkshop", "namaAtasanSeksi",
+        "keputusan8210", "keputusan820"
       FROM "SectionRequest"
       WHERE "approvalToken" = ${token}
       LIMIT 1
@@ -100,8 +103,14 @@ export async function POST(request: Request) {
         );
       }
 
-      const spReviewer = namaAtasan || 'Manager Special Project (8210)';
-      const deptHeadReviewer = namaDeptHead || 'Dept Head Special Project (820)';
+      const spReviewer =
+        namaAtasan?.trim() ||
+        (current.keputusan8210?.startsWith('Manager Special') ? '' : current.keputusan8210) ||
+        '';
+      const deptHeadReviewer =
+        namaDeptHead?.trim() ||
+        (current.keputusan820?.startsWith('Dept Head') ? '' : current.keputusan820) ||
+        '';
 
       if (action === 'APPROVE' || action === 'APPROVE_SPROJECT') {
         const updated = await withTransaction(async (tx) => {

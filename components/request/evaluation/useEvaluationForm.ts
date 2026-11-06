@@ -75,8 +75,14 @@ export function useEvaluationForm(
         komentarEstimate: requestData.komentarEstimate || '',
         komentarActual: requestData.komentarActual || '',
         keputusan: requestData.keputusan || 'GO',
-        keputusan8210: requestData.keputusan8210 || '',
-        keputusan820: requestData.keputusan820 || '',
+        keputusan8210:
+          requestData.keputusan8210?.startsWith('Manager Special') || requestData.keputusan8210 === '8210'
+            ? ''
+            : requestData.keputusan8210 || '',
+        keputusan820:
+          requestData.keputusan820?.startsWith('Dept Head') || requestData.keputusan820 === '820'
+            ? ''
+            : requestData.keputusan820 || '',
         hasilCheck: requestData.hasilCheck || '',
         hasilCheckPemohon: requestData.hasilCheckPemohon || '',
         schedulePlanning: requestData.schedulePlanning || '',
@@ -187,8 +193,8 @@ export function useEvaluationForm(
     sp820?: string,
     catatan?: string
   ) => {
-    const k8210 = sp8210 || formData.keputusan8210 || 'Manager Special Project (8210)';
-    const k820 = sp820 || formData.keputusan820 || 'Dept Head Special Project (820)';
+    const k8210 = sp8210 || formData.keputusan8210 || '';
+    const k820 = sp820 || formData.keputusan820 || '';
     const cat = catatan !== undefined ? catatan : formData.catatanAdmin;
     void handleSaveAction('ASSIGN_ATASAN_SPROJECT', {
       assignAtasanSpecialProject: true,
