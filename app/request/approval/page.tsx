@@ -1036,18 +1036,12 @@ function ApprovalContent() {
                 </div>
               </div>
 
-              <div className="p-2.5 space-y-2 flex flex-col justify-between">
-                <div>
-                  <div className="font-bold">Target Hasil :</div>
-                  <span className="text-[10px] text-slate-500 block -mt-0.5">(Pcs/Day, Rp./Month, etc)</span>
-                  <p className="text-slate-800 text-xs leading-relaxed min-h-[30px] mt-1 whitespace-pre-wrap">
-                    {requestData.targetHasil || '-'}
-                  </p>
-                </div>
-                <div className="border border-dashed border-slate-300 rounded-lg bg-slate-50 min-h-[140px] p-3 flex flex-col items-center justify-center text-center">
-                  <span className="text-xs font-semibold text-slate-700">Target Capaian</span>
-                  <span className="text-[11px] text-slate-500 mt-1">Hanya berupa uraian teks target / KPI (tanpa foto)</span>
-                </div>
+              <div className="p-2.5 space-y-2 flex flex-col">
+                <div className="font-bold">Target Hasil :</div>
+                <span className="text-[10px] text-slate-500 block -mt-1">(Pcs/Day, Rp./Month, etc)</span>
+                <p className="text-slate-800 text-xs leading-relaxed min-h-[140px] mt-1 whitespace-pre-wrap p-2 rounded bg-slate-50/50 border border-slate-200">
+                  {requestData.targetHasil || '-'}
+                </p>
               </div>
             </div>
 

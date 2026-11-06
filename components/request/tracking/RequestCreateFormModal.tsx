@@ -18,7 +18,6 @@ import {
   ShieldCheck,
   Phone,
   Layers,
-  Target,
 } from 'lucide-react';
 import { compressImageFile } from '@/lib/imageCompressor';
 import { RequestFormData, DAFTAR_SEKSI_REQUEST, DAFTAR_FAKTOR } from './types';
@@ -750,45 +749,31 @@ export default function RequestCreateFormModal({
             </div>
 
             {/* Kartu 3: Target Hasil : (Pcs/Day, Rp./Month, etc) */}
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3 flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="flex justify-between items-start gap-2">
-                  <div>
-                    <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                      <span>Target Hasil : (Target/KPI)</span>
-                    </span>
-                    <p className="text-xs text-slate-600 mt-0.5">
-                      Pcs/Day, Rp./Month, efisiensi waktu, dll
-                    </p>
-                  </div>
-                  <span className="text-xs text-blue-700 bg-blue-50 border border-blue-200 font-bold px-1.5 py-0.5 rounded shrink-0">
-                    Teks Target
+            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3 flex flex-col">
+              <div className="flex justify-between items-start gap-2">
+                <div>
+                  <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                    <span>Target Hasil : (Target/KPI)</span>
                   </span>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Pcs/Day, Rp./Month, efisiensi waktu, dll
+                  </p>
                 </div>
-
-                <textarea
-                  value={formData.targetHasil}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, targetHasil: e.target.value }))
-                  }
-                  rows={3}
-                  className="w-full p-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none resize-none leading-relaxed"
-                  placeholder="Contoh: Pengurangan downtime 30 menit/hari, efisiensi Rp. 5jt/bulan, atau peningkatan output 50 pcs/day..."
-                />
+                <span className="text-xs text-blue-700 bg-blue-50 border border-blue-200 font-bold px-1.5 py-0.5 rounded shrink-0">
+                  Teks Target
+                </span>
               </div>
 
-              <div>
-                <div className="w-full h-24 border-2 border-dashed border-blue-200 rounded-xl flex flex-col items-center justify-center bg-blue-50/50 p-3 text-center">
-                  <Target className="w-5 h-5 mb-1 text-blue-600" />
-                  <span className="text-xs font-bold text-slate-800">
-                    Hanya Input Teks Target
-                  </span>
-                  <span className="text-xs text-slate-600 mt-0.5">
-                    Tidak memerlukan upload gambar/foto
-                  </span>
-                </div>
-              </div>
+              <textarea
+                value={formData.targetHasil}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, targetHasil: e.target.value }))
+                }
+                rows={6}
+                className="w-full flex-1 min-h-[140px] p-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none resize-none leading-relaxed"
+                placeholder="Contoh: Pengurangan downtime 30 menit/hari, efisiensi Rp. 5jt/bulan, atau peningkatan output 50 pcs/day..."
+              />
             </div>
           </div>
         </section>
