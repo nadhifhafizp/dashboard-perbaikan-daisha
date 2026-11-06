@@ -11,6 +11,16 @@ export type FlowchartFilter =
 
 export const DAFTAR_SEKSI_REQUEST = [...DAFTAR_SEKSI_FOLLOWUP];
 
+export const DAFTAR_FAKTOR = [
+  'Safety',
+  'Environment',
+  'Quality',
+  'Cost',
+  'Delivery',
+] as const;
+
+export type FaktorType = (typeof DAFTAR_FAKTOR)[number];
+
 export const DAFTAR_TUJUAN = [
   'Safety',
   'Quality',
@@ -34,6 +44,7 @@ export interface RequestFormData {
   perihal: string;
   namaMachine: string;
   namaBarang: string;
+  faktor: string;
   tujuan: string;
   alasan: string;
   urgensi: string;

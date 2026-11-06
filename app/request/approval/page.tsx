@@ -23,7 +23,7 @@ import {
   DollarSign,
   Package,
 } from 'lucide-react';
-import { SectionRequestFull } from '@/components/request/BridgestoneRequestPrintModal';
+import { SectionRequestFull, FAKTOR_OPTIONS } from '@/components/request/BridgestoneRequestPrintModal';
 import { getSeksiCode } from '@/lib/nomorSurat';
 import SignaturePad from '@/components/request/SignaturePad';
 
@@ -939,24 +939,69 @@ function ApprovalContent() {
               </div>
             </div>
 
-            {/* Tujuan & Alasan */}
-            <div className="border-x border-b border-slate-900 p-2 text-xs space-y-1">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="font-bold">TUJUAN : </span>
-                  <span className="font-semibold underline">{requestData.tujuan || 'Safety'}</span>
-                  <span className="ml-2 font-normal text-slate-700">
-                    ({requestData.alasan || requestData.spesifikasi || '-'})
-                  </span>
-                </div>
-                <div className="flex gap-1.5 shrink-0">
-                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs">
-                    {requestData.urgensi || 'Normal'}
-                  </span>
-                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs">
-                    QTY: {requestData.jumlah} {requestData.satuan}
-                  </span>
-                </div>
+            {/* Tujuan & Faktor (SEQCD) - Kotak Terpisah */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-xs">
+              <div className="p-2 space-y-1">
+                <span className="font-bold">TUJUAN : </span>
+                <span className="text-slate-800">{requestData.tujuan || '-'}</span>
+              </div>
+              <div className="p-2 space-y-1">
+                <span className="font-bold">FAKTOR : </span>
+                <span className="text-slate-700">
+                  {FAKTOR_OPTIONS.map((f, idx) => {
+                    const activeFaktor = (requestData.faktor || requestData.tujuan || 'Safety').toLowerCase();
+                    const sel =
+                      activeFaktor.includes(f.toLowerCase()) ||
+                      (f === 'Safety' && activeFaktor.includes('safety'));
+                    return (
+                      <span key={f}>
+                        {sel ? (
+                          <strong className="underline underline-offset-2 font-bold text-slate-950 bg-slate-200 px-1 py-0.5 rounded border border-slate-400">
+                            {f}
+                          </strong>
+                        ) : (
+                          <span className="text-slate-600">{f}</span>
+                        )}
+                        {idx < FAKTOR_OPTIONS.length - 1 ? ' | ' : ''}
+                      </span>
+                    );
+                  })}
+                </span>
+              </div>
+            </div>
+
+            {/* Alasan Permohonan & Kuantitas / Urgensi - Kotak Terpisah */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-xs">
+              <div className="sm:col-span-8 p-2">
+                <span className="font-bold">(alasan) : </span>
+                <span className="text-slate-800">{requestData.alasan || requestData.spesifikasi || '-'}</span>
+              </div>
+              <div className="sm:col-span-4 p-2 flex items-center justify-end gap-1.5 flex-wrap">
+                <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs uppercase bg-slate-50">
+                  {requestData.faktor || 'SAFETY'}
+                </span>
+                <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs uppercase bg-slate-50">
+                  {requestData.urgensi || 'NORMAL'}
+                </span>
+                <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs bg-slate-50">
+                  QTY: {requestData.jumlah} {requestData.satuan}
+                </span>
+              </div>
+            </div>
+
+            {/* Seksi, Nama, Telp - Kotak Terpisah */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-xs">
+              <div className="p-2">
+                <span className="font-bold">SEKSI : </span>
+                <span>{requestData.seksiPemohon}</span>
+              </div>
+              <div className="p-2">
+                <span className="font-bold">NAMA : </span>
+                <span>{requestData.picPemohon || requestData.drafter || '-'}</span>
+              </div>
+              <div className="p-2">
+                <span className="font-bold">TELP. (Ext) : </span>
+                <span>{requestData.kontakPemohon || '-'}</span>
               </div>
             </div>
 

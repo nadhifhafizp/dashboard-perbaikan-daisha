@@ -192,6 +192,7 @@ export async function GET(request: Request) {
         sr."waktuSelesai",
         sr.perihal,
         sr."namaMachine",
+        sr.faktor,
         sr.tujuan,
         sr.alasan,
         sr."kodeSeksi",
@@ -295,7 +296,8 @@ export async function POST(request: Request) {
       const spesifikasi = sanitizeText(body.spesifikasi || body.rencanaTindakan, 2000);
       const jumlah = validatePositiveInt(body.jumlah || 1, 'Jumlah barang', 1, 10000).value;
       const satuan = sanitizeText(body.satuan, 20) || 'set';
-      const tujuan = sanitizeText(body.tujuan, 100) || 'Safety';
+      const faktor = sanitizeText(body.faktor, 100) || 'Safety';
+      const tujuan = sanitizeText(body.tujuan, 1000) || '';
       const alasan = sanitizeText(body.alasan, 2000);
       const urgensi = sanitizeText(body.urgensi || body.prioritas, 20) || 'Normal';
       const kodeSeksi = sanitizeText(body.kodeSeksi, 50);
@@ -348,7 +350,7 @@ export async function POST(request: Request) {
         INSERT INTO "SectionRequest" (
           "nomorRequest", "seksiPemohon", "picPemohon", "kontakPemohon",
           "namaBarang", spesifikasi, jumlah, satuan, urgensi, catatan,
-          perihal, "namaMachine", tujuan, alasan, "kodeSeksi",
+          perihal, "namaMachine", faktor, tujuan, alasan, "kodeSeksi",
           drafter, foreman, "keadaanSekarang", "fotoSebelum",
           "rencanaTindakan", "fotoSesudah", "targetHasil", "penjelasanPelaksanaan",
           "emailAtasanSeksi", "namaAtasanSeksi", "emailMentorWorkshop",
@@ -368,6 +370,7 @@ export async function POST(request: Request) {
           ${catatan || null},
           ${perihal || null},
           ${namaMachine || null},
+          ${faktor},
           ${tujuan || null},
           ${alasan || null},
           ${kodeSeksi || null},

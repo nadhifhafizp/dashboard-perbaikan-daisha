@@ -19,7 +19,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { compressImageFile } from '@/lib/imageCompressor';
-import { RequestFormData, DAFTAR_SEKSI_REQUEST, DAFTAR_TUJUAN } from './types';
+import { RequestFormData, DAFTAR_SEKSI_REQUEST, DAFTAR_FAKTOR } from './types';
 import { getSeksiCode } from '@/lib/nomorSurat';
 import { SessionPayload } from '@/lib/auth';
 import QrScannerModal from '@/components/input/QrScannerModal';
@@ -434,25 +434,54 @@ export default function RequestCreateFormModal({
             </div>
           </div>
 
-          {/* Tujuan & Kuantitas */}
+          {/* Pilihan Faktor Utama (SEQCD) */}
+          <div className="space-y-1.5 pt-1">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-slate-700">
+                Faktor Utama (SEQCD) <span className="text-red-500">*</span>
+              </label>
+              <span className="text-xs text-slate-500">Pilih salah satu faktor pendorong pekerjaan</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {DAFTAR_FAKTOR.map((faktor) => {
+                const isSelected = (formData.faktor || 'Safety').toLowerCase() === faktor.toLowerCase();
+                return (
+                  <button
+                    key={faktor}
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, faktor }))}
+                    className={`px-3 py-2.5 rounded-lg border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      isSelected
+                        ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-emerald-400' : 'bg-slate-300'}`} />
+                    <span>{faktor}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tujuan Pekerjaan (Input Teks Manual) & Kuantitas */}
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 pt-1">
             <div className="sm:col-span-6">
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Tujuan Pekerjaan
+                Tujuan Pekerjaan <span className="text-slate-400 font-normal">(Input Manual)</span>
               </label>
-              <select
+              <input
+                type="text"
                 value={formData.tujuan}
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, tujuan: e.target.value }))
                 }
-                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 bg-white focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none cursor-pointer"
-              >
-                {DAFTAR_TUJUAN.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                placeholder="Contoh: Mencegah ceceran compound saat proses transfer material"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Tuliskan target atau tujuan spesifik dari perihal permohonan
+              </p>
             </div>
 
             <div className="sm:col-span-3">

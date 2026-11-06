@@ -30,6 +30,7 @@ export interface SectionRequestFull {
   // Official form fields
   perihal?: string;
   namaMachine?: string;
+  faktor?: string;
   tujuan?: string;
   alasan?: string;
   kodeSeksi?: string;
@@ -95,14 +96,15 @@ interface BridgestoneRequestPrintModalProps {
   onClose: () => void;
 }
 
-const TUJUAN_OPTIONS = [
+export const FAKTOR_OPTIONS = [
   'Safety',
+  'Environment',
   'Quality',
-  'Peningkatan Produksi',
-  'Cost Down',
-  'Penambahan Produksi',
-  'Lain-lain',
-];
+  'Cost',
+  'Delivery',
+] as const;
+
+export const TUJUAN_OPTIONS = [...FAKTOR_OPTIONS];
 
 function cleanPersonName(val?: string | null): string {
   if (!val) return '-';
@@ -159,14 +161,15 @@ export default function BridgestoneRequestPrintModal({
       return;
     }
 
-    const tujuanHTML = TUJUAN_OPTIONS.map((t) => {
+    const currentFaktor = (requestData.faktor || requestData.tujuan || 'Safety').toLowerCase();
+    const faktorHTML = FAKTOR_OPTIONS.map((f) => {
       const isSelected =
-        (requestData.tujuan || '').toLowerCase().includes(t.toLowerCase()) ||
-        (t === 'Safety' && (requestData.tujuan || '').toLowerCase().includes('safety'));
+        currentFaktor.includes(f.toLowerCase()) ||
+        (f === 'Safety' && currentFaktor.includes('safety'));
       return isSelected
-        ? `<strong style="text-decoration: underline; background: #e5e7eb; padding: 1px 4px; border-radius: 2px;">${t}</strong>`
-        : `<span style="color: #4b5563;">${t}</span>`;
-    }).join(', ');
+        ? `<strong style="text-decoration: underline; background: #e5e7eb; padding: 1px 5px; border-radius: 2px; border: 1px solid #64748b;">${f}</strong>`
+        : `<span style="color: #4b5563;">${f}</span>`;
+    }).join(' &nbsp;|&nbsp; ');
 
     const fotoSebelumHTML = requestData.fotoSebelum
       ? `<img src="${requestData.fotoSebelum}" alt="Keadaan Sekarang" style="width: 100%; max-height: 190px; object-fit: contain; border: 1px solid #9ca3af; background: #fafafa; display: block; margin: 4px auto;" />`
@@ -376,7 +379,7 @@ export default function BridgestoneRequestPrintModal({
       </tr>
     </table>
 
-    <!-- Main Detail Table -->
+    <!-- Main Detail Table: Kotak-kotak Terpisah Rapi -->
     <table class="table-box" style="margin-top: -1px;">
       <tr>
         <td style="width: 50%;">
@@ -387,27 +390,28 @@ export default function BridgestoneRequestPrintModal({
         </td>
       </tr>
       <tr>
-        <td colspan="2">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-            <div style="flex: 1;">
-              <strong>TUJUAN :</strong> ${tujuanHTML}
-              <div style="margin-top: 3px;">
-                <strong>(alasan) :</strong> ${requestData.alasan || requestData.spesifikasi || '-'}
-              </div>
-            </div>
-            <div style="text-align: right; white-space: nowrap;">
-              <span class="badge-tag">${(requestData.tujuan || 'SAFETY').toUpperCase()}</span>
-              <span class="badge-tag" style="margin-left: 4px;">${(requestData.urgensi || 'Normal').toUpperCase()}</span>
-              <span class="badge-tag" style="margin-left: 4px;">QTY: ${requestData.jumlah} ${requestData.satuan}</span>
-            </div>
-          </div>
+        <td style="width: 50%; vertical-align: top;">
+          <strong>TUJUAN :</strong> ${requestData.tujuan || '-'}
+        </td>
+        <td style="width: 50%; vertical-align: top;">
+          <strong>FAKTOR :</strong> ${faktorHTML}
         </td>
       </tr>
       <tr>
-        <td style="width: 50%;">
+        <td style="width: 60%; vertical-align: top;">
+          <strong>(alasan) :</strong> ${requestData.alasan || requestData.spesifikasi || '-'}
+        </td>
+        <td style="width: 40%; vertical-align: middle; text-align: right; white-space: nowrap;">
+          <span class="badge-tag">${(requestData.faktor || 'SAFETY').toUpperCase()}</span>
+          <span class="badge-tag" style="margin-left: 4px;">${(requestData.urgensi || 'Normal').toUpperCase()}</span>
+          <span class="badge-tag" style="margin-left: 4px;">QTY: ${requestData.jumlah} ${requestData.satuan}</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="width: 40%;">
           <strong>SEKSI :</strong> ${requestData.seksiPemohon || '-'}
         </td>
-        <td style="width: 50%;">
+        <td style="width: 60%;">
           <div style="display: flex; justify-content: space-between;">
             <span><strong>NAMA :</strong> ${requestData.picPemohon || requestData.drafter || '-'}</span>
             <span><strong>TELP. (Extension) :</strong> ${requestData.kontakPemohon || '-'}</span>
@@ -801,46 +805,53 @@ export default function BridgestoneRequestPrintModal({
               </div>
             </div>
 
-            {/* Tujuan, Alasan, Badges, Qty */}
-            <div className="border-x border-b border-slate-900 p-2 text-xs space-y-1.5">
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
-                <div>
-                  <span className="font-bold">TUJUAN : </span>
-                  <span className="text-slate-700">
-                    {TUJUAN_OPTIONS.map((t, idx) => {
-                      const sel =
-                        (requestData.tujuan || '').toLowerCase().includes(t.toLowerCase()) ||
-                        (t === 'Safety' && (requestData.tujuan || '').toLowerCase().includes('safety'));
-                      return (
-                        <span key={t}>
-                          {sel ? (
-                            <strong className="underline underline-offset-2 font-bold text-slate-950 bg-slate-100 px-1 rounded">
-                              {t}
-                            </strong>
-                          ) : (
-                            <span>{t}</span>
-                          )}
-                          {idx < TUJUAN_OPTIONS.length - 1 ? ', ' : ''}
-                        </span>
-                      );
-                    })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs uppercase">
-                    {requestData.tujuan || 'SAFETY'}
-                  </span>
-                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs uppercase">
-                    {requestData.urgensi || 'NORMAL'}
-                  </span>
-                  <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs">
-                    QTY: {requestData.jumlah} {requestData.satuan}
-                  </span>
-                </div>
+            {/* Tujuan & Faktor (SEQCD) - Kotak Terpisah */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-xs">
+              <div className="p-2 space-y-1">
+                <span className="font-bold">TUJUAN : </span>
+                <span className="text-slate-800">{requestData.tujuan || '-'}</span>
               </div>
-              <div>
+              <div className="p-2 space-y-1">
+                <span className="font-bold">FAKTOR : </span>
+                <span className="text-slate-700">
+                  {FAKTOR_OPTIONS.map((f, idx) => {
+                    const activeFaktor = (requestData.faktor || requestData.tujuan || 'Safety').toLowerCase();
+                    const sel =
+                      activeFaktor.includes(f.toLowerCase()) ||
+                      (f === 'Safety' && activeFaktor.includes('safety'));
+                    return (
+                      <span key={f}>
+                        {sel ? (
+                          <strong className="underline underline-offset-2 font-bold text-slate-950 bg-slate-200 px-1 py-0.5 rounded border border-slate-400">
+                            {f}
+                          </strong>
+                        ) : (
+                          <span className="text-slate-600">{f}</span>
+                        )}
+                        {idx < FAKTOR_OPTIONS.length - 1 ? ' | ' : ''}
+                      </span>
+                    );
+                  })}
+                </span>
+              </div>
+            </div>
+
+            {/* Alasan Permohonan & Kuantitas / Urgensi - Kotak Terpisah */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 p-0 text-xs">
+              <div className="sm:col-span-8 p-2">
                 <span className="font-bold">(alasan) : </span>
-                <span>{requestData.alasan || requestData.spesifikasi || '-'}</span>
+                <span className="text-slate-800">{requestData.alasan || requestData.spesifikasi || '-'}</span>
+              </div>
+              <div className="sm:col-span-4 p-2 flex items-center justify-end gap-1.5 flex-wrap">
+                <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs uppercase bg-slate-50">
+                  {requestData.faktor || 'SAFETY'}
+                </span>
+                <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs uppercase bg-slate-50">
+                  {requestData.urgensi || 'NORMAL'}
+                </span>
+                <span className="border border-slate-900 font-bold px-2 py-0.5 rounded text-xs bg-slate-50">
+                  QTY: {requestData.jumlah} {requestData.satuan}
+                </span>
               </div>
             </div>
 
