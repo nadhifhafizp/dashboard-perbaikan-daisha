@@ -88,13 +88,13 @@ export default function EvaluasiTab({
           </span>
         </div>
         <div>
-          <span className="text-slate-500 font-medium block">Alasan Permohonan:</span>
-          <span className="text-slate-800">{requestData.alasan || '-'}</span>
+          <span className="text-slate-500 font-medium block">Tujuan Pekerjaan:</span>
+          <span className="text-slate-800">{requestData.tujuan || '-'}</span>
         </div>
         <div>
-          <span className="text-slate-500 font-medium block">Tujuan & Qty:</span>
+          <span className="text-slate-500 font-medium block">Faktor (SEQCD) &amp; Qty:</span>
           <span className="font-semibold text-slate-800">
-            {requestData.tujuan || 'Safety'} • {requestData.jumlah || 1} {requestData.satuan || 'Set'}
+            {requestData.faktor || 'Safety'} • {requestData.jumlah || 1} {requestData.satuan || 'Set'}
           </span>
         </div>
       </div>

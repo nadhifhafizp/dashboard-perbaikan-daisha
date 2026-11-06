@@ -622,7 +622,6 @@ export default function RequestCreateFormModal({
                   setFormData((p) => ({
                     ...p,
                     keadaanSekarang: e.target.value,
-                    alasan: e.target.value,
                   }))
                 }
                 rows={3}
