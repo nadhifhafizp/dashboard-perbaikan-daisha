@@ -771,8 +771,11 @@ function ApprovalContent() {
         {/* Paper Document Preview */}
         {requestData && (
           <div className="bg-white rounded-2xl shadow-md border-2 border-slate-900 p-4 sm:p-6 text-slate-900 text-xs font-sans space-y-3">
-            {/* Top Logo */}
-            <div className="flex justify-end items-center border-b border-slate-900 pb-1.5">
+            {/* Top Registration & Logo */}
+            <div className="flex justify-between items-center border-b border-slate-900 pb-1.5">
+              <span className="font-mono text-[10.5px] text-slate-500 font-normal">
+                ID: {requestData.nomorRequest}
+              </span>
               <div className="flex items-center gap-1.5">
                 <div className="relative w-5 h-5">
                   <Image src="/logo-bs.png" alt="BS" fill className="object-contain" />
@@ -809,14 +812,9 @@ function ApprovalContent() {
                       {requestData.nomorSurat}
                     </span>
                   ) : (
-                    <div>
-                      <span className="text-slate-400 italic text-xs block">
-                        (Nomor Surat Terbit Setelah Assign S.Project)
-                      </span>
-                      <span className="font-mono text-xs font-semibold text-slate-600">
-                        ID: {requestData.nomorRequest}
-                      </span>
-                    </div>
+                    <span className="text-slate-400 italic text-xs">
+                      (Belum Terbit)
+                    </span>
                   )}
                 </div>
               </div>

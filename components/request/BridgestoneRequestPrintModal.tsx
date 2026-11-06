@@ -278,7 +278,9 @@ export default function BridgestoneRequestPrintModal({
     <!-- Top Header -->
     <table class="table-box" style="border: none;">
       <tr style="border-bottom: 1px solid #000;">
-        <td style="width: 50%; border: none;"></td>
+        <td style="width: 50%; border: none; vertical-align: middle; padding-bottom: 4px; text-align: left;">
+          <span style="font-family: monospace; font-size: 10px; color: #64748b; font-weight: normal;">ID: ${requestData.nomorRequest}</span>
+        </td>
         <td style="width: 50%; text-align: right; border: none; padding-bottom: 4px;">
           <div style="display: inline-flex; align-items: center; gap: 6px;">
             <img src="${logoSrc}" class="logo-img" alt="Bridgestone" onerror="this.style.display='none'" />
@@ -305,7 +307,7 @@ export default function BridgestoneRequestPrintModal({
             <strong>REQ. NO. :</strong> ${
               requestData.nomorSurat && !requestData.nomorSurat.startsWith('REQ-')
                 ? `<span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #b91c1c;">${requestData.nomorSurat}</span>`
-                : `<span style="font-style: italic; color: #64748b; font-size: 9.5px;">(Belum Terbit - Menunggu ACC S.Project)</span> <small style="display:block; font-size: 8.5px; color: #475569; font-family: monospace;">ID Tracking: ${requestData.nomorRequest}</small>`
+                : `<span style="font-style: italic; color: #64748b; font-size: 9.5px;">(Belum Terbit)</span>`
             }
           </div>
         </td>
@@ -617,7 +619,10 @@ export default function BridgestoneRequestPrintModal({
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/70">
           <div className="printable-request-area bg-white mx-auto shadow-md border-2 border-slate-900 p-3 sm:p-5 text-slate-900 text-xs font-sans max-w-3xl">
             {/* Top Registration & Logo */}
-            <div className="flex justify-end items-center border-b border-slate-900 pb-1.5 mb-1.5">
+            <div className="flex justify-between items-center border-b border-slate-900 pb-1.5 mb-1.5">
+              <span className="font-mono text-[10.5px] text-slate-500 font-normal">
+                ID: {requestData.nomorRequest}
+              </span>
               <div className="flex items-center gap-1.5">
                 <div className="relative w-5 h-5">
                   <Image src="/logo-bs.png" alt="BS" fill className="object-contain" />
@@ -646,14 +651,9 @@ export default function BridgestoneRequestPrintModal({
                       {requestData.nomorSurat}
                     </span>
                   ) : (
-                    <div>
-                      <span className="text-slate-400 italic text-xs block">
-                        (Belum Terbit - Menunggu ACC S.Project)
-                      </span>
-                      <span className="font-mono text-xs font-semibold text-slate-600">
-                        ID: {requestData.nomorRequest}
-                      </span>
-                    </div>
+                    <span className="text-slate-400 italic text-xs">
+                      (Belum Terbit)
+                    </span>
                   )}
                 </div>
               </div>
