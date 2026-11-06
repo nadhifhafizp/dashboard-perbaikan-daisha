@@ -467,60 +467,60 @@ export default function BridgestoneRequestPrintModal({
       </tr>
     </table>
 
-    <!-- Evaluasi & Workflow Section -->
+    <!-- Evaluasi & Keputusan Section (Centering & Full Width) -->
     <table class="table-box" style="margin-top: -1px;">
       <tr>
         <!-- Evaluasi Pekerjaan Table -->
-        <td style="width: 40%; padding: 0;">
+        <td style="width: 55%; padding: 0; vertical-align: top;">
           <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 9.5px;">
             <tr>
-              <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 2px;">
+              <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px;">
                 EVALUASI PEKERJAAN
               </th>
             </tr>
             <tr style="text-align: center; font-size: 9px; background: #fafafa;">
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 40%;">ITEM</td>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 30%;">ESTIMATE</td>
-              <td style="border-bottom: 1px solid #000; font-weight: bold; width: 30%;">ACTUAL</td>
+              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 40%; padding: 2px;">ITEM</td>
+              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; width: 30%; padding: 2px;">ESTIMATE</td>
+              <td style="border-bottom: 1px solid #000; font-weight: bold; width: 30%; padding: 2px;">ACTUAL</td>
             </tr>
             <tr>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px;">Biaya</td>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px; text-align: right;">${requestData.biayaEstimate || '-'}</td>
-              <td style="border-bottom: 1px solid #000; padding: 2px; text-align: right;">${requestData.biayaActual || '-'}</td>
+              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px;">Biaya</td>
+              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.biayaEstimate || '-'}</td>
+              <td style="border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.biayaActual || '-'}</td>
             </tr>
             <tr>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px;">Orang/Jam</td>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px; text-align: right;">${requestData.orangJamEstimate || '-'}</td>
-              <td style="border-bottom: 1px solid #000; padding: 2px; text-align: right;">${requestData.orangJamActual || '-'}</td>
+              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px;">Orang/Jam</td>
+              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.orangJamEstimate || '-'}</td>
+              <td style="border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.orangJamActual || '-'}</td>
             </tr>
             <tr>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px;">Waktu</td>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px; text-align: right;">${requestData.waktuEstimate || '-'}</td>
-              <td style="border-bottom: 1px solid #000; padding: 2px; text-align: right;">${requestData.waktuActual || '-'}</td>
+              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px;">Waktu</td>
+              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.waktuEstimate || '-'}</td>
+              <td style="border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.waktuActual || '-'}</td>
             </tr>
             <tr>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px;">Tgl Pelaksanaan</td>
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px; text-align: right;">${requestData.tglPelaksanaanEstimate || '-'}</td>
-              <td style="border-bottom: 1px solid #000; padding: 2px; text-align: right;">${requestData.tglPelaksanaanActual || '-'}</td>
+              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px;">Tgl Pelaksanaan</td>
+              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.tglPelaksanaanEstimate || '-'}</td>
+              <td style="border-bottom: 1px solid #000; padding: 3px 4px; text-align: right;">${requestData.tglPelaksanaanActual || '-'}</td>
             </tr>
             <tr>
-              <td style="border-right: 1px solid #000; padding: 2px;">Komentar</td>
-              <td style="border-right: 1px solid #000; padding: 2px;">${requestData.komentarEstimate || '-'}</td>
-              <td style="padding: 2px;">${requestData.komentarActual || '-'}</td>
+              <td style="border-right: 1px solid #000; padding: 3px 4px;">Komentar</td>
+              <td style="border-right: 1px solid #000; padding: 3px 4px;">${requestData.komentarEstimate || '-'}</td>
+              <td style="padding: 3px 4px;">${requestData.komentarActual || '-'}</td>
             </tr>
           </table>
         </td>
 
         <!-- Arrow -->
-        <td style="width: 3%; text-align: center; vertical-align: middle; font-size: 16px; font-weight: bold;">
+        <td style="width: 6%; text-align: center; vertical-align: middle; font-size: 18px; font-weight: bold;">
           &#10140;
         </td>
 
         <!-- Keputusan 8210 / 820 -->
-        <td style="width: 25%; padding: 0;">
+        <td style="width: 39%; padding: 0; vertical-align: top;">
           <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 9.5px;">
             <tr>
-              <th colspan="2" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 2px;">
+              <th colspan="2" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 3px;">
                 KEPUTUSAN
               </th>
             </tr>
@@ -528,63 +528,24 @@ export default function BridgestoneRequestPrintModal({
               <td style="width: 50%; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px;">Spv</td>
               <td style="width: 50%; border-bottom: 1px solid #000; padding: 2px;">Manajer (8236)</td>
             </tr>
-            <tr style="height: 40px;">
-              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8px;">
+            <tr style="height: 44px;">
+              <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">
                 ${cleanPersonName(requestData.keputusan8210)}
               </td>
-              <td style="border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8px;">
+              <td style="border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">
                 ${cleanPersonName(requestData.keputusan820)}
               </td>
             </tr>
             <tr>
-              <td colspan="2" style="padding: 4px; font-size: 9.5px;">
+              <td colspan="2" style="padding: 6px 4px; font-size: 10px;">
                 <span class="decision-box ${isGo ? 'decision-active' : ''}">GO</span>
                 <span class="decision-box ${isPending ? 'decision-active' : ''}">PENDING</span>
                 <span class="decision-box ${isReject ? 'decision-active' : ''}">REJECT</span>
               </td>
             </tr>
             <tr>
-              <td colspan="2" style="font-size: 8px; color: #4b5563; padding: 2px; border-top: 1px dashed #000;">
+              <td colspan="2" style="font-size: 8.5px; color: #4b5563; padding: 4px 2px; border-top: 1px dashed #000;">
                 Selesai Bekerja &#10140; COPY KE SEKSI PEMOHON
-              </td>
-            </tr>
-          </table>
-        </td>
-
-        <!-- Arrow -->
-        <td style="width: 3%; text-align: center; vertical-align: middle; font-size: 16px; font-weight: bold;">
-          &#10140;
-        </td>
-
-        <!-- Hasil Check & Schedule -->
-        <td style="width: 29%; padding: 0;">
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 9.5px;">
-            <tr>
-              <th class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 2px;">
-                HASIL CHECK (Seksi Pemohon)
-              </th>
-            </tr>
-            <tr>
-              <td style="padding: 3px; border-bottom: 1px solid #000;">
-                <div style="font-weight: bold; font-size: 8.5px;">Perbandingan Hasil : (Target VS Actual)</div>
-                <div style="min-height: 24px; font-size: 9.5px; padding-top: 2px;">
-                  ${requestData.hasilCheck || '-'}
-                </div>
-                <div style="text-align: right; font-size: 8px; color: #555;">
-                  Checker: ${requestData.hasilCheckPemohon || '-'}
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 2px; border-bottom: 1px solid #000; font-size: 8.5px;">
-                <strong>SCHEDULE :</strong>
-                <div>Planning: ${requestData.schedulePlanning || '-'}</div>
-                <div>Actual: ${requestData.scheduleActual || '-'}</div>
-              </td>
-            </tr>
-            <tr>
-              <td style="font-size: 8px; text-align: center; padding: 2px;">
-                Kembali 8236 &#10140; <strong>ORIGINAL FILE ENG.</strong>
               </td>
             </tr>
           </table>
@@ -954,10 +915,10 @@ export default function BridgestoneRequestPrintModal({
               )}
             </div>
 
-            {/* Evaluasi, Keputusan & Hasil Check */}
+            {/* Evaluasi & Keputusan (Centered & Full Width) */}
             <div className="grid grid-cols-12 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 text-xs">
               {/* Evaluasi Pekerjaan Table */}
-              <div className="col-span-12 sm:col-span-5 p-0">
+              <div className="col-span-12 sm:col-span-7 p-0">
                 <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900">
                   EVALUASI PEKERJAAN
                 </div>
@@ -971,65 +932,65 @@ export default function BridgestoneRequestPrintModal({
                   </thead>
                   <tbody className="divide-y divide-slate-200">
                     <tr>
-                      <td className="p-1 border-r border-slate-900 font-medium">Biaya</td>
-                      <td className="p-1 border-r border-slate-900 text-right">{requestData.biayaEstimate || '-'}</td>
-                      <td className="p-1 text-right">{requestData.biayaActual || '-'}</td>
+                      <td className="p-1.5 border-r border-slate-900 font-medium">Biaya</td>
+                      <td className="p-1.5 border-r border-slate-900 text-right">{requestData.biayaEstimate || '-'}</td>
+                      <td className="p-1.5 text-right">{requestData.biayaActual || '-'}</td>
                     </tr>
                     <tr>
-                      <td className="p-1 border-r border-slate-900 font-medium">Orang/Jam</td>
-                      <td className="p-1 border-r border-slate-900 text-right">{requestData.orangJamEstimate || '-'}</td>
-                      <td className="p-1 text-right">{requestData.orangJamActual || '-'}</td>
+                      <td className="p-1.5 border-r border-slate-900 font-medium">Orang/Jam</td>
+                      <td className="p-1.5 border-r border-slate-900 text-right">{requestData.orangJamEstimate || '-'}</td>
+                      <td className="p-1.5 text-right">{requestData.orangJamActual || '-'}</td>
                     </tr>
                     <tr>
-                      <td className="p-1 border-r border-slate-900 font-medium">Waktu</td>
-                      <td className="p-1 border-r border-slate-900 text-right">{requestData.waktuEstimate || '-'}</td>
-                      <td className="p-1 text-right">{requestData.waktuActual || '-'}</td>
+                      <td className="p-1.5 border-r border-slate-900 font-medium">Waktu</td>
+                      <td className="p-1.5 border-r border-slate-900 text-right">{requestData.waktuEstimate || '-'}</td>
+                      <td className="p-1.5 text-right">{requestData.waktuActual || '-'}</td>
                     </tr>
                     <tr>
-                      <td className="p-1 border-r border-slate-900 font-medium">Tgl Pelaksanaan</td>
-                      <td className="p-1 border-r border-slate-900 text-right">{requestData.tglPelaksanaanEstimate || '-'}</td>
-                      <td className="p-1 text-right">{requestData.tglPelaksanaanActual || '-'}</td>
+                      <td className="p-1.5 border-r border-slate-900 font-medium">Tgl Pelaksanaan</td>
+                      <td className="p-1.5 border-r border-slate-900 text-right">{requestData.tglPelaksanaanEstimate || '-'}</td>
+                      <td className="p-1.5 text-right">{requestData.tglPelaksanaanActual || '-'}</td>
                     </tr>
                     <tr>
-                      <td className="p-1 border-r border-slate-900 font-medium">Komentar</td>
-                      <td className="p-1 border-r border-slate-900">{requestData.komentarEstimate || '-'}</td>
-                      <td className="p-1">{requestData.komentarActual || '-'}</td>
+                      <td className="p-1.5 border-r border-slate-900 font-medium">Komentar</td>
+                      <td className="p-1.5 border-r border-slate-900">{requestData.komentarEstimate || '-'}</td>
+                      <td className="p-1.5">{requestData.komentarActual || '-'}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              {/* Keputusan GO/PENDING/REJECT */}
-              <div className="col-span-12 sm:col-span-3 p-0 flex flex-col justify-between">
+              {/* Keputusan GO/PENDING/REJECT (Centered) */}
+              <div className="col-span-12 sm:col-span-5 p-0 flex flex-col justify-between">
                 <div>
                   <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900">
                     KEPUTUSAN
                   </div>
                   <div className="grid grid-cols-2 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
-                    <div className="py-0.5">Spv</div>
-                    <div className="py-0.5">Manajer (8236)</div>
+                    <div className="py-1">Spv</div>
+                    <div className="py-1">Manajer (8236)</div>
                   </div>
-                  <div className="grid grid-cols-2 text-center text-xs divide-x divide-slate-900 h-10 items-end pb-1 border-b border-slate-900">
-                    <div className="truncate px-1">{cleanPersonName(requestData.keputusan8210)}</div>
-                    <div className="truncate px-1">{cleanPersonName(requestData.keputusan820)}</div>
+                  <div className="grid grid-cols-2 text-center text-xs divide-x divide-slate-900 h-12 items-end pb-1 border-b border-slate-900">
+                    <div className="truncate px-1 font-medium">{cleanPersonName(requestData.keputusan8210)}</div>
+                    <div className="truncate px-1 font-medium">{cleanPersonName(requestData.keputusan820)}</div>
                   </div>
-                  <div className="p-2 flex items-center justify-center gap-1.5 flex-wrap">
+                  <div className="p-3 flex items-center justify-center gap-2 flex-wrap">
                     <span
-                      className={`px-2 py-0.5 border border-slate-900 font-bold text-xs rounded ${
+                      className={`px-3 py-1 border border-slate-900 font-bold text-xs rounded ${
                         isGo ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
                       }`}
                     >
                       GO
                     </span>
                     <span
-                      className={`px-2 py-0.5 border border-slate-900 font-bold text-xs rounded ${
+                      className={`px-3 py-1 border border-slate-900 font-bold text-xs rounded ${
                         isPending ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
                       }`}
                     >
                       PENDING
                     </span>
                     <span
-                      className={`px-2 py-0.5 border border-slate-900 font-bold text-xs rounded ${
+                      className={`px-3 py-1 border border-slate-900 font-bold text-xs rounded ${
                         isReject ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
                       }`}
                     >
@@ -1037,30 +998,8 @@ export default function BridgestoneRequestPrintModal({
                     </span>
                   </div>
                 </div>
-                <div className="text-xs text-slate-500 text-center p-1 border-t border-dashed border-slate-300">
+                <div className="text-xs text-slate-500 text-center p-2 border-t border-dashed border-slate-300 font-medium">
                   Selesai Bekerja &#10140; COPY KE SEKSI PEMOHON
-                </div>
-              </div>
-
-              {/* Hasil Check & Schedule */}
-              <div className="col-span-12 sm:col-span-4 p-0">
-                <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900">
-                  HASIL CHECK
-                </div>
-                <div className="p-2 space-y-1.5 border-b border-slate-900">
-                  <div className="font-bold text-xs">Perbandingan Hasil : (Target VS Actual)</div>
-                  <p className="text-slate-800 text-xs min-h-[28px]">{requestData.hasilCheck || '-'}</p>
-                  <div className="text-right text-xs text-slate-500">
-                    Checker: <strong>{requestData.hasilCheckPemohon || '-'}</strong>
-                  </div>
-                </div>
-                <div className="p-2 space-y-0.5 text-xs border-b border-slate-900">
-                  <div className="font-bold">SCHEDULE :</div>
-                  <div>Plan: {requestData.schedulePlanning || '-'}</div>
-                  <div>Actual: {requestData.scheduleActual || '-'}</div>
-                </div>
-                <div className="text-center text-xs font-bold p-1 bg-slate-50">
-                  Kembali 8236 &#10140; ORIGINAL FILE ENG.
                 </div>
               </div>
             </div>
