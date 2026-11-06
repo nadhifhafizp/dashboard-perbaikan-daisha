@@ -24,7 +24,7 @@ export default function PenyelesaianTab({
         <div className="p-3.5 rounded-lg bg-amber-50 border border-amber-300 flex items-center gap-2.5 text-amber-900 text-xs">
           <Lock className="w-4 h-4 text-amber-600 shrink-0" />
           <span>
-            <strong>Tahap Penyelesaian Terkunci:</strong> Permohonan belum disetujui / di-assign oleh Atasan Special Project (8210 / 820). Admin bengkel belum dapat menyelesaikan request ini.
+            <strong>Tahap Penyelesaian Terkunci:</strong> Permohonan belum disetujui / di-assign oleh Atasan Special Project (8236). Admin bengkel belum dapat menyelesaikan request ini.
           </span>
         </div>
       )}

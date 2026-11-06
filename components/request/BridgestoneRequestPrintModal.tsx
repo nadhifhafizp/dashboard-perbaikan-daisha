@@ -297,9 +297,9 @@ export default function BridgestoneRequestPrintModal({
               <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 2px;">Seksi Pemohon</th>
             </tr>
             <tr style="font-size: 9px; font-weight: bold; background: #fafafa;">
-              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">DRAFTER</td>
-              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">FOREMAN</td>
-              <td style="width: 34%; padding: 2px;">${requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)}</td>
+              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">Staff</td>
+              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">Spv</td>
+              <td style="width: 34%; padding: 2px;">Manajer (${requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)})</td>
             </tr>
             <tr class="signature-space">
               <td style="border-right: 1px solid #000; vertical-align: bottom; font-size: 8.5px; padding: 2px;">${requestData.drafter || requestData.picPemohon || ''}</td>
@@ -317,16 +317,16 @@ export default function BridgestoneRequestPrintModal({
           &#10140;
         </td>
 
-        <!-- Bengkel Prod. -->
+        <!-- Special Project -->
         <td style="width: 31%; padding: 0;">
           <table style="width: 100%; border-collapse: collapse; text-align: center;">
             <tr>
-              <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 2px;">Bengkel Prod.</th>
+              <th colspan="3" class="bg-sub" style="border: none; border-bottom: 1px solid #000; padding: 2px;">Special Project</th>
             </tr>
             <tr style="font-size: 9px; font-weight: bold; background: #fafafa;">
-              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">PWS</td>
-              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">K.SIE</td>
-              <td style="width: 34%; padding: 2px;">8210/820</td>
+              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">Staff</td>
+              <td style="width: 33%; border-right: 1px solid #000; padding: 2px;">Spv</td>
+              <td style="width: 34%; padding: 2px;">Manajer (8236)</td>
             </tr>
             <tr class="signature-space">
               <td style="border-right: 1px solid #000; vertical-align: middle; text-align: center; font-size: 8.5px; padding: 2px;">
@@ -488,8 +488,8 @@ export default function BridgestoneRequestPrintModal({
               </th>
             </tr>
             <tr style="font-size: 9px; font-weight: bold; background: #fafafa;">
-              <td style="width: 50%; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px;">8210</td>
-              <td style="width: 50%; border-bottom: 1px solid #000; padding: 2px;">820</td>
+              <td style="width: 50%; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px;">Spv</td>
+              <td style="width: 50%; border-bottom: 1px solid #000; padding: 2px;">Manajer (8236)</td>
             </tr>
             <tr style="height: 40px;">
               <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; vertical-align: bottom; font-size: 8px;">
@@ -547,7 +547,7 @@ export default function BridgestoneRequestPrintModal({
             </tr>
             <tr>
               <td style="font-size: 8px; text-align: center; padding: 2px;">
-                Kembali 8210 &#10140; <strong>ORIGINAL FILE ENG.</strong>
+                Kembali 8236 &#10140; <strong>ORIGINAL FILE ENG.</strong>
               </td>
             </tr>
           </table>
@@ -679,16 +679,16 @@ export default function BridgestoneRequestPrintModal({
                   Seksi Pemohon
                 </div>
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
-                  <div className="py-0.5">DRAFTER</div>
-                  <div className="py-0.5">FOREMAN</div>
-                  <div className="py-0.5">{requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)}</div>
+                  <div className="py-0.5">Staff</div>
+                  <div className="py-0.5">Spv</div>
+                  <div className="py-0.5">Manajer ({requestData.kodeSeksi || getSeksiCode(requestData.seksiPemohon)})</div>
                 </div>
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-center pb-1">
                   <div className="truncate px-1 font-medium">{requestData.drafter || requestData.picPemohon || '-'}</div>
                   <div className="px-1 font-medium flex flex-col items-center justify-center">
                     {requestData.ttdAtasanSeksi ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdAtasanSeksi} alt="TTD Foreman" className="h-8 max-w-full object-contain" />
+                      <img src={requestData.ttdAtasanSeksi} alt="TTD Spv" className="h-8 max-w-full object-contain" />
                     ) : (
                       <span className="truncate">{requestData.foreman || '-'}</span>
                     )}
@@ -697,21 +697,21 @@ export default function BridgestoneRequestPrintModal({
                 </div>
               </div>
 
-              {/* Bengkel Prod */}
+              {/* Special Project */}
               <div className="col-span-12 sm:col-span-4 p-0">
                 <div className="bg-slate-100 font-bold text-center py-1 border-b border-slate-900 text-xs">
-                  Bengkel Prod.
+                  Special Project
                 </div>
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
-                  <div className="py-0.5">PWS</div>
-                  <div className="py-0.5">K.SIE</div>
-                  <div className="py-0.5">8210/820</div>
+                  <div className="py-0.5">Staff</div>
+                  <div className="py-0.5">Spv</div>
+                  <div className="py-0.5">Manajer (8236)</div>
                 </div>
                 <div className="grid grid-cols-3 text-center text-xs divide-x divide-slate-900 h-12 items-center pb-1">
                   <div className="px-1 font-medium flex flex-col items-center justify-center">
                     {requestData.ttdAdminWorkshop ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdAdminWorkshop} alt="TTD PWS" className="h-8 max-w-full object-contain" />
+                      <img src={requestData.ttdAdminWorkshop} alt="TTD Staff" className="h-8 max-w-full object-contain" />
                     ) : (
                       <span className="truncate">{requestData.picBengkel || '-'}</span>
                     )}
@@ -720,7 +720,7 @@ export default function BridgestoneRequestPrintModal({
                   <div className="px-1 font-medium flex flex-col items-center justify-center">
                     {requestData.ttdAtasanSpecialProject ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={requestData.ttdAtasanSpecialProject} alt="TTD 820" className="h-8 max-w-full object-contain" />
+                      <img src={requestData.ttdAtasanSpecialProject} alt="TTD Manajer 8236" className="h-8 max-w-full object-contain" />
                     ) : (
                       <span className="truncate">{requestData.keputusan820 || '-'}</span>
                     )}
@@ -933,8 +933,8 @@ export default function BridgestoneRequestPrintModal({
                     KEPUTUSAN
                   </div>
                   <div className="grid grid-cols-2 text-center text-xs divide-x divide-slate-900 border-b border-slate-900 font-semibold bg-slate-50">
-                    <div className="py-0.5">8210</div>
-                    <div className="py-0.5">820</div>
+                    <div className="py-0.5">Spv</div>
+                    <div className="py-0.5">Manajer (8236)</div>
                   </div>
                   <div className="grid grid-cols-2 text-center text-xs divide-x divide-slate-900 h-10 items-end pb-1 border-b border-slate-900">
                     <div className="truncate px-1">{requestData.keputusan8210 || '-'}</div>
@@ -987,7 +987,7 @@ export default function BridgestoneRequestPrintModal({
                   <div>Actual: {requestData.scheduleActual || '-'}</div>
                 </div>
                 <div className="text-center text-xs font-bold p-1 bg-slate-50">
-                  Kembali 8210 &#10140; ORIGINAL FILE ENG.
+                  Kembali 8236 &#10140; ORIGINAL FILE ENG.
                 </div>
               </div>
             </div>

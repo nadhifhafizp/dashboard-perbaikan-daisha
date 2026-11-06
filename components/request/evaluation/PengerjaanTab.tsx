@@ -63,7 +63,7 @@ export default function PengerjaanTab({
             <div>
               <p className="font-bold text-xs text-purple-950 flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-purple-600" />
-                <span>Menunggu Tanda Tangan & Assign Atasan Special Project (8210 / 820)</span>
+                <span>Menunggu Tanda Tangan & Assign Atasan Special Project (8236)</span>
               </p>
               <p className="text-xs text-purple-800 mt-0.5">
                 Pekerjaan fisik belum boleh dimulai atau diselesaikan. Begitu disetujui, request akan <strong>otomatis langsung berstatus &quot;Dikerjakan&quot;</strong> dan nomor surat resmi akan terbit.

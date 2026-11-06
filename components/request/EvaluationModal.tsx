@@ -144,7 +144,7 @@ export default function EvaluationModal({
             type="button"
             onClick={() => {
               if (!isApprovedBySpecialProject) {
-                form.setErrorMsg('Tahap pengerjaan fisik masih terkunci. Menunggu persetujuan & assign resmi dari Atasan Special Project (8210 / 820).');
+                form.setErrorMsg('Tahap pengerjaan fisik masih terkunci. Menunggu persetujuan & assign resmi dari Atasan Special Project (8236).');
                 return;
               }
               form.setActiveTab('pengerjaan');
@@ -157,7 +157,7 @@ export default function EvaluationModal({
                 ? 'border-red-600 text-red-700 bg-red-50/40 cursor-pointer'
                 : 'border-transparent text-slate-600 hover:text-slate-900 cursor-pointer'
             }`}
-            title={!isApprovedBySpecialProject ? 'Terkunci: Menunggu persetujuan & assign dari Atasan Special Project (8210 / 820)' : undefined}
+            title={!isApprovedBySpecialProject ? 'Terkunci: Menunggu persetujuan & assign dari Atasan Special Project (8236)' : undefined}
           >
             {!isApprovedBySpecialProject ? (
               <Lock className="w-3.5 h-3.5 text-slate-400" />
@@ -174,7 +174,7 @@ export default function EvaluationModal({
             type="button"
             onClick={() => {
               if (!isApprovedBySpecialProject) {
-                form.setErrorMsg('Tahap penyelesaian permohonan terkunci. Menunggu persetujuan & assign resmi dari Atasan Special Project (8210 / 820).');
+                form.setErrorMsg('Tahap penyelesaian permohonan terkunci. Menunggu persetujuan & assign resmi dari Atasan Special Project (8236).');
                 return;
               }
               form.setActiveTab('penyelesaian');
@@ -187,7 +187,7 @@ export default function EvaluationModal({
                 ? 'border-red-600 text-red-700 bg-red-50/40 cursor-pointer'
                 : 'border-transparent text-slate-600 hover:text-slate-900 cursor-pointer'
             }`}
-            title={!isApprovedBySpecialProject ? 'Terkunci: Menunggu persetujuan & assign dari Atasan Special Project (8210 / 820)' : undefined}
+            title={!isApprovedBySpecialProject ? 'Terkunci: Menunggu persetujuan & assign dari Atasan Special Project (8236)' : undefined}
           >
             {!isApprovedBySpecialProject ? (
               <Lock className="w-3.5 h-3.5 text-slate-400" />
@@ -216,7 +216,7 @@ export default function EvaluationModal({
                 <span>{form.notifSuccessData.message}</span>
               </div>
               <p className="text-xs text-purple-900 leading-relaxed">
-                Evaluasi workshop telah disimpan. Permohonan kini <strong>menunggu persetujuan dan tanda tangan resmi dari Atasan Special Project (8210 / 820)</strong>. Tahap pengerjaan fisik serta penyelesaian baru dapat dilakukan setelah Atasan Special Project memberikan persetujuan (Assign).
+                Evaluasi workshop telah disimpan. Permohonan kini <strong>menunggu persetujuan dan tanda tangan resmi dari Atasan Special Project (8236)</strong>. Tahap pengerjaan fisik serta penyelesaian baru dapat dilakukan setelah Atasan Special Project memberikan persetujuan (Assign).
               </p>
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 {form.notifSuccessData.emailData && (

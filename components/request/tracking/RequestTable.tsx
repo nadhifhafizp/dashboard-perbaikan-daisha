@@ -408,7 +408,7 @@ export default function RequestTable({
                             type="button"
                             onClick={() => onOpenShareApproval(r, 'special_project')}
                             className="px-1.5 py-0.5 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-2xs"
-                            title="Simulasi Persetujuan & Assign Atasan Special Project (8210 / 820)"
+                            title="Simulasi Persetujuan & Assign Atasan Special Project (8236)"
                           >
                             <Share2 className="w-3 h-3" />
                             <span>Simulasi</span>

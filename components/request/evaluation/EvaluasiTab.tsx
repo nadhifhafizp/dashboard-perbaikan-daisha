@@ -197,7 +197,7 @@ export default function EvaluasiTab({
         </div>
       </div>
 
-      {/* 5. BOX UTAMA ACC & ASSIGN ATASAN SPECIAL PROJECT (8210 / 820) */}
+      {/* 5. BOX UTAMA ACC & ASSIGN ATASAN SPECIAL PROJECT (8236) */}
       {isWaitingSpecialProject && (
         <div className="p-4 sm:p-5 rounded-2xl border-2 border-purple-500 bg-purple-50/90 space-y-4 shadow-sm animate-scale-up">
           <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-purple-200">
@@ -207,7 +207,7 @@ export default function EvaluasiTab({
               </div>
               <div>
                 <h4 className="text-xs sm:text-sm font-bold text-purple-950 uppercase tracking-wide flex items-center gap-2">
-                  <span>Persetujuan &amp; ACC Assign Atasan Special Project (8210 / 820)</span>
+                  <span>Persetujuan &amp; ACC Assign Atasan Special Project (8236)</span>
                   <span className="px-2 py-0.5 rounded text-[10px] font-black bg-purple-200 text-purple-900 border border-purple-300">
                     TAHAP 5 AKTIF
                   </span>
@@ -222,25 +222,25 @@ export default function EvaluasiTab({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-purple-950 mb-1">
-                Reviewer / Manager 8210 *
+                Reviewer / Manager Special Project (8236) *
               </label>
               <input
                 type="text"
-                value={formData.keputusan8210 || 'Manager Special Project (8210)'}
+                value={formData.keputusan8210 || 'Manager Special Project (8236)'}
                 onChange={(e) => setFormData((p) => ({ ...p, keputusan8210: e.target.value }))}
-                placeholder="Manager Special Project (8210)"
+                placeholder="Manager Special Project (8236)"
                 className="w-full h-10 px-3 bg-white border border-purple-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 shadow-2xs"
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-purple-950 mb-1">
-                Dept Head 820 *
+                Dept Head (8236) *
               </label>
               <input
                 type="text"
-                value={formData.keputusan820 || 'Dept Head Special Project (820)'}
+                value={formData.keputusan820 || 'Dept Head Special Project (8236)'}
                 onChange={(e) => setFormData((p) => ({ ...p, keputusan820: e.target.value }))}
-                placeholder="Dept Head Special Project (820)"
+                placeholder="Dept Head Special Project (8236)"
                 className="w-full h-10 px-3 bg-white border border-purple-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 shadow-2xs"
               />
             </div>
@@ -282,7 +282,7 @@ export default function EvaluasiTab({
                 className="h-10 px-5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-2 shadow-md disabled:opacity-50"
               >
                 <ShieldCheck className="w-4 h-4" />
-                <span>{loading ? 'Menyimpan ke DB...' : 'ACC / Setujui Assign Special Project (8210 / 820)'}</span>
+                <span>{loading ? 'Menyimpan ke DB...' : 'ACC / Setujui Assign Special Project (8236)'}</span>
               </button>
             </div>
           </div>
@@ -295,7 +295,7 @@ export default function EvaluasiTab({
           <div className="flex items-center gap-2 text-emerald-950 font-semibold">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>
-              Telah di-ACC oleh Atasan Special Project: <strong>{formData.keputusan8210 || '8210'}</strong> &amp; <strong>{formData.keputusan820 || '820'}</strong> (Status: Dikerjakan / Tahap 6).
+              Telah di-ACC oleh Atasan Special Project: <strong>{formData.keputusan8210 || '8236'}</strong> &amp; <strong>{formData.keputusan820 || '8236'}</strong> (Status: Dikerjakan / Tahap 6).
             </span>
           </div>
           <button
@@ -343,7 +343,7 @@ export default function EvaluasiTab({
             value={formData.ttdAdminWorkshop}
             onChange={(val) => setFormData((p) => ({ ...p, ttdAdminWorkshop: val }))}
             signerName={formData.picBengkel || 'PIC Workshop'}
-            roleLabel="Tanda Tangan / Paraf PIC Workshop (PWS / K.SIE)"
+            roleLabel="Tanda Tangan / Paraf PIC Workshop (Staff / Spv)"
           />
         </div>
 

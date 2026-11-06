@@ -112,9 +112,9 @@ export default function ShareApprovalModal({
           {isSpecialProject ? (
             <div>
               <span className="font-bold block mb-0.5 text-purple-900">
-                Persetujuan &amp; Penugasan Workshop (8210 / 820):
+                Persetujuan &amp; Penugasan Special Project (8236):
               </span>
-              Tautan simulasi untuk <strong>Manager 8210 &amp; Dept Head 820</strong>. Keputusan
+              Tautan simulasi untuk <strong>Manager Special Project (8236)</strong>. Keputusan
               persetujuan, catatan instruksi pengerjaan, dan perubahan status langsung tersimpan
               ke dalam database sistem.
             </div>
@@ -125,7 +125,7 @@ export default function ShareApprovalModal({
               </span>
               Tautan tanda tangan Atasan Seksi (
               <strong>{request.emailAtasanSeksi || 'Atasan Seksi'}</strong>) pada dokumen resmi
-              ENG-KP-011 kotak Foreman sebelum diteruskan ke PIC Workshop.
+              ENG-KP-011 kotak Spv sebelum diteruskan ke PIC Workshop.
             </div>
           )}
         </div>

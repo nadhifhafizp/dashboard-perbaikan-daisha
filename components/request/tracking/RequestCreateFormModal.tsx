@@ -137,7 +137,7 @@ export default function RequestCreateFormModal({
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
             {/* Seksi Pemohon */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -146,9 +146,6 @@ export default function RequestCreateFormModal({
               {currentUser?.role === 'USER_SEKSI' ? (
                 <div className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 flex items-center justify-between">
                   <span>{formData.seksiPemohon || currentUser.seksi}</span>
-                  <span className="text-xs text-slate-600 bg-slate-200/80 px-2 py-0.5 rounded font-mono font-bold">
-                    {formData.kodeSeksi || getSeksiCode(currentUser.seksi)}
-                  </span>
                 </div>
               ) : (
                 <div className="space-y-1">
@@ -167,15 +164,33 @@ export default function RequestCreateFormModal({
                   </select>
                 </div>
               )}
-              <p className="text-xs text-slate-600 mt-1">
-                Kode Seksi: <span className="font-mono font-bold text-slate-700">{formData.kodeSeksi || '-'}</span> (Otomatis)
+              <p className="text-xs text-slate-500 mt-1">Unit seksi pembuat request</p>
+            </div>
+
+            {/* 3. Manajer (Kode Diinput Manual oleh Seksi Pemohon) */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Kode Manajer Pemohon <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.kodeSeksi}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, kodeSeksi: e.target.value.toUpperCase() }))
+                }
+                className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-mono font-bold uppercase text-slate-900 bg-white focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                placeholder="Contoh: 8230 / B-B"
+                required
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Kode Manajer (input manual oleh pemohon)
               </p>
             </div>
 
-            {/* Nama Pemohon (PIC) */}
+            {/* 1. Staff (Nama PIC Pemohon) */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Nama PIC Pemohon <span className="text-red-500">*</span>
+                1. Staff (PIC Pemohon) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -189,13 +204,13 @@ export default function RequestCreateFormModal({
                     }))
                   }
                   className="w-full h-10 pl-3 pr-8 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none font-medium"
-                  placeholder="Nama pembuat request (mis: Osep M)"
+                  placeholder="Nama Staff pembuat request"
                   required
                 />
                 <User className="w-4 h-4 text-slate-400 absolute right-2.5 top-3" />
               </div>
-              <p className="text-xs text-slate-600 mt-1">
-                Nama Anda sebagai penanggung jawab pengajuan
+              <p className="text-xs text-slate-500 mt-1">
+                Staff penanggung jawab pengajuan
               </p>
             </div>
 
@@ -216,7 +231,7 @@ export default function RequestCreateFormModal({
                 />
                 <Phone className="w-4 h-4 text-slate-400 absolute right-2.5 top-3" />
               </div>
-              <p className="text-xs text-slate-600 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Untuk koordinasi teknis oleh tim bengkel
               </p>
             </div>
@@ -232,10 +247,10 @@ export default function RequestCreateFormModal({
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-red-600" />
-                <span>Persetujuan Atasan Seksi (Approval Digital)</span>
+                <span>2. Persetujuan Spv Seksi (Approval Digital)</span>
               </h3>
               <p className="text-xs text-slate-500">
-                Tautan persetujuan tanda tangan digital akan dibuat otomatis untuk Atasan Seksi Anda (Foreman / Ka. Sie).
+                Tautan persetujuan tanda tangan digital akan dibuat otomatis untuk Spv (Supervisor) Seksi Anda.
               </p>
             </div>
           </div>
@@ -243,7 +258,7 @@ export default function RequestCreateFormModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Nama Atasan Seksi <span className="text-slate-400 font-normal">(Foreman / Ka. Sie)</span>
+                Nama Spv (Supervisor Seksi) <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -256,7 +271,8 @@ export default function RequestCreateFormModal({
                   }))
                 }
                 className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
-                placeholder="Contoh: Bpk. Budi Santoso (Foreman)"
+                placeholder="Contoh: Bpk. Budi Santoso (Spv)"
+                required
               />
             </div>
 

@@ -202,11 +202,10 @@ export default function ThroughputCharts({
                 <button
                   type="button"
                   onClick={() => setChartOrientation('opposing')}
-                  className={`px-2.5 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1 ${
-                    chartOrientation === 'opposing'
-                      ? 'bg-white text-slate-900 font-bold shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`px-2.5 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1 ${chartOrientation === 'opposing'
+                    ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                    }`}
                   title="Batang Masuk di Atas, Selesai di Bawah"
                 >
                   <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
@@ -215,11 +214,10 @@ export default function ThroughputCharts({
                 <button
                   type="button"
                   onClick={() => setChartOrientation('sideBySide')}
-                  className={`px-2.5 py-1.5 rounded-md transition cursor-pointer ${
-                    chartOrientation === 'sideBySide'
-                      ? 'bg-white text-slate-900 font-bold shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`px-2.5 py-1.5 rounded-md transition cursor-pointer ${chartOrientation === 'sideBySide'
+                    ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                    }`}
                   title="Batang Masuk dan Selesai Berdampingan"
                 >
                   <span>Berdampingan</span>
@@ -231,11 +229,10 @@ export default function ThroughputCharts({
                 <button
                   type="button"
                   onClick={() => setTimelineScale('7days')}
-                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
-                    timelineScale === '7days'
-                      ? 'bg-white text-slate-900 font-bold shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${timelineScale === '7days'
+                    ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                    }`}
                   title="Tampilkan rentang 7 hari kerja terakhir (1 minggu)"
                 >
                   7 Hari
@@ -243,11 +240,10 @@ export default function ThroughputCharts({
                 <button
                   type="button"
                   onClick={() => setTimelineScale('14days')}
-                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
-                    timelineScale === '14days'
-                      ? 'bg-white text-slate-900 font-bold shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${timelineScale === '14days'
+                    ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                    }`}
                   title="Tampilkan rentang 14 hari kerja terakhir"
                 >
                   14 Hari
@@ -255,11 +251,10 @@ export default function ThroughputCharts({
                 <button
                   type="button"
                   onClick={() => setTimelineScale('monthly')}
-                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
-                    timelineScale === 'monthly'
-                      ? 'bg-white text-slate-900 font-bold shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${timelineScale === 'monthly'
+                    ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                    }`}
                   title="Tampilkan agregasi data per bulan"
                 >
                   Bulanan
@@ -527,7 +522,7 @@ export default function ThroughputCharts({
 
       {/* Baris kedua: Donut status & lead time */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        
+
         {/* 2. Diagram Donat: Status pipeline */}
         <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
           <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-slate-100">
