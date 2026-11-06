@@ -633,11 +633,6 @@ export default function BridgestoneRequestPrintModal({
                   <span class="decision-box ${isReject ? 'decision-active' : ''}">REJECT</span>
                 </td>
               </tr>
-              <tr>
-                <td style="font-size: 9px; color: #4b5563; padding: 4px 2px; border-top: 1px dashed #000;">
-                  Selesai Bekerja &#10140; COPY KE SEKSI PEMOHON
-                </td>
-              </tr>
             </table>
           </td>
         </tr>
@@ -1090,9 +1085,6 @@ export default function BridgestoneRequestPrintModal({
                       REJECT
                     </span>
                   </div>
-                </div>
-                <div className="text-xs text-slate-500 text-center p-2 border-t border-dashed border-slate-300 font-medium">
-                  Selesai Bekerja &#10140; COPY KE SEKSI PEMOHON
                 </div>
               </div>
             </div>
