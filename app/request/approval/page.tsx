@@ -988,13 +988,15 @@ function ApprovalContent() {
               </div>
             </div>
 
-            {/* Visual Condition: Keadaan Sekarang vs Rencana Tindakan */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 border-x border-b border-slate-900 divide-y sm:divide-y-0 sm:divide-x divide-slate-900 text-xs">
-              <div className="p-2.5 space-y-2">
-                <div className="font-bold">Keadaan Sekarang :</div>
-                <p className="text-slate-800 text-xs leading-relaxed min-h-[30px]">
-                  {requestData.keadaanSekarang || requestData.catatan || '-'}
-                </p>
+            {/* Visual Condition: Keadaan Sekarang vs Rencana Tindakan vs Target Hasil (3 Kolom) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 border-x border-b border-slate-900 divide-y md:divide-y-0 md:divide-x divide-slate-900 text-xs">
+              <div className="p-2.5 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="font-bold">Keadaan Sekarang :</div>
+                  <p className="text-slate-800 text-xs leading-relaxed min-h-[30px] mt-1">
+                    {requestData.keadaanSekarang || requestData.catatan || '-'}
+                  </p>
+                </div>
                 <div className="border border-slate-200 rounded bg-slate-50 min-h-[140px] flex items-center justify-center overflow-hidden">
                   {requestData.fotoSebelum ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
@@ -1011,11 +1013,13 @@ function ApprovalContent() {
                 </div>
               </div>
 
-              <div className="p-2.5 space-y-2">
-                <div className="font-bold">Rencana Tindakan :</div>
-                <p className="text-slate-800 text-xs leading-relaxed min-h-[30px]">
-                  {requestData.rencanaTindakan || requestData.spesifikasi || '-'}
-                </p>
+              <div className="p-2.5 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="font-bold">Rencana Tindakan :</div>
+                  <p className="text-slate-800 text-xs leading-relaxed min-h-[30px] mt-1">
+                    {requestData.rencanaTindakan || requestData.spesifikasi || '-'}
+                  </p>
+                </div>
                 <div className="border border-slate-200 rounded bg-slate-50 min-h-[140px] flex items-center justify-center overflow-hidden">
                   {requestData.fotoSesudah ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
@@ -1031,12 +1035,20 @@ function ApprovalContent() {
                   )}
                 </div>
               </div>
-            </div>
 
-            {/* Target Hasil */}
-            <div className="border-x border-b border-slate-900 p-2 text-xs">
-              <span className="font-bold">Target Hasil : </span>
-              <span>{requestData.targetHasil || '-'}</span>
+              <div className="p-2.5 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="font-bold">Target Hasil :</div>
+                  <span className="text-[10px] text-slate-500 block -mt-0.5">(Pcs/Day, Rp./Month, etc)</span>
+                  <p className="text-slate-800 text-xs leading-relaxed min-h-[30px] mt-1 whitespace-pre-wrap">
+                    {requestData.targetHasil || '-'}
+                  </p>
+                </div>
+                <div className="border border-dashed border-slate-300 rounded-lg bg-slate-50 min-h-[140px] p-3 flex flex-col items-center justify-center text-center">
+                  <span className="text-xs font-semibold text-slate-700">Target Capaian</span>
+                  <span className="text-[11px] text-slate-500 mt-1">Hanya berupa uraian teks target / KPI (tanpa foto)</span>
+                </div>
+              </div>
             </div>
 
             {/* Penjelasan Pelaksanaan */}

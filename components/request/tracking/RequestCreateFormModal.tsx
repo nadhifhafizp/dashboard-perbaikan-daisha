@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Phone,
   Layers,
+  Target,
 } from 'lucide-react';
 import { compressImageFile } from '@/lib/imageCompressor';
 import { RequestFormData, DAFTAR_SEKSI_REQUEST, DAFTAR_FAKTOR } from './types';
@@ -598,146 +599,196 @@ export default function RequestCreateFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Kartu Kiri: Kondisi Aktual Saat Ini (Problem) */}
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-red-600" />
-                    <span>Kondisi Aktual Saat Ini (Problem)</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Kartu 1: Kondisi Aktual Saat Ini (Problem) */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3 flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-red-600 shrink-0" />
+                      <span>Keadaan Sekarang (Problem)</span>
+                    </span>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Kendala, posisi aus/patah, atau potensi bahaya
+                    </p>
+                  </div>
+                  <span className="text-xs text-red-700 bg-red-50 border border-red-200 font-bold px-1.5 py-0.5 rounded shrink-0">
+                    Foto Before
                   </span>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    Jelaskan kendala, posisi aus/patah, atau potensi bahaya saat ini
-                  </p>
                 </div>
-                <span className="text-xs text-red-700 bg-red-50 border border-red-200 font-bold px-1.5 py-0.5 rounded">
-                  Foto Before
-                </span>
+
+                <textarea
+                  value={formData.keadaanSekarang}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      keadaanSekarang: e.target.value,
+                    }))
+                  }
+                  rows={3}
+                  className="w-full p-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none resize-none leading-relaxed"
+                  placeholder="Contoh: Pengait troli aus dan sering macet saat ditarik, berisiko jatuh saat membawa material..."
+                />
               </div>
 
-              <textarea
-                value={formData.keadaanSekarang}
-                onChange={(e) =>
-                  setFormData((p) => ({
-                    ...p,
-                    keadaanSekarang: e.target.value,
-                  }))
-                }
-                rows={3}
-                className="w-full p-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none resize-none leading-relaxed"
-                placeholder="Contoh: Pengait troli aus dan sering macet saat ditarik, berisiko jatuh saat membawa material..."
-              />
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputSebelumRef}
+                  onChange={(e) => handlePhotoUpload(e, 'fotoSebelum')}
+                  className="hidden"
+                />
 
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputSebelumRef}
-                onChange={(e) => handlePhotoUpload(e, 'fotoSebelum')}
-                className="hidden"
-              />
-
-              {formData.fotoSebelum ? (
-                <div className="relative rounded-lg overflow-hidden border border-slate-300 bg-white">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={formData.fotoSebelum}
-                    alt="Kondisi Aktual (Before)"
-                    className="w-full h-44 object-contain p-1.5 bg-slate-50"
-                  />
+                {formData.fotoSebelum ? (
+                  <div className="relative rounded-lg overflow-hidden border border-slate-300 bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={formData.fotoSebelum}
+                      alt="Kondisi Aktual (Before)"
+                      className="w-full h-44 object-contain p-1.5 bg-slate-50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData((p) => ({ ...p, fotoSebelum: '' }))}
+                      className="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg text-xs hover:bg-rose-700 transition shadow-sm cursor-pointer"
+                      title="Hapus foto"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => setFormData((p) => ({ ...p, fotoSebelum: '' }))}
-                    className="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg text-xs hover:bg-rose-700 transition shadow-sm cursor-pointer"
-                    title="Hapus foto"
+                    onClick={() => fileInputSebelumRef.current?.click()}
+                    className="w-full h-24 border-2 border-dashed border-slate-300 hover:border-red-500 rounded-xl flex flex-col items-center justify-center text-slate-600 hover:text-red-600 transition cursor-pointer bg-white group p-3 text-center"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Upload className="w-5 h-5 mb-1 text-slate-400 group-hover:text-red-500 transition" />
+                    <span className="text-xs font-bold text-slate-800 group-hover:text-red-600">
+                      Upload Foto Keadaan Sekarang
+                    </span>
+                    <span className="text-xs text-slate-600 mt-0.5">
+                      Kamera ponsel atau galeri
+                    </span>
                   </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputSebelumRef.current?.click()}
-                  className="w-full h-24 border-2 border-dashed border-slate-300 hover:border-red-500 rounded-xl flex flex-col items-center justify-center text-slate-600 hover:text-red-600 transition cursor-pointer bg-white group p-3 text-center"
-                >
-                  <Upload className="w-5 h-5 mb-1 text-slate-400 group-hover:text-red-500 transition" />
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-red-600">
-                    Upload Foto Kondisi Saat Ini (Before)
-                  </span>
-                  <span className="text-xs text-slate-600 mt-0.5">
-                    Ambil dari kamera ponsel atau unggah galeri
-                  </span>
-                </button>
-              )}
+                )}
+              </div>
             </div>
 
-            {/* Kartu Kanan: Rencana / Sketsa Rencana (Usulan) */}
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                    <span>Usulan Solusi / Rencana Permintaan</span>
+            {/* Kartu 2: Rencana Tindakan / Usulan Solusi */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3 flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
+                      <span>Rencana Tindakan (Usulan)</span>
+                    </span>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Bentuk perbaikan, dimensi, atau modifikasi
+                    </p>
+                  </div>
+                  <span className="text-xs text-slate-600 bg-slate-100 border border-slate-200 font-semibold px-1.5 py-0.5 rounded shrink-0">
+                    Sketsa / Desain
                   </span>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    Jelaskan bentuk perbaikan, dimensi, atau modifikasi yang diharapkan
-                  </p>
                 </div>
-                <span className="text-xs text-slate-600 bg-slate-100 border border-slate-200 font-semibold px-1.5 py-0.5 rounded">
-                  Sketsa / Desain
-                </span>
+
+                <textarea
+                  value={formData.rencanaTindakan}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, rencanaTindakan: e.target.value }))
+                  }
+                  rows={3}
+                  className="w-full p-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none resize-none leading-relaxed"
+                  placeholder="Contoh: Dibuatkan stopper ganda dari plat baja tebal 5mm dan dicat kuning keselamatan..."
+                />
               </div>
 
-              <textarea
-                value={formData.rencanaTindakan}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, rencanaTindakan: e.target.value }))
-                }
-                rows={3}
-                className="w-full p-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none resize-none leading-relaxed"
-                placeholder="Contoh: Dibuatkan stopper ganda dari plat baja tebal 5mm dan dicat kuning keselamatan..."
-              />
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputSesudahRef}
+                  onChange={(e) => handlePhotoUpload(e, 'fotoSesudah')}
+                  className="hidden"
+                />
 
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputSesudahRef}
-                onChange={(e) => handlePhotoUpload(e, 'fotoSesudah')}
-                className="hidden"
-              />
-
-              {formData.fotoSesudah ? (
-                <div className="relative rounded-lg overflow-hidden border border-slate-300 bg-white">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={formData.fotoSesudah}
-                    alt="Sketsa / Referensi Rencana"
-                    className="w-full h-44 object-contain p-1.5 bg-slate-50"
-                  />
+                {formData.fotoSesudah ? (
+                  <div className="relative rounded-lg overflow-hidden border border-slate-300 bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={formData.fotoSesudah}
+                      alt="Sketsa / Referensi Rencana"
+                      className="w-full h-44 object-contain p-1.5 bg-slate-50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData((p) => ({ ...p, fotoSesudah: '' }))}
+                      className="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg text-xs hover:bg-rose-700 transition shadow-sm cursor-pointer"
+                      title="Hapus foto"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => setFormData((p) => ({ ...p, fotoSesudah: '' }))}
-                    className="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg text-xs hover:bg-rose-700 transition shadow-sm cursor-pointer"
-                    title="Hapus foto"
+                    onClick={() => fileInputSesudahRef.current?.click()}
+                    className="w-full h-24 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-xl flex flex-col items-center justify-center text-slate-600 hover:text-emerald-700 transition cursor-pointer bg-white group p-3 text-center"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Upload className="w-5 h-5 mb-1 text-slate-400 group-hover:text-emerald-600 transition" />
+                    <span className="text-xs font-bold text-slate-800 group-hover:text-emerald-700">
+                      Upload Sketsa / Referensi Rencana
+                    </span>
+                    <span className="text-xs text-slate-600 mt-0.5">
+                      Coretan tangan, foto acuan, atau CAD
+                    </span>
                   </button>
+                )}
+              </div>
+            </div>
+
+            {/* Kartu 3: Target Hasil : (Pcs/Day, Rp./Month, etc) */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3 flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                      <span>Target Hasil : (Target/KPI)</span>
+                    </span>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Pcs/Day, Rp./Month, efisiensi waktu, dll
+                    </p>
+                  </div>
+                  <span className="text-xs text-blue-700 bg-blue-50 border border-blue-200 font-bold px-1.5 py-0.5 rounded shrink-0">
+                    Teks Target
+                  </span>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputSesudahRef.current?.click()}
-                  className="w-full h-24 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-xl flex flex-col items-center justify-center text-slate-600 hover:text-emerald-700 transition cursor-pointer bg-white group p-3 text-center"
-                >
-                  <Upload className="w-5 h-5 mb-1 text-slate-400 group-hover:text-emerald-600 transition" />
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-emerald-700">
-                    Upload Sketsa / Foto Contoh Referensi
+
+                <textarea
+                  value={formData.targetHasil}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, targetHasil: e.target.value }))
+                  }
+                  rows={3}
+                  className="w-full p-3 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none resize-none leading-relaxed"
+                  placeholder="Contoh: Pengurangan downtime 30 menit/hari, efisiensi Rp. 5jt/bulan, atau peningkatan output 50 pcs/day..."
+                />
+              </div>
+
+              <div>
+                <div className="w-full h-24 border-2 border-dashed border-blue-200 rounded-xl flex flex-col items-center justify-center bg-blue-50/50 p-3 text-center">
+                  <Target className="w-5 h-5 mb-1 text-blue-600" />
+                  <span className="text-xs font-bold text-slate-800">
+                    Hanya Input Teks Target
                   </span>
                   <span className="text-xs text-slate-600 mt-0.5">
-                    Opsional: gambar coretan tangan, foto acuan barang, atau gambar CAD
+                    Tidak memerlukan upload gambar/foto
                   </span>
-                </button>
-              )}
+                </div>
+              </div>
             </div>
           </div>
         </section>
