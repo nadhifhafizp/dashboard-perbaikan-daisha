@@ -300,88 +300,81 @@ export default function TargetVsActualChart({
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 space-y-4">
       {/* 1. Header & Segmented Mode Switcher */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 pb-3 border-b border-slate-100">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <BarChart3 className="w-4 h-4" />
-            </div>
-            <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
-              {title}
-            </h2>
-          </div>
-          <p className="text-xs text-slate-500">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-slate-200">
+        <div>
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+            {title}
+          </h2>
+          <p className="text-xs text-slate-500 font-normal mt-0.5">
             {subtitle}
           </p>
         </div>
 
         {/* View Switcher: Per Jenis Daisha vs Tren 14 Hari */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg self-stretch sm:self-auto">
+        <div className="flex items-center rounded-lg border border-slate-200 p-0.5 bg-slate-50 text-xs">
           <button
             type="button"
             onClick={() => setViewMode('JENIS')}
-            className={`min-h-[40px] px-3.5 py-2 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
+            className={`h-8 px-3 rounded-md transition cursor-pointer font-medium ${
               viewMode === 'JENIS'
-                ? 'bg-white text-slate-900 border border-slate-200/80'
+                ? 'bg-slate-900 text-white font-semibold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Layers className="w-4 h-4 text-emerald-600" />
-            <span>Per Jenis Daisha (Backlog Tracker)</span>
+            Per Jenis Daisha (Backlog Tracker)
           </button>
           <button
             type="button"
             onClick={() => setViewMode('TREND')}
-            className={`min-h-[40px] px-3.5 py-2 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
+            className={`h-8 px-3 rounded-md transition cursor-pointer font-medium ${
               viewMode === 'TREND'
-                ? 'bg-white text-slate-900 border border-slate-200/80'
+                ? 'bg-slate-900 text-white font-semibold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <CalendarClock className="w-4 h-4 text-sky-600" />
-            <span>Tren 14 Hari</span>
+            Tren 14 Hari
           </button>
         </div>
       </div>
 
-      {/* 2. Top Summary KPI Badges: Total Backlog, Target Harian, Real Actual */}
+      {/* 2. Top Summary Metrics (KPIs as Type, Flat Surfaces) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {/* Total Sisa Backlog (Belum PM) */}
-        <div className="p-3 rounded-xl bg-rose-50/60 border border-rose-200 text-left">
-          <span className="text-xs text-rose-700 font-medium block">
+        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-left">
+          <span className="text-xs text-slate-500 font-medium block">
             Total Sisa Backlog PM
           </span>
           <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-lg font-bold text-rose-900 tabular-nums">
+            <span className="text-xl font-bold text-slate-900 tabular-nums">
               {totalBacklog.toLocaleString('id-ID')}
             </span>
-            <span className="text-xs font-normal text-rose-700">Unit Belum PM</span>
+            <span className="text-xs text-slate-500">unit</span>
           </div>
         </div>
 
         {/* Target Harian Wajib */}
-        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-left">
+        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-left">
           <span className="text-xs text-slate-500 font-medium block">
             Target Harian Wajib
           </span>
           <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-lg font-bold text-slate-900 tabular-nums">
+            <span className="text-xl font-bold text-slate-900 tabular-nums">
               {(totalDailyTarget || dailyTarget).toLocaleString('id-ID')}
             </span>
-            <span className="text-xs font-normal text-slate-500">Unit / Hari</span>
+            <span className="text-xs text-slate-500">unit/hari</span>
           </div>
         </div>
 
         {/* Real Actual Hari Ini */}
-        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-left">
+        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-left">
           <span className="text-xs text-slate-500 font-medium block">
-            Real Actual Hari Ini
+            Realisasi Hari Ini
           </span>
           <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-lg font-bold text-emerald-600 tabular-nums">
+            <span className="text-xl font-bold text-slate-900 tabular-nums">
               {totalRealActualToday.toLocaleString('id-ID')}
             </span>
-            <span className="text-xs font-normal text-slate-500">Unit Selesai</span>
+            <span className="text-xs text-slate-500">unit selesai</span>
           </div>
         </div>
 
@@ -390,32 +383,24 @@ export default function TargetVsActualChart({
           const gapTotal = totalRealActualToday - (totalDailyTarget || dailyTarget);
           const isAchieved = gapTotal >= 0;
           return (
-            <div
-              className={`p-3 rounded-xl border text-left ${
-                isAchieved ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'
-              }`}
-            >
-              <span
-                className={`text-xs font-medium block ${
-                  isAchieved ? 'text-emerald-700' : 'text-rose-700'
-                }`}
-              >
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-left">
+              <span className="text-xs text-slate-500 font-medium block">
                 Status GAP Hari Ini
               </span>
-              <div className="flex items-baseline gap-1 mt-1">
+              <div className="flex items-baseline gap-1.5 mt-1">
                 <span
-                  className={`text-lg font-bold tabular-nums ${
-                    isAchieved ? 'text-emerald-800' : 'text-rose-800'
+                  className={`text-xl font-bold tabular-nums ${
+                    isAchieved ? 'text-emerald-700' : 'text-slate-900'
                   }`}
                 >
                   {gapTotal >= 0 ? `+${gapTotal}` : `${gapTotal}`}
                 </span>
                 <span
                   className={`text-xs font-medium ${
-                    isAchieved ? 'text-emerald-700' : 'text-rose-700'
+                    isAchieved ? 'text-emerald-700' : 'text-slate-500'
                   }`}
                 >
-                  {isAchieved ? 'Unit (Tercapai)' : 'Unit (Defisit Kuota)'}
+                  {isAchieved ? 'Tercapai' : 'Defisit kuota'}
                 </span>
               </div>
             </div>

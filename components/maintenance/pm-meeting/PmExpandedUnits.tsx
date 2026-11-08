@@ -36,28 +36,28 @@ export default function PmExpandedUnits({
 
   return (
     <tr>
-      <td colSpan={7} className="p-0 bg-slate-50 border-y border-slate-200">
+      <td colSpan={7} className="p-0 bg-slate-50/60 border-y border-slate-200">
         <div className="p-4 sm:p-5 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
             <div>
-              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <span>Mapping Unit Fisik: {item.nama}</span>
-                <span className="text-xs font-normal text-slate-500">
+              <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <span>Rincian Unit: {item.nama}</span>
+                <span className="font-normal text-slate-500">
                   ({item.units.length} total unit di pabrik)
                 </span>
               </h4>
-              <p className="text-xs text-slate-500">
-                Status kesiapan fisik (OK/Rusak) dan kepatuhan PM tahun {currentYear} untuk setiap nomor armada
+              <p className="text-[11px] text-slate-500">
+                Nomor armada, seksi operasional, status fisik, dan waktu pemeliharaan tahun {currentYear}
               </p>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Filter Status Unit */}
-              <div className="flex items-center rounded-lg border border-slate-300 p-0.5 bg-white text-xs font-medium">
+              {/* Filter Status Unit Segmented */}
+              <div className="flex items-center rounded-lg border border-slate-200 p-0.5 bg-white text-xs">
                 <button
                   type="button"
                   onClick={() => setUnitStatusFilter('all')}
-                  className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                  className={`h-7 px-2.5 rounded-md transition cursor-pointer ${
                     unitStatusFilter === 'all'
                       ? 'bg-slate-900 text-white font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
@@ -68,10 +68,10 @@ export default function PmExpandedUnits({
                 <button
                   type="button"
                   onClick={() => setUnitStatusFilter('unmaintained')}
-                  className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                  className={`h-7 px-2.5 rounded-md transition cursor-pointer ${
                     unitStatusFilter === 'unmaintained'
-                      ? 'bg-rose-600 text-white font-semibold'
-                      : 'text-rose-700 hover:bg-rose-50'
+                      ? 'bg-slate-900 text-white font-semibold'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   Belum PM ({item.unmaintained})
@@ -79,10 +79,10 @@ export default function PmExpandedUnits({
                 <button
                   type="button"
                   onClick={() => setUnitStatusFilter('maintained')}
-                  className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                  className={`h-7 px-2.5 rounded-md transition cursor-pointer ${
                     unitStatusFilter === 'maintained'
-                      ? 'bg-emerald-600 text-white font-semibold'
-                      : 'text-emerald-700 hover:bg-emerald-50'
+                      ? 'bg-slate-900 text-white font-semibold'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   Sudah PM ({item.maintained})
@@ -91,10 +91,10 @@ export default function PmExpandedUnits({
                   <button
                     type="button"
                     onClick={() => setUnitStatusFilter('rusak')}
-                    className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                    className={`h-7 px-2.5 rounded-md transition cursor-pointer ${
                       unitStatusFilter === 'rusak'
-                        ? 'bg-rose-800 text-white font-semibold'
-                        : 'text-rose-800 font-bold hover:bg-rose-50'
+                        ? 'bg-rose-700 text-white font-semibold'
+                        : 'text-rose-700 font-medium hover:bg-rose-50'
                     }`}
                   >
                     Rusak ({item.rusakCount})
@@ -108,13 +108,13 @@ export default function PmExpandedUnits({
                 placeholder="Cari No. Unit / Seksi..."
                 value={unitSearch}
                 onChange={(e) => setUnitSearch(e.target.value)}
-                className="h-8 px-2.5 text-xs bg-white border border-slate-300 rounded-md w-40 focus:outline-hidden focus:border-red-500"
+                className="h-8 px-2.5 text-xs bg-white text-slate-800 border border-slate-200 rounded-md w-44 focus:outline-hidden focus:border-red-600 placeholder:text-slate-400"
               />
             </div>
           </div>
 
-          {/* Grid Unit Kartu */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 max-h-80 overflow-y-auto pr-1">
+          {/* Grid Unit Kartu Precision */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-80 overflow-y-auto pr-1">
             {filteredUnits.length === 0 ? (
               <div className="col-span-full py-6 text-center text-xs text-slate-400">
                 Tidak ada unit yang cocok dengan kriteria filter.
@@ -133,51 +133,56 @@ export default function PmExpandedUnits({
                 return (
                   <div
                     key={u.id || u.nomor_daisha}
-                    className={`p-2.5 rounded-lg border text-left transition ${
+                    className={`p-2.5 rounded-lg border text-left bg-white transition ${
                       isDamaged
-                        ? 'bg-rose-50/70 border-rose-300 ring-1 ring-rose-200'
+                        ? 'border-rose-300'
                         : isDone
-                        ? 'bg-emerald-50/50 border-emerald-200'
-                        : 'bg-white border-slate-200 hover:border-slate-300'
+                        ? 'border-slate-200'
+                        : 'border-slate-200'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-bold text-xs text-slate-900 tracking-tight">
+                      <span className="font-semibold text-xs text-slate-900 tracking-tight font-mono">
                         {u.nomor_daisha}
                       </span>
                       <span
-                        className={`w-2 h-2 rounded-full ${
+                        className={`w-1.5 h-1.5 rounded-full ${
                           isDamaged
                             ? 'bg-rose-600'
                             : isDone
-                            ? 'bg-emerald-500'
+                            ? 'bg-emerald-600'
                             : 'bg-amber-400'
                         }`}
+                        title={isDamaged ? 'Rusak' : isDone ? 'Sudah PM' : 'Belum PM'}
                       />
                     </div>
 
-                    <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
                       <span className="truncate">{u.seksi || 'Pabrik'}</span>
                       <span
-                        className={`font-semibold ${
-                          isDamaged ? 'text-rose-700' : 'text-emerald-700'
+                        className={`font-medium ${
+                          isDamaged ? 'text-rose-700' : 'text-slate-600'
                         }`}
                       >
                         {isDamaged ? 'RUSAK' : 'OK'}
                       </span>
                     </div>
 
-                    <div className="mt-1.5 pt-1.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <div className="mt-1 pt-1 border-t border-slate-100 flex items-center justify-between text-[11px]">
                       <span
                         className={
                           isDone
-                            ? 'text-emerald-700 font-semibold'
-                            : 'text-slate-500 font-medium'
+                            ? 'text-emerald-700 font-medium'
+                            : 'text-slate-400'
                         }
                       >
                         {isDone ? 'Sudah PM' : 'Belum PM'}
                       </span>
-                      {dateStr && <span className="text-slate-400">{dateStr}</span>}
+                      {dateStr ? (
+                        <span className="text-slate-400 tabular-nums">{dateStr}</span>
+                      ) : (
+                        <span className="text-slate-300">-</span>
+                      )}
                     </div>
                   </div>
                 );

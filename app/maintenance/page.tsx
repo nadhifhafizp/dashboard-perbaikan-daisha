@@ -420,14 +420,14 @@ function MaintenanceModuleContent() {
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap">
+        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
           {/* Dropdown Filter Seksi khusus Admin / Operator */}
           {!isSeksi && (
             <select
               value={selectedSeksiFilter}
               onChange={(e) => handleSeksiFilterChange(e.target.value)}
               aria-label="Filter armada berdasarkan Seksi Operasional"
-              className="h-11 sm:h-10 px-3 bg-white text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600/20 focus-visible:border-red-600 cursor-pointer"
+              className="h-9 px-3 bg-white text-slate-800 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-red-600 cursor-pointer"
             >
               <option value="">Semua Seksi</option>
               {seksiList.map((s) => (
@@ -442,11 +442,11 @@ function MaintenanceModuleContent() {
             type="button"
             onClick={() => fetchData(true)}
             disabled={loading || refreshing}
-            className="h-11 sm:h-10 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="h-9 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 focus:outline-hidden"
             title="Muat Ulang Data"
             aria-label="Segarkan data pemeliharaan"
           >
-            <RefreshCw className={`w-4 h-4 text-slate-500 ${refreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
+            <RefreshCw className={`w-3.5 h-3.5 text-slate-400 ${refreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
             <span>Segarkan</span>
           </button>
 
@@ -454,18 +454,18 @@ function MaintenanceModuleContent() {
           {isSeksi ? (
             <Link
               href="/lapor-rusak"
-              className="h-11 sm:h-10 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
+              className="h-9 px-3.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer focus:outline-hidden"
             >
-              <AlertTriangle className="w-4 h-4 text-white" aria-hidden="true" />
+              <AlertTriangle className="w-3.5 h-3.5 text-white" aria-hidden="true" />
               <span>Lapor Rusak</span>
             </Link>
           ) : (
             <button
               type="button"
               onClick={() => handleOpenInput()}
-              className="h-11 sm:h-10 min-h-[40px] px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
+              className="h-9 px-3.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4 text-white" />
+              <PlusCircle className="w-3.5 h-3.5 text-white" />
               <span>Catat PM</span>
             </button>
           )}
@@ -473,29 +473,34 @@ function MaintenanceModuleContent() {
       </header>
 
       {/* 2. Primary Module Panel Navigation (Segmented Switcher) */}
-      <nav aria-label="Navigasi Panel Maintenance" className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
-        <Link
-          href={`/kpi?tab=pm${activeSeksi ? `&seksi=${encodeURIComponent(activeSeksi)}` : ''}`}
-          className="h-10 min-h-[40px] px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300 shrink-0"
+      <nav aria-label="Navigasi Panel Maintenance" className="flex items-center gap-1.5 border-b border-slate-200 pb-2 overflow-x-auto text-xs">
+        <button
+          type="button"
+          onClick={() => handleTabChange('DASHBOARD')}
+          className={`h-9 px-3 rounded-lg font-semibold transition flex items-center gap-1.5 cursor-pointer border shrink-0 ${
+            activeTab === 'DASHBOARD'
+              ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+              : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
+          }`}
         >
-          <BarChart3 className="w-4 h-4 text-red-600" />
-          <span>KPI PM</span>
-        </Link>
+          <LayoutDashboard className="w-3.5 h-3.5" />
+          <span>Ringkasan PM</span>
+        </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('STAGING')}
-          className={`h-10 min-h-[40px] px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
+          className={`h-9 px-3 rounded-lg font-semibold transition flex items-center gap-1.5 cursor-pointer border shrink-0 ${
             activeTab === 'STAGING'
-              ? 'bg-red-600 text-white border-red-600'
+              ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
               : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
           }`}
         >
-          <Truck className="w-4 h-4" />
+          <Truck className="w-3.5 h-3.5" />
           <span>{activeSeksi ? 'Penjemputan PM' : 'Antrean Penjemputan'}</span>
           {waitingStagingCount > 0 && (
-            <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold tabular-nums ${
-              activeTab === 'STAGING' ? 'bg-white text-red-700' : 'bg-amber-500 text-white'
+            <span className={`px-1.5 py-0.2 rounded text-[11px] font-bold tabular-nums ${
+              activeTab === 'STAGING' ? 'bg-white/20 text-white' : 'bg-amber-500 text-white'
             }`}>
               {waitingStagingCount}
             </span>
@@ -505,28 +510,39 @@ function MaintenanceModuleContent() {
         <button
           type="button"
           onClick={() => handleTabChange('FLEET')}
-          className={`h-10 min-h-[40px] px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
+          className={`h-9 px-3 rounded-lg font-semibold transition flex items-center gap-1.5 cursor-pointer border shrink-0 ${
             activeTab === 'FLEET'
-              ? 'bg-red-600 text-white border-red-600'
+              ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
               : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
           }`}
         >
-          <Grid className="w-4 h-4" />
+          <Grid className="w-3.5 h-3.5" />
           <span>Katalog Armada ({units.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('LOGS')}
-          className={`h-10 min-h-[40px] px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
+          className={`h-9 px-3 rounded-lg font-semibold transition flex items-center gap-1.5 cursor-pointer border shrink-0 ${
             activeTab === 'LOGS'
-              ? 'bg-red-600 text-white border-red-600'
+              ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
               : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
           }`}
         >
-          <FileText className="w-4 h-4" />
+          <FileText className="w-3.5 h-3.5" />
           <span>Riwayat PM ({recentLogs.length})</span>
         </button>
+
+        <div className="ml-auto hidden sm:flex items-center gap-1 shrink-0">
+          <Link
+            href={`/kpi?tab=pm${activeSeksi ? `&seksi=${encodeURIComponent(activeSeksi)}` : ''}`}
+            className="h-9 px-3 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer border bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300"
+            title="Buka Dashboard Rapat & Evaluasi Manajemen Eksekutif"
+          >
+            <BarChart3 className="w-3.5 h-3.5 text-slate-500" />
+            <span>Rapat & Analitik PM ↗</span>
+          </Link>
+        </div>
       </nav>
 
       {/* Error Alert */}
