@@ -123,6 +123,8 @@ export async function GET(request: Request) {
 
     const computePayload = async (): Promise<Record<string, unknown>> => {
       const startOfYear = new Date(currentYear, 0, 1, 0, 0, 0, 0);
+      // Siklus PM Daisha resmi dimulai per 1 Oktober (Oktober tahun berjalan)
+      const startOfPmPeriod = new Date(currentYear, 9, 1, 0, 0, 0, 0);
       const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59, 999);
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
       const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
@@ -218,7 +220,7 @@ export async function GET(request: Request) {
             COALESCE(kondisi, 'OK') AS kondisi,
             COUNT(*)::int AS count
           FROM "MaintenanceLog"
-          WHERE tanggal_pengerjaan >= ${startOfYear} AND tanggal_pengerjaan <= ${endOfYear}
+          WHERE tanggal_pengerjaan >= ${startOfPmPeriod} AND tanggal_pengerjaan <= ${endOfYear}
           GROUP BY COALESCE(kondisi, 'OK')
         `,
         sql<Array<{
@@ -369,7 +371,7 @@ export async function GET(request: Request) {
         const effectiveLastDate = (lastMaint && lastRepair)
           ? (lastMaint > lastRepair ? lastMaint : lastRepair)
           : (lastMaint || lastRepair);
-        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfYear && effectiveLastDate <= endOfYear;
+        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfPmPeriod && effectiveLastDate <= endOfYear;
         
         const canonicalJenis = getCanonicalPmJenis(u.jenis);
 
@@ -444,7 +446,7 @@ export async function GET(request: Request) {
         const effectiveLastDate = (lastMaint && lastRepair)
           ? (lastMaint > lastRepair ? lastMaint : lastRepair)
           : (lastMaint || lastRepair);
-        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfYear && effectiveLastDate <= endOfYear;
+        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfPmPeriod && effectiveLastDate <= endOfYear;
         if (isMaintainedThisYear) {
           entry.maintained++;
         } else {
