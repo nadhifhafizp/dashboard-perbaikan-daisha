@@ -51,6 +51,14 @@ export default function WorkshopPortalPage() {
   const activeRepairCount = seksiTickets.filter((t) => t.status !== 'Done' && t.status !== 'Scrap').length;
   const completedRepairCount = seksiTickets.filter((t) => t.status === 'Done').length;
 
+  const allActiveRepairs = useMemo(() => {
+    return tickets.filter((t) => t.status !== 'Done' && t.status !== 'Scrap').length;
+  }, [tickets]);
+
+  const allCompletedRepairs = useMemo(() => {
+    return tickets.filter((t) => t.status === 'Done').length;
+  }, [tickets]);
+
   if (authLoading || isOperator) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -294,228 +302,385 @@ export default function WorkshopPortalPage() {
 
   // Workshop Management Hub untuk Admin & Superuser
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto font-sans">
-      {/* 1. Page Header (Flat layout) */}
-      <header className="pb-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-6xl mx-auto font-sans">
+      {/* 1. Header Admin Portal */}
+      <header className="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="t-title text-slate-900 tracking-tight">
-            Workshop Daisha
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-900 text-white">
+              <Building2 className="w-3.5 h-3.5 text-red-400" />
+              <span>Workshop Control Center</span>
+            </span>
+            <span className="text-xs text-slate-500 font-medium">
+              Administrator: <strong className="text-slate-800 font-semibold">{currentUser?.username}</strong>
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Portal Administrasi Workshop
           </h1>
-          <p className="t-caption text-slate-500">
-            Status operasional bengkel dan armada pabrik
+          <p className="text-xs text-slate-500">
+            Pusat kendali operasional perbaikan, jadwal pemeliharaan berkala (PM), logistik sparepart, dan manajemen hak akses.
           </p>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-center">
+          <Link
+            href="/admin"
+            className="h-10 px-4 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 transition shadow-xs"
+          >
+            <Wrench className="w-4 h-4" />
+            <span>Panel Tindakan</span>
+          </Link>
+          <Link
+            href="/kpi"
+            className="h-10 px-4 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 transition shadow-2xs"
+          >
+            <BarChart3 className="w-4 h-4 text-red-600" />
+            <span>Pusat KPI</span>
+          </Link>
         </div>
       </header>
 
-      {/* 2. Operational Module Cards (Sesuai DS v2.0 Section 7) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {/* Module 1: KPI Daisha */}
-        <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5 relative">
-          <div className="space-y-3">
-            <div className="w-10 h-10 rounded-lg bg-red-50 border border-red-100 text-red-600 flex items-center justify-center">
-              <BarChart3 className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="t-section text-slate-900">
-                KPI Daisha
-              </h2>
-              <p className="t-body text-slate-600 mt-1 line-clamp-2">
-                Monitoring analitik armada, kepatuhan PM, request, dan stok sparepart.
-              </p>
-            </div>
+      {/* 2. Quick Pulse Metrics Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="p-4 bg-white rounded-xl border border-slate-200 flex items-center justify-between shadow-2xs">
+          <div>
+            <p className="text-xs text-slate-500 font-medium">Unit Sedang Diservis</p>
+            <p className="text-2xl font-bold text-slate-900 mt-0.5 font-mono">
+              {allActiveRepairs} <span className="text-xs font-normal text-slate-500">unit</span>
+            </p>
           </div>
-
-          <div className="mt-5 pt-3 border-t border-slate-100 space-y-2">
-            <Link
-              href="/kpi"
-              className="w-full h-11 sm:h-10 px-4 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>Lihat KPI</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-            <div className="flex items-center justify-center gap-3 pt-0.5 text-xs text-slate-500">
-              <Link href="/kpi?tab=daisha" className="hover:text-red-600 transition">Armada & PM</Link>
-              <span className="text-slate-300">/</span>
-              <Link href="/kpi?tab=request" className="hover:text-red-600 transition">Request</Link>
-              <span className="text-slate-300">/</span>
-              <Link href="/kpi?tab=spareparts" className="hover:text-red-600 transition">Stok</Link>
-            </div>
-          </div>
+          <Link
+            href="/admin"
+            className="text-xs font-semibold px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition"
+          >
+            Tangani &rarr;
+          </Link>
         </div>
 
-        {/* Module 2: Perbaikan Daisha (Operasional Servis) */}
-        <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
-          <div className="space-y-3">
-            <div className="w-10 h-10 rounded-lg bg-red-50 border border-red-100 text-red-600 flex items-center justify-center">
-              <Wrench className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="t-section text-slate-900">
-                Perbaikan Daisha
-              </h2>
-              <p className="t-body text-slate-600 mt-1 line-clamp-2">
-                Penanganan kerusakan unit, eksekusi servis, dan riwayat perbaikan.
-              </p>
-            </div>
+        <div className="p-4 bg-white rounded-xl border border-slate-200 flex items-center justify-between shadow-2xs">
+          <div>
+            <p className="text-xs text-slate-500 font-medium">Selesai Diperbaiki</p>
+            <p className="text-2xl font-bold text-slate-900 mt-0.5 font-mono">
+              {allCompletedRepairs} <span className="text-xs font-normal text-slate-500">unit</span>
+            </p>
           </div>
-
-          <div className="mt-5 pt-3 border-t border-slate-100 space-y-2">
-            <Link
-              href="/admin"
-              className="w-full h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>Buka Panel</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-            <div className="flex items-center justify-center gap-3">
-              <Link
-                href="/input"
-                className="t-caption text-slate-500 hover:text-slate-900 inline-flex items-center gap-1 transition"
-              >
-                <span>Input Kerusakan</span>
-              </Link>
-              <span className="text-slate-300">/</span>
-              <Link
-                href="/riwayat"
-                className="t-caption text-slate-500 hover:text-slate-900 inline-flex items-center gap-1 transition"
-              >
-                <span>{isOperator ? 'Tindakan Bengkel' : 'Antrean Unit'}</span>
-              </Link>
-            </div>
-          </div>
+          <Link
+            href="/riwayat"
+            className="text-xs font-semibold px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition"
+          >
+            Riwayat &rarr;
+          </Link>
         </div>
 
-        {/* Module 3: Modul Maintenance Daisha (Operasional PM) */}
-        <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
-          <div className="space-y-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center">
-              <Target className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="t-section text-slate-900">
-                PM Daisha
-              </h2>
-              <p className="t-body text-slate-600 mt-1 line-clamp-2">
-                Antrean penjemputan berkala, penyiapan seksi, dan registri armada.
-              </p>
-            </div>
+        <div className="p-4 bg-white rounded-xl border border-slate-200 flex items-center justify-between shadow-2xs">
+          <div>
+            <p className="text-xs text-slate-500 font-medium">Siklus PM Aktif</p>
+            <p className="text-sm font-semibold text-slate-800 mt-1">
+              Periode Oktober - Maret
+            </p>
           </div>
-
-          <div className="mt-5 pt-3 border-t border-slate-100 space-y-2">
-            <Link
-              href="/maintenance?tab=staging"
-              className="w-full h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>Buka PM</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-            <div className="flex items-center justify-center gap-3">
-              <Link
-                href="/maintenance?tab=fleet"
-                className="t-caption text-slate-500 hover:text-slate-900 inline-flex items-center gap-1 transition"
-              >
-                <span>Katalog Armada</span>
-              </Link>
-              <span className="text-slate-300">/</span>
-              <Link
-                href="/catalog"
-                className="t-caption text-slate-500 hover:text-slate-900 inline-flex items-center gap-1 transition"
-              >
-                <span>Registri Daisha</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Module 4: Request Seksi */}
-        <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
-          <div className="space-y-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
-              <SendHorizonal className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="t-section text-slate-900">
-                Request Seksi
-              </h2>
-              <p className="t-body text-slate-600 mt-1 line-clamp-2">
-                Daftar permohonan modifikasi, evaluasi teknis, dan unit baru.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5 pt-3 border-t border-slate-100 space-y-2">
-            <Link
-              href="/request/tracking"
-              className="w-full h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>Lihat Request</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-            <div className="text-center">
-              <Link
-                href="/request/tracking"
-                className="t-caption text-slate-500 hover:text-slate-900 inline-flex items-center gap-1 transition"
-              >
-                <span>Buat Request</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Module 5: Stok Sparepart */}
-        <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
-          <div className="space-y-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center">
-              <Package className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="t-section text-slate-900">
-                Stok Sparepart
-              </h2>
-              <p className="t-body text-slate-600 mt-1 line-clamp-2">
-                Inventaris suku cadang, stok gudang, dan riwayat mutasi masuk keluar.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5 pt-3 border-t border-slate-100 space-y-2">
-            <Link
-              href="/spareparts"
-              className="w-full h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>Buka Sparepart</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Module 6: Akun Pengguna */}
-        <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
-          <div className="space-y-3">
-            <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="t-section text-slate-900">
-                Akun Pengguna
-              </h2>
-              <p className="t-body text-slate-600 mt-1 line-clamp-2">
-                Daftar akun bengkel, operator, dan hak akses seksi pabrik.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5 pt-3 border-t border-slate-100 space-y-2">
-            <Link
-              href="/users"
-              className="w-full h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>Kelola Akun</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          <Link
+            href="/maintenance"
+            className="text-xs font-semibold px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg transition"
+          >
+            Buka PM &rarr;
+          </Link>
         </div>
       </div>
+
+      {/* 3. Tiga Zona Jelas Sesuai Struktur Navigasi Sidebar */}
+
+      {/* ZONA 1: OPERASIONAL WORKSHOP */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-600" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Operasional Workshop
+            </h2>
+          </div>
+          <span className="text-xs text-slate-400">Servis harian, pemeliharaan rutin &amp; order seksi</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Module 1: Perbaikan Daisha */}
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-red-50 border border-red-100 text-red-600 flex items-center justify-center">
+                  <Wrench className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
+                  Utama
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Perbaikan Daisha
+                </h3>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                  Penanganan kerusakan unit, eksekusi servis di bengkel, dan log riwayat perbaikan.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2">
+              <Link
+                href="/admin"
+                className="w-full h-10 px-4 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>Panel Tindakan</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+              <div className="flex items-center justify-center gap-3 pt-0.5 text-xs text-slate-500">
+                <Link href="/input" className="hover:text-red-600 transition">Input Kerusakan</Link>
+                <span className="text-slate-300">/</span>
+                <Link href="/riwayat" className="hover:text-red-600 transition">Antrean Bengkel</Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Module 2: PM Daisha */}
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <Target className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Rutin 6 Bulan
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  PM Daisha
+                </h3>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                  Jadwal pemeliharaan berkala, staging penjemputan seksi, dan checklist perawatan unit.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2">
+              <Link
+                href="/maintenance"
+                className="w-full h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>Buka PM Daisha</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+              <div className="flex items-center justify-center gap-3 pt-0.5 text-xs text-slate-500">
+                <Link href="/maintenance?tab=staging" className="hover:text-emerald-700 transition">Staging Penjemputan</Link>
+                <span className="text-slate-300">/</span>
+                <Link href="/maintenance?tab=fleet" className="hover:text-emerald-700 transition">Armada PM</Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Module 3: Request Seksi */}
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
+                  <SendHorizonal className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                  Order Kerja
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Request Seksi
+                </h3>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                  Permohonan modifikasi unit, pembuatan troli baru, estimasi part, dan persetujuan SP Project.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2">
+              <Link
+                href="/request/tracking"
+                className="w-full h-10 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>Antrean Request</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+              <div className="flex items-center justify-center gap-3 pt-0.5 text-xs text-slate-500">
+                <Link href="/request/tracking?new=true" className="hover:text-blue-700 transition">Buat Form Baru</Link>
+                <span className="text-slate-300">/</span>
+                <Link href="/request/tracking" className="hover:text-blue-700 transition">Tracking Progres</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ZONA 2: LOGISTIK & MASTER ASET */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Logistik &amp; Master Aset
+            </h2>
+          </div>
+          <span className="text-xs text-slate-400">Inventaris suku cadang &amp; registri seluruh armada pabrik</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Module 4: Stok Sparepart */}
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center">
+                  <Package className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                  Gudang
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Stok Sparepart
+                </h3>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                  Saldo persediaan suku cadang, mutasi barang masuk/keluar, dan monitoring minimum stok bengkel.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2">
+              <Link
+                href="/spareparts"
+                className="w-full h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>Kelola Stok Sparepart</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Module 5: Registri Master Daisha */}
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                  Master Data
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Registri Master Daisha
+                </h3>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                  Database seluruh unit Daisha lintas seksi pabrik, label barcode/QR unit, dan spesifikasi tipe.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2">
+              <Link
+                href="/catalog"
+                className="w-full h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>Buka Registri Daisha</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ZONA 3: MANAJEMEN & KONTROL */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-slate-800" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Manajemen &amp; Kontrol
+            </h2>
+          </div>
+          <span className="text-xs text-slate-400">Pusat analitik eksekutif &amp; konfigurasi hak akses</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Module 6: Dashboard KPI */}
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-red-50 border border-red-100 text-red-600 flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
+                  Analitik
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Dashboard KPI Daisha
+                </h3>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                  Laporan performa armada, grafik throughput servis, kepatuhan PM per seksi, dan tren lead time.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2">
+              <Link
+                href="/kpi"
+                className="w-full h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>Buka Dashboard KPI</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+              <div className="flex items-center justify-center gap-3 pt-0.5 text-xs text-slate-500">
+                <Link href="/kpi?tab=jumlah_daisha" className="hover:text-red-600 transition">Populasi</Link>
+                <span className="text-slate-300">/</span>
+                <Link href="/kpi?tab=perbaikan_daisha" className="hover:text-red-600 transition">Perbaikan</Link>
+                <span className="text-slate-300">/</span>
+                <Link href="/kpi?tab=pm_daisha" className="hover:text-red-600 transition">PM Rutin</Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Module 7: Pengelola Akun */}
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+                  <Users className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                  Akses
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Pengelola Akun
+                </h3>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                  Manajemen akun pengguna, konfigurasi role (Admin, Operator, Seksi), dan reset kredensial password.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2">
+              <Link
+                href="/users"
+                className="w-full h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>Kelola Akun Pengguna</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

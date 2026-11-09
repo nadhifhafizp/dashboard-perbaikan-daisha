@@ -14,8 +14,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === '/login';
   const isPortalPage = pathname === '/';
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  // Default sidebar selalu tertutup (collapsed) saat awal dibuka
-  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(true);
+  // Default sidebar terbuka di desktop agar navigasi admin langsung terlihat dan tidak membingungkan
+  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
 
   const {
     isLogoutModalOpen,
