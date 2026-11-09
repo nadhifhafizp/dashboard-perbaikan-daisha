@@ -105,15 +105,16 @@ export async function GET(request: Request) {
       }>
     >`
       SELECT 
-        id, 
-        name, 
-        seksi,
-        "codePrefix",
-        COALESCE("totalUnits", 0)::int as "totalUnits",
-        COALESCE(components, '[]'::jsonb) as components,
-        COALESCE(variants, '[]'::jsonb) as variants
-      FROM "DaishaCatalog"
-      ORDER BY name ASC
+        c.id, 
+        c.name, 
+        COALESCE(s.name, c.legacy_section_name) as seksi,
+        c.code_prefix as "codePrefix",
+        COALESCE(c.total_units, 0)::int as "totalUnits",
+        COALESCE(c.components, '[]'::jsonb) as components,
+        COALESCE(c.variants, '[]'::jsonb) as variants
+      FROM daisha_catalogs c
+      LEFT JOIN sections s ON s.id = c.section_id
+      ORDER BY c.name ASC
     `;
 
     // Ambil data Section dari DB jika ada
@@ -127,9 +128,20 @@ export async function GET(request: Request) {
       accentBorder: string | null;
     }> = [];
     try {
-      customSections = await sql`SELECT id, name, "colorName", "badgeBg", "textColor", "borderColor", "accentBorder" FROM "Section" ORDER BY id ASC`;
+      customSections = await sql`
+        SELECT 
+          id, 
+          name, 
+          color_name as "colorName", 
+          badge_bg as "badgeBg", 
+          text_color as "textColor", 
+          border_color as "borderColor", 
+          accent_border as "accentBorder" 
+        FROM sections 
+        ORDER BY id ASC
+      `;
     } catch {
-      // Abaikan jika tabel Section belum terisi
+      // Abaikan jika tabel sections belum terisi
     }
 
     const defaultSectionRows = Object.values(SECTION_METAS).map((s, idx) => ({
@@ -319,24 +331,32 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama Daisha wajib diisi.' }, { status: 400 });
       }
 
-      const [existing] = await sql`SELECT id FROM "DaishaCatalog" WHERE LOWER(name) = LOWER(${name}) LIMIT 1`;
+      const [existing] = await sql`SELECT id FROM daisha_catalogs WHERE LOWER(name) = LOWER(${name}) LIMIT 1`;
       if (existing) {
         return NextResponse.json({ error: `Jenis Daisha "${name}" sudah ada.` }, { status: 400 });
       }
 
+      let sectionId: number | null = null;
+      if (seksi?.trim()) {
+        const [sec] = await sql`SELECT id FROM sections WHERE LOWER(TRIM(name)) = LOWER(TRIM(${seksi})) LIMIT 1`;
+        if (sec) sectionId = Number(sec.id);
+      }
+
       const [newDaisha] = await sql`
-        INSERT INTO "DaishaCatalog" (
+        INSERT INTO daisha_catalogs (
           name, 
-          seksi, 
-          "codePrefix", 
-          "totalUnits", 
+          section_id,
+          legacy_section_name, 
+          code_prefix, 
+          total_units, 
           components, 
           variants, 
-          "createdAt", 
-          "updatedAt"
+          created_at, 
+          updated_at
         )
         VALUES (
           ${name},
+          ${sectionId},
           ${seksi},
           ${codePrefix || null},
           ${totalUnits},
@@ -345,8 +365,22 @@ export async function POST(request: Request) {
           NOW(),
           NOW()
         )
-        RETURNING id, name, seksi, "codePrefix", "totalUnits"
+        RETURNING id, name, legacy_section_name as seksi, code_prefix as "codePrefix", total_units as "totalUnits"
       `;
+
+      // Dual-write ke legacy "DaishaCatalog"
+      try {
+        await sql`
+          INSERT INTO "DaishaCatalog" (id, name, seksi, "codePrefix", "totalUnits", components, variants, "createdAt", "updatedAt")
+          VALUES (${newDaisha.id}, ${name}, ${seksi}, ${codePrefix || null}, ${totalUnits}, '[]'::jsonb, '[]'::jsonb, NOW(), NOW())
+          ON CONFLICT (id) DO UPDATE SET 
+            name = EXCLUDED.name, 
+            seksi = EXCLUDED.seksi, 
+            "codePrefix" = EXCLUDED."codePrefix", 
+            "totalUnits" = EXCLUDED."totalUnits", 
+            "updatedAt" = NOW();
+        `;
+      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_ADD_DAISHA',
@@ -385,7 +419,7 @@ export async function POST(request: Request) {
 
       const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
         SELECT id, name, COALESCE(components, '[]'::jsonb) as components 
-        FROM "DaishaCatalog" 
+        FROM daisha_catalogs 
         WHERE id = ${daishaId} 
         LIMIT 1
       `;
@@ -411,11 +445,20 @@ export async function POST(request: Request) {
       comps.push(newComponent);
 
       await sql`
-        UPDATE "DaishaCatalog"
+        UPDATE daisha_catalogs
         SET components = ${toJsonb(comps)},
-            "updatedAt" = NOW()
+            updated_at = NOW()
         WHERE id = ${daishaId}
       `;
+
+      try {
+        await sql`
+          UPDATE "DaishaCatalog"
+          SET components = ${toJsonb(comps)},
+              "updatedAt" = NOW()
+          WHERE id = ${daishaId}
+        `;
+      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_ADD_COMPONENT',
@@ -445,10 +488,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'ID Komponen dan Gejala Kerusakan wajib diisi.' }, { status: 400 });
       }
 
-      // Cari record DaishaCatalog yang memiliki componentId
+      // Cari record daisha_catalogs yang memiliki componentId
       const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
         SELECT id, name, COALESCE(components, '[]'::jsonb) as components
-        FROM "DaishaCatalog"
+        FROM daisha_catalogs
         WHERE EXISTS (
           SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp
           WHERE (comp->>'id')::int = ${componentId}
@@ -485,11 +528,20 @@ export async function POST(request: Request) {
       targetComp.symptoms.push(newSymptom);
 
       await sql`
-        UPDATE "DaishaCatalog"
+        UPDATE daisha_catalogs
         SET components = ${toJsonb(comps)},
-            "updatedAt" = NOW()
+            updated_at = NOW()
         WHERE id = ${daisha.id}
       `;
+
+      try {
+        await sql`
+          UPDATE "DaishaCatalog"
+          SET components = ${toJsonb(comps)},
+              "updatedAt" = NOW()
+          WHERE id = ${daisha.id}
+        `;
+      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_ADD_SYMPTOM',
@@ -531,7 +583,7 @@ export async function POST(request: Request) {
 
       const [daisha] = await sql<Array<{ id: number; name: string; variants: VariantObj[] }>>`
         SELECT id, name, COALESCE(variants, '[]'::jsonb) as variants 
-        FROM "DaishaCatalog" 
+        FROM daisha_catalogs 
         WHERE id = ${daishaId} 
         LIMIT 1
       `;
@@ -563,12 +615,22 @@ export async function POST(request: Request) {
       const totalUnitsSum = variants.reduce((acc, v) => acc + (Number(v.totalUnits) || 0), 0);
 
       await sql`
-        UPDATE "DaishaCatalog"
+        UPDATE daisha_catalogs
         SET variants = ${toJsonb(variants)},
-            "totalUnits" = ${totalUnitsSum},
-            "updatedAt" = NOW()
+            total_units = ${totalUnitsSum},
+            updated_at = NOW()
         WHERE id = ${daishaId}
       `;
+
+      try {
+        await sql`
+          UPDATE "DaishaCatalog"
+          SET variants = ${toJsonb(variants)},
+              "totalUnits" = ${totalUnitsSum},
+              "updatedAt" = NOW()
+          WHERE id = ${daishaId}
+        `;
+      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_ADD_VARIANT',
@@ -604,17 +666,31 @@ export async function POST(request: Request) {
       }
 
       const [newSection] = await sql`
-        INSERT INTO "Section" (name, "colorName", "badgeBg", "textColor", "borderColor", "accentBorder", "updatedAt")
+        INSERT INTO sections (name, color_name, badge_bg, text_color, border_color, accent_border, updated_at)
         VALUES (${name}, ${colorName}, ${badgeBg}, ${textColor}, ${borderColor}, ${accentBorder}, NOW())
-        ON CONFLICT (name) DO UPDATE SET 
-          "colorName" = EXCLUDED."colorName",
-          "badgeBg" = EXCLUDED."badgeBg",
-          "textColor" = EXCLUDED."textColor",
-          "borderColor" = EXCLUDED."borderColor",
-          "accentBorder" = EXCLUDED."accentBorder",
-          "updatedAt" = NOW()
-        RETURNING *
+        ON CONFLICT (LOWER(TRIM(name))) DO UPDATE SET 
+          color_name = EXCLUDED.color_name,
+          badge_bg = EXCLUDED.badge_bg,
+          text_color = EXCLUDED.text_color,
+          border_color = EXCLUDED.border_color,
+          accent_border = EXCLUDED.accent_border,
+          updated_at = NOW()
+        RETURNING id, name, color_name as "colorName", badge_bg as "badgeBg", text_color as "textColor", border_color as "borderColor", accent_border as "accentBorder"
       `;
+
+      try {
+        await sql`
+          INSERT INTO "Section" (id, name, "colorName", "badgeBg", "textColor", "borderColor", "accentBorder", "updatedAt")
+          VALUES (${newSection.id}, ${name}, ${colorName}, ${badgeBg}, ${textColor}, ${borderColor}, ${accentBorder}, NOW())
+          ON CONFLICT (name) DO UPDATE SET 
+            "colorName" = EXCLUDED."colorName",
+            "badgeBg" = EXCLUDED."badgeBg",
+            "textColor" = EXCLUDED."textColor",
+            "borderColor" = EXCLUDED."borderColor",
+            "accentBorder" = EXCLUDED."accentBorder",
+            "updatedAt" = NOW();
+        `;
+      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_ADD_SECTION',
@@ -680,16 +756,35 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'ID dan Nama Daisha wajib diisi.' }, { status: 400 });
       }
 
+      let sectionId: number | null = null;
+      if (seksi?.trim()) {
+        const [sec] = await sql`SELECT id FROM sections WHERE LOWER(TRIM(name)) = LOWER(TRIM(${seksi})) LIMIT 1`;
+        if (sec) sectionId = Number(sec.id);
+      }
+
       const [updated] = await sql`
-        UPDATE "DaishaCatalog"
+        UPDATE daisha_catalogs
         SET name = ${name},
-            seksi = ${seksi},
-            "codePrefix" = ${codePrefix || null},
-            "totalUnits" = ${totalUnits},
-            "updatedAt" = NOW()
+            section_id = ${sectionId},
+            legacy_section_name = ${seksi},
+            code_prefix = ${codePrefix || null},
+            total_units = ${totalUnits},
+            updated_at = NOW()
         WHERE id = ${id}
-        RETURNING id, name, seksi, "codePrefix", "totalUnits"
+        RETURNING id, name, legacy_section_name as seksi, code_prefix as "codePrefix", total_units as "totalUnits"
       `;
+
+      try {
+        await sql`
+          UPDATE "DaishaCatalog"
+          SET name = ${name},
+              seksi = ${seksi},
+              "codePrefix" = ${codePrefix || null},
+              "totalUnits" = ${totalUnits},
+              "updatedAt" = NOW()
+          WHERE id = ${id}
+        `;
+      } catch {}
 
       if (!updated) {
         return NextResponse.json({ error: 'Jenis Daisha tidak ditemukan.' }, { status: 404 });
@@ -726,7 +821,7 @@ export async function PUT(request: Request) {
 
       const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
         SELECT id, name, COALESCE(components, '[]'::jsonb) as components
-        FROM "DaishaCatalog"
+        FROM daisha_catalogs
         WHERE EXISTS (
           SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp
           WHERE (comp->>'id')::int = ${id}
@@ -747,11 +842,20 @@ export async function PUT(request: Request) {
       comp.name = name;
 
       await sql`
-        UPDATE "DaishaCatalog"
+        UPDATE daisha_catalogs
         SET components = ${toJsonb(comps)},
-            "updatedAt" = NOW()
+            updated_at = NOW()
         WHERE id = ${daisha.id}
       `;
+
+      try {
+        await sql`
+          UPDATE "DaishaCatalog"
+          SET components = ${toJsonb(comps)},
+              "updatedAt" = NOW()
+          WHERE id = ${daisha.id}
+        `;
+      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_UPDATE_COMPONENT',
@@ -783,7 +887,7 @@ export async function PUT(request: Request) {
 
       const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
         SELECT id, name, COALESCE(components, '[]'::jsonb) as components
-        FROM "DaishaCatalog"
+        FROM daisha_catalogs
         WHERE EXISTS (
           SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp,
           LATERAL jsonb_array_elements(COALESCE(comp->'symptoms', '[]'::jsonb)) sym
@@ -815,11 +919,20 @@ export async function PUT(request: Request) {
       }
 
       await sql`
-        UPDATE "DaishaCatalog"
+        UPDATE daisha_catalogs
         SET components = ${toJsonb(comps)},
-            "updatedAt" = NOW()
+            updated_at = NOW()
         WHERE id = ${daisha.id}
       `;
+
+      try {
+        await sql`
+          UPDATE "DaishaCatalog"
+          SET components = ${toJsonb(comps)},
+              "updatedAt" = NOW()
+          WHERE id = ${daisha.id}
+        `;
+      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_UPDATE_SYMPTOM',
@@ -861,7 +974,7 @@ export async function PUT(request: Request) {
 
       const [daisha] = await sql<Array<{ id: number; name: string; variants: VariantObj[] }>>`
         SELECT id, name, COALESCE(variants, '[]'::jsonb) as variants
-        FROM "DaishaCatalog"
+        FROM daisha_catalogs
         WHERE EXISTS (
           SELECT 1 FROM jsonb_array_elements(COALESCE(variants, '[]'::jsonb)) v
           WHERE (v->>'id')::int = ${id}
@@ -894,12 +1007,22 @@ export async function PUT(request: Request) {
       const totalUnitsSum = variants.reduce((acc, v) => acc + (Number(v.totalUnits) || 0), 0);
 
       await sql`
-        UPDATE "DaishaCatalog"
+        UPDATE daisha_catalogs
         SET variants = ${toJsonb(variants)},
-            "totalUnits" = ${totalUnitsSum},
-            "updatedAt" = NOW()
+            total_units = ${totalUnitsSum},
+            updated_at = NOW()
         WHERE id = ${daisha.id}
       `;
+
+      try {
+        await sql`
+          UPDATE "DaishaCatalog"
+          SET variants = ${toJsonb(variants)},
+              "totalUnits" = ${totalUnitsSum},
+              "updatedAt" = NOW()
+          WHERE id = ${daisha.id}
+        `;
+      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_UPDATE_VARIANT',
@@ -978,12 +1101,26 @@ export async function DELETE(request: Request) {
 
     // Hapus jenis daisha
     if (type === 'daisha') {
-      const [deleted] = await sql`DELETE FROM "DaishaCatalog" WHERE id = ${id} RETURNING id, name`;
+      const [deleted] = await sql`DELETE FROM daisha_catalogs WHERE id = ${id} RETURNING id, name`;
       if (!deleted) {
         return NextResponse.json({ error: 'Jenis Daisha tidak ditemukan.' }, { status: 404 });
       }
 
+      // Dual-delete ke legacy "DaishaCatalog"
+      try {
+        await sql`DELETE FROM "DaishaCatalog" WHERE id = ${id}`;
+      } catch {}
+
       // Bersihkan seluruh unit armada yang terasosiasi dengan jenis daisha yang dihapus
+      try {
+        await sql`
+          DELETE FROM daisha_units
+          WHERE LOWER(TRIM(nama_daisha)) = LOWER(TRIM(${deleted.name}))
+        `;
+      } catch (err) {
+        console.warn('Gagal menghapus unit fisik daisha_units saat katalog dihapus:', err);
+      }
+
       try {
         await sql`
           DELETE FROM "Daisha"
@@ -991,7 +1128,7 @@ export async function DELETE(request: Request) {
              OR LOWER(TRIM(jenis)) = LOWER(TRIM(${deleted.name}))
         `;
       } catch (err) {
-        console.warn('Gagal menghapus unit fisik daisha saat katalog dihapus:', err);
+        console.warn('Gagal menghapus unit fisik legacy "Daisha" saat katalog dihapus:', err);
       }
 
       recordAuditLog({
@@ -1014,7 +1151,7 @@ export async function DELETE(request: Request) {
     if (type === 'component') {
       const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
         SELECT id, name, COALESCE(components, '[]'::jsonb) as components
-        FROM "DaishaCatalog"
+        FROM daisha_catalogs
         WHERE EXISTS (
           SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp
           WHERE (comp->>'id')::int = ${id}
@@ -1030,11 +1167,20 @@ export async function DELETE(request: Request) {
       const updatedComps = comps.filter((c) => c.id !== id);
 
       await sql`
-        UPDATE "DaishaCatalog"
+        UPDATE daisha_catalogs
         SET components = ${toJsonb(updatedComps)},
-            "updatedAt" = NOW()
+            updated_at = NOW()
         WHERE id = ${daisha.id}
       `;
+
+      try {
+        await sql`
+          UPDATE "DaishaCatalog"
+          SET components = ${toJsonb(updatedComps)},
+              "updatedAt" = NOW()
+          WHERE id = ${daisha.id}
+        `;
+      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_DELETE_COMPONENT',
@@ -1055,7 +1201,7 @@ export async function DELETE(request: Request) {
     if (type === 'symptom') {
       const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
         SELECT id, name, COALESCE(components, '[]'::jsonb) as components
-        FROM "DaishaCatalog"
+        FROM daisha_catalogs
         WHERE EXISTS (
           SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp,
           LATERAL jsonb_array_elements(COALESCE(comp->'symptoms', '[]'::jsonb)) sym
@@ -1076,11 +1222,20 @@ export async function DELETE(request: Request) {
       }
 
       await sql`
-        UPDATE "DaishaCatalog"
+        UPDATE daisha_catalogs
         SET components = ${toJsonb(comps)},
-            "updatedAt" = NOW()
+            updated_at = NOW()
         WHERE id = ${daisha.id}
       `;
+
+      try {
+        await sql`
+          UPDATE "DaishaCatalog"
+          SET components = ${toJsonb(comps)},
+              "updatedAt" = NOW()
+          WHERE id = ${daisha.id}
+        `;
+      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_DELETE_SYMPTOM',
@@ -1101,7 +1256,7 @@ export async function DELETE(request: Request) {
     if (type === 'variant') {
       const [daisha] = await sql<Array<{ id: number; name: string; variants: VariantObj[] }>>`
         SELECT id, name, COALESCE(variants, '[]'::jsonb) as variants
-        FROM "DaishaCatalog"
+        FROM daisha_catalogs
         WHERE EXISTS (
           SELECT 1 FROM jsonb_array_elements(COALESCE(variants, '[]'::jsonb)) v
           WHERE (v->>'id')::int = ${id}
@@ -1118,12 +1273,22 @@ export async function DELETE(request: Request) {
       const totalUnitsSum = updatedVariants.reduce((acc, v) => acc + (Number(v.totalUnits) || 0), 0);
 
       await sql`
-        UPDATE "DaishaCatalog"
+        UPDATE daisha_catalogs
         SET variants = ${toJsonb(updatedVariants)},
-            "totalUnits" = ${totalUnitsSum},
-            "updatedAt" = NOW()
+            total_units = ${totalUnitsSum},
+            updated_at = NOW()
         WHERE id = ${daisha.id}
       `;
+
+      try {
+        await sql`
+          UPDATE "DaishaCatalog"
+          SET variants = ${toJsonb(updatedVariants)},
+              "totalUnits" = ${totalUnitsSum},
+              "updatedAt" = NOW()
+          WHERE id = ${daisha.id}
+        `;
+      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_DELETE_VARIANT',

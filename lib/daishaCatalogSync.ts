@@ -69,9 +69,16 @@ export async function syncDaishaMasterFromCatalog(): Promise<SyncCatalogResult> 
       rangeFormat?: string | null;
     }>;
   }>>`
-    SELECT id, name, seksi, "codePrefix", "totalUnits", variants
-    FROM "DaishaCatalog"
-    ORDER BY id ASC
+    SELECT 
+      c.id, 
+      c.name, 
+      COALESCE(s.name, c.legacy_section_name) as seksi, 
+      c.code_prefix as "codePrefix", 
+      c.total_units as "totalUnits", 
+      c.variants
+    FROM daisha_catalogs c
+    LEFT JOIN sections s ON s.id = c.section_id
+    ORDER BY c.id ASC
   `;
 
   const validUnitsMap = new Map<string, {
@@ -198,6 +205,27 @@ export async function syncDaishaMasterFromCatalog(): Promise<SyncCatalogResult> 
         "updated_at" = NOW()
     `;
 
+    try {
+      await sql`
+        INSERT INTO daisha_units (nomor_daisha, nama_daisha, jenis, ukuran, legacy_section_name, last_condition, updated_at)
+        SELECT 
+          u.nomor_daisha, 
+          u.nama_daisha, 
+          u.jenis, 
+          u.ukuran, 
+          u.seksi, 
+          'OK',
+          NOW()
+        FROM ${sql(chunk, 'nomor_daisha', 'nama_daisha', 'jenis', 'ukuran', 'seksi')} AS u
+        ON CONFLICT (nomor_daisha) DO UPDATE SET
+          nama_daisha = EXCLUDED.nama_daisha,
+          jenis = EXCLUDED.jenis,
+          ukuran = EXCLUDED.ukuran,
+          legacy_section_name = EXCLUDED.legacy_section_name,
+          updated_at = NOW();
+      `;
+    } catch {}
+
     for (const u of chunk) {
       if (existingMap.has(u.nomor_daisha.toUpperCase())) {
         updated++;
@@ -306,6 +334,26 @@ export async function insertNewDaishaUnits(
           "seksi" = EXCLUDED."seksi",
           "updated_at" = NOW()
       `;
+
+      try {
+        await sql`
+          INSERT INTO daisha_units (nomor_daisha, nama_daisha, jenis, ukuran, legacy_section_name, last_condition, updated_at)
+          SELECT 
+            u.nomor_daisha, 
+            u.nama_daisha, 
+            u.jenis, 
+            u.ukuran, 
+            u.seksi, 
+            COALESCE(u.last_condition, 'OK'),
+            NOW()
+          FROM ${sql(chunk, 'nomor_daisha', 'nama_daisha', 'jenis', 'ukuran', 'seksi', 'last_condition')} AS u
+          ON CONFLICT (nomor_daisha) DO UPDATE SET
+            nama_daisha = EXCLUDED.nama_daisha,
+            jenis = EXCLUDED.jenis,
+            legacy_section_name = EXCLUDED.legacy_section_name,
+            updated_at = NOW();
+        `;
+      } catch {}
     }
   }
 

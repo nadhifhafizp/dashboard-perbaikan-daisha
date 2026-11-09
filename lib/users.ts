@@ -47,18 +47,34 @@ export async function findUserByCredentials(
   passwordInput: string
 ): Promise<UserAccount | null> {
   const cleanUsername = usernameInput.trim().toLowerCase();
-  const [user] = await sql`SELECT * FROM "User" WHERE "username" = ${cleanUsername} LIMIT 1`;
+  const [user] = await sql`
+    SELECT 
+      u.id, 
+      u.username, 
+      u.password_hash, 
+      u.full_name, 
+      u.role, 
+      COALESCE(s.name, u.legacy_section_name) AS seksi, 
+      u.section_id,
+      u.description, 
+      u.created_at AS "createdAt", 
+      u.updated_at AS "updatedAt"
+    FROM users u
+    LEFT JOIN sections s ON s.id = u.section_id
+    WHERE LOWER(u.username) = ${cleanUsername}
+    LIMIT 1
+  `;
 
   if (!user) return null;
 
-  if (!verifyPassword(passwordInput, user.password)) return null;
+  if (!verifyPassword(passwordInput, user.password_hash)) return null;
 
   return {
-    id: user.id,
+    id: Number(user.id),
     username: user.username,
-    name: user.name,
+    name: user.full_name,
     role: user.role as UserRole,
-    seksi: resolveUserSeksi(user),
+    seksi: resolveUserSeksi({ ...user, name: user.full_name }),
     description: user.description,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -90,16 +106,31 @@ function resolveUserSeksi(user: Record<string, unknown>): string | null {
  */
 export async function findUserByUsername(usernameInput: string): Promise<UserAccount | null> {
   const cleanUsername = usernameInput.trim().toLowerCase();
-  const [user] = await sql`SELECT * FROM "User" WHERE "username" = ${cleanUsername} LIMIT 1`;
+  const [user] = await sql`
+    SELECT 
+      u.id, 
+      u.username, 
+      u.full_name, 
+      u.role, 
+      COALESCE(s.name, u.legacy_section_name) AS seksi, 
+      u.section_id,
+      u.description, 
+      u.created_at AS "createdAt", 
+      u.updated_at AS "updatedAt"
+    FROM users u
+    LEFT JOIN sections s ON s.id = u.section_id
+    WHERE LOWER(u.username) = ${cleanUsername}
+    LIMIT 1
+  `;
 
   if (!user) return null;
 
   return {
-    id: user.id,
+    id: Number(user.id),
     username: user.username,
-    name: user.name,
+    name: user.full_name,
     role: user.role as UserRole,
-    seksi: resolveUserSeksi(user),
+    seksi: resolveUserSeksi({ ...user, name: user.full_name }),
     description: user.description,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -113,15 +144,31 @@ export async function findUserByUsername(usernameInput: string): Promise<UserAcc
  * @returns Array data akun pengguna terdaftar
  */
 export async function getAllUsers(): Promise<UserAccount[]> {
-  const users = await sql<UserAccount[]>`
-    SELECT "id", "username", "name", "role", "seksi", "description", "createdAt", "updatedAt"
-    FROM "User"
-    ORDER BY "id" ASC
+  const users = await sql`
+    SELECT 
+      u.id, 
+      u.username, 
+      u.full_name AS name, 
+      u.role, 
+      COALESCE(s.name, u.legacy_section_name) AS seksi, 
+      u.section_id,
+      u.description, 
+      u.created_at AS "createdAt", 
+      u.updated_at AS "updatedAt"
+    FROM users u
+    LEFT JOIN sections s ON s.id = u.section_id
+    ORDER BY u.id ASC
   `;
 
   return users.map((u) => ({
-    ...u,
+    id: Number(u.id),
+    username: u.username,
+    name: u.name,
     role: u.role as UserRole,
+    seksi: u.seksi || null,
+    description: u.description,
+    createdAt: u.createdAt,
+    updatedAt: u.updatedAt,
   }));
 }
 
@@ -142,29 +189,79 @@ export async function createUser(data: {
 }): Promise<UserAccount> {
   const cleanUsername = data.username.trim().toLowerCase();
 
-  const [existing] = await sql`SELECT "id" FROM "User" WHERE "username" = ${cleanUsername} LIMIT 1`;
+  const [existing] = await sql`SELECT id FROM users WHERE LOWER(username) = ${cleanUsername} LIMIT 1`;
   if (existing) {
     throw new Error(`Username "${cleanUsername}" sudah digunakan.`);
   }
 
-  const [user] = await sql<UserAccount[]>`
-    INSERT INTO "User" ("username", "password", "name", "role", "seksi", "description", "createdAt", "updatedAt")
+  let sectionId: number | null = null;
+  if (data.seksi?.trim()) {
+    const [sec] = await sql`SELECT id FROM sections WHERE LOWER(TRIM(name)) = LOWER(TRIM(${data.seksi})) LIMIT 1`;
+    if (sec) {
+      sectionId = Number(sec.id);
+    } else {
+      const [newSec] = await sql`
+        INSERT INTO sections (name) VALUES (${data.seksi.trim()})
+        ON CONFLICT (LOWER(TRIM(name))) DO UPDATE SET name = EXCLUDED.name
+        RETURNING id
+      `;
+      if (newSec) sectionId = Number(newSec.id);
+    }
+  }
+
+  const [user] = await sql`
+    INSERT INTO users (username, password_hash, full_name, role, section_id, legacy_section_name, description, created_at, updated_at)
     VALUES (
       ${cleanUsername},
       ${hashPassword(data.passwordPlain)},
       ${data.name.trim()},
       ${data.role},
+      ${sectionId},
       ${data.seksi?.trim() || null},
       ${data.description?.trim() || null},
       NOW(),
       NOW()
     )
-    RETURNING "id", "username", "name", "role", "seksi", "description", "createdAt", "updatedAt"
+    RETURNING id, username, full_name AS name, role, legacy_section_name AS seksi, description, created_at AS "createdAt", updated_at AS "updatedAt"
   `;
 
+  // Dual-write ke tabel legacy "User" untuk kompatibilitas selama transisi
+  try {
+    await sql`
+      INSERT INTO "User" (id, username, password, name, role, seksi, description, "createdAt", "updatedAt")
+      VALUES (
+        ${user.id},
+        ${cleanUsername},
+        ${hashPassword(data.passwordPlain)},
+        ${data.name.trim()},
+        ${data.role},
+        ${data.seksi?.trim() || null},
+        ${data.description?.trim() || null},
+        NOW(),
+        NOW()
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        username = EXCLUDED.username,
+        password = EXCLUDED.password,
+        name = EXCLUDED.name,
+        role = EXCLUDED.role,
+        seksi = EXCLUDED.seksi,
+        description = EXCLUDED.description,
+        "updatedAt" = NOW();
+    `;
+  } catch (err) {
+    console.warn('Dual-write ke legacy User dilewati:', err);
+  }
+
   return {
-    ...user,
+    id: Number(user.id),
+    username: user.username,
+    name: user.name,
     role: user.role as UserRole,
+    seksi: user.seksi || null,
+    description: user.description,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 }
 
@@ -189,8 +286,8 @@ export async function updateUser(
   if (data.username) {
     const cleanUsername = data.username.trim().toLowerCase();
     const [existing] = await sql`
-      SELECT "id" FROM "User"
-      WHERE "username" = ${cleanUsername} AND "id" != ${id}
+      SELECT id FROM users
+      WHERE LOWER(username) = ${cleanUsername} AND id != ${id}
       LIMIT 1
     `;
     if (existing) {
@@ -198,26 +295,69 @@ export async function updateUser(
     }
   }
 
-  const [user] = await sql<UserAccount[]>`
-    UPDATE "User"
+  let sectionId: number | null | undefined = undefined;
+  if (data.seksi !== undefined) {
+    if (data.seksi && data.seksi.trim()) {
+      const [sec] = await sql`SELECT id FROM sections WHERE LOWER(TRIM(name)) = LOWER(TRIM(${data.seksi})) LIMIT 1`;
+      if (sec) {
+        sectionId = Number(sec.id);
+      } else {
+        const [newSec] = await sql`
+          INSERT INTO sections (name) VALUES (${data.seksi.trim()})
+          ON CONFLICT (LOWER(TRIM(name))) DO UPDATE SET name = EXCLUDED.name
+          RETURNING id
+        `;
+        if (newSec) sectionId = Number(newSec.id);
+      }
+    } else {
+      sectionId = null;
+    }
+  }
+
+  const [user] = await sql`
+    UPDATE users
     SET
-      "username" = COALESCE(${data.username ? data.username.trim().toLowerCase() : null}, "username"),
-      "name" = COALESCE(${data.name ? data.name.trim() : null}, "name"),
-      "role" = COALESCE(${data.role || null}, "role"),
-      "seksi" = ${data.seksi !== undefined ? (data.seksi?.trim() || null) : sql`"seksi"`},
-      "description" = ${data.description !== undefined ? (data.description?.trim() || null) : sql`"description"`},
-      "updatedAt" = NOW()
-    WHERE "id" = ${id}
-    RETURNING "id", "username", "name", "role", "seksi", "description", "createdAt", "updatedAt"
+      username = COALESCE(${data.username ? data.username.trim().toLowerCase() : null}, username),
+      full_name = COALESCE(${data.name ? data.name.trim() : null}, full_name),
+      role = COALESCE(${data.role || null}, role),
+      section_id = ${sectionId !== undefined ? sectionId : sql`section_id`},
+      legacy_section_name = ${data.seksi !== undefined ? (data.seksi?.trim() || null) : sql`legacy_section_name`},
+      description = ${data.description !== undefined ? (data.description?.trim() || null) : sql`description`},
+      updated_at = NOW()
+    WHERE id = ${id}
+    RETURNING id, username, full_name AS name, role, legacy_section_name AS seksi, description, created_at AS "createdAt", updated_at AS "updatedAt"
   `;
 
   if (!user) {
     throw new Error('Pengguna tidak ditemukan.');
   }
 
+  // Dual-write ke tabel legacy "User"
+  try {
+    await sql`
+      UPDATE "User"
+      SET
+        username = COALESCE(${data.username ? data.username.trim().toLowerCase() : null}, username),
+        name = COALESCE(${data.name ? data.name.trim() : null}, name),
+        role = COALESCE(${data.role || null}, role),
+        seksi = ${data.seksi !== undefined ? (data.seksi?.trim() || null) : sql`seksi`},
+        description = ${data.description !== undefined ? (data.description?.trim() || null) : sql`description`},
+        "updatedAt" = NOW()
+      WHERE id = ${id}
+    `;
+  } catch (err) {
+    console.warn('Dual-update ke legacy User dilewati:', err);
+  }
+
   return {
-    ...user,
+    id: Number(user.id),
+    username: user.username,
+    name: user.name,
     role: user.role as UserRole,
+    seksi: user.seksi || null,
+    description: user.description,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 }
 
@@ -233,11 +373,20 @@ export async function changeUserPassword(id: number, newPasswordPlain: string): 
     throw new Error('Password baru minimal harus 6 karakter.');
   }
 
+  const hashed = hashPassword(newPasswordPlain);
   await sql`
-    UPDATE "User"
-    SET "password" = ${hashPassword(newPasswordPlain)}, "updatedAt" = NOW()
-    WHERE "id" = ${id}
+    UPDATE users
+    SET password_hash = ${hashed}, updated_at = NOW()
+    WHERE id = ${id}
   `;
+
+  try {
+    await sql`
+      UPDATE "User"
+      SET password = ${hashed}, "updatedAt" = NOW()
+      WHERE id = ${id}
+    `;
+  } catch {}
 }
 
 /**
@@ -247,17 +396,20 @@ export async function changeUserPassword(id: number, newPasswordPlain: string): 
  * @param id - ID akun yang akan dihapus
  */
 export async function deleteUser(id: number): Promise<void> {
-  const [target] = await sql`SELECT "id", "role" FROM "User" WHERE "id" = ${id} LIMIT 1`;
+  const [target] = await sql`SELECT id, role FROM users WHERE id = ${id} LIMIT 1`;
   if (!target) {
     throw new Error('Pengguna tidak ditemukan.');
   }
 
   if (target.role === 'ADMIN') {
-    const [adminCountResult] = await sql`SELECT COUNT(*)::int AS count FROM "User" WHERE "role" = 'ADMIN'`;
+    const [adminCountResult] = await sql`SELECT COUNT(*)::int AS count FROM users WHERE role = 'ADMIN'`;
     if ((adminCountResult?.count ?? 0) <= 1) {
       throw new Error('Tidak dapat menghapus akun Admin terakhir pada sistem.');
     }
   }
 
-  await sql`DELETE FROM "User" WHERE "id" = ${id}`;
+  await sql`DELETE FROM users WHERE id = ${id}`;
+  try {
+    await sql`DELETE FROM "User" WHERE id = ${id}`;
+  } catch {}
 }
