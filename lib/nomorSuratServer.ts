@@ -20,11 +20,11 @@ export async function generateNextNomorSurat(
   const year = approvalDate.getFullYear();
   const yearPattern = `%/${year}`;
 
-  // Ambil seluruh nomor request & surat pada tahun yang sama
+  // Ambil seluruh nomor request & surat pada tahun yang sama dari TWMSSectionRequest
   const existingRecords = await db<Array<{ nomorSurat: string | null; nomorRequest: string | null }>>`
-    SELECT "nomorSurat", "nomorRequest"
-    FROM "SectionRequest"
-    WHERE ("nomorSurat" LIKE ${yearPattern} OR "nomorRequest" LIKE ${yearPattern})
+    SELECT "NomorSurat" AS "nomorSurat", "RequestNo" AS "nomorRequest"
+    FROM "TWMSSectionRequest"
+    WHERE ("NomorSurat" LIKE ${yearPattern} OR "RequestNo" LIKE ${yearPattern})
   `;
 
   let maxSeq = 0;

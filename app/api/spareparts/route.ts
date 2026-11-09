@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import sql from '@/lib/db';
+import sql, { withTransaction } from '@/lib/db';
 import {
   requireAuth,
   checkRateLimit,
@@ -30,29 +30,52 @@ export async function GET(request: Request) {
     const spareparts = withLogs
       ? await sql`
           SELECT 
-            s.*,
+            s."Id" AS id,
+            s."PartName" AS "namaKomponen",
+            s."Category" AS kategori,
+            s."CurrentStock" AS "stokGudang",
+            s."Unit" AS satuan,
+            s."MinStock" AS "minStok",
+            s."LocationRack" AS lokasi,
+            s."UpdateDate" AS "updatedAt",
             COALESCE(
               (
                 SELECT json_agg(l)
                 FROM (
-                  SELECT sl.*
-                  FROM "SparepartLog" sl
-                  WHERE sl."namaKomponen" = s."namaKomponen"
-                  ORDER BY sl.tanggal DESC
+                  SELECT 
+                    sl."Id" AS id,
+                    sl."SparepartId" AS "sparepartId",
+                    sl."PartName" AS "namaKomponen",
+                    sl."MovementType" AS tipe,
+                    sl."Qty" AS qty,
+                    sl."TicketId" AS referensi,
+                    sl."Notes" AS keterangan,
+                    sl."MovementDate" AS tanggal
+                  FROM "TWMSSparepartLog" sl
+                  WHERE sl."SparepartId" = s."Id" OR UPPER(TRIM(sl."PartName")) = UPPER(TRIM(s."PartName"))
+                  ORDER BY sl."MovementDate" DESC
                   LIMIT 50
                 ) l
               ),
               '[]'::json
-            ) as logs
-          FROM "Sparepart" s
-          WHERE (${filterKategori}::text IS NULL OR s.kategori = ${filterKategori})
-          ORDER BY s."namaKomponen" ASC
+            ) AS logs
+          FROM "TWMSSparepartMaster" s
+          WHERE (${filterKategori}::text IS NULL OR s."Category" = ${filterKategori})
+          ORDER BY s."PartName" ASC
         `
       : await sql`
-          SELECT *
-          FROM "Sparepart"
-          WHERE (${filterKategori}::text IS NULL OR kategori = ${filterKategori})
-          ORDER BY "namaKomponen" ASC
+          SELECT 
+            s."Id" AS id,
+            s."PartName" AS "namaKomponen",
+            s."Category" AS kategori,
+            s."CurrentStock" AS "stokGudang",
+            s."Unit" AS satuan,
+            s."MinStock" AS "minStok",
+            s."LocationRack" AS lokasi,
+            s."UpdateDate" AS "updatedAt"
+          FROM "TWMSSparepartMaster" s
+          WHERE (${filterKategori}::text IS NULL OR s."Category" = ${filterKategori})
+          ORDER BY s."PartName" ASC
         `;
 
     return NextResponse.json({ success: true, spareparts });
@@ -95,23 +118,31 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama komponen dan satuan wajib diisi.' }, { status: 400 });
       }
 
-      const [exists] = await sql`SELECT "namaKomponen" FROM "Sparepart" WHERE "namaKomponen" = ${namaKomponen} LIMIT 1`;
+      const [exists] = await sql`
+        SELECT "Id" FROM "TWMSSparepartMaster" 
+        WHERE UPPER(TRIM("PartName")) = UPPER(TRIM(${namaKomponen})) 
+        LIMIT 1
+      `;
       if (exists) {
         return NextResponse.json({ error: `Sparepart "${namaKomponen}" sudah ada.` }, { status: 400 });
       }
 
-      const [created] = await sql`
-        INSERT INTO "Sparepart" ("namaKomponen", kategori, "stokGudang", satuan, "minStok", lokasi)
-        VALUES (${namaKomponen}, ${kategori}, ${stokGudang}, ${satuan}, ${minStok}, ${lokasi || null})
-        RETURNING *
-      `;
-
-      if (stokGudang > 0) {
-        await sql`
-          INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, keterangan, tanggal)
-          VALUES (${namaKomponen}, 'IN', ${stokGudang}, 'Stok awal saat pendaftaran', NOW())
+      const created = await withTransaction(async (tx) => {
+        const [row] = await tx`
+          INSERT INTO "TWMSSparepartMaster" ("PartName", "Category", "CurrentStock", "Unit", "MinStock", "LocationRack", "UpdateDate")
+          VALUES (${namaKomponen}, ${kategori}, ${stokGudang}, ${satuan}, ${minStok}, ${lokasi || null}, NOW())
+          RETURNING "Id" AS id, "PartName" AS "namaKomponen", "Category" AS kategori, "CurrentStock" AS "stokGudang", "Unit" AS satuan, "MinStock" AS "minStok", "LocationRack" AS lokasi
         `;
-      }
+
+        if (stokGudang > 0) {
+          await tx`
+            INSERT INTO "TWMSSparepartLog" ("SparepartId", "PartName", "MovementType", "Qty", "Notes", "MovementDate")
+            VALUES (${row.id}, ${namaKomponen}, 'IN', ${stokGudang}, 'Stok awal saat pendaftaran', NOW())
+          `;
+        }
+
+        return row;
+      });
 
       recordAuditLog({
         action: 'SPAREPART_CREATE',
@@ -139,14 +170,16 @@ export async function POST(request: Request) {
       }
 
       const [current] = await sql<Array<{
-        kategori: string;
-        satuan: string;
-        minStok: number;
-        lokasi: string | null;
+        Id: number;
+        Category: string;
+        Unit: string;
+        MinStock: number;
+        LocationRack: string | null;
       }>>`
-        SELECT kategori, satuan, "minStok", lokasi
-        FROM "Sparepart"
-        WHERE "namaKomponen" = ${namaKomponen}
+        SELECT "Id", "Category", "Unit", "MinStock", "LocationRack"
+        FROM "TWMSSparepartMaster"
+        WHERE UPPER(TRIM("PartName")) = UPPER(TRIM(${namaKomponen}))
+        LIMIT 1
       `;
 
       if (!current) {
@@ -154,14 +187,15 @@ export async function POST(request: Request) {
       }
 
       const [updated] = await sql`
-        UPDATE "Sparepart"
+        UPDATE "TWMSSparepartMaster"
         SET
-          kategori = ${kategori !== undefined ? kategori : current.kategori},
-          satuan = ${satuan !== undefined ? satuan : current.satuan},
-          "minStok" = ${minStok !== undefined ? minStok : current.minStok},
-          lokasi = ${lokasi !== undefined ? lokasi : current.lokasi}
-        WHERE "namaKomponen" = ${namaKomponen}
-        RETURNING *
+          "Category" = ${kategori !== undefined ? kategori : current.Category},
+          "Unit" = ${satuan !== undefined ? satuan : current.Unit},
+          "MinStock" = ${minStok !== undefined ? minStok : current.MinStock},
+          "LocationRack" = ${lokasi !== undefined ? lokasi : current.LocationRack},
+          "UpdateDate" = NOW()
+        WHERE "Id" = ${current.Id}
+        RETURNING "Id" AS id, "PartName" AS "namaKomponen", "Category" AS kategori, "CurrentStock" AS "stokGudang", "Unit" AS satuan, "MinStock" AS "minStok", "LocationRack" AS lokasi
       `;
 
       recordAuditLog({
@@ -186,15 +220,26 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama komponen dan jumlah restock wajib diisi.' }, { status: 400 });
       }
 
-      await sql.begin(async (tx) => {
-        await tx`
-          UPDATE "Sparepart"
-          SET "stokGudang" = "stokGudang" + ${qty}
-          WHERE "namaKomponen" = ${namaKomponen}
+      await withTransaction(async (tx) => {
+        const [target] = await tx<Array<{ Id: number; PartName: string }>>`
+          SELECT "Id", "PartName" FROM "TWMSSparepartMaster"
+          WHERE UPPER(TRIM("PartName")) = UPPER(TRIM(${namaKomponen}))
+          LIMIT 1
         `;
+
+        if (!target) {
+          throw new Error(`Sparepart "${namaKomponen}" tidak ditemukan.`);
+        }
+
         await tx`
-          INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, keterangan, tanggal)
-          VALUES (${namaKomponen}, 'IN', ${qty}, ${keterangan}, NOW())
+          UPDATE "TWMSSparepartMaster"
+          SET "CurrentStock" = "CurrentStock" + ${qty}, "UpdateDate" = NOW()
+          WHERE "Id" = ${target.Id}
+        `;
+
+        await tx`
+          INSERT INTO "TWMSSparepartLog" ("SparepartId", "PartName", "MovementType", "Qty", "Notes", "MovementDate")
+          VALUES (${target.Id}, ${target.PartName}, 'IN', ${qty}, ${keterangan}, NOW())
         `;
       });
 
@@ -222,25 +267,27 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama komponen dan jumlah pemakaian wajib diisi.' }, { status: 400 });
       }
 
-      const [sparepart] = await sql<Array<{ stokGudang: number }>>`
-        SELECT "stokGudang" FROM "Sparepart" WHERE "namaKomponen" = ${namaKomponen} LIMIT 1
+      const [sparepart] = await sql<Array<{ Id: number; PartName: string; CurrentStock: number }>>`
+        SELECT "Id", "PartName", "CurrentStock" FROM "TWMSSparepartMaster" 
+        WHERE UPPER(TRIM("PartName")) = UPPER(TRIM(${namaKomponen})) 
+        LIMIT 1
       `;
       if (!sparepart) {
         return NextResponse.json({ error: `Sparepart "${namaKomponen}" tidak ditemukan.` }, { status: 404 });
       }
-      if (sparepart.stokGudang < qty) {
-        return NextResponse.json({ error: `Stok tidak mencukupi (sisa: ${sparepart.stokGudang}).` }, { status: 400 });
+      if (sparepart.CurrentStock < qty) {
+        return NextResponse.json({ error: `Stok tidak mencukupi (sisa: ${sparepart.CurrentStock}).` }, { status: 400 });
       }
 
-      await sql.begin(async (tx) => {
+      await withTransaction(async (tx) => {
         await tx`
-          UPDATE "Sparepart"
-          SET "stokGudang" = "stokGudang" - ${qty}
-          WHERE "namaKomponen" = ${namaKomponen}
+          UPDATE "TWMSSparepartMaster"
+          SET "CurrentStock" = "CurrentStock" - ${qty}, "UpdateDate" = NOW()
+          WHERE "Id" = ${sparepart.Id}
         `;
         await tx`
-          INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
-          VALUES (${namaKomponen}, 'OUT', ${qty}, ${referensi || null}, ${keterangan}, NOW())
+          INSERT INTO "TWMSSparepartLog" ("SparepartId", "PartName", "MovementType", "Qty", "Notes", "MovementDate")
+          VALUES (${sparepart.Id}, ${sparepart.PartName}, 'OUT', ${qty}, ${referensi ? `${referensi}: ${keterangan}` : keterangan}, NOW())
         `;
       });
 
@@ -264,11 +311,19 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama komponen wajib diisi.' }, { status: 400 });
       }
 
-      await sql.begin(async (tx) => {
-        await tx`DELETE FROM "SparepartLog" WHERE "namaKomponen" = ${namaKomponen}`;
-        await tx`DELETE FROM "SectionRequestMaterial" WHERE "namaKomponen" = ${namaKomponen}`;
-        await tx`DELETE FROM "Sparepart" WHERE "namaKomponen" = ${namaKomponen}`;
-      });
+      const [target] = await sql<Array<{ Id: number }>>`
+        SELECT "Id" FROM "TWMSSparepartMaster"
+        WHERE UPPER(TRIM("PartName")) = UPPER(TRIM(${namaKomponen}))
+        LIMIT 1
+      `;
+
+      if (target) {
+        await withTransaction(async (tx) => {
+          await tx`DELETE FROM "TWMSSparepartLog" WHERE "SparepartId" = ${target.Id} OR UPPER(TRIM("PartName")) = UPPER(TRIM(${namaKomponen}))`;
+          await tx`DELETE FROM "TWMSSectionRequestMaterial" WHERE "SparepartId" = ${target.Id} OR UPPER(TRIM("MaterialName")) = UPPER(TRIM(${namaKomponen}))`;
+          await tx`DELETE FROM "TWMSSparepartMaster" WHERE "Id" = ${target.Id}`;
+        });
+      }
 
       recordAuditLog({
         action: 'SPAREPART_DELETE',
@@ -287,14 +342,32 @@ export async function POST(request: Request) {
       const namaKomponen = sanitizeText(body.namaKomponen, 100);
       const logs = namaKomponen
         ? await sql`
-            SELECT * FROM "SparepartLog"
-            WHERE "namaKomponen" = ${namaKomponen}
-            ORDER BY tanggal DESC
+            SELECT 
+              sl."Id" AS id,
+              sl."SparepartId" AS "sparepartId",
+              sl."PartName" AS "namaKomponen",
+              sl."MovementType" AS tipe,
+              sl."Qty" AS qty,
+              sl."TicketId" AS referensi,
+              sl."Notes" AS keterangan,
+              sl."MovementDate" AS tanggal
+            FROM "TWMSSparepartLog" sl
+            WHERE UPPER(TRIM(sl."PartName")) = UPPER(TRIM(${namaKomponen}))
+            ORDER BY sl."MovementDate" DESC
             LIMIT 100
           `
         : await sql`
-            SELECT * FROM "SparepartLog"
-            ORDER BY tanggal DESC
+            SELECT 
+              sl."Id" AS id,
+              sl."SparepartId" AS "sparepartId",
+              sl."PartName" AS "namaKomponen",
+              sl."MovementType" AS tipe,
+              sl."Qty" AS qty,
+              sl."TicketId" AS referensi,
+              sl."Notes" AS keterangan,
+              sl."MovementDate" AS tanggal
+            FROM "TWMSSparepartLog" sl
+            ORDER BY sl."MovementDate" DESC
             LIMIT 100
           `;
       return NextResponse.json({ success: true, logs });

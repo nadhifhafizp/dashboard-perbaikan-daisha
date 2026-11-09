@@ -17,10 +17,75 @@ export async function GET(request: Request) {
   try {
     const [req] = await sql<Array<Record<string, unknown>>>`
       SELECT 
-        sr.*,
-        COALESCE(sr."materials", '[]'::jsonb) as materials
-      FROM "SectionRequest" sr
-      WHERE sr."approvalToken" = ${token}
+        sr."Id" AS id,
+        sr."RequestNo" AS "nomorRequest",
+        sr."NomorSurat" AS "nomorSurat",
+        sr."RequesterSection" AS "seksiPemohon",
+        sr."RequesterName" AS "picPemohon",
+        sr."RequesterContact" AS "kontakPemohon",
+        sr."ItemTitle" AS "namaBarang",
+        sr."ItemSpec" AS "spesifikasi",
+        sr."ItemQty" AS jumlah,
+        sr."ItemUnit" AS satuan,
+        sr."Urgency" AS urgensi,
+        sr."Remark" AS catatan,
+        sr."WorkflowStatus" AS status,
+        sr."Subject" AS perihal,
+        sr."MachineName" AS "namaMachine",
+        sr."ProblemFactor" AS faktor,
+        sr."RequestType" AS tujuan,
+        sr."Reason" AS alasan,
+        sr."CurrentCondition" AS "keadaanSekarang",
+        sr."PhotoBefore" AS "fotoSebelum",
+        sr."ActionPlan" AS "rencanaTindakan",
+        sr."PhotoAfter" AS "fotoSesudah",
+        sr."TargetResult" AS "targetHasil",
+        sr."ExecutionNote" AS "penjelasanPelaksanaan",
+        sr."FlowStep" AS "flowStep",
+        sr."ApprovalToken" AS "approvalToken",
+        sr."SectionHeadName" AS "namaAtasanSeksi",
+        sr."SectionHeadEmail" AS "emailAtasanSeksi",
+        sr."SectionHeadStatus" AS "statusApprovalAtasanSeksi",
+        sr."SectionHeadSignature" AS "ttdAtasanSeksi",
+        sr."WorkshopEmail" AS "emailMentorWorkshop",
+        sr."WorkshopSignature" AS "ttdAdminWorkshop",
+        sr."SpecialProjectSignature" AS "ttdAtasanSpecialProject",
+        sr."EstCost" AS "biayaEstimate",
+        sr."ActCost" AS "biayaActual",
+        sr."EstManHour" AS "orangJamEstimate",
+        sr."ActManHour" AS "orangJamActual",
+        sr."EstDuration" AS "waktuEstimate",
+        sr."ActDuration" AS "waktuActual",
+        sr."EstExecDate" AS "tglPelaksanaanEstimate",
+        sr."ActExecDate" AS "tglPelaksanaanActual",
+        sr."EstComment" AS "komentarEstimate",
+        sr."ActComment" AS "komentarActual",
+        sr."Decision" AS keputusan,
+        sr."Decision8210" AS "keputusan8210",
+        sr."Decision820" AS "keputusan820",
+        sr."CheckResult" AS "hasilCheck",
+        sr."SchedulePlan" AS "schedulePlanning",
+        sr."ScheduleActual" AS "scheduleActual",
+        COALESCE(
+          (
+            SELECT jsonb_agg(
+              jsonb_build_object(
+                'id', m."Id",
+                'sectionRequestId', m."RequestId",
+                'namaKomponen', m."MaterialName",
+                'tipe', m."MaterialType",
+                'qty', m."QtyUsed",
+                'satuan', m."Unit",
+                'dimensi', m."MaterialSpec"
+              ) ORDER BY m."Id"
+            )
+            FROM "TWMSSectionRequestMaterial" m
+            WHERE m."RequestId" = sr."Id"
+          ),
+          '[]'::jsonb
+        ) AS materials
+      FROM "TWMSSectionRequest" sr
+      WHERE sr."ApprovalToken" = ${token}
       LIMIT 1
     `;
 
@@ -66,27 +131,34 @@ export async function POST(request: Request) {
       perihal: string;
       namaBarang: string;
       statusApprovalAtasanSeksi: string;
-      statusApprovalManajerSeksi: string | null;
       flowStep: string;
       status: string;
       emailMentorWorkshop: string | null;
       namaAtasanSeksi: string | null;
       emailAtasanSeksi: string | null;
-      namaManajerSeksi: string | null;
-      emailManajerSeksi: string | null;
       keputusan8210: string | null;
       keputusan820: string | null;
       approvalToken: string;
     }>>`
       SELECT 
-        id, "nomorRequest", "nomorSurat", "seksiPemohon", "picPemohon",
-        perihal, "namaBarang", "statusApprovalAtasanSeksi", "statusApprovalManajerSeksi",
-        "flowStep", status,
-        "emailMentorWorkshop", "namaAtasanSeksi", "emailAtasanSeksi",
-        "namaManajerSeksi", "emailManajerSeksi",
-        "keputusan8210", "keputusan820", "approvalToken"
-      FROM "SectionRequest"
-      WHERE "approvalToken" = ${token}
+        "Id" AS id, 
+        "RequestNo" AS "nomorRequest", 
+        "NomorSurat" AS "nomorSurat", 
+        "RequesterSection" AS "seksiPemohon", 
+        "RequesterName" AS "picPemohon",
+        COALESCE("Subject", "ItemTitle") AS perihal, 
+        COALESCE("ItemTitle", "Subject") AS "namaBarang", 
+        "SectionHeadStatus" AS "statusApprovalAtasanSeksi",
+        "FlowStep" AS "flowStep", 
+        "WorkflowStatus" AS status,
+        "WorkshopEmail" AS "emailMentorWorkshop", 
+        "SectionHeadName" AS "namaAtasanSeksi", 
+        "SectionHeadEmail" AS "emailAtasanSeksi",
+        "Decision8210" AS "keputusan8210", 
+        "Decision820" AS "keputusan820", 
+        "ApprovalToken" AS "approvalToken"
+      FROM "TWMSSectionRequest"
+      WHERE "ApprovalToken" = ${token}
       LIMIT 1
     `;
 
@@ -101,12 +173,9 @@ export async function POST(request: Request) {
       action === 'REJECT_SPROJECT';
 
     if (isSpecialProjectApproval) {
-      if (current.status === 'Selesai' || current.flowStep === 'STEP_7_SELESAI') {
+      if (current.status === 'Selesai' || current.flowStep === 'STEP_8_SELESAI') {
         return NextResponse.json(
-          {
-            error:
-              'Permohonan ini sudah berstatus Selesai dan tidak dapat diubah lagi.',
-          },
+          { error: 'Permohonan ini sudah berstatus Selesai dan tidak dapat diubah lagi.' },
           { status: 400 }
         );
       }
@@ -122,62 +191,29 @@ export async function POST(request: Request) {
 
       if (action === 'APPROVE' || action === 'APPROVE_SPROJECT') {
         const updated = await withTransaction(async (tx) => {
-          // Alur Tahap 4: Penerbitan Nomor Surat Resmi (Format: 001/SEKSI/ROMAWI/TAHUN)
-          // Nomor surat resmi HANYA dan BARU terbit setelah Atasan Special Project meng-assign request!
           let finalNomorSurat = current.nomorSurat;
           if (!finalNomorSurat || finalNomorSurat.startsWith('REQ-')) {
             finalNomorSurat = await generateNextNomorSurat(current.seksiPemohon, new Date(), tx as unknown as typeof sql);
           }
 
           const [upd] = await tx<Array<{ nomorRequest: string; nomorSurat: string }>>`
-            UPDATE "SectionRequest"
+            UPDATE "TWMSSectionRequest"
             SET
-              "keputusan8210" = ${spReviewer},
-              "keputusan820" = ${deptHeadReviewer},
-              "statusApprovalAtasanSpecialProject" = 'APPROVED',
-              "statusApprovalAtasanSeksi" = 'APPROVED',
-              "ttdAtasanSpecialProject" = ${ttdAtasanSpecialProject || null},
-              "nomorSurat" = ${finalNomorSurat},
-              status = 'Dikerjakan',
-              "flowStep" = 'STEP_6_DALAM_PENGERJAAN',
-              "waktuApprovalAtasanSpecialProject" = NOW(),
-              "catatanAdmin" = CASE 
-                WHEN "catatanAdmin" IS NULL OR "catatanAdmin" = '' THEN ${catatan ? `[Catatan S.Project: ${catatan}]` : null}
-                ELSE "catatanAdmin" || ${catatan ? ` [Catatan S.Project: ${catatan}]` : ''}
+              "Decision8210" = ${spReviewer},
+              "Decision820" = ${deptHeadReviewer},
+              "SectionHeadStatus" = 'APPROVED',
+              "SpecialProjectSignature" = ${ttdAtasanSpecialProject || null},
+              "NomorSurat" = ${finalNomorSurat},
+              "WorkflowStatus" = 'Dikerjakan',
+              "FlowStep" = 'STEP_6_DALAM_PENGERJAAN',
+              "ExecutionNote" = CASE 
+                WHEN "ExecutionNote" IS NULL OR "ExecutionNote" = '' THEN ${catatan ? `[Catatan S.Project: ${catatan}]` : null}
+                ELSE "ExecutionNote" || ${catatan ? ` [Catatan S.Project: ${catatan}]` : ''}
               END,
-              "waktuUpdate" = NOW()
-            WHERE id = ${current.id}
-            RETURNING *
+              "UpdateDate" = NOW()
+            WHERE "Id" = ${current.id}
+            RETURNING "RequestNo" AS "nomorRequest", "NomorSurat" AS "nomorSurat"
           `;
-
-          // In-App Notification untuk Workshop & Admin
-          await createInAppNotification(
-            {
-              requestId: current.id,
-              nomorRequest: finalNomorSurat || current.nomorRequest,
-              targetRole: 'ADMIN',
-              tipe: 'ASSIGN_ATASAN_SPROJECT',
-              judul: `Request ${finalNomorSurat || current.nomorRequest} Disetujui Atasan S.Project`,
-              pesan: `Atasan Special Project (${spReviewer}) telah menyetujui & meng-assign request. Nomor Surat resmi "${finalNomorSurat}" telah diterbitkan dan pengerjaan fisik siap dimulai oleh teknisi bengkel.`,
-              link: `/request`,
-            },
-            tx
-          );
-
-          // In-App Notification untuk Pemohon Seksi
-          await createInAppNotification(
-            {
-              requestId: current.id,
-              nomorRequest: finalNomorSurat || current.nomorRequest,
-              targetRole: 'USER_SEKSI',
-              targetUser: current.picPemohon,
-              tipe: 'ASSIGN_ATASAN_SPROJECT',
-              judul: `Request ${finalNomorSurat || current.nomorRequest} Disetujui Special Project`,
-              pesan: `Permohonan Anda (${current.perihal || current.namaBarang}) telah resmi disetujui Atasan Special Project dengan Nomor Surat ${finalNomorSurat}. Pekerjaan bengkel segera diproses.`,
-              link: `/request`,
-            },
-            tx
-          );
 
           return upd;
         });
@@ -200,43 +236,16 @@ export async function POST(request: Request) {
       if (action === 'REJECT' || action === 'REJECT_SPROJECT') {
         const updated = await withTransaction(async (tx) => {
           const [upd] = await tx<Array<{ nomorRequest: string }>>`
-            UPDATE "SectionRequest"
+            UPDATE "TWMSSectionRequest"
             SET
-              "keputusan8210" = 'DITOLAK',
-              status = 'Ditolak',
-              "flowStep" = 'STEP_5_DITOLAK',
-              "alasanTolak" = ${alasanTolak || catatan || 'Ditolak oleh Atasan Special Project (8210 / 820)'},
-              "waktuUpdate" = NOW()
-            WHERE id = ${current.id}
-            RETURNING *
+              "Decision8210" = 'DITOLAK',
+              "WorkflowStatus" = 'Ditolak',
+              "FlowStep" = 'STEP_5_DITOLAK',
+              "PendingReason" = ${alasanTolak || catatan || 'Ditolak oleh Atasan Special Project (8210 / 820)'},
+              "UpdateDate" = NOW()
+            WHERE "Id" = ${current.id}
+            RETURNING "RequestNo" AS "nomorRequest"
           `;
-
-          await createInAppNotification(
-            {
-              requestId: current.id,
-              nomorRequest: current.nomorRequest,
-              targetRole: 'USER_SEKSI',
-              targetUser: current.picPemohon,
-              tipe: 'INFO_TOLAK_SEKSI',
-              judul: `Request ${current.nomorRequest} Ditolak Special Project`,
-              pesan: `Permohonan ditolak oleh Atasan Special Project (${spReviewer}). Alasan: ${alasanTolak || catatan || '-'}`,
-              link: `/request`,
-            },
-            tx
-          );
-
-          await createInAppNotification(
-            {
-              requestId: current.id,
-              nomorRequest: current.nomorRequest,
-              targetRole: 'ADMIN',
-              tipe: 'INFO_TOLAK_SEKSI',
-              judul: `Request ${current.nomorRequest} Ditolak Atasan Special Project`,
-              pesan: `Permohonan Seksi ${current.seksiPemohon} ditolak oleh Atasan Special Project. Alasan: ${alasanTolak || catatan || '-'}`,
-              link: `/request`,
-            },
-            tx
-          );
 
           return upd;
         });
@@ -257,289 +266,95 @@ export async function POST(request: Request) {
       }
     }
 
-    // Jalur B: Approval Manajer Seksi Pemohon (Tahap 2)
-    const isManajerSeksiApproval =
-      role === 'manajer_seksi' ||
-      (current.statusApprovalAtasanSeksi === 'APPROVED' &&
-        current.statusApprovalManajerSeksi !== 'APPROVED' &&
-        !isSpecialProjectApproval);
-
-    if (isManajerSeksiApproval) {
-      if (current.statusApprovalManajerSeksi === 'APPROVED') {
-        return NextResponse.json(
-          { error: 'Formulir ini sudah disetujui oleh Manajer Seksi sebelumnya.' },
-          { status: 400 }
-        );
-      }
-
-      const manajerName = namaManajerSeksi || namaAtasan || current.namaManajerSeksi || 'Manajer Seksi';
-
-      if (action === 'APPROVE') {
-        const updated = await withTransaction(async (tx) => {
-          const [upd] = await tx<Array<{ nomorRequest: string }>>`
-            UPDATE "SectionRequest"
-            SET
-              "statusApprovalManajerSeksi" = 'APPROVED',
-              "waktuApprovalManajerSeksi" = NOW(),
-              "namaManajerSeksi" = ${manajerName},
-              "ttdManajerSeksi" = ${ttdManajerSeksi || ttdAtasanSeksi || null},
-              "catatanManajerSeksi" = ${catatan || null},
-              status = 'Pending: Menunggu Evaluasi Workshop',
-              "flowStep" = 'STEP_3_DITERIMA_WORKSHOP',
-              "waktuUpdate" = NOW()
-            WHERE id = ${current.id}
-            RETURNING *
-          `;
-
-          // Buat notifikasi otomatis untuk Admin & PIC Workshop (In-App)
-          await createInAppNotification(
-            {
-              requestId: current.id,
-              nomorRequest: current.nomorRequest,
-              targetRole: 'ADMIN',
-              tipe: 'ASSIGN_DITERIMA_WORKSHOP',
-              judul: `Request Siap Evaluasi: ${current.nomorRequest}`,
-              pesan: `Request permohonan "${current.perihal || current.namaBarang}" dari Seksi ${current.seksiPemohon} telah disetujui lengkap oleh Spv (${current.namaAtasanSeksi}) & Manajer Seksi (${manajerName}). Siap dilakukan evaluasi pekerjaan bengkel.`,
-              link: `/request`,
-            },
-            tx
-          );
-
-          // Notifikasi untuk Seksi Pemohon
-          await createInAppNotification(
-            {
-              requestId: current.id,
-              nomorRequest: current.nomorRequest,
-              targetRole: 'USER_SEKSI',
-              targetUser: current.picPemohon,
-              tipe: 'APPROVAL_MANAJER_SEKSI',
-              judul: `Request ${current.nomorRequest} Disetujui Manajer Seksi`,
-              pesan: `Manajer Seksi Anda (${manajerName}) telah menyetujui formulir request. Permohonan resmi diteruskan ke Workshop Produksi.`,
-              link: `/request`,
-            },
-            tx
-          );
-
-          return upd;
-        });
-
-        // Email notifikasi ke Admin Workshop
-        const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        const adminEmailContent = buildAdminWorkshopEmailContent({
-          nomorRequest: current.nomorRequest,
-          perihal: current.perihal || current.namaBarang,
-          seksiPemohon: current.seksiPemohon,
-          picPemohon: current.picPemohon,
-          namaAtasan: `${current.namaAtasanSeksi || 'Spv'} & ${manajerName}`,
-          detailLink: `${origin}/request`,
-        });
-
-        sendEmailAsync({
-          subject: adminEmailContent.subject,
-          bodyText: adminEmailContent.bodyText,
-        });
-
-        recordAuditLog({
-          action: 'SECTION_REQUEST_APPROVE_MANAJER_SEKSI',
-          ip,
-          status: 'SUCCESS',
-          targetId: current.nomorRequest,
-          details: `Disetujui oleh Manajer Seksi: ${manajerName}`,
-        });
-
-        return NextResponse.json({
-          success: true,
-          message: `Formulir ${current.nomorRequest} berhasil disetujui oleh Manajer Seksi dan diteruskan ke Admin Workshop.`,
-          request: updated,
-          adminWorkshopEmail: adminEmailContent,
-        });
-      }
-
-      if (action === 'REJECT') {
-        const updated = await withTransaction(async (tx) => {
-          const [upd] = await tx<Array<{ nomorRequest: string }>>`
-            UPDATE "SectionRequest"
-            SET
-              "statusApprovalManajerSeksi" = 'REJECTED',
-              "waktuApprovalManajerSeksi" = NOW(),
-              "alasanTolak" = ${alasanTolak || catatan || 'Ditolak oleh Manajer Seksi Pemohon'},
-              status = 'Ditolak Manajer Seksi',
-              "flowStep" = 'STEP_5_DITOLAK',
-              "waktuUpdate" = NOW()
-            WHERE id = ${current.id}
-            RETURNING *
-          `;
-
-          await createInAppNotification(
-            {
-              requestId: current.id,
-              nomorRequest: current.nomorRequest,
-              targetRole: 'USER_SEKSI',
-              targetUser: current.picPemohon,
-              tipe: 'INFO_TOLAK_SEKSI',
-              judul: `Request ${current.nomorRequest} Ditolak Manajer Seksi`,
-              pesan: `Permohonan request ditolak oleh Manajer Seksi (${manajerName}). Alasan: ${alasanTolak || catatan || '-'}`,
-              link: `/request`,
-            },
-            tx
-          );
-
-          return upd;
-        });
-
-        recordAuditLog({
-          action: 'SECTION_REQUEST_REJECT_MANAJER_SEKSI',
-          ip,
-          status: 'SUCCESS',
-          targetId: current.nomorRequest,
-          details: `Ditolak oleh Manajer Seksi: ${manajerName}. Alasan: ${alasanTolak || catatan || '-'}`,
-        });
-
-        return NextResponse.json({
-          success: true,
-          message: `Formulir ${current.nomorRequest} ditolak oleh Manajer Seksi.`,
-          request: updated,
-        });
-      }
-    }
-
-    // Jalur C: Approval Supervisor (Spv) Seksi Pemohon (Tahap 1)
+    // Jalur B: Approval Atasan / Spv Seksi Pemohon (Tahap 1 / 2)
     if (current.statusApprovalAtasanSeksi === 'APPROVED') {
       return NextResponse.json({
-        error: 'Formulir ini sudah disetujui oleh Supervisor Seksi sebelumnya.',
+        error: 'Formulir ini sudah disetujui oleh Atasan Seksi sebelumnya.',
       }, { status: 400 });
     }
 
     const spvName = namaAtasan || current.namaAtasanSeksi || 'Supervisor Seksi';
 
     if (action === 'APPROVE') {
-      const hasManajer = Boolean(current.namaManajerSeksi || current.emailManajerSeksi);
-
       const updated = await withTransaction(async (tx) => {
         const [upd] = await tx<Array<{ nomorRequest: string }>>`
-          UPDATE "SectionRequest"
+          UPDATE "TWMSSectionRequest"
           SET
-            "statusApprovalAtasanSeksi" = 'APPROVED',
-            "waktuApprovalAtasanSeksi" = NOW(),
-            "foreman" = ${spvName},
-            "namaAtasanSeksi" = ${spvName},
-            "ttdAtasanSeksi" = ${ttdAtasanSeksi || null},
-            "catatanAtasanSeksi" = ${catatan || null},
-            status = ${hasManajer ? 'Menunggu Assign Manajer Seksi' : 'Pending: Menunggu Evaluasi Workshop'},
-            "flowStep" = ${hasManajer ? 'STEP_2B_WAITING_MANAJER_SEKSI' : 'STEP_3_DITERIMA_WORKSHOP'},
-            "waktuUpdate" = NOW()
-          WHERE id = ${current.id}
-          RETURNING *
+            "SectionHeadStatus" = 'APPROVED',
+            "Foreman" = ${spvName},
+            "SectionHeadName" = ${spvName},
+            "SectionHeadSignature" = ${ttdAtasanSeksi || ttdManajerSeksi || null},
+            "Remark" = CASE WHEN ${catatan && catatan.trim()} THEN ${catatan} ELSE "Remark" END,
+            "WorkflowStatus" = 'Pending: Menunggu Evaluasi Workshop',
+            "FlowStep" = 'STEP_3_DITERIMA_WORKSHOP',
+            "UpdateDate" = NOW()
+          WHERE "Id" = ${current.id}
+          RETURNING "RequestNo" AS "nomorRequest"
         `;
-
-        if (hasManajer) {
-          // Notifikasi untuk Manajer Seksi (Tahap 2)
-          await createInAppNotification({
-            requestId: current.id,
-            nomorRequest: current.nomorRequest,
-            targetRole: 'MANAJER_SEKSI',
-            targetEmail: current.emailManajerSeksi || undefined,
-            tipe: 'APPROVAL_MANAJER_SEKSI',
-            judul: `Request ${current.nomorRequest} Menunggu Persetujuan Manajer Seksi`,
-            pesan: `Spv Seksi (${spvName}) telah menandatangani formulir request "${current.perihal || current.namaBarang}". Mohon tanda tangan persetujuan Manajer Seksi.`,
-            link: `/request/approval?token=${current.approvalToken}&role=manajer_seksi`,
-          }, tx);
-
-          // Notifikasi untuk PIC Pemohon
-          await createInAppNotification({
-            requestId: current.id,
-            nomorRequest: current.nomorRequest,
-            targetRole: 'USER_SEKSI',
-            targetUser: current.picPemohon,
-            tipe: 'APPROVAL_ATASAN_SEKSI',
-            judul: `Request ${current.nomorRequest} Disetujui Spv Seksi`,
-            pesan: `Spv Seksi (${spvName}) telah menandatangani form. Dokumen saat ini diteruskan ke Manajer Seksi (${current.namaManajerSeksi || 'Atasan'}) untuk persetujuan akhir seksi.`,
-            link: `/request`,
-          }, tx);
-        } else {
-          // Jika tidak ada manajer seksi terdaftar, langsung teruskan ke Workshop
-          await createInAppNotification({
-            requestId: current.id,
-            nomorRequest: current.nomorRequest,
-            targetRole: 'ADMIN',
-            tipe: 'ASSIGN_DITERIMA_WORKSHOP',
-            judul: `Request Baru Diterima: ${current.nomorRequest}`,
-            pesan: `Request permohonan "${current.perihal || current.namaBarang}" dari Seksi ${current.seksiPemohon} telah disetujui & ditandatangani oleh ${spvName}. Siap dilakukan evaluasi pekerjaan bengkel.`,
-            link: `/request`,
-          }, tx);
-
-          await createInAppNotification({
-            requestId: current.id,
-            nomorRequest: current.nomorRequest,
-            targetRole: 'USER_SEKSI',
-            targetUser: current.picPemohon,
-            tipe: 'APPROVAL_ATASAN_SEKSI',
-            judul: `Request ${current.nomorRequest} Disetujui Atasan`,
-            pesan: `Atasan Anda (${spvName}) telah menyetujui formulir request. Dokumen otomatis diteruskan ke Admin Workshop Produksi.`,
-            link: `/request`,
-          }, tx);
-        }
 
         return upd;
       });
 
+      // Email notifikasi ke Admin Workshop
+      const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const adminEmailContent = buildAdminWorkshopEmailContent({
+        nomorRequest: current.nomorRequest,
+        perihal: current.perihal || current.namaBarang,
+        seksiPemohon: current.seksiPemohon,
+        picPemohon: current.picPemohon,
+        namaAtasan: spvName,
+        detailLink: `${origin}/request`,
+      });
+
+      sendEmailAsync({
+        subject: adminEmailContent.subject,
+        bodyText: adminEmailContent.bodyText,
+      });
+
       recordAuditLog({
-        action: 'SECTION_REQUEST_APPROVE_SPV_SEKSI',
+        action: 'SECTION_REQUEST_APPROVE_ATASAN_SEKSI',
         ip,
         status: 'SUCCESS',
         targetId: current.nomorRequest,
-        details: `Disetujui oleh Spv: ${spvName}`,
+        details: `Disetujui oleh Atasan Seksi: ${spvName}`,
       });
 
       return NextResponse.json({
         success: true,
-        message: hasManajer
-          ? `Formulir ${current.nomorRequest} berhasil ditandatangani oleh Spv dan diteruskan ke Manajer Seksi.`
-          : `Formulir ${current.nomorRequest} berhasil ditandatangani dan diteruskan ke Admin Workshop.`,
+        message: `Formulir ${current.nomorRequest} berhasil disetujui oleh Atasan Seksi dan diteruskan ke Admin Workshop.`,
         request: updated,
+        adminWorkshopEmail: adminEmailContent,
       });
     }
 
     if (action === 'REJECT') {
       const updated = await withTransaction(async (tx) => {
         const [upd] = await tx<Array<{ nomorRequest: string }>>`
-          UPDATE "SectionRequest"
+          UPDATE "TWMSSectionRequest"
           SET
-            "statusApprovalAtasanSeksi" = 'REJECTED',
-            "waktuApprovalAtasanSeksi" = NOW(),
-            "alasanTolak" = ${alasanTolak || catatan || 'Ditolak oleh Spv Seksi pemohon'},
-            status = 'Ditolak Spv Seksi',
-            "flowStep" = 'STEP_5_DITOLAK',
-            "waktuUpdate" = NOW()
-          WHERE id = ${current.id}
-          RETURNING *
+            "SectionHeadStatus" = 'REJECTED',
+            "PendingReason" = ${alasanTolak || catatan || 'Ditolak oleh Atasan Seksi pemohon'},
+            "WorkflowStatus" = 'Ditolak Atasan Seksi',
+            "FlowStep" = 'STEP_5_DITOLAK',
+            "UpdateDate" = NOW()
+          WHERE "Id" = ${current.id}
+          RETURNING "RequestNo" AS "nomorRequest"
         `;
-
-        await createInAppNotification({
-          requestId: current.id,
-          nomorRequest: current.nomorRequest,
-          targetRole: 'USER_SEKSI',
-          targetUser: current.picPemohon,
-          tipe: 'INFO_TOLAK_SEKSI',
-          judul: `Request ${current.nomorRequest} Ditolak Spv Seksi`,
-          pesan: `Permohonan request ditolak oleh Spv Seksi (${spvName}). Alasan: ${alasanTolak || catatan || '-'}`,
-          link: `/request`,
-        }, tx);
 
         return upd;
       });
 
       recordAuditLog({
-        action: 'SECTION_REQUEST_REJECT_SPV_SEKSI',
+        action: 'SECTION_REQUEST_REJECT_ATASAN_SEKSI',
         ip,
         status: 'SUCCESS',
         targetId: current.nomorRequest,
-        details: `Ditolak oleh Spv: ${spvName}. Alasan: ${alasanTolak || catatan || '-'}`,
+        details: `Ditolak oleh Atasan: ${spvName}. Alasan: ${alasanTolak || catatan || '-'}`,
       });
 
       return NextResponse.json({
         success: true,
-        message: `Formulir ${current.nomorRequest} ditolak oleh Spv Seksi. Pemberitahuan telah dikirim ke pemohon.`,
+        message: `Formulir ${current.nomorRequest} ditolak oleh Atasan Seksi.`,
         request: updated,
       });
     }

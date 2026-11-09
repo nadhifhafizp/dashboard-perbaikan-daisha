@@ -79,22 +79,34 @@ export async function GET(request: Request) {
 
     const tickets = await sql`
       SELECT 
-        t."idTiket",
-        t."status",
-        t."namaPelapor",
-        t."noDaisha",
-        t."waktuMasuk",
-        t."waktuSelesai",
-        t."catatan",
-        COALESCE(t."items", '[]'::jsonb) AS details,
-        d."nama_daisha" AS "namaDaisha",
-        d."seksi"
-      FROM "Ticket" t
-      LEFT JOIN "Daisha" d ON UPPER(TRIM(d."nomor_daisha")) = UPPER(TRIM(t."noDaisha"))
-      WHERE (${idParam}::text IS NULL OR t."idTiket" = ${idParam} OR UPPER(t."noDaisha") = UPPER(${idParam}))
-        AND (${fromIso}::timestamptz IS NULL OR t."waktuMasuk" >= ${fromIso}::timestamptz OR t."status" IN ('Open', 'Progress', 'Pending'))
-        AND (${toIso}::timestamptz IS NULL OR t."waktuMasuk" <= ${toIso}::timestamptz OR t."status" IN ('Open', 'Progress', 'Pending'))
-      ORDER BY t."waktuMasuk" DESC
+        t."TicketNo" AS "idTiket",
+        t."Status" AS "status",
+        t."ReporterName" AS "namaPelapor",
+        t."UnitCode" AS "noDaisha",
+        t."ReportDate" AS "waktuMasuk",
+        t."CompletedDate" AS "waktuSelesai",
+        COALESCE(t."DamageDescription", t."ActionTaken", '-') AS "catatan",
+        COALESCE((
+          SELECT jsonb_agg(
+            jsonb_build_object(
+              'idDetail', td."LineNo",
+              'komponen', td."ComponentName",
+              'gejala', td."SymptomDesc",
+              'tindakan', td."ActionType",
+              'qty', td."Qty"
+            ) ORDER BY td."LineNo"
+          )
+          FROM "TWMSRepairTicketDetail" td
+          WHERE td."TicketId" = t."Id"
+        ), '[]'::jsonb) AS details,
+        d."DaishaType" AS "namaDaisha",
+        COALESCE(d."SectionName", t."ReporterSection") AS "seksi"
+      FROM "TWMSRepairTicket" t
+      LEFT JOIN "TWMSDaishaCatalog" d ON UPPER(TRIM(d."UnitCode")) = UPPER(TRIM(t."UnitCode"))
+      WHERE (${idParam}::text IS NULL OR t."TicketNo" = ${idParam} OR UPPER(t."UnitCode") = UPPER(${idParam}))
+        AND (${fromIso}::timestamptz IS NULL OR t."ReportDate" >= ${fromIso}::timestamptz OR t."Status" IN ('Open', 'Progress', 'Pending'))
+        AND (${toIso}::timestamptz IS NULL OR t."ReportDate" <= ${toIso}::timestamptz OR t."Status" IN ('Open', 'Progress', 'Pending'))
+      ORDER BY t."ReportDate" DESC
     `;
 
     // Format output 100% kompatibel dengan frontend tanpa merubah UI/komponen apa pun
@@ -212,17 +224,17 @@ export async function POST(request: Request) {
       }
       const noDaisha = noDaishaValidation.value;
 
-      // Auto-resolve seksi dan namaDaisha dari tabel Daisha
+      // Auto-resolve seksi dan namaDaisha dari tabel TWMSDaishaCatalog
       if (!seksi || !namaDaisha) {
         const [existingDaisha] = await sql`
-          SELECT "nama_daisha", "seksi", "jenis", "ukuran" 
-          FROM "Daisha" 
-          WHERE UPPER("nomor_daisha") = UPPER(${noDaisha})
+          SELECT "DaishaType", "SectionName", "SizeSpec"
+          FROM "TWMSDaishaCatalog" 
+          WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${noDaisha}))
           LIMIT 1
         `;
         if (existingDaisha) {
-          if (!namaDaisha && existingDaisha.nama_daisha) namaDaisha = existingDaisha.nama_daisha;
-          if (!seksi && existingDaisha.seksi) seksi = existingDaisha.seksi;
+          if (!namaDaisha && existingDaisha.DaishaType) namaDaisha = existingDaisha.DaishaType;
+          if (!seksi && existingDaisha.SectionName) seksi = existingDaisha.SectionName;
         }
       }
 
@@ -244,17 +256,14 @@ export async function POST(request: Request) {
         );
       }
 
-      // Pastikan data unit di tabel Daisha terdaftar / terupdate
-      // Resolve jenis & ukuran dari DB dulu, baru fallback ke deteksi
+      // Pastikan data unit di TWMSDaishaCatalog terdaftar / terupdate
       const [existingUnit] = await sql`
-        SELECT "jenis", "ukuran" FROM "Daisha"
-        WHERE UPPER("nomor_daisha") = UPPER(${noDaisha}) LIMIT 1
+        SELECT "SizeSpec" FROM "TWMSDaishaCatalog"
+        WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${noDaisha})) LIMIT 1
       `;
       const sizeInfo = detectDaishaSize(noDaisha);
       const ukuranNorm = (sizeInfo?.size === 'Small' ? 'SMALL' : sizeInfo?.size === 'Medium' ? 'MEDIUM' : sizeInfo?.size === 'Large' ? 'LARGE' : 'NONE');
-      const ukuran = existingUnit?.ukuran || ukuranNorm;
-      const jenisDefault = noDaisha.toUpperCase().includes('NF') || namaDaisha.toLowerCase().includes('nagara') ? 'NAGARA_FILTER' : 'VERTICAL';
-      const jenis = existingUnit?.jenis || jenisDefault;
+      const ukuran = existingUnit?.SizeSpec || ukuranNorm;
 
       // Parse waktu masuk secara konsisten
       let parsedDateMasuk = new Date();
@@ -263,7 +272,7 @@ export async function POST(request: Request) {
         if (ts > 0) parsedDateMasuk = new Date(ts);
       }
 
-      // Pecah rincian kerusakan ke items JSONB (atau gunakan template laporan seksi jika tanpa detail)
+      // Pecah rincian kerusakan ke items
       let itemsJson: Array<{ idDetail: number; komponen: string; gejala: string; tindakan: string; qty: number }> = [];
 
       if (isSeksiReport && (!detail || detail.trim() === '')) {
@@ -299,24 +308,59 @@ export async function POST(request: Request) {
       }
 
       const finalCatatan = catatanInput || '-';
+      const kategoriUtama = itemsJson[0]?.komponen || 'Umum';
+      const ringkasanGejala = itemsJson.map((it) => `${it.komponen}: ${it.gejala}`).join('; ');
 
       // Eksekusi mutasi multi-tabel dalam 1 transaksi atomik aman
       await withTransaction(async (tx) => {
+        // 1. Upsert unit di TWMSDaishaCatalog
         await tx`
-          INSERT INTO "Daisha" ("nomor_daisha", "nama_daisha", "ukuran", "seksi", "jenis", "last_condition")
-          VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi}, ${jenis}, 'RUSAK')
-          ON CONFLICT ("nomor_daisha") DO UPDATE 
-          SET "nama_daisha" = COALESCE(EXCLUDED."nama_daisha", "Daisha"."nama_daisha"), 
-              "seksi" = COALESCE(EXCLUDED."seksi", "Daisha"."seksi"),
-              "last_condition" = 'RUSAK'
+          INSERT INTO "TWMSDaishaCatalog" ("UnitCode", "DaishaType", "SizeSpec", "SectionName", "CurrentCondition", "UpdateDate")
+          VALUES (${noDaisha}, ${namaDaisha}, ${ukuran}, ${seksi}, 'RUSAK', NOW())
+          ON CONFLICT ("UnitCode") DO UPDATE 
+          SET "DaishaType" = COALESCE(EXCLUDED."DaishaType", "TWMSDaishaCatalog"."DaishaType"), 
+              "SectionName" = COALESCE(EXCLUDED."SectionName", "TWMSDaishaCatalog"."SectionName"),
+              "CurrentCondition" = 'RUSAK',
+              "UpdateDate" = NOW()
         `;
 
-        await tx`
-          INSERT INTO "Ticket" ("idTiket", "noDaisha", "namaPelapor", "status", "waktuMasuk", "catatan", "items")
-          VALUES (${idTiket}, ${noDaisha}, ${namaPelapor}, ${targetStatus}, ${parsedDateMasuk}, ${finalCatatan}, ${JSON.stringify(itemsJson)}::jsonb)
+        // 2. Insert Header Tiket ke TWMSRepairTicket
+        const [ticketRow] = await tx<Array<{ Id: number }>>`
+          INSERT INTO "TWMSRepairTicket" (
+            "TicketNo", "UnitCode", "ReporterName", "ReporterSection", "Status",
+            "ReportDate", "ActionTaken", "DamageCategory", "DamageDescription", "UpdateDate"
+          )
+          VALUES (
+            ${idTiket}, ${noDaisha}, ${namaPelapor}, ${seksi}, ${targetStatus},
+            ${parsedDateMasuk}, ${finalCatatan}, ${kategoriUtama}, ${ringkasanGejala}, NOW()
+          )
+          RETURNING "Id"
         `;
 
-        // Pengurangan stok otomatis untuk komponen Ganti Baru (Projek 3)
+        const ticketId = ticketRow.Id;
+
+        // 3. Insert baris rincian ke TWMSRepairTicketDetail
+        for (const item of itemsJson) {
+          // Cari DamageCatalogId bila ada
+          const [catMatch] = await tx<Array<{ Id: number }>>`
+            SELECT "Id" FROM "TWMSDamageCatalog"
+            WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${namaDaisha}))
+              AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${item.komponen}))
+              AND LOWER(COALESCE(TRIM("SymptomDesc"), '')) = LOWER(COALESCE(TRIM(${item.gejala}), ''))
+            LIMIT 1
+          `;
+
+          await tx`
+            INSERT INTO "TWMSRepairTicketDetail" (
+              "TicketId", "LineNo", "ComponentName", "SymptomDesc", "ActionType", "Qty", "DamageCatalogId"
+            )
+            VALUES (
+              ${ticketId}, ${item.idDetail}, ${item.komponen}, ${item.gejala}, ${item.tindakan}, ${item.qty}, ${catMatch?.Id || null}
+            )
+          `;
+        }
+
+        // 4. Pengurangan stok otomatis untuk komponen Ganti Baru
         const gantiItems = itemsJson.filter((it) => it.tindakan === 'Ganti');
         for (const it of gantiItems) {
           try {
@@ -324,22 +368,22 @@ export async function POST(request: Request) {
             const deductQty = Number(it.qty) || 1;
             if (!targetKomponen) continue;
 
-            const [upd] = await tx<Array<{ namaKomponen: string; stokGudang: number; satuan: string }>>`
-              UPDATE "Sparepart"
-              SET "stokGudang" = "stokGudang" - ${deductQty}
-              WHERE "namaKomponen" = ${targetKomponen}
-                 OR UPPER("namaKomponen") = UPPER(${targetKomponen})
-              RETURNING "namaKomponen", "stokGudang", "satuan"
+            const [upd] = await tx<Array<{ Id: number; PartName: string; CurrentStock: number; Unit: string }>>`
+              UPDATE "TWMSSparepartMaster"
+              SET "CurrentStock" = "CurrentStock" - ${deductQty}, "UpdateDate" = NOW()
+              WHERE UPPER(TRIM("PartName")) = UPPER(TRIM(${targetKomponen}))
+              RETURNING "Id", "PartName", "CurrentStock", "Unit"
             `;
 
             if (upd) {
               await tx`
-                INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
+                INSERT INTO "TWMSSparepartLog" ("SparepartId", "PartName", "MovementType", "Qty", "TicketId", "Notes", "MovementDate")
                 VALUES (
-                  ${upd.namaKomponen},
+                  ${upd.Id},
+                  ${upd.PartName},
                   'OUT',
                   ${deductQty},
-                  ${idTiket},
+                  ${ticketId},
                   ${`Penggantian sparepart perbaikan Daisha ${noDaisha} (${namaDaisha}) - ${it.gejala || 'Ganti Baru'}`},
                   NOW()
                 )
@@ -419,87 +463,82 @@ export async function POST(request: Request) {
       }
 
       await withTransaction(async (tx) => {
-        await tx`
-          UPDATE "Ticket"
+        const [updatedTicket] = await tx<Array<{ Id: number; UnitCode: string; ReportDate: Date | null }>>`
+          UPDATE "TWMSRepairTicket"
           SET 
-            "status" = ${normalizedStatus},
-            "waktuSelesai" = ${parsedWaktuSelesai},
-            "catatan" = ${catatan && catatan !== '-' ? catatan : null}
-          WHERE "idTiket" = ${idTiket}
+            "Status" = ${normalizedStatus},
+            "CompletedDate" = ${parsedWaktuSelesai},
+            "DamageDescription" = CASE WHEN ${catatan && catatan !== '-'} THEN ${catatan} ELSE "DamageDescription" END,
+            "UpdateDate" = NOW()
+          WHERE "TicketNo" = ${idTiket}
+          RETURNING "Id", "UnitCode", "ReportDate"
         `;
 
-        // PRD Modul Maintenance: Sinkronisasi perbaikan selesai -> terhitung riwayat servis & maintenance
-        if (normalizedStatus === 'Done') {
-          const tRow = await tx`SELECT "noDaisha", "waktuMasuk" FROM "Ticket" WHERE "idTiket" = ${idTiket} LIMIT 1`;
-          if (tRow.length > 0 && tRow[0].noDaisha) {
-            const noD = tRow[0].noDaisha.trim();
-            const completionDate = parsedWaktuSelesai || new Date();
-            const ticketWaktuMasuk = tRow[0].waktuMasuk ? new Date(tRow[0].waktuMasuk) : completionDate;
-            const detailKerusakan = body.detail ? sanitizeText(body.detail, 1000) : 'Perbaikan kerusakan di bengkel';
-
-            const cleanNoD = noD.replace(/\s+/g, '').toUpperCase();
-            const daishaMatch = await tx`
-              SELECT id FROM "Daisha" 
-              WHERE UPPER(nomor_daisha) = ${noD.toUpperCase()}
-                 OR REPLACE(UPPER(nomor_daisha), ' ', '') = ${cleanNoD}
-              LIMIT 1
-            `;
-
-            let dId: string;
-            if (daishaMatch.length > 0) {
-              dId = daishaMatch[0].id;
-              await tx`
-                UPDATE "Daisha"
-                SET 
-                  "last_maintenance_date" = ${completionDate},
-                  "last_repair_date" = ${completionDate},
-                  "last_waktu_masuk" = ${ticketWaktuMasuk},
-                  "last_waktu_keluar" = ${completionDate},
-                  "last_condition" = 'OK',
-                  "updated_at" = now()
-                WHERE id = ${dId}
-              `;
-            } else {
-              const sInfo = detectDaishaSize(noD);
-              const ukuranResolved = sInfo?.size === 'Small' ? 'SMALL' : sInfo?.size === 'Medium' ? 'MEDIUM' : sInfo?.size === 'Large' ? 'LARGE' : 'NONE';
-              const jenisResolved = noD.toUpperCase().includes('NF') || noD.toUpperCase().includes('FIL') ? 'NAGARA_FILTER' : 'VERTICAL';
-              const inserted = await tx`
-                INSERT INTO "Daisha" (
-                  "nomor_daisha", "jenis", "ukuran", "last_maintenance_date",
-                  "last_repair_date", "last_waktu_masuk", "last_waktu_keluar", "last_condition"
-                )
-                VALUES (
-                  ${noD}, ${jenisResolved}, ${ukuranResolved}, ${completionDate},
-                  ${completionDate}, ${ticketWaktuMasuk}, ${completionDate}, 'OK'
-                )
-                RETURNING id
-              `;
-              dId = inserted[0].id;
-            }
-
-            // Catat log pengerjaan repair terintegrasi
-            await tx`
-              INSERT INTO "MaintenanceLog" (
-                "daisha_id", "nomor_daisha", "jenis_pekerjaan", "kondisi",
-                "tanggal_pengerjaan", "waktu_masuk", "waktu_keluar", "detail_kerusakan",
-                "admin_id", "catatan"
-              ) VALUES (
-                ${dId}, ${noD}, 'REPAIR', 'RUSAK',
-                ${completionDate}, ${ticketWaktuMasuk}, ${completionDate}, ${detailKerusakan},
-                ${auth.user?.name || auth.user?.username || 'Admin'}, ${'Perbaikan selesai via tiket ' + idTiket}
-              )
-            `;
-          }
+        if (!updatedTicket) {
+          throw new Error(`Tiket ${idTiket} tidak ditemukan.`);
         }
 
-        // Jika unit dinyatakan Scrap / Rusak Total
-        if (normalizedStatus === 'Scrap') {
-          const tRow = await tx`SELECT "noDaisha" FROM "Ticket" WHERE "idTiket" = ${idTiket} LIMIT 1`;
-          if (tRow.length > 0 && tRow[0].noDaisha) {
+        const noD = (updatedTicket.UnitCode || '').trim();
+        const completionDate = parsedWaktuSelesai || new Date();
+        const ticketWaktuMasuk = updatedTicket.ReportDate ? new Date(updatedTicket.ReportDate) : completionDate;
+
+        // Sinkronisasi unit jika Selesai (Done)
+        if (normalizedStatus === 'Done' && noD) {
+          const periodMonth = `${completionDate.getFullYear()}-${String(completionDate.getMonth() + 1).padStart(2, '0')}`;
+          const detailKerusakan = body.detail ? sanitizeText(body.detail, 1000) : 'Perbaikan kerusakan di bengkel';
+
+          // Update TWMSDaishaCatalog
+          const [daishaRow] = await tx<Array<{ SectionName: string }>>`
+            UPDATE "TWMSDaishaCatalog"
+            SET 
+              "LastPMDate" = ${completionDate},
+              "CurrentCondition" = 'OK',
+              "TotalRepairs" = COALESCE("TotalRepairs", 0) + 1,
+              "UpdateDate" = NOW()
+            WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${noD}))
+            RETURNING "SectionName"
+          `;
+
+          const sectionName = daishaRow?.SectionName || 'Building';
+
+          // Catat log pengerjaan repair di TWMSMaintenanceLog (RecordType = 'PM')
+          await tx`
+            INSERT INTO "TWMSMaintenanceLog" (
+              "UnitCode", "SectionName", "RecordType", "PeriodMonth", "WorkType", "ChecklistResult",
+              "InspectionNote", "ActionTaken", "CheckDate", "EntryTime", "ExitTime",
+              "InspectorBy", "Notes", "UpdateDate"
+            ) VALUES (
+              ${noD}, ${sectionName}, 'PM', ${periodMonth}, 'REPAIR', 'OK',
+              ${detailKerusakan}, ${'Perbaikan selesai via tiket ' + idTiket}, ${completionDate},
+              ${ticketWaktuMasuk}, ${completionDate},
+              ${auth.user?.name || auth.user?.username || 'Admin'}, ${'Perbaikan selesai via tiket ' + idTiket}, NOW()
+            )
+          `;
+        }
+
+        // Jika unit dinyatakan Scrap
+        if (normalizedStatus === 'Scrap' && noD) {
+          await tx`
+            UPDATE "TWMSDaishaCatalog"
+            SET "CurrentCondition" = 'RUSAK', "IsActive" = false, "UpdateDate" = NOW()
+            WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${noD}))
+          `;
+        }
+
+        // Update detail jika disertakan
+        if (body.detail) {
+          const detailStr = sanitizeText(body.detail, 2000);
+          const parsedDetails = parseTicketDamageDetail(detailStr);
+          await tx`DELETE FROM "TWMSRepairTicketDetail" WHERE "TicketId" = ${updatedTicket.Id}`;
+
+          for (let idx = 0; idx < parsedDetails.items.length; idx++) {
+            const it = parsedDetails.items[idx];
             await tx`
-              UPDATE "Daisha"
-              SET "last_condition" = 'RUSAK', "updated_at" = now()
-              WHERE UPPER(nomor_daisha) = ${tRow[0].noDaisha.trim().toUpperCase()}
+              INSERT INTO "TWMSRepairTicketDetail" (
+                "TicketId", "LineNo", "ComponentName", "SymptomDesc", "ActionType", "Qty"
+              ) VALUES (
+                ${updatedTicket.Id}, ${idx + 1}, ${it.komponen}, ${it.gejala}, ${it.tindakan || 'Repair'}, ${it.qty || 1}
+              )
             `;
           }
         }
@@ -507,23 +546,6 @@ export async function POST(request: Request) {
 
       if (normalizedStatus === 'Done' || normalizedStatus === 'Scrap') {
         invalidateMaintenanceCache();
-      }
-
-      if (body.detail) {
-        const detailStr = sanitizeText(body.detail, 2000);
-        const parsedDetails = parseTicketDamageDetail(detailStr);
-        const itemsJson = parsedDetails.items.map((it, idx) => ({
-          idDetail: idx + 1,
-          komponen: it.komponen,
-          gejala: it.gejala,
-          tindakan: it.tindakan || 'Repair',
-          qty: it.qty || 1,
-        }));
-        await sql`
-          UPDATE "Ticket"
-          SET "items" = ${JSON.stringify(itemsJson)}::jsonb
-          WHERE "idTiket" = ${idTiket}
-        `;
       }
 
       recordAuditLog({
@@ -542,7 +564,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // Hapus atau batalkan tiket (khusus role admin - operasi destruktif)
+    // 2.3 DELETE (Hapus atau batalkan tiket - khusus role admin)
     else if (action === 'DELETE') {
       if (auth.user?.role !== 'ADMIN') {
         recordAuditLog({
@@ -567,29 +589,35 @@ export async function POST(request: Request) {
         );
       }
 
-      const tRows = await sql`SELECT "noDaisha" FROM "Ticket" WHERE "idTiket" = ${idTiket} LIMIT 1`;
-      const deletedNoDaisha = tRows.length > 0 ? tRows[0].noDaisha : null;
-
-      await sql`DELETE FROM "TicketDetail" WHERE "idTiket" = ${idTiket}`;
-      await sql`DELETE FROM "Ticket" WHERE "idTiket" = ${idTiket}`;
-
-      // Jika tiket dihapus, cek apakah unit masih memiliki tiket aktif lain
-      if (deletedNoDaisha) {
-        const remainingActive = await sql`
-          SELECT count(*)::int as c
-          FROM "Ticket"
-          WHERE ("noDaisha" = ${deletedNoDaisha} OR UPPER(TRIM("noDaisha")) = UPPER(TRIM(${deletedNoDaisha})))
-            AND status IN ('Open', 'Progress', 'Pending')
+      await withTransaction(async (tx) => {
+        const [ticket] = await tx<Array<{ Id: number; UnitCode: string }>>`
+          SELECT "Id", "UnitCode" FROM "TWMSRepairTicket" WHERE "TicketNo" = ${idTiket} LIMIT 1
         `;
-        if ((remainingActive[0]?.c || 0) === 0) {
-          await sql`
-            UPDATE "Daisha"
-            SET "last_condition" = 'OK', "updated_at" = NOW()
-            WHERE UPPER(TRIM("nomor_daisha")) = UPPER(TRIM(${deletedNoDaisha}))
-               OR REPLACE(UPPER("nomor_daisha"), ' ', '') = REPLACE(UPPER(${deletedNoDaisha}), ' ', '')
+
+        if (!ticket) return;
+
+        // Cascade delete detail dan ticket
+        await tx`DELETE FROM "TWMSRepairTicketDetail" WHERE "TicketId" = ${ticket.Id}`;
+        await tx`DELETE FROM "TWMSSparepartLog" WHERE "TicketId" = ${ticket.Id}`;
+        await tx`DELETE FROM "TWMSRepairTicket" WHERE "Id" = ${ticket.Id}`;
+
+        // Cek apakah unit masih memiliki tiket aktif lain
+        if (ticket.UnitCode) {
+          const remaining = await tx`
+            SELECT count(*)::int as c
+            FROM "TWMSRepairTicket"
+            WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${ticket.UnitCode}))
+              AND "Status" IN ('Open', 'Progress', 'Pending')
           `;
+          if ((remaining[0]?.c || 0) === 0) {
+            await tx`
+              UPDATE "TWMSDaishaCatalog"
+              SET "CurrentCondition" = 'OK', "UpdateDate" = NOW()
+              WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${ticket.UnitCode}))
+            `;
+          }
         }
-      }
+      });
 
       invalidateMaintenanceCache();
       invalidateRepairCache();
@@ -626,22 +654,6 @@ export async function POST(request: Request) {
       }
       const noDaisha = noDaishaValidation.value;
 
-      // Update Daisha - pertahankan jenis & ukuran yang sudah ada di DB
-      const [editExisting] = await sql`
-        SELECT "jenis", "ukuran" FROM "Daisha"
-        WHERE UPPER("nomor_daisha") = UPPER(${noDaisha}) LIMIT 1
-      `;
-      const sizeInfoEdit = detectDaishaSize(noDaisha);
-      const ukuranEdit = editExisting?.ukuran || (sizeInfoEdit?.size === 'Small' ? 'SMALL' : sizeInfoEdit?.size === 'Medium' ? 'MEDIUM' : sizeInfoEdit?.size === 'Large' ? 'LARGE' : 'NONE');
-      const jenisEdit = editExisting?.jenis || (noDaisha.toUpperCase().includes('NF') || namaDaisha.toLowerCase().includes('nagara') ? 'NAGARA_FILTER' : 'VERTICAL');
-      await sql`
-        INSERT INTO "Daisha" ("nomor_daisha", "nama_daisha", "ukuran", "seksi", "jenis")
-        VALUES (${noDaisha}, ${namaDaisha}, ${ukuranEdit}, ${seksi}, ${jenisEdit})
-        ON CONFLICT ("nomor_daisha") DO UPDATE 
-        SET "nama_daisha" = EXCLUDED."nama_daisha", "seksi" = EXCLUDED."seksi"
-      `;
-
-      // Update Ticket
       const waktuMasukRaw = sanitizeText(body.waktuMasuk, 30);
       let parsedWaktuMasuk: Date | null = null;
       if (waktuMasukRaw && waktuMasukRaw !== '-') {
@@ -654,42 +666,56 @@ export async function POST(request: Request) {
         }
       }
 
-      // Update Rincian Kerusakan
-      await sql`DELETE FROM "TicketDetail" WHERE "idTiket" = ${idTiket}`;
-      const parsedDetails = parseTicketDamageDetail(detail);
-      const itemsJson = parsedDetails.items.map(it => ({
-        komponen: it.komponen,
-        gejala: it.gejala,
-        tindakan: it.tindakan || 'Repair',
-        qty: it.qty || 1,
-      }));
+      await withTransaction(async (tx) => {
+        // Upsert unit di TWMSDaishaCatalog
+        await tx`
+          INSERT INTO "TWMSDaishaCatalog" ("UnitCode", "DaishaType", "SectionName", "UpdateDate")
+          VALUES (${noDaisha}, ${namaDaisha}, ${seksi}, NOW())
+          ON CONFLICT ("UnitCode") DO UPDATE 
+          SET "DaishaType" = EXCLUDED."DaishaType", "SectionName" = EXCLUDED."SectionName", "UpdateDate" = NOW()
+        `;
 
-      await sql`
-        UPDATE "Ticket"
-        SET 
-          "noDaisha" = ${noDaisha},
-          "namaPelapor" = ${namaPelapor || auth.user?.name || 'Operator'},
-          "waktuMasuk" = COALESCE(${parsedWaktuMasuk}, "waktuMasuk"),
-          "items" = ${JSON.stringify(itemsJson)}::jsonb
-        WHERE "idTiket" = ${idTiket}
-      `;
+        const [tRow] = await tx<Array<{ Id: number }>>`
+          SELECT "Id" FROM "TWMSRepairTicket" WHERE "TicketNo" = ${idTiket} LIMIT 1
+        `;
 
-      if (parsedDetails.items.length > 0) {
-        try {
-          const detailRows = parsedDetails.items.map((it) => ({
-            idTiket,
-            komponen: it.komponen,
-            gejala: it.gejala,
-            tindakan: it.tindakan || 'Repair',
-            qty: it.qty || 1,
-          }));
-          await sql`
-            INSERT INTO "TicketDetail" ${sql(detailRows, 'idTiket', 'komponen', 'gejala', 'tindakan', 'qty')}
-          `;
-        } catch (detailErr) {
-          console.warn('[TicketDetail] Gagal sinkronisasi baris detail:', detailErr);
+        if (!tRow) {
+          throw new Error(`Tiket ${idTiket} tidak ditemukan.`);
         }
-      }
+
+        const ticketId = tRow.Id;
+
+        // Parse detail kerusakan
+        const parsedDetails = parseTicketDamageDetail(detail);
+        const ringkasanGejala = parsedDetails.items.map((it) => `${it.komponen}: ${it.gejala}`).join('; ');
+        const firstComp = parsedDetails.items[0]?.komponen || 'Umum';
+
+        await tx`
+          UPDATE "TWMSRepairTicket"
+          SET 
+            "UnitCode" = ${noDaisha},
+            "ReporterName" = ${namaPelapor || auth.user?.name || 'Operator'},
+            "ReporterSection" = ${seksi},
+            "ReportDate" = COALESCE(${parsedWaktuMasuk}, "ReportDate"),
+            "DamageCategory" = ${firstComp},
+            "DamageDescription" = ${ringkasanGejala || '-'},
+            "UpdateDate" = NOW()
+          WHERE "Id" = ${ticketId}
+        `;
+
+        // Update Rincian Kerusakan
+        await tx`DELETE FROM "TWMSRepairTicketDetail" WHERE "TicketId" = ${ticketId}`;
+        for (let idx = 0; idx < parsedDetails.items.length; idx++) {
+          const it = parsedDetails.items[idx];
+          await tx`
+            INSERT INTO "TWMSRepairTicketDetail" (
+              "TicketId", "LineNo", "ComponentName", "SymptomDesc", "ActionType", "Qty"
+            ) VALUES (
+              ${ticketId}, ${idx + 1}, ${it.komponen}, ${it.gejala}, ${it.tindakan || 'Repair'}, ${it.qty || 1}
+            )
+          `;
+        }
+      });
 
       invalidateRepairCache();
       invalidateMaintenanceCache();
@@ -737,7 +763,6 @@ export async function PUT(request: Request) {
       ...rawBody,
     };
 
-    // Forward ke POST handler yang sudah memiliki auth & audit lengkap
     const forwardedRequest = new Request(request.url, {
       method: 'POST',
       headers: request.headers,

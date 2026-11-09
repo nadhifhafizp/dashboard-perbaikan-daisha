@@ -20,7 +20,7 @@ export interface PmStagingItem {
 
 /**
  * GET /api/maintenance/staging?seksi=Building
- * Mengambil daftar unit yang disiapkan seksi untuk penjemputan PM
+ * Mengambil daftar unit yang disiapkan seksi untuk penjemputan PM dari TWMSMaintenanceLog
  */
 export async function GET(request: Request) {
   const auth = await requireAuth(request);
@@ -28,49 +28,31 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const querySeksi = sanitizeText(searchParams.get('seksi') || '', 50);
+    const rawSeksi = sanitizeText(searchParams.get('seksi') || '', 50);
+    const querySeksi =
+      rawSeksi && !['all seksi', 'semua seksi', 'all', 'semua'].includes(rawSeksi.toLowerCase())
+        ? rawSeksi
+        : null;
 
-    let rows: PmStagingItem[] = [];
-    if (
-      querySeksi &&
-      querySeksi.toLowerCase() !== 'all seksi' &&
-      querySeksi.toLowerCase() !== 'semua seksi'
-    ) {
-      rows = await sql<PmStagingItem[]>`
-        SELECT 
-          "id",
-          "seksi",
-          "units",
-          "lokasi",
-          "catatan",
-          "pelapor",
-          "status",
-          "createdAt",
-          "pickedUpAt",
-          "completedAt"
-        FROM "PmStaging"
-        WHERE LOWER("seksi") = LOWER(${querySeksi})
-        ORDER BY "createdAt" DESC
-        LIMIT 50
-      `;
-    } else {
-      rows = await sql<PmStagingItem[]>`
-        SELECT 
-          "id",
-          "seksi",
-          "units",
-          "lokasi",
-          "catatan",
-          "pelapor",
-          "status",
-          "createdAt",
-          "pickedUpAt",
-          "completedAt"
-        FROM "PmStaging"
-        ORDER BY "createdAt" DESC
-        LIMIT 100
-      `;
-    }
+    const rows = await sql<PmStagingItem[]>`
+      SELECT 
+        min("Id") AS id,
+        "SectionName" AS seksi,
+        json_agg("UnitCode" ORDER BY "UnitCode") AS units,
+        COALESCE("StagingLocation", '-') AS lokasi,
+        "Notes" AS catatan,
+        COALESCE("ReporterName", '-') AS pelapor,
+        COALESCE("StagingStatus", 'WAITING_PICKUP') AS status,
+        "StagingDate" AS "createdAt",
+        "PickedUpDate" AS "pickedUpAt",
+        "CompletedDate" AS "completedAt"
+      FROM "TWMSMaintenanceLog"
+      WHERE "RecordType" = 'STAGING'
+        AND (${querySeksi}::text IS NULL OR LOWER("SectionName") = LOWER(${querySeksi}))
+      GROUP BY "StagingDate", "StagingLocation", "ReporterName", "SectionName", "StagingStatus", "PickedUpDate", "CompletedDate", "Notes"
+      ORDER BY "StagingDate" DESC
+      LIMIT 100
+    `;
 
     return NextResponse.json({
       success: true,
@@ -139,40 +121,46 @@ export async function POST(request: Request) {
         );
       }
 
-      // Simpan ke tabel PmStaging & notifikasi dalam 1 transaksi atomik aman
-      const inserted = await withTransaction(async (tx) => {
-        const [row] = await tx<PmStagingItem[]>`
-          INSERT INTO "PmStaging" ("seksi", "units", "lokasi", "catatan", "pelapor", "status", "createdAt")
-          VALUES (
-            ${seksi},
-            ${tx.json(cleanUnits)},
-            ${lokasi},
-            ${catatan || null},
-            ${pelapor},
-            'WAITING_PICKUP',
-            NOW()
-          )
-          RETURNING *
-        `;
+      const now = new Date();
+      const periodMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-        // Kirim notifikasi lonceng ke tim Workshop (ADMIN & OPERATOR)
-        const notifPesan = `Seksi ${seksi} telah menyiapkan ${cleanUnits.length} unit Daisha (${cleanUnits.join(', ')}) untuk pemeliharaan berkala (PM) di lokasi: ${lokasi}. Silakan tim Workshop mengambil unit.`;
+      // Simpan 1 baris per unit di TWMSMaintenanceLog
+      const firstId = await withTransaction(async (tx) => {
+        let createdFirstId = 0;
+        for (let i = 0; i < cleanUnits.length; i++) {
+          const u = cleanUnits[i];
+          const [row] = await tx<Array<{ Id: number }>>`
+            INSERT INTO "TWMSMaintenanceLog" (
+              "UnitCode", "SectionName", "RecordType", "PeriodMonth",
+              "StagingStatus", "StagingLocation", "ReporterName",
+              "StagingDate", "Notes", "UpdateDate"
+            )
+            VALUES (
+              ${u}, ${seksi}, 'STAGING', ${periodMonth},
+              'WAITING_PICKUP', ${lokasi}, ${pelapor},
+              ${now}, ${catatan || null}, NOW()
+            )
+            RETURNING "Id"
+          `;
+          if (i === 0) createdFirstId = row.Id;
+        }
 
-        await tx`
-          INSERT INTO "SectionRequestNotification" 
-            ("targetRole", "tipe", "judul", "pesan", "link", "isRead", "waktu")
-          VALUES 
-            ('ADMIN', 'PM_PICKUP', ${'Unit PM Siap Dijemput - Seksi ' + seksi}, ${notifPesan}, '/maintenance', false, NOW()),
-            ('OPERATOR', 'PM_PICKUP', ${'Unit PM Siap Dijemput - Seksi ' + seksi}, ${notifPesan}, '/maintenance', false, NOW())
-        `;
-
-        return row;
+        return createdFirstId;
       });
 
       return NextResponse.json({
         success: true,
         message: `Pemberitahuan berhasil dikirim ke Workshop! ${cleanUnits.length} unit Daisha tercatat siap dijemput di ${lokasi}.`,
-        data: inserted,
+        data: {
+          id: firstId,
+          seksi,
+          units: cleanUnits,
+          lokasi,
+          catatan,
+          pelapor,
+          status: 'WAITING_PICKUP',
+          createdAt: now.toISOString(),
+        },
       });
     }
 
@@ -189,38 +177,34 @@ export async function POST(request: Request) {
       }
 
       const updated = await withTransaction(async (tx) => {
-        const [row] = await tx<PmStagingItem[]>`
-          UPDATE "PmStaging"
-          SET 
-            "status" = ${newStatus},
-            "pickedUpAt" = CASE WHEN ${newStatus} = 'PICKED_UP' AND "pickedUpAt" IS NULL THEN NOW() ELSE "pickedUpAt" END,
-            "completedAt" = CASE WHEN ${newStatus} = 'COMPLETED' THEN NOW() ELSE "completedAt" END
-          WHERE "id" = ${id}
-          RETURNING *
+        // Cari informasi grup staging berdasarkan Id
+        const [target] = await tx<Array<{
+          StagingDate: Date;
+          StagingLocation: string | null;
+          ReporterName: string | null;
+        }>>`
+          SELECT "StagingDate", "StagingLocation", "ReporterName"
+          FROM "TWMSMaintenanceLog"
+          WHERE "Id" = ${id} AND "RecordType" = 'STAGING'
+          LIMIT 1
         `;
 
-        if (!row) return null;
+        if (!target) return null;
 
-        // Kirim notifikasi balik ke Seksi jika status berubah
-        if (newStatus === 'PICKED_UP') {
-          const pesan = `Tim Workshop telah mengambil ${row.units.length} unit Daisha dari lokasi ${row.lokasi} dan saat ini sedang dilakukan pemeliharaan berkala (PM).`;
-          await tx`
-            INSERT INTO "SectionRequestNotification" 
-              ("targetRole", "tipe", "judul", "pesan", "link", "isRead", "waktu")
-            VALUES 
-              ('USER_SEKSI', 'PM_IN_PROGRESS', ${'Unit Daisha Sedang Di-PM di Workshop'}, ${pesan}, '/maintenance', false, NOW())
-          `;
-        } else if (newStatus === 'COMPLETED') {
-          const pesan = `Pemeliharaan berkala (PM) untuk ${row.units.length} unit Daisha (${row.units.join(', ')}) telah selesai dikerjakan oleh tim Workshop. Unit siap digunakan kembali.`;
-          await tx`
-            INSERT INTO "SectionRequestNotification" 
-              ("targetRole", "tipe", "judul", "pesan", "link", "isRead", "waktu")
-            VALUES 
-              ('USER_SEKSI', 'PM_COMPLETED', ${'PM Unit Daisha Selesai Diservis'}, ${pesan}, '/maintenance', false, NOW())
-          `;
-        }
+        await tx`
+          UPDATE "TWMSMaintenanceLog"
+          SET 
+            "StagingStatus" = ${newStatus},
+            "PickedUpDate" = CASE WHEN ${newStatus} = 'PICKED_UP' AND "PickedUpDate" IS NULL THEN NOW() ELSE "PickedUpDate" END,
+            "CompletedDate" = CASE WHEN ${newStatus} = 'COMPLETED' THEN NOW() ELSE "CompletedDate" END,
+            "UpdateDate" = NOW()
+          WHERE "RecordType" = 'STAGING'
+            AND "StagingDate" = ${target.StagingDate}
+            AND COALESCE("StagingLocation", '') = COALESCE(${target.StagingLocation}, '')
+            AND COALESCE("ReporterName", '') = COALESCE(${target.ReporterName}, '')
+        `;
 
-        return row;
+        return { id, status: newStatus };
       });
 
       if (!updated) {

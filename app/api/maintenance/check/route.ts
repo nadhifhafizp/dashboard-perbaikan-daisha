@@ -20,11 +20,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ exists: false, isRecent: false });
     }
 
-    // Cari di tabel Daisha menggunakan functional index UPPER(TRIM(...))
+    // Cari di tabel TWMSDaishaCatalog menggunakan index UPPER(TRIM(...))
     let daisha = await sql`
-      SELECT id, nomor_daisha, jenis, ukuran, seksi, nama_daisha, last_maintenance_date
-      FROM "Daisha"
-      WHERE UPPER(TRIM(nomor_daisha)) = UPPER(TRIM(${nomor}))
+      SELECT 
+        "Id" AS id, 
+        "UnitCode" AS nomor_daisha, 
+        "DaishaType" AS jenis, 
+        "SizeSpec" AS ukuran, 
+        "SectionName" AS seksi, 
+        "DaishaType" AS nama_daisha, 
+        "LastPMDate" AS last_maintenance_date
+      FROM "TWMSDaishaCatalog"
+      WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${nomor}))
       LIMIT 1
     `;
 
@@ -34,9 +41,16 @@ export async function GET(request: Request) {
       if (numOnly) {
         const padded = String(parseInt(numOnly, 10)).padStart(3, '0');
         daisha = await sql`
-          SELECT id, nomor_daisha, jenis, ukuran, seksi, nama_daisha, last_maintenance_date
-          FROM "Daisha"
-          WHERE nomor_daisha ILIKE ${'%' + padded + '%'} OR nomor_daisha ILIKE ${'%' + nomor + '%'}
+          SELECT 
+            "Id" AS id, 
+            "UnitCode" AS nomor_daisha, 
+            "DaishaType" AS jenis, 
+            "SizeSpec" AS ukuran, 
+            "SectionName" AS seksi, 
+            "DaishaType" AS nama_daisha, 
+            "LastPMDate" AS last_maintenance_date
+          FROM "TWMSDaishaCatalog"
+          WHERE "UnitCode" ILIKE ${'%' + padded + '%'} OR "UnitCode" ILIKE ${'%' + nomor + '%'}
           LIMIT 1
         `;
       }
@@ -69,12 +83,12 @@ export async function GET(request: Request) {
         year: 'numeric',
       });
 
-      // Ambil log terakhir
+      // Ambil log terakhir dari TWMSMaintenanceLog
       const lastLog = await sql`
-        SELECT jenis_pekerjaan, tanggal_pengerjaan, admin_id, catatan
-        FROM "MaintenanceLog"
-        WHERE daisha_id = ${unit.id}
-        ORDER BY tanggal_pengerjaan DESC
+        SELECT "WorkType" AS jenis_pekerjaan, "CheckDate" AS tanggal_pengerjaan, "InspectorBy" AS admin_id, "Notes" AS catatan
+        FROM "TWMSMaintenanceLog"
+        WHERE "UnitCode" = ${unit.nomor_daisha} AND "RecordType" = 'PM'
+        ORDER BY "CheckDate" DESC
         LIMIT 1
       `;
 

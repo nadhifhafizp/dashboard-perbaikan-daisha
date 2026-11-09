@@ -40,10 +40,10 @@ export interface SectionRequestRow {
   picBengkel?: string | null;
   estimasi?: string | null;
   catatanAdmin?: string | null;
-  biayaEstimate?: number | null;
-  biayaActual?: number | null;
-  orangJamEstimate?: number | null;
-  orangJamActual?: number | null;
+  biayaEstimate?: string | number | null;
+  biayaActual?: string | number | null;
+  orangJamEstimate?: string | number | null;
+  orangJamActual?: string | number | null;
   waktuEstimate?: string | null;
   waktuActual?: string | null;
   kebutuhanSparepart?: string | null;
@@ -98,20 +98,20 @@ function normalizeMaterials(raw: unknown): Array<{
         } else if (inner && typeof inner === 'object') {
           result.push(inner);
         }
-      } catch {
-        // ignore
-      }
+      } catch {}
     } else if (typeof item === 'object') {
-      result.push(item);
+      result.push(item as Record<string, unknown>);
     }
   }
+
   return result
-    .filter((m) => m && (m.namaKomponen || m.id))
+    .filter((m) => m && (m.namaKomponen || m.MaterialName))
     .map((m) => {
-      const nama = String(m.namaKomponen || '');
+      const nama = String(m.namaKomponen || m.MaterialName || '');
       const lower = nama.toLowerCase();
       const isMat =
         m.tipe === 'MATERIAL' ||
+        m.MaterialType === 'MATERIAL' ||
         lower.includes('plat') ||
         lower.includes('cat') ||
         lower.includes('las') ||
@@ -119,35 +119,30 @@ function normalizeMaterials(raw: unknown): Array<{
         lower.includes('hollow') ||
         lower.includes('siku') ||
         m.satuan === 'cm²' ||
-        m.satuan === 'm²';
+        m.satuan === 'm²' ||
+        m.Unit === 'cm²' ||
+        m.Unit === 'm²';
 
       return {
-        id: Number(m.id) || Date.now(),
-        sectionRequestId: m.sectionRequestId ? Number(m.sectionRequestId) : undefined,
+        id: Number(m.id || m.Id) || Date.now(),
+        sectionRequestId: m.sectionRequestId ? Number(m.sectionRequestId) : (m.RequestId ? Number(m.RequestId) : undefined),
         namaKomponen: nama,
-        tipe: (m.tipe || (isMat ? 'MATERIAL' : 'SPAREPART')) as 'SPAREPART' | 'MATERIAL',
-        qty: Number(m.qty) || 1,
-        satuan: String(m.satuan || (isMat ? 'cm²' : 'Pcs')),
-        dimensi: m.dimensi ? String(m.dimensi) : undefined,
-        potongStok: Boolean(m.potongStok),
-        qtyPotongStok: m.qtyPotongStok !== undefined ? Number(m.qtyPotongStok) : undefined,
-        keterangan: m.keterangan ? String(m.keterangan) : null,
+        tipe: ((m.tipe || m.MaterialType || (isMat ? 'MATERIAL' : 'SPAREPART')) as string).toUpperCase() as 'SPAREPART' | 'MATERIAL',
+        qty: Number(m.qty ?? m.QtyUsed) || 1,
+        satuan: String(m.satuan || m.Unit || (isMat ? 'cm²' : 'Pcs')),
+        dimensi: m.dimensi ? String(m.dimensi) : (m.MaterialSpec ? String(m.MaterialSpec) : undefined),
+        potongStok: Boolean(m.potongStok ?? m.DeductStock),
+        qtyPotongStok: m.qtyPotongStok !== undefined ? Number(m.qtyPotongStok) : (m.QtyDeducted !== undefined ? Number(m.QtyDeducted) : undefined),
+        keterangan: m.keterangan ? String(m.keterangan) : (m.Remark ? String(m.Remark) : null),
       };
     });
 }
 
-// Buat nomor request resmi Bridgestone (Format: 001/SEKSI/ROMAWI/TAHUN)
-async function generateRequestNumber(seksiPemohon: string, date: Date = new Date()): Promise<string> {
-  return generateNextNomorSurat(seksiPemohon, date);
-}
-
 // GET: Ambil daftar request (Admin: semua, USER_SEKSI: hanya milik seksinya)
 export async function GET(request: Request) {
-  // Verifikasi otorisasi sesi
   const auth = await requireAuth(request, ['ADMIN', 'USER_SEKSI', 'OPERATOR']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // Pembatasan laju permintaan (rate limiting 60 req/menit)
   const rateLimit = checkRateLimit(`requests_get:${auth.ip}`, 60, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan data request.' }, { status: 429 });
@@ -160,7 +155,6 @@ export async function GET(request: Request) {
     const status = searchParams.get('status');
     const seksi = searchParams.get('seksi');
 
-    // ISOLASI DATA PENGGUNA: User Seksi HANYA dapat melihat request milik seksinya sendiri
     const userSeksi = auth.user?.role === 'USER_SEKSI' ? (auth.user.seksi || null) : null;
     const filterByUser = auth.user?.role === 'USER_SEKSI' ? auth.user.username : null;
     const filterStatus = status && status !== 'all' ? sanitizeText(status, 50) : null;
@@ -169,89 +163,97 @@ export async function GET(request: Request) {
 
     const requests = await sql`
       SELECT 
-        sr.id,
-        sr."nomorRequest",
-        sr."nomorSurat",
-        sr."seksiPemohon",
-        sr."picPemohon",
-        sr."kontakPemohon",
-        sr."namaBarang",
-        sr."spesifikasi",
-        sr.jumlah,
-        sr.satuan,
-        sr.urgensi,
-        sr.catatan,
-        sr.status,
-        sr."alasanTolak",
-        sr."picBengkel",
-        sr.estimasi,
-        sr."catatanAdmin",
-        sr."dibuatOleh",
-        sr."waktuDibuat",
-        sr."waktuUpdate",
-        sr."waktuSelesai",
-        sr.perihal,
-        sr."namaMachine",
-        sr.faktor,
-        sr.tujuan,
-        sr.alasan,
-        sr."kodeSeksi",
-        sr.drafter,
-        sr.foreman,
-        sr."keadaanSekarang",
-        ${includeImage ? sql`sr."fotoSebelum"` : sql`NULL as "fotoSebelum"`},
-        CASE WHEN sr."fotoSebelum" IS NOT NULL AND length(sr."fotoSebelum") > 0 THEN TRUE ELSE FALSE END as "hasFotoSebelum",
-        sr."rencanaTindakan",
-        ${includeImage ? sql`sr."fotoSesudah"` : sql`NULL as "fotoSesudah"`},
-        CASE WHEN sr."fotoSesudah" IS NOT NULL AND length(sr."fotoSesudah") > 0 THEN TRUE ELSE FALSE END as "hasFotoSesudah",
-        sr."targetHasil",
-        sr."penjelasanPelaksanaan",
-        sr."biayaEstimate",
-        sr."biayaActual",
-        sr."orangJamEstimate",
-        sr."orangJamActual",
-        sr."waktuEstimate",
-        sr."waktuActual",
-        sr."tglPelaksanaanEstimate",
-        sr."tglPelaksanaanActual",
-        sr."komentarEstimate",
-        sr."komentarActual",
-        sr.keputusan,
-        sr."keputusan8210",
-        sr."keputusan820",
-        sr."hasilCheck",
-        sr."hasilCheckPemohon",
-        sr."schedulePlanning",
-        sr."scheduleActual",
-        sr."emailAtasanSeksi",
-        sr."namaAtasanSeksi",
-        sr."statusApprovalAtasanSeksi",
-        sr."waktuApprovalAtasanSeksi",
-        sr."catatanAtasanSeksi",
-        sr."approvalToken",
-        sr."emailMentorWorkshop",
-        sr."statusApprovalAtasanSpecialProject",
-        sr."waktuApprovalAtasanSpecialProject",
-        sr."kebutuhanSparepart",
-        sr."kebutuhanMaterial",
-        sr."flowStep",
-        sr."alasanPending",
-        sr."ttdAtasanSeksi",
-        sr."namaManajerSeksi",
-        sr."emailManajerSeksi",
-        sr."statusApprovalManajerSeksi",
-        sr."ttdManajerSeksi",
-        sr."waktuApprovalManajerSeksi",
-        sr."catatanManajerSeksi",
-        sr."ttdAdminWorkshop",
-        sr."ttdAtasanSpecialProject",
-        COALESCE(sr."materials", '[]'::jsonb) as materials
-      FROM "SectionRequest" sr
-      WHERE (${filterByUser}::text IS NULL OR sr."dibuatOleh" = ${filterByUser} OR (${userSeksi}::text IS NOT NULL AND LOWER(sr."seksiPemohon") = LOWER(${userSeksi})))
-        AND (${filterStatus}::text IS NULL OR sr.status = ${filterStatus})
-        AND (${filterSeksi}::text IS NULL OR LOWER(sr."seksiPemohon") = LOWER(${filterSeksi}))
-        AND (${filterId}::int IS NULL OR sr.id = ${filterId})
-      ORDER BY sr."waktuDibuat" DESC
+        sr."Id" AS id,
+        sr."RequestNo" AS "nomorRequest",
+        sr."NomorSurat" AS "nomorSurat",
+        sr."RequesterSection" AS "seksiPemohon",
+        sr."RequesterName" AS "picPemohon",
+        sr."RequesterContact" AS "kontakPemohon",
+        sr."ItemTitle" AS "namaBarang",
+        sr."ItemSpec" AS "spesifikasi",
+        sr."ItemQty" AS jumlah,
+        sr."ItemUnit" AS satuan,
+        sr."Urgency" AS urgensi,
+        sr."Remark" AS catatan,
+        sr."WorkflowStatus" AS status,
+        sr."PendingReason" AS "alasanTolak",
+        sr."UpdateBy" AS "picBengkel",
+        sr."EstDuration" AS estimasi,
+        sr."ExecutionNote" AS "catatanAdmin",
+        sr."CreatedBy" AS "dibuatOleh",
+        sr."RequestDate" AS "waktuDibuat",
+        sr."UpdateDate" AS "waktuUpdate",
+        sr."FinishDate" AS "waktuSelesai",
+        sr."Subject" AS perihal,
+        sr."MachineName" AS "namaMachine",
+        sr."ProblemFactor" AS faktor,
+        sr."RequestType" AS tujuan,
+        sr."Reason" AS alasan,
+        sr."SectionCode" AS "kodeSeksi",
+        sr."Drafter" AS drafter,
+        sr."Foreman" AS foreman,
+        sr."CurrentCondition" AS "keadaanSekarang",
+        ${includeImage ? sql`sr."PhotoBefore"` : sql`NULL`} AS "fotoSebelum",
+        CASE WHEN sr."PhotoBefore" IS NOT NULL AND length(sr."PhotoBefore") > 0 THEN TRUE ELSE FALSE END AS "hasFotoSebelum",
+        sr."ActionPlan" AS "rencanaTindakan",
+        ${includeImage ? sql`sr."PhotoAfter"` : sql`NULL`} AS "fotoSesudah",
+        CASE WHEN sr."PhotoAfter" IS NOT NULL AND length(sr."PhotoAfter") > 0 THEN TRUE ELSE FALSE END AS "hasFotoSesudah",
+        sr."TargetResult" AS "targetHasil",
+        sr."ExecutionNote" AS "penjelasanPelaksanaan",
+        sr."EstCost" AS "biayaEstimate",
+        sr."ActCost" AS "biayaActual",
+        sr."EstManHour" AS "orangJamEstimate",
+        sr."ActManHour" AS "orangJamActual",
+        sr."EstDuration" AS "waktuEstimate",
+        sr."ActDuration" AS "waktuActual",
+        sr."EstExecDate" AS "tglPelaksanaanEstimate",
+        sr."ActExecDate" AS "tglPelaksanaanActual",
+        sr."EstComment" AS "komentarEstimate",
+        sr."ActComment" AS "komentarActual",
+        sr."Decision" AS keputusan,
+        sr."Decision8210" AS "keputusan8210",
+        sr."Decision820" AS "keputusan820",
+        sr."CheckResult" AS "hasilCheck",
+        sr."CheckResultRequester" AS "hasilCheckPemohon",
+        sr."SchedulePlan" AS "schedulePlanning",
+        sr."ScheduleActual" AS "scheduleActual",
+        sr."SectionHeadEmail" AS "emailAtasanSeksi",
+        sr."SectionHeadName" AS "namaAtasanSeksi",
+        sr."SectionHeadStatus" AS "statusApprovalAtasanSeksi",
+        sr."ApprovalToken" AS "approvalToken",
+        sr."WorkshopEmail" AS "emailMentorWorkshop",
+        sr."FlowStep" AS "flowStep",
+        sr."PendingReason" AS "alasanPending",
+        sr."SectionHeadSignature" AS "ttdAtasanSeksi",
+        sr."WorkshopSignature" AS "ttdAdminWorkshop",
+        sr."SpecialProjectSignature" AS "ttdAtasanSpecialProject",
+        COALESCE(
+          (
+            SELECT jsonb_agg(
+              jsonb_build_object(
+                'id', m."Id",
+                'sectionRequestId', m."RequestId",
+                'namaKomponen', m."MaterialName",
+                'tipe', m."MaterialType",
+                'qty', m."QtyUsed",
+                'satuan', m."Unit",
+                'dimensi', m."MaterialSpec",
+                'potongStok', m."DeductStock",
+                'qtyPotongStok', m."QtyDeducted",
+                'keterangan', m."Remark"
+              ) ORDER BY m."Id"
+            )
+            FROM "TWMSSectionRequestMaterial" m
+            WHERE m."RequestId" = sr."Id"
+          ),
+          '[]'::jsonb
+        ) AS materials
+      FROM "TWMSSectionRequest" sr
+      WHERE (${filterByUser}::text IS NULL OR sr."CreatedBy" = ${filterByUser} OR (${userSeksi}::text IS NOT NULL AND LOWER(sr."RequesterSection") = LOWER(${userSeksi})))
+        AND (${filterStatus}::text IS NULL OR sr."WorkflowStatus" = ${filterStatus})
+        AND (${filterSeksi}::text IS NULL OR LOWER(sr."RequesterSection") = LOWER(${filterSeksi}))
+        AND (${filterId}::int IS NULL OR sr."Id" = ${filterId})
+      ORDER BY sr."RequestDate" DESC
     `;
 
     const mappedRequests = requests.map((r) => ({
@@ -272,15 +274,12 @@ export async function GET(request: Request) {
 
 // POST: Buat request baru atau update status/material/evaluasi
 export async function POST(request: Request) {
-  // Verifikasi otorisasi sesi
   const auth = await requireAuth(request, ['ADMIN', 'USER_SEKSI', 'OPERATOR']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  // Validasi ukuran payload maksimum 10MB
   const sizeCheck = validatePayloadSize(request, 10 * 1024 * 1024);
   if (!sizeCheck.ok) return sizeCheck.errorResponse!;
 
-  // Pembatasan laju permintaan (rate limiting 30 mutasi/menit)
   const rateLimit = checkRateLimit(`requests_post:${auth.ip}`, 30, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan mutasi request.' }, { status: 429 });
@@ -317,11 +316,8 @@ export async function POST(request: Request) {
       const penjelasanPelaksanaan = sanitizeText(body.penjelasanPelaksanaan, 5000);
       const catatan = sanitizeText(body.catatan || body.catatanTambahan, 1000);
 
-      // Data Atasan & Mentor
       const emailAtasanSeksi = sanitizeText(body.emailAtasanSeksi, 255);
       const namaAtasanSeksi = sanitizeText(body.namaAtasanSeksi || body.foreman, 100);
-      const emailManajerSeksi = sanitizeText(body.emailManajerSeksi, 255);
-      const namaManajerSeksi = sanitizeText(body.namaManajerSeksi, 100);
       const emailMentorWorkshop = sanitizeText(body.emailMentorWorkshop, 255) || 'mentor.workshop@bridgestone.com';
 
       if (!seksiPemohon || (!perihal && !namaBarang)) {
@@ -331,17 +327,13 @@ export async function POST(request: Request) {
         );
       }
 
-      // 1. Alur Tahap 1: Pembuatan request awal oleh Seksi Pemohon.
-      // Sesuai alur resmi: Pada tahap submit awal, tiket HANYA mendapatkan kode tracking request sementara (REQ-YYMMDD-XXX).
-      // Nomor Surat resmi (Format: 001/SEKSI/ROMAWI/TAHUN) BELUM DITERBITKAN dan masih bernilai NULL.
-      // Nomor surat resmi baru terbit saat Atasan Special Project menyetujui (Tahap 4).
       const now = new Date();
       const datePrefix = `REQ-${now.getFullYear().toString().slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
       
       const [latestReq] = await sql<Array<{ nomorRequest: string }>>`
-        SELECT "nomorRequest" FROM "SectionRequest"
-        WHERE "nomorRequest" LIKE ${datePrefix + '-%'}
-        ORDER BY id DESC LIMIT 1
+        SELECT "RequestNo" AS "nomorRequest" FROM "TWMSSectionRequest"
+        WHERE "RequestNo" LIKE ${datePrefix + '-%'}
+        ORDER BY "Id" DESC LIMIT 1
       `;
       let seq = 1;
       if (latestReq?.nomorRequest) {
@@ -350,20 +342,18 @@ export async function POST(request: Request) {
         if (!isNaN(lastSeq)) seq = lastSeq + 1;
       }
       const nomorRequest = `${datePrefix}-${String(seq).padStart(3, '0')}`;
-
-      // Buat token persetujuan aman untuk email atasan seksi
       const approvalToken = crypto.randomUUID().replace(/-/g, '') + Date.now().toString(36);
 
       const [created] = await sql<Array<{ id: number; nomorRequest: string; nomorSurat: string | null }>>`
-        INSERT INTO "SectionRequest" (
-          "nomorRequest", "seksiPemohon", "picPemohon", "kontakPemohon",
-          "namaBarang", spesifikasi, jumlah, satuan, urgensi, catatan,
-          perihal, "namaMachine", faktor, tujuan, alasan, "kodeSeksi",
-          drafter, foreman, "keadaanSekarang", "fotoSebelum",
-          "rencanaTindakan", "fotoSesudah", "targetHasil", "penjelasanPelaksanaan",
-          "emailAtasanSeksi", "namaAtasanSeksi", "emailManajerSeksi", "namaManajerSeksi", "emailMentorWorkshop",
-          "approvalToken", "statusApprovalAtasanSeksi", "statusApprovalManajerSeksi", "flowStep",
-          status, "nomorSurat", "dibuatOleh", "waktuDibuat", "waktuUpdate"
+        INSERT INTO "TWMSSectionRequest" (
+          "RequestNo", "RequesterSection", "RequesterName", "RequesterContact",
+          "ItemTitle", "ItemSpec", "ItemQty", "ItemUnit", "Urgency", "Remark",
+          "Subject", "MachineName", "ProblemFactor", "RequestType", "Reason", "SectionCode",
+          "Drafter", "Foreman", "CurrentCondition", "PhotoBefore",
+          "ActionPlan", "PhotoAfter", "TargetResult", "ExecutionNote",
+          "SectionHeadEmail", "SectionHeadName", "WorkshopEmail",
+          "ApprovalToken", "SectionHeadStatus", "FlowStep",
+          "WorkflowStatus", "NomorSurat", "CreatedBy", "RequestDate", "UpdateDate"
         )
         VALUES (
           ${nomorRequest},
@@ -392,11 +382,8 @@ export async function POST(request: Request) {
           ${penjelasanPelaksanaan || null},
           ${emailAtasanSeksi || null},
           ${namaAtasanSeksi || null},
-          ${emailManajerSeksi || null},
-          ${namaManajerSeksi || null},
           ${emailMentorWorkshop || null},
           ${approvalToken},
-          'PENDING',
           'PENDING',
           'STEP_2_WAITING_ATASAN_SEKSI',
           'Menunggu Assign Spv Seksi',
@@ -405,20 +392,8 @@ export async function POST(request: Request) {
           NOW(),
           NOW()
         )
-        RETURNING id, "nomorRequest", "nomorSurat"
+        RETURNING "Id" AS id, "RequestNo" AS "nomorRequest", "NomorSurat" AS "nomorSurat"
       `;
-
-      // Buat notifikasi in-app
-      await createInAppNotification({
-        requestId: created.id,
-        nomorRequest: created.nomorRequest,
-        targetRole: 'ATASAN_SEKSI',
-        targetEmail: emailAtasanSeksi || undefined,
-        tipe: 'APPROVAL_ATASAN_SEKSI',
-        judul: `Permohonan Baru: ${nomorRequest}`,
-        pesan: `PIC ${picPemohon} (${seksiPemohon}) mengajukan permohonan "${perihal}". Mohon persetujuan dan tanda tangan atasan.`,
-        link: `/request/approval?token=${approvalToken}`,
-      });
 
       recordAuditLog({
         action: 'SECTION_REQUEST_CREATE',
@@ -455,7 +430,6 @@ export async function POST(request: Request) {
       const keputusan = sanitizeText(body.keputusan, 50); // 'GO' | 'PENDING' | 'REJECT'
       const alasanTolak = sanitizeText(body.alasanTolak, 500);
 
-      // 4 Aspek Evaluasi Sesuai Flowchart
       const waktuEstimate = sanitizeText(body.waktuEstimate, 100);
       const waktuActual = sanitizeText(body.waktuActual, 100);
       const orangJamEstimate = sanitizeText(body.orangJamEstimate, 100);
@@ -480,18 +454,35 @@ export async function POST(request: Request) {
       const schedulePlanning = sanitizeText(body.schedulePlanning, 1000);
       const scheduleActual = sanitizeText(body.scheduleActual, 1000);
 
-      const [current] = await sql<SectionRequestRow[]>`
-        SELECT * FROM "SectionRequest" WHERE id = ${id} LIMIT 1
+      const [current] = await sql<Array<{
+        Id: number;
+        RequestNo: string;
+        NomorSurat: string | null;
+        RequesterSection: string;
+        RequesterName: string;
+        Subject: string;
+        ItemTitle: string;
+        SectionHeadStatus: string;
+        SpecialProjectSignature: string | null;
+        WorkflowStatus: string;
+        FlowStep: string;
+        WorkshopSignature: string | null;
+        FinishDate: Date | null;
+      }>>`
+        SELECT 
+          "Id", "RequestNo", "NomorSurat", "RequesterSection", "RequesterName",
+          "Subject", "ItemTitle", "SectionHeadStatus", "SpecialProjectSignature",
+          "WorkflowStatus", "FlowStep", "WorkshopSignature", "FinishDate"
+        FROM "TWMSSectionRequest" WHERE "Id" = ${id} LIMIT 1
       `;
 
       if (!current) {
         return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
       }
 
-      // Guard: Admin Bengkel belum bisa melakukan evaluasi/ACC jika atasan requestor belum assign!
       if (
         (keputusan === 'GO' || body.assignAtasanSpecialProject || action === 'ASSIGN_ATASAN_SPROJECT') &&
-        current.statusApprovalAtasanSeksi !== 'APPROVED'
+        current.SectionHeadStatus !== 'APPROVED'
       ) {
         return NextResponse.json(
           {
@@ -502,14 +493,13 @@ export async function POST(request: Request) {
         );
       }
 
-      // Guard: Admin TIDAK DAPAT menyelesaikan pekerjaan jika Atasan Special Project belum assign!
       const isCompletingWork =
         newStatus === 'Pekerjaan Fisik Selesai' ||
         newStatus === 'Selesai' ||
         body.flowStep === 'STEP_7_PEKERJAAN_SELESAI' ||
         body.flowStep === 'STEP_8_SELESAI';
 
-      if (isCompletingWork && current.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+      if (isCompletingWork && !current.SpecialProjectSignature) {
         return NextResponse.json(
           {
             error:
@@ -519,13 +509,11 @@ export async function POST(request: Request) {
         );
       }
 
-      // Tanda tangan
       const ttdAdminWorkshop = body.ttdAdminWorkshop ? sanitizeText(body.ttdAdminWorkshop, 500000) : undefined;
       const ttdAtasanSpecialProject = body.ttdAtasanSpecialProject ? sanitizeText(body.ttdAtasanSpecialProject, 500000) : undefined;
 
-      // Tentukan step flowchart berikutnya
-      let nextFlowStep = current.flowStep;
-      let nextStatus = newStatus || current.status;
+      let nextFlowStep = current.FlowStep;
+      let nextStatus = newStatus || current.WorkflowStatus;
 
       const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
       let atasanSProjectEmail = null;
@@ -534,36 +522,12 @@ export async function POST(request: Request) {
         nextFlowStep = 'STEP_5_DITOLAK';
         nextStatus = 'Ditolak';
 
-        // 1. Notif ke Seksi Pemohon
-        await createInAppNotification({
-          requestId: current.id,
-          nomorRequest: current.nomorRequest,
-          targetRole: 'USER_SEKSI',
-          targetUser: current.picPemohon,
-          tipe: 'INFO_TOLAK_SEKSI',
-          judul: `Request ${current.nomorRequest} Ditolak Workshop`,
-          pesan: `Permohonan ditolak oleh PIC Workshop. Alasan: ${alasanTolak || komentarActual || 'Tidak memenuhi kriteria workshop'}`,
-          link: `/request`,
-        });
-
-        // 2. TETAP kirimkan notifikasi ke Atasan Special Project (via email & sistem)
-        await createInAppNotification({
-          requestId: current.id,
-          nomorRequest: current.nomorRequest,
-          targetRole: 'ADMIN',
-          targetEmail: DEFAULT_ATASAN_SPROJECT_EMAIL,
-          tipe: 'INFO_TOLAK_SEKSI',
-          judul: `[Info Penolakan] Request ${current.nomorRequest} Ditolak Workshop`,
-          pesan: `Permohonan dari Seksi ${current.seksiPemohon} (${current.perihal || current.namaBarang}) tidak disanggupi/ditolak oleh PIC Workshop. Alasan: ${alasanTolak || 'Keterbatasan sumber daya bengkel'}.`,
-          link: `/request`,
-        });
-
         atasanSProjectEmail = buildAtasanSpecialProjectEmailContent({
           action: 'REJECT',
-          nomorRequest: current.nomorRequest,
-          perihal: current.perihal || current.namaBarang || '-',
-          seksiPemohon: current.seksiPemohon,
-          picPemohon: current.picPemohon,
+          nomorRequest: current.RequestNo,
+          perihal: current.Subject || current.ItemTitle || '-',
+          seksiPemohon: current.RequesterSection,
+          picPemohon: current.RequesterName,
           alasanTolak: alasanTolak || komentarActual || 'Tidak memenuhi kriteria workshop',
           detailLink: `${origin}/request`,
         });
@@ -571,51 +535,16 @@ export async function POST(request: Request) {
         if (body.assignAtasanSpecialProject || action === 'ASSIGN_ATASAN_SPROJECT') {
           nextFlowStep = 'STEP_6_DALAM_PENGERJAAN';
           nextStatus = newStatus === 'Disetujui' ? 'Dikerjakan' : (newStatus || 'Dikerjakan');
-
-          // Setelah Atasan Special Project approve: notifikasi ke Admin & Workshop
-          await createInAppNotification({
-            requestId: current.id,
-            nomorRequest: current.nomorRequest,
-            targetRole: 'ADMIN',
-            tipe: 'ASSIGN_ATASAN_SPROJECT',
-            judul: `Request ${current.nomorRequest} Disetujui Atasan S.Project`,
-            pesan: `Atasan Special Project (8210 / 820) telah menyetujui request ${current.nomorRequest}. Pengerjaan fisik siap dimulai oleh teknisi bengkel.`,
-            link: `/request`,
-          });
-
-          // Notifikasi juga ke Seksi Pemohon
-          await createInAppNotification({
-            requestId: current.id,
-            nomorRequest: current.nomorRequest,
-            targetRole: 'USER_SEKSI',
-            targetUser: current.picPemohon,
-            tipe: 'ASSIGN_ATASAN_SPROJECT',
-            judul: `Request ${current.nomorRequest} Disetujui Special Project`,
-            pesan: `Permohonan Anda (${current.perihal || current.namaBarang}) telah disetujui & di-assign Atasan Special Project. Teknisi bengkel siap memulai pengerjaan.`,
-            link: `/request`,
-          });
         } else {
           nextFlowStep = 'STEP_5_MENUNGGU_ATASAN_SPROJECT';
           nextStatus = 'Menunggu Assign S.Project';
 
-          // PIC Workshop menyanggupi -> Otomatis kirimkan notif ke Atasan Special Project
-          await createInAppNotification({
-            requestId: current.id,
-            nomorRequest: current.nomorRequest,
-            targetRole: 'ADMIN',
-            targetEmail: DEFAULT_ATASAN_SPROJECT_EMAIL,
-            tipe: 'ASSIGN_ATASAN_SPROJECT',
-            judul: `[Perlu Assign] Request ${current.nomorRequest} Disanggupi Workshop`,
-            pesan: `PIC Workshop telah mengevaluasi dan menyanggupi permohonan dari Seksi ${current.seksiPemohon}. Menunggu persetujuan & assign Atasan Special Project.`,
-            link: `/request`,
-          });
-
           atasanSProjectEmail = buildAtasanSpecialProjectEmailContent({
             action: 'GO',
-            nomorRequest: current.nomorRequest,
-            perihal: current.perihal || current.namaBarang || '-',
-            seksiPemohon: current.seksiPemohon,
-            picPemohon: current.picPemohon,
+            nomorRequest: current.RequestNo,
+            perihal: current.Subject || current.ItemTitle || '-',
+            seksiPemohon: current.RequesterSection,
+            picPemohon: current.RequesterName,
             waktuEstimate,
             orangJamEstimate,
             kebutuhanSparepart,
@@ -630,59 +559,51 @@ export async function POST(request: Request) {
         nextFlowStep = sanitizeText(body.flowStep, 50);
       }
 
-      // Update nomor request / surat resmi:
-      // Menurut aturan resmi: Nomor surat resmi (Format: 001/SEKSI/ROMAWI/TAHUN) BARU terbit saat
-      // Atasan Special Project meng-assign (Tahap 4). Saat evaluasi workshop, nomor surat tetap belum diterbitkan (null).
-      let finalNomorSurat = current.nomorSurat || null;
+      let finalNomorSurat = current.NomorSurat || null;
       if (body.nomorSurat && typeof body.nomorSurat === 'string' && body.nomorSurat.trim().length > 0) {
         finalNomorSurat = sanitizeText(body.nomorSurat, 100);
       } else if (
         (body.assignAtasanSpecialProject || action === 'ASSIGN_ATASAN_SPROJECT') &&
         (!finalNomorSurat || finalNomorSurat.startsWith('REQ-'))
       ) {
-        finalNomorSurat = await generateNextNomorSurat(current.seksiPemohon, new Date());
+        finalNomorSurat = await generateNextNomorSurat(current.RequesterSection, new Date());
       }
 
-      const nextNomorRequest = current.nomorRequest;
-      const prevTtdWorkshop = ((current as Record<string, unknown>).ttdAdminWorkshop as string) || null;
-      const prevTtdSpecialProject = ((current as Record<string, unknown>).ttdAtasanSpecialProject as string) || null;
+      const prevTtdWorkshop = current.WorkshopSignature || null;
+      const prevTtdSpecialProject = current.SpecialProjectSignature || null;
 
-      const [updated] = await sql<SectionRequestRow[]>`
-        UPDATE "SectionRequest"
+      const [updated] = await sql<Array<{ RequestNo: string; NomorSurat: string | null }>>`
+        UPDATE "TWMSSectionRequest"
         SET
-          status = ${nextStatus},
-          "flowStep" = ${nextFlowStep},
-          "nomorSurat" = ${finalNomorSurat},
-          "nomorRequest" = ${nextNomorRequest},
-          "ttdAdminWorkshop" = ${ttdAdminWorkshop !== undefined ? (ttdAdminWorkshop || null) : prevTtdWorkshop},
-          "ttdAtasanSpecialProject" = ${ttdAtasanSpecialProject !== undefined ? (ttdAtasanSpecialProject || null) : prevTtdSpecialProject},
-          "alasanTolak" = ${alasanTolak !== undefined ? (alasanTolak || null) : (current.alasanTolak ?? null)},
-          "picBengkel" = ${picBengkel !== undefined ? (picBengkel || null) : (current.picBengkel ?? null)},
-          "estimasi" = ${estimasi !== undefined ? (estimasi || null) : (current.estimasi ?? null)},
-          "catatanAdmin" = ${catatanAdmin !== undefined ? (catatanAdmin || null) : (current.catatanAdmin ?? null)},
-          "biayaEstimate" = ${biayaEstimate !== undefined ? (biayaEstimate || null) : (current.biayaEstimate ?? null)},
-          "biayaActual" = ${biayaActual !== undefined ? (biayaActual || null) : (current.biayaActual ?? null)},
-          "orangJamEstimate" = ${orangJamEstimate !== undefined ? (orangJamEstimate || null) : (current.orangJamEstimate ?? null)},
-          "orangJamActual" = ${orangJamActual !== undefined ? (orangJamActual || null) : (current.orangJamActual ?? null)},
-          "waktuEstimate" = ${waktuEstimate !== undefined ? (waktuEstimate || null) : (current.waktuEstimate ?? null)},
-          "waktuActual" = ${waktuActual !== undefined ? (waktuActual || null) : (current.waktuActual ?? null)},
-          "kebutuhanSparepart" = ${kebutuhanSparepart !== undefined ? (kebutuhanSparepart || null) : (current.kebutuhanSparepart ?? null)},
-          "kebutuhanMaterial" = ${kebutuhanMaterial !== undefined ? (kebutuhanMaterial || null) : (current.kebutuhanMaterial ?? null)},
-          "tglPelaksanaanEstimate" = ${tglPelaksanaanEstimate !== undefined ? (tglPelaksanaanEstimate || null) : (current.tglPelaksanaanEstimate ?? null)},
-          "tglPelaksanaanActual" = ${tglPelaksanaanActual !== undefined ? (tglPelaksanaanActual || null) : (current.tglPelaksanaanActual ?? null)},
-          "komentarEstimate" = ${komentarEstimate !== undefined ? (komentarEstimate || null) : (current.komentarEstimate ?? null)},
-          "komentarActual" = ${komentarActual !== undefined ? (komentarActual || null) : (current.komentarActual ?? null)},
-          keputusan = ${keputusan !== undefined ? (keputusan || null) : (current.keputusan ?? null)},
-          "keputusan8210" = ${keputusan8210 !== undefined ? (keputusan8210 || null) : (current.keputusan8210 ?? null)},
-          "keputusan820" = ${keputusan820 !== undefined ? (keputusan820 || null) : (current.keputusan820 ?? null)},
-          "hasilCheck" = ${hasilCheck !== undefined ? (hasilCheck || null) : (current.hasilCheck ?? null)},
-          "hasilCheckPemohon" = ${hasilCheckPemohon !== undefined ? (hasilCheckPemohon || null) : (current.hasilCheckPemohon ?? null)},
-          "schedulePlanning" = ${schedulePlanning !== undefined ? (schedulePlanning || null) : (current.schedulePlanning ?? null)},
-          "scheduleActual" = ${scheduleActual !== undefined ? (scheduleActual || null) : (current.scheduleActual ?? null)},
-          "waktuSelesai" = ${nextStatus === 'Selesai' ? (current.waktuSelesai || new Date()) : (current.waktuSelesai ?? null)},
-          "waktuUpdate" = NOW()
-        WHERE id = ${id}
-        RETURNING *
+          "WorkflowStatus" = ${nextStatus},
+          "FlowStep" = ${nextFlowStep},
+          "NomorSurat" = ${finalNomorSurat},
+          "WorkshopSignature" = ${ttdAdminWorkshop !== undefined ? (ttdAdminWorkshop || null) : prevTtdWorkshop},
+          "SpecialProjectSignature" = ${ttdAtasanSpecialProject !== undefined ? (ttdAtasanSpecialProject || null) : prevTtdSpecialProject},
+          "PendingReason" = ${alasanTolak !== undefined ? (alasanTolak || null) : null},
+          "UpdateBy" = ${picBengkel !== undefined ? (picBengkel || null) : null},
+          "EstDuration" = ${waktuEstimate !== undefined ? (waktuEstimate || null) : (estimasi !== undefined ? (estimasi || null) : null)},
+          "ExecutionNote" = ${catatanAdmin !== undefined ? (catatanAdmin || null) : null},
+          "EstCost" = ${biayaEstimate !== undefined ? (biayaEstimate || null) : null},
+          "ActCost" = ${biayaActual !== undefined ? (biayaActual || null) : null},
+          "EstManHour" = ${orangJamEstimate !== undefined ? (orangJamEstimate || null) : null},
+          "ActManHour" = ${orangJamActual !== undefined ? (orangJamActual || null) : null},
+          "ActDuration" = ${waktuActual !== undefined ? (waktuActual || null) : null},
+          "EstExecDate" = ${tglPelaksanaanEstimate !== undefined ? (tglPelaksanaanEstimate || null) : null},
+          "ActExecDate" = ${tglPelaksanaanActual !== undefined ? (tglPelaksanaanActual || null) : null},
+          "EstComment" = ${komentarEstimate !== undefined ? (komentarEstimate || null) : null},
+          "ActComment" = ${komentarActual !== undefined ? (komentarActual || null) : null},
+          "Decision" = ${keputusan !== undefined ? (keputusan || null) : null},
+          "Decision8210" = ${keputusan8210 !== undefined ? (keputusan8210 || null) : null},
+          "Decision820" = ${keputusan820 !== undefined ? (keputusan820 || null) : null},
+          "CheckResult" = ${hasilCheck !== undefined ? (hasilCheck || null) : null},
+          "CheckResultRequester" = ${hasilCheckPemohon !== undefined ? (hasilCheckPemohon || null) : null},
+          "SchedulePlan" = ${schedulePlanning !== undefined ? (schedulePlanning || null) : null},
+          "ScheduleActual" = ${scheduleActual !== undefined ? (scheduleActual || null) : null},
+          "FinishDate" = ${nextStatus === 'Selesai' ? (current.FinishDate || new Date()) : current.FinishDate},
+          "UpdateDate" = NOW()
+        WHERE "Id" = ${id}
+        RETURNING "RequestNo", "NomorSurat"
       `;
 
       recordAuditLog({
@@ -691,7 +612,7 @@ export async function POST(request: Request) {
         user: auth.user?.username,
         role: auth.user?.role,
         status: 'SUCCESS',
-        targetId: updated.nomorRequest,
+        targetId: updated.RequestNo,
         details: `Keputusan: ${keputusan || '-'}, FlowStep: ${nextFlowStep}`,
       });
 
@@ -705,13 +626,13 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: `Evaluasi request ${updated.nomorRequest} berhasil disimpan.`,
+        message: `Evaluasi request ${updated.RequestNo} berhasil disimpan.`,
         request: updated,
         atasanSProjectEmail,
       });
     }
 
-    // 3. FINISH_REQUEST: Selesaikan pengerjaan dan kirim notifikasi serah terima
+    // 3. FINISH_REQUEST: Selesaikan pengerjaan dan serah terima
     if (action === 'FINISH_REQUEST') {
       if (auth.user!.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Hanya PIC Workshop yang dapat menyelesaikan request.' }, { status: 403 });
@@ -721,52 +642,32 @@ export async function POST(request: Request) {
       const hasilCheck = sanitizeText(body.hasilCheck, 2000);
       const hasilCheckPemohon = sanitizeText(body.hasilCheckPemohon, 100);
 
-      const [current] = await sql<SectionRequestRow[]>`
-        SELECT * FROM "SectionRequest" WHERE id = ${id} LIMIT 1
+      const [current] = await sql<Array<{ Id: number; RequestNo: string; SpecialProjectSignature: string | null }>>`
+        SELECT "Id", "RequestNo", "SpecialProjectSignature" FROM "TWMSSectionRequest" WHERE "Id" = ${id} LIMIT 1
       `;
       if (!current) {
         return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
       }
 
-      // Guard: Atasan Special Project WAJIB assign terlebih dahulu sebelum request dapat diselesaikan!
-      if (current.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+      if (!current.SpecialProjectSignature) {
         return NextResponse.json(
-          {
-            error:
-              'Pekerjaan belum dapat diselesaikan karena permohonan ini belum disetujui / di-assign oleh Atasan Special Project.',
-          },
+          { error: 'Pekerjaan belum dapat diselesaikan karena permohonan ini belum disetujui / di-assign oleh Atasan Special Project.' },
           { status: 400 }
         );
       }
 
-      const [updated] = await withTransaction(async (tx) => {
-        const [upd] = await tx<SectionRequestRow[]>`
-          UPDATE "SectionRequest"
-          SET
-            status = 'Selesai',
-            "flowStep" = 'STEP_8_SELESAI',
-            "hasilCheck" = ${hasilCheck || null},
-            "hasilCheckPemohon" = ${hasilCheckPemohon || null},
-            "waktuSelesai" = NOW(),
-            "waktuUpdate" = NOW()
-          WHERE id = ${id}
-          RETURNING *
-        `;
-
-        // Informasikan ke seksi terkait
-        await createInAppNotification({
-          requestId: upd.id,
-          nomorRequest: upd.nomorRequest,
-          targetRole: 'USER_SEKSI',
-          targetUser: upd.picPemohon,
-          tipe: 'INFO_SELESAI_SEKSI',
-          judul: `Pekerjaan Selesai: ${upd.nomorRequest}`,
-          pesan: `Pekerjaan "${upd.perihal || upd.namaBarang}" telah selesai dikerjakan oleh bengkel. Silakan cek dan lakukan serah terima barang.`,
-          link: `/request`,
-        }, tx);
-
-        return [upd];
-      });
+      const [updated] = await sql<Array<{ Id: number; RequestNo: string }>>`
+        UPDATE "TWMSSectionRequest"
+        SET
+          "WorkflowStatus" = 'Selesai',
+          "FlowStep" = 'STEP_8_SELESAI',
+          "CheckResult" = ${hasilCheck || null},
+          "CheckResultRequester" = ${hasilCheckPemohon || null},
+          "FinishDate" = NOW(),
+          "UpdateDate" = NOW()
+        WHERE "Id" = ${id}
+        RETURNING "Id", "RequestNo"
+      `;
 
       return NextResponse.json({
         success: true,
@@ -799,33 +700,30 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'ID request dan nama komponen/material wajib diisi.' }, { status: 400 });
       }
 
-      // Cek apakah item ada di database Sparepart
-      const [sparepart] = await sql<Array<{ namaKomponen: string; stokGudang: number; satuan: string }>>`
-        SELECT "namaKomponen", "stokGudang", "satuan" FROM "Sparepart" WHERE "namaKomponen" = ${namaKomponen} LIMIT 1
+      const [sparepart] = await sql<Array<{ Id: number; PartName: string; CurrentStock: number; Unit: string }>>`
+        SELECT "Id", "PartName", "CurrentStock", "Unit" FROM "TWMSSparepartMaster" 
+        WHERE UPPER(TRIM("PartName")) = UPPER(TRIM(${namaKomponen})) LIMIT 1
       `;
 
       let shouldDeductStock = false;
       let deductQty = 0;
 
       if (tipe === 'SPAREPART') {
-        // Untuk Sparepart: jika ada di gudang, potong stok fisik
         if (sparepart) {
           deductQty = Math.round(qty);
-          if (sparepart.stokGudang < deductQty) {
+          if (sparepart.CurrentStock < deductQty) {
             return NextResponse.json(
-              { error: `Stok gudang "${namaKomponen}" tidak mencukupi (sisa: ${sparepart.stokGudang} ${sparepart.satuan}).` },
+              { error: `Stok gudang "${namaKomponen}" tidak mencukupi (sisa: ${sparepart.CurrentStock} ${sparepart.Unit}).` },
               { status: 400 }
             );
           }
           shouldDeductStock = true;
         }
       } else {
-        // Untuk Material (plat, kawat las, cat, dll.):
-        // Luas / potongan kecil (cm², m²) biasanya dari sisa/off-cut, kecuali user meminta potong stok lembar utuh
         if (sparepart && potongStok && qtyPotongStok > 0) {
-          if (sparepart.stokGudang < qtyPotongStok) {
+          if (sparepart.CurrentStock < qtyPotongStok) {
             return NextResponse.json(
-              { error: `Stok gudang "${namaKomponen}" tidak mencukupi untuk dipotong ${qtyPotongStok} ${sparepart.satuan} (sisa: ${sparepart.stokGudang}).` },
+              { error: `Stok gudang "${namaKomponen}" tidak mencukupi untuk dipotong ${qtyPotongStok} ${sparepart.Unit} (sisa: ${sparepart.CurrentStock}).` },
               { status: 400 }
             );
           }
@@ -834,60 +732,73 @@ export async function POST(request: Request) {
         }
       }
 
-      const [reqData] = await sql<Array<{ nomorRequest: string; namaBarang: string }>>`
-        SELECT "nomorRequest", "namaBarang" FROM "SectionRequest" WHERE id = ${sectionRequestId} LIMIT 1
+      const [reqData] = await sql<Array<{ RequestNo: string; ItemTitle: string }>>`
+        SELECT "RequestNo", "ItemTitle" FROM "TWMSSectionRequest" WHERE "Id" = ${sectionRequestId} LIMIT 1
       `;
-
-      const newMat = {
-        id: Date.now(),
-        sectionRequestId,
-        namaKomponen,
-        tipe,
-        qty,
-        satuan,
-        dimensi: dimensi || null,
-        potongStok: shouldDeductStock,
-        qtyPotongStok: shouldDeductStock ? deductQty : 0,
-        keterangan: keterangan || null,
-      };
-
-      const [currentReq] = await sql<Array<{ materials: unknown }>>`
-        SELECT COALESCE("materials", '[]'::jsonb) as materials FROM "SectionRequest" WHERE id = ${sectionRequestId} LIMIT 1
-      `;
-      const currentList = normalizeMaterials(currentReq?.materials);
-      const updatedMaterials = [...currentList, newMat];
 
       await withTransaction(async (tx) => {
         await tx`
-          UPDATE "SectionRequest"
-          SET "materials" = ${sql.json(updatedMaterials)},
-              "waktuUpdate" = NOW()
-          WHERE id = ${sectionRequestId}
+          INSERT INTO "TWMSSectionRequestMaterial" (
+            "RequestId", "SparepartId", "MaterialName", "MaterialType",
+            "MaterialSpec", "QtyUsed", "Unit", "DeductStock", "QtyDeducted", "Remark"
+          ) VALUES (
+            ${sectionRequestId},
+            ${sparepart?.Id || null},
+            ${namaKomponen},
+            ${tipe},
+            ${dimensi || null},
+            ${qty},
+            ${satuan},
+            ${shouldDeductStock},
+            ${shouldDeductStock ? deductQty : 0},
+            ${keterangan || null}
+          )
         `;
-        if (shouldDeductStock && deductQty > 0) {
+
+        await tx`UPDATE "TWMSSectionRequest" SET "UpdateDate" = NOW() WHERE "Id" = ${sectionRequestId}`;
+
+        if (shouldDeductStock && deductQty > 0 && sparepart) {
           await tx`
-            UPDATE "Sparepart"
-            SET "stokGudang" = "stokGudang" - ${deductQty}
-            WHERE "namaKomponen" = ${namaKomponen}
+            UPDATE "TWMSSparepartMaster"
+            SET "CurrentStock" = "CurrentStock" - ${deductQty}, "UpdateDate" = NOW()
+            WHERE "Id" = ${sparepart.Id}
           `;
           await tx`
-            INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
+            INSERT INTO "TWMSSparepartLog" ("SparepartId", "PartName", "MovementType", "Qty", "Notes", "MovementDate")
             VALUES (
-              ${namaKomponen},
+              ${sparepart.Id},
+              ${sparepart.PartName},
               'OUT',
               ${deductQty},
-              ${reqData?.nomorRequest || `REQ-${sectionRequestId}`},
-              ${`Pemakaian ${tipe.toLowerCase()} untuk request seksi: ${reqData?.namaBarang || '-'} (${qty} ${satuan}${dimensi ? ` • ${dimensi}` : ''})`},
+              ${`Pemakaian ${tipe.toLowerCase()} untuk request seksi: ${reqData?.ItemTitle || '-'} (${qty} ${satuan}${dimensi ? ` • ${dimensi}` : ''})`},
               NOW()
             )
           `;
         }
       });
 
+      // Ambil rincian material terupdate
+      const updatedMaterialsRaw = await sql`
+        SELECT 
+          m."Id" AS id,
+          m."RequestId" AS "sectionRequestId",
+          m."MaterialName" AS "namaKomponen",
+          m."MaterialType" AS tipe,
+          m."QtyUsed" AS qty,
+          m."Unit" AS satuan,
+          m."MaterialSpec" AS dimensi,
+          m."DeductStock" AS "potongStok",
+          m."QtyDeducted" AS "qtyPotongStok",
+          m."Remark" AS keterangan
+        FROM "TWMSSectionRequestMaterial" m
+        WHERE m."RequestId" = ${sectionRequestId}
+        ORDER BY m."Id" ASC
+      `;
+
       return NextResponse.json({
         success: true,
-        message: `${tipe === 'MATERIAL' ? 'Material' : 'Sparepart'} ${namaKomponen} (${qty} ${satuan}) berhasil dicatat.${shouldDeductStock ? ` Stok gudang dipotong ${deductQty} ${sparepart?.satuan || 'unit'}.` : ''}`,
-        materials: updatedMaterials,
+        message: `${tipe === 'MATERIAL' ? 'Material' : 'Sparepart'} ${namaKomponen} (${qty} ${satuan}) berhasil dicatat.${shouldDeductStock ? ` Stok gudang dipotong ${deductQty} ${sparepart?.Unit || 'unit'}.` : ''}`,
+        materials: updatedMaterialsRaw,
       });
     }
 
@@ -901,50 +812,42 @@ export async function POST(request: Request) {
       const materialId = body.materialId ? Number(body.materialId) : null;
       const namaKomponen = body.namaKomponen ? sanitizeText(body.namaKomponen, 100) : null;
 
-      const [current] = await sql<Array<{ id: number; nomorRequest: string; materials: unknown }>>`
-        SELECT id, "nomorRequest", COALESCE("materials", '[]'::jsonb) as materials
-        FROM "SectionRequest"
-        WHERE id = ${sectionRequestId}
+      const [target] = await sql<Array<{
+        Id: number;
+        MaterialName: string;
+        DeductStock: boolean;
+        QtyDeducted: number;
+        SparepartId: number | null;
+      }>>`
+        SELECT "Id", "MaterialName", "DeductStock", "QtyDeducted", "SparepartId"
+        FROM "TWMSSectionRequestMaterial"
+        WHERE "RequestId" = ${sectionRequestId}
+          AND (${materialId}::int IS NULL OR "Id" = ${materialId})
+          AND (${namaKomponen}::text IS NULL OR UPPER(TRIM("MaterialName")) = UPPER(TRIM(${namaKomponen})))
         LIMIT 1
       `;
 
-      if (!current) {
-        return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
-      }
-
-      const currentMats = normalizeMaterials(current.materials);
-      const targetMatIndex = currentMats.findIndex((m) => 
-        (materialId && Number(m.id) === materialId) ||
-        (namaKomponen && m.namaKomponen === namaKomponen)
-      );
-
-      if (targetMatIndex === -1) {
+      if (!target) {
         return NextResponse.json({ error: 'Data item tidak ditemukan pada request ini.' }, { status: 404 });
       }
 
-      const targetMat = currentMats[targetMatIndex];
-      const updatedMats = currentMats.filter((_, idx) => idx !== targetMatIndex);
-
       await withTransaction(async (tx) => {
-        await tx`
-          UPDATE "SectionRequest"
-          SET "materials" = ${sql.json(updatedMats)},
-              "waktuUpdate" = NOW()
-          WHERE id = ${sectionRequestId}
-        `;
-        if (targetMat.potongStok && targetMat.qtyPotongStok && targetMat.qtyPotongStok > 0) {
+        await tx`DELETE FROM "TWMSSectionRequestMaterial" WHERE "Id" = ${target.Id}`;
+        await tx`UPDATE "TWMSSectionRequest" SET "UpdateDate" = NOW() WHERE "Id" = ${sectionRequestId}`;
+
+        if (target.DeductStock && target.QtyDeducted > 0 && target.SparepartId) {
           await tx`
-            UPDATE "Sparepart"
-            SET "stokGudang" = "stokGudang" + ${targetMat.qtyPotongStok}
-            WHERE "namaKomponen" = ${targetMat.namaKomponen}
+            UPDATE "TWMSSparepartMaster"
+            SET "CurrentStock" = "CurrentStock" + ${target.QtyDeducted}, "UpdateDate" = NOW()
+            WHERE "Id" = ${target.SparepartId}
           `;
           await tx`
-            INSERT INTO "SparepartLog" ("namaKomponen", tipe, qty, referensi, keterangan, tanggal)
+            INSERT INTO "TWMSSparepartLog" ("SparepartId", "PartName", "MovementType", "Qty", "Notes", "MovementDate")
             VALUES (
-              ${targetMat.namaKomponen},
+              ${target.SparepartId},
+              ${target.MaterialName},
               'IN',
-              ${targetMat.qtyPotongStok},
-              ${current.nomorRequest || `REQ-${sectionRequestId}`},
+              ${target.QtyDeducted},
               ${'Pembatalan pemakaian request seksi (stok dikembalikan ke gudang)'},
               NOW()
             )
@@ -952,10 +855,27 @@ export async function POST(request: Request) {
         }
       });
 
+      const updatedMaterialsRaw = await sql`
+        SELECT 
+          m."Id" AS id,
+          m."RequestId" AS "sectionRequestId",
+          m."MaterialName" AS "namaKomponen",
+          m."MaterialType" AS tipe,
+          m."QtyUsed" AS qty,
+          m."Unit" AS satuan,
+          m."MaterialSpec" AS dimensi,
+          m."DeductStock" AS "potongStok",
+          m."QtyDeducted" AS "qtyPotongStok",
+          m."Remark" AS keterangan
+        FROM "TWMSSectionRequestMaterial" m
+        WHERE m."RequestId" = ${sectionRequestId}
+        ORDER BY m."Id" ASC
+      `;
+
       return NextResponse.json({
         success: true,
-        message: `Pemakaian ${targetMat.namaKomponen} (${targetMat.qty} ${targetMat.satuan || 'unit'}) berhasil dibatalkan${targetMat.potongStok ? ' dan stok gudang dikembalikan' : ''}.`,
-        materials: updatedMats,
+        message: `Pemakaian ${target.MaterialName} berhasil dibatalkan${target.DeductStock ? ' dan stok gudang dikembalikan' : ''}.`,
+        materials: updatedMaterialsRaw,
       });
     }
 
@@ -968,31 +888,28 @@ export async function POST(request: Request) {
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
       const alasan = sanitizeText(body.alasan || 'Menunggu ketersediaan sparepart / material di gudang', 500);
 
-      const [current] = await sql<SectionRequestRow[]>`
-        SELECT * FROM "SectionRequest" WHERE id = ${id} LIMIT 1
+      const [current] = await sql<Array<{ SpecialProjectSignature: string | null }>>`
+        SELECT "SpecialProjectSignature" FROM "TWMSSectionRequest" WHERE "Id" = ${id} LIMIT 1
       `;
       if (!current) {
         return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
       }
 
-      if (current.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+      if (!current.SpecialProjectSignature) {
         return NextResponse.json(
-          {
-            error:
-              'Pengerjaan belum aktif karena belum disetujui / di-assign oleh Atasan Special Project.',
-          },
+          { error: 'Pengerjaan belum aktif karena belum disetujui / di-assign oleh Atasan Special Project.' },
           { status: 400 }
         );
       }
 
-      const [updated] = await sql<SectionRequestRow[]>`
-        UPDATE "SectionRequest"
+      const [updated] = await sql<Array<{ RequestNo: string }>>`
+        UPDATE "TWMSSectionRequest"
         SET
-          status = 'Pending: Material Habis',
-          "alasanPending" = ${alasan},
-          "waktuUpdate" = NOW()
-        WHERE id = ${id}
-        RETURNING *
+          "WorkflowStatus" = 'Pending: Material Habis',
+          "PendingReason" = ${alasan},
+          "UpdateDate" = NOW()
+        WHERE "Id" = ${id}
+        RETURNING "RequestNo"
       `;
 
       recordAuditLog({
@@ -1001,7 +918,7 @@ export async function POST(request: Request) {
         user: auth.user?.username,
         role: auth.user?.role,
         status: 'SUCCESS',
-        targetId: updated?.nomorRequest,
+        targetId: updated?.RequestNo,
         details: `Status diubah ke Pending Material: ${alasan}`,
       });
 
@@ -1020,31 +937,28 @@ export async function POST(request: Request) {
 
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
 
-      const [current] = await sql<SectionRequestRow[]>`
-        SELECT * FROM "SectionRequest" WHERE id = ${id} LIMIT 1
+      const [current] = await sql<Array<{ SpecialProjectSignature: string | null }>>`
+        SELECT "SpecialProjectSignature" FROM "TWMSSectionRequest" WHERE "Id" = ${id} LIMIT 1
       `;
       if (!current) {
         return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
       }
 
-      if (current.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+      if (!current.SpecialProjectSignature) {
         return NextResponse.json(
-          {
-            error:
-              'Pengerjaan belum aktif karena belum disetujui / di-assign oleh Atasan Special Project.',
-          },
+          { error: 'Pengerjaan belum aktif karena belum disetujui / di-assign oleh Atasan Special Project.' },
           { status: 400 }
         );
       }
 
-      const [updated] = await sql<SectionRequestRow[]>`
-        UPDATE "SectionRequest"
+      const [updated] = await sql<Array<{ RequestNo: string }>>`
+        UPDATE "TWMSSectionRequest"
         SET
-          status = 'Dikerjakan',
-          "alasanPending" = null,
-          "waktuUpdate" = NOW()
-        WHERE id = ${id}
-        RETURNING *
+          "WorkflowStatus" = 'Dikerjakan',
+          "PendingReason" = null,
+          "UpdateDate" = NOW()
+        WHERE "Id" = ${id}
+        RETURNING "RequestNo"
       `;
 
       recordAuditLog({
@@ -1053,7 +967,7 @@ export async function POST(request: Request) {
         user: auth.user?.username,
         role: auth.user?.role,
         status: 'SUCCESS',
-        targetId: updated.nomorRequest,
+        targetId: updated.RequestNo,
         details: 'Status pengerjaan dilanjutkan (Dikerjakan)',
       });
 
@@ -1072,14 +986,8 @@ export async function POST(request: Request) {
 
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
 
-      const [current] = await sql<Array<{
-        id: number;
-        nomorRequest: string;
-      }>>`
-        SELECT id, "nomorRequest"
-        FROM "SectionRequest"
-        WHERE id = ${id}
-        LIMIT 1
+      const [current] = await sql<Array<{ Id: number; RequestNo: string }>>`
+        SELECT "Id", "RequestNo" FROM "TWMSSectionRequest" WHERE "Id" = ${id} LIMIT 1
       `;
 
       if (!current) {
@@ -1087,9 +995,8 @@ export async function POST(request: Request) {
       }
 
       await withTransaction(async (tx) => {
-        await tx`DELETE FROM "SectionRequestNotification" WHERE "requestId" = ${id}`;
-        await tx`DELETE FROM "SectionRequestMaterial" WHERE "requestId" = ${id}`;
-        await tx`DELETE FROM "SectionRequest" WHERE id = ${id}`;
+        await tx`DELETE FROM "TWMSSectionRequestMaterial" WHERE "RequestId" = ${id}`;
+        await tx`DELETE FROM "TWMSSectionRequest" WHERE "Id" = ${id}`;
       });
 
       recordAuditLog({
@@ -1098,11 +1005,11 @@ export async function POST(request: Request) {
         user: auth.user?.username,
         role: auth.user?.role,
         status: 'SUCCESS',
-        targetId: current.nomorRequest,
-        details: `Request ${current.nomorRequest} berhasil dihapus oleh ${auth.user?.username}`,
+        targetId: current.RequestNo,
+        details: `Request ${current.RequestNo} berhasil dihapus oleh ${auth.user?.username}`,
       });
 
-      return NextResponse.json({ success: true, message: `Request ${current.nomorRequest} berhasil dihapus.` });
+      return NextResponse.json({ success: true, message: `Request ${current.RequestNo} berhasil dihapus.` });
     }
 
     return NextResponse.json({ error: 'Action tidak valid.' }, { status: 400 });
@@ -1133,9 +1040,7 @@ export async function DELETE(request: Request) {
         if (val.error) return NextResponse.json({ error: val.error }, { status: 400 });
         id = val.value;
       }
-    } catch {
-      // payload json kosong
-    }
+    } catch {}
   }
 
   if (!id) {
@@ -1143,14 +1048,8 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    const [current] = await sql<Array<{
-      id: number;
-      nomorRequest: string;
-    }>>`
-      SELECT id, "nomorRequest"
-      FROM "SectionRequest"
-      WHERE id = ${id}
-      LIMIT 1
+    const [current] = await sql<Array<{ Id: number; RequestNo: string }>>`
+      SELECT "Id", "RequestNo" FROM "TWMSSectionRequest" WHERE "Id" = ${id} LIMIT 1
     `;
 
     if (!current) {
@@ -1158,9 +1057,8 @@ export async function DELETE(request: Request) {
     }
 
     await withTransaction(async (tx) => {
-      await tx`DELETE FROM "SectionRequestNotification" WHERE "requestId" = ${id}`;
-      await tx`DELETE FROM "SectionRequestMaterial" WHERE "requestId" = ${id}`;
-      await tx`DELETE FROM "SectionRequest" WHERE id = ${id}`;
+      await tx`DELETE FROM "TWMSSectionRequestMaterial" WHERE "RequestId" = ${id}`;
+      await tx`DELETE FROM "TWMSSectionRequest" WHERE "Id" = ${id}`;
     });
 
     recordAuditLog({
@@ -1169,13 +1067,13 @@ export async function DELETE(request: Request) {
       user: auth.user?.username,
       role: auth.user?.role,
       status: 'SUCCESS',
-      targetId: current.nomorRequest,
-      details: `Request ${current.nomorRequest} berhasil dihapus oleh ${auth.user?.username}`,
+      targetId: current.RequestNo,
+      details: `Request ${current.RequestNo} berhasil dihapus oleh ${auth.user?.username}`,
     });
 
     return NextResponse.json({
       success: true,
-      message: `Request ${current.nomorRequest} berhasil dihapus.`,
+      message: `Request ${current.RequestNo} berhasil dihapus.`,
     });
   } catch (error) {
     console.error('DELETE /api/section-requests error:', error);

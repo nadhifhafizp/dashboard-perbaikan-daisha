@@ -110,7 +110,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // In-Flight Promise Deduplication: jika ada request concurrent untuk cacheKey yang sama, gunakan promise yang sama
+    // In-Flight Promise Deduplication
     if (!bypassCache && inFlightMaintenancePromises.has(cacheKey)) {
       const sharedResult = await inFlightMaintenancePromises.get(cacheKey)!;
       return NextResponse.json(sharedResult, {
@@ -122,7 +122,6 @@ export async function GET(request: Request) {
     }
 
     const computePayload = async (): Promise<Record<string, unknown>> => {
-      const startOfYear = new Date(currentYear, 0, 1, 0, 0, 0, 0);
       // Siklus PM Daisha resmi dimulai per 1 Oktober (Oktober tahun berjalan)
       const startOfPmPeriod = new Date(currentYear, 9, 1, 0, 0, 0, 0);
       const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59, 999);
@@ -135,7 +134,7 @@ export async function GET(request: Request) {
       const workDaysInfo = calculateRemainingWorkDaysInYear(now, true);
       const remainingWorkDays = workDaysInfo.remainingWorkDays;
 
-      // Ambil master daisha dari DB langsung jika bypassCache (selalu segar untuk KPI Armada)
+      // Ambil master daisha dari TWMSDaishaCatalog
       let allDaisha: DaishaRow[];
       const nowMs = Date.now();
       const cached = globalForMaint.cachedAllDaisha;
@@ -144,19 +143,20 @@ export async function GET(request: Request) {
       } else {
         allDaisha = await sql<DaishaRow[]>`
           SELECT 
-            d.id,
-            d.nomor_daisha,
-            d.jenis,
-            d.ukuran,
-            COALESCE(d.nama_daisha, d.jenis) AS nama_daisha,
-            COALESCE(d.seksi, 'All seksi') AS seksi,
-            d.last_maintenance_date,
-            COALESCE(d.last_condition, 'OK') AS last_condition,
-            d.last_repair_date,
-            d.last_waktu_masuk,
-            d.last_waktu_keluar,
-            d.updated_at
-          FROM "Daisha" d
+            d."Id" AS id,
+            d."UnitCode" AS nomor_daisha,
+            d."DaishaType" AS jenis,
+            COALESCE(d."SizeSpec", 'NONE') AS ukuran,
+            COALESCE(d."DaishaType", 'Vertical') AS nama_daisha,
+            COALESCE(d."SectionName", 'All seksi') AS seksi,
+            d."LastPMDate" AS last_maintenance_date,
+            COALESCE(d."CurrentCondition", 'OK') AS last_condition,
+            d."LastPMDate" AS last_repair_date,
+            NULL AS last_waktu_masuk,
+            NULL AS last_waktu_keluar,
+            d."UpdateDate" AS updated_at
+          FROM "TWMSDaishaCatalog" d
+          WHERE d."IsActive" = TRUE
         `;
         globalForMaint.cachedAllDaisha = {
           data: allDaisha,
@@ -164,64 +164,66 @@ export async function GET(request: Request) {
         };
       }
 
-      // Query tabel log, master katalog, dan tiket aktif secara paralel (Sangat cepat < 35ms)
+      // Query tabel log, master katalog, dan tiket aktif secara paralel
       const [todayLogs, recentLogs, trendLogRows, conditionRows, catalogRows, activeTicketRows] = await Promise.all([
         sql`
           SELECT 
-            l.id,
-            l.daisha_id,
-            l.nomor_daisha,
-            l.jenis_pekerjaan,
-            COALESCE(l.kondisi, 'OK') AS kondisi,
-            l.detail_kerusakan,
-            l.tindakan,
-            l.waktu_masuk,
-            l.waktu_keluar,
-            l.tanggal_pengerjaan,
-            l.admin_id,
-            l.catatan,
-            d.jenis,
-            d.ukuran
-          FROM "MaintenanceLog" l
-          LEFT JOIN "Daisha" d ON l.daisha_id = d.id
-          WHERE l.tanggal_pengerjaan >= ${startOfToday} AND l.tanggal_pengerjaan <= ${endOfToday}
+            l."Id" AS id,
+            l."Id" AS daisha_id,
+            l."UnitCode" AS nomor_daisha,
+            l."WorkType" AS jenis_pekerjaan,
+            COALESCE(l."ChecklistResult", 'OK') AS kondisi,
+            l."InspectionNote" AS detail_kerusakan,
+            l."ActionTaken" AS tindakan,
+            l."EntryTime" AS waktu_masuk,
+            l."ExitTime" AS waktu_keluar,
+            l."CheckDate" AS tanggal_pengerjaan,
+            l."InspectorBy" AS admin_id,
+            l."Notes" AS catatan,
+            d."DaishaType" AS jenis,
+            d."SizeSpec" AS ukuran
+          FROM "TWMSMaintenanceLog" l
+          LEFT JOIN "TWMSDaishaCatalog" d ON UPPER(TRIM(d."UnitCode")) = UPPER(TRIM(l."UnitCode"))
+          WHERE l."RecordType" = 'PM'
+            AND l."CheckDate" >= ${startOfToday} AND l."CheckDate" <= ${endOfToday}
         `,
         sql`
           SELECT 
-            l.id,
-            l.daisha_id,
-            l.nomor_daisha,
-            l.jenis_pekerjaan,
-            COALESCE(l.kondisi, 'OK') AS kondisi,
-            l.detail_kerusakan,
-            l.tindakan,
-            l.waktu_masuk,
-            l.waktu_keluar,
-            l.tanggal_pengerjaan,
-            l.admin_id,
-            l.catatan,
-            d.jenis,
-            d.ukuran
-          FROM "MaintenanceLog" l
-          LEFT JOIN "Daisha" d ON l.daisha_id = d.id
-          ORDER BY l.tanggal_pengerjaan DESC
+            l."Id" AS id,
+            l."Id" AS daisha_id,
+            l."UnitCode" AS nomor_daisha,
+            l."WorkType" AS jenis_pekerjaan,
+            COALESCE(l."ChecklistResult", 'OK') AS kondisi,
+            l."InspectionNote" AS detail_kerusakan,
+            l."ActionTaken" AS tindakan,
+            l."EntryTime" AS waktu_masuk,
+            l."ExitTime" AS waktu_keluar,
+            l."CheckDate" AS tanggal_pengerjaan,
+            l."InspectorBy" AS admin_id,
+            l."Notes" AS catatan,
+            d."DaishaType" AS jenis,
+            d."SizeSpec" AS ukuran
+          FROM "TWMSMaintenanceLog" l
+          LEFT JOIN "TWMSDaishaCatalog" d ON UPPER(TRIM(d."UnitCode")) = UPPER(TRIM(l."UnitCode"))
+          WHERE l."RecordType" = 'PM'
+          ORDER BY l."CheckDate" DESC
           LIMIT 50
         `,
         sql`
           SELECT 
-            tanggal_pengerjaan,
-            jenis_pekerjaan,
-            COALESCE(kondisi, 'OK') AS kondisi
-          FROM "MaintenanceLog"
-          WHERE tanggal_pengerjaan >= ${trendStartDate}
+            "CheckDate" AS tanggal_pengerjaan,
+            "WorkType" AS jenis_pekerjaan,
+            COALESCE("ChecklistResult", 'OK') AS kondisi
+          FROM "TWMSMaintenanceLog"
+          WHERE "RecordType" = 'PM' AND "CheckDate" >= ${trendStartDate}
         `,
         sql`
           SELECT 
-            COALESCE(kondisi, 'OK') AS kondisi,
+            COALESCE("ChecklistResult", 'OK') AS kondisi,
             COUNT(*)::int AS count
-          FROM "MaintenanceLog"
-          WHERE tanggal_pengerjaan >= ${startOfPmPeriod} AND tanggal_pengerjaan <= ${endOfYear}
-          GROUP BY COALESCE(kondisi, 'OK')
+          FROM "TWMSMaintenanceLog"
+          WHERE "RecordType" = 'PM' AND "CheckDate" >= ${startOfPmPeriod} AND "CheckDate" <= ${endOfYear}
+          GROUP BY COALESCE("ChecklistResult", 'OK')
         `,
         sql<Array<{
           id: number;
@@ -233,27 +235,32 @@ export async function GET(request: Request) {
           variants: unknown;
         }>>`
           SELECT 
-            id, 
-            name, 
-            seksi, 
-            "codePrefix",
-            COALESCE("totalUnits", 0)::int as "totalUnits", 
-            COALESCE(components, '[]'::jsonb) as components,
-            COALESCE(variants, '[]'::jsonb) as variants
-          FROM "DaishaCatalog"
-          ORDER BY name ASC
+            min("Id") AS id, 
+            "DaishaType" AS name, 
+            COALESCE("SectionName", 'Building') AS seksi, 
+            NULL AS "codePrefix",
+            (
+              SELECT count(*)::int 
+              FROM "TWMSDaishaCatalog" dc 
+              WHERE dc."DaishaType" = c."DaishaType" AND dc."IsActive" = TRUE
+            ) AS "totalUnits", 
+            '[]'::jsonb AS components,
+            '[]'::jsonb AS variants
+          FROM "TWMSDamageCatalog" c
+          WHERE "DaishaType" IS NOT NULL
+          GROUP BY "DaishaType", "SectionName"
+          ORDER BY "DaishaType" ASC
         `,
         sql<Array<{ noDaisha: string }>>`
-          SELECT DISTINCT UPPER(TRIM("noDaisha")) as "noDaisha"
-          FROM "Ticket"
-          WHERE status IN ('Open', 'Progress', 'Pending')
-            AND "noDaisha" IS NOT NULL
-            AND "noDaisha" != '-'
+          SELECT DISTINCT UPPER(TRIM("UnitCode")) AS "noDaisha"
+          FROM "TWMSRepairTicket"
+          WHERE "Status" IN ('Open', 'Progress', 'Pending')
+            AND "UnitCode" IS NOT NULL
+            AND "UnitCode" != '-'
         `,
       ]);
 
-      // Sinkronisasi status kondisi unit dengan tiket perbaikan aktif di workshop
-      // Menjamin tidak ada unit hantu / orphan condition yang berbeda antara workshop & KPI
+      // Sinkronisasi status kondisi unit dengan tiket perbaikan aktif
       const activeRepairNoSet = new Set(
         activeTicketRows.map((r) => r.noDaisha.replace(/[\s\-_]+/g, ''))
       );
@@ -267,28 +274,17 @@ export async function GET(request: Request) {
         }
       }
 
-      // Agregasi statistik resmi dari DaishaCatalog (Registri Daisha)
+      // Agregasi statistik resmi dari TWMSDamageCatalog / TWMSDaishaCatalog
       const catalogSeksiMap = new Map<string, number>();
       const catalogJenisSet = new Set<string>();
       let catalogTotalAllUnits = 0;
 
-      // Statistik khusus 6 armada PM resmi
       const pmCatalogSeksiMap = new Map<string, number>();
       let pmCatalogTotalUnits = 0;
 
       for (const cat of catalogRows) {
         const s = (cat.seksi && cat.seksi.trim()) ? cat.seksi.trim() : 'Building';
-        let units = Number(cat.totalUnits) || 0;
-        const variants = Array.isArray(cat.variants) ? (cat.variants as Array<Record<string, unknown>>) : [];
-        if (variants.length > 0) {
-          const vSum = variants.reduce((acc, v) => {
-            const vUnits = Number(v.totalUnits) || 0;
-            const minNum = Number(v.minNumber) || 1;
-            const maxNum = Number(v.maxNumber) || (minNum + vUnits - 1);
-            return acc + (vUnits > 0 ? vUnits : (maxNum >= minNum ? maxNum - minNum + 1 : 0));
-          }, 0);
-          if (vSum > 0) units = vSum;
-        }
+        const units = Number(cat.totalUnits) || 0;
 
         catalogSeksiMap.set(s, (catalogSeksiMap.get(s) || 0) + units);
         catalogTotalAllUnits += units;
@@ -307,14 +303,12 @@ export async function GET(request: Request) {
         !filterSeksi.trim() ||
         ['all', 'all seksi', 'semua'].includes(filterSeksi.trim().toLowerCase());
 
-      // targetDaisha: armada seluruh pabrik sesuai filter seksi
       const targetAllDaisha = !isAllSeksi
         ? allDaisha.filter(
             (d) => (d.seksi || '').toLowerCase() === filterSeksi.trim().toLowerCase()
           )
         : Array.from(allDaisha);
 
-      // targetPmDaisha: KHUSUS FITUR PM - HANYA 6 JENIS DAISHA RESMI
       const targetPmDaisha = targetAllDaisha.filter((d) =>
         isPmEligibleDaisha(d.jenis || d.nama_daisha)
       );
@@ -329,7 +323,6 @@ export async function GET(request: Request) {
           isPmEligibleDaisha(l.jenis)
       );
 
-      // Tentukan angka total populasi resmi PM yang mengacu ke DaishaCatalog
       let officialPmUnits = targetPmDaisha.length;
       if (isAllSeksi) {
         officialPmUnits = pmCatalogTotalUnits > 0 ? pmCatalogTotalUnits : targetPmDaisha.length;
@@ -342,7 +335,7 @@ export async function GET(request: Request) {
         }
       }
 
-      // 2. Hitung agregasi per kategori KHUSUS PM
+      // Hitung agregasi per kategori KHUSUS PM
       const summary = {
         totalUnits: officialPmUnits,
         maintainedUnits: 0,
@@ -415,7 +408,6 @@ export async function GET(request: Request) {
         };
       });
 
-      // Mapping seluruh armada pabrik (hanya jika diminta spesifik oleh modul KPI Jumlah Daisha)
       const mappedAllUnits = includeAllUnits
         ? targetAllDaisha.map((u) => {
             const canonicalNama = u.nama_daisha && u.nama_daisha !== 'VERTICAL' ? u.nama_daisha : (u.jenis || 'Daisha');
@@ -431,7 +423,7 @@ export async function GET(request: Request) {
           })
         : [];
 
-      // Sebaran Populasi Seksi KHUSUS PM (Building, Cutt/Cal, Extruding)
+      // Sebaran Populasi Seksi KHUSUS PM
       const pmSeksiMap = new Map<string, { total: number; maintained: number; unmaintained: number; rusak: number }>();
       for (const u of targetPmDaisha) {
         const s = (u.seksi && u.seksi.trim() && u.seksi.toLowerCase() !== 'all seksi') ? u.seksi.trim() : 'Lainnya';
@@ -457,177 +449,192 @@ export async function GET(request: Request) {
         }
       }
 
-      // Daftar Seksi yang memiliki armada PM resmi
-      const pmSeksiList = ['Building', 'Cutt/Cal', 'Extruding'];
-      const seksiSummaries = pmSeksiList
-        .map((seksiName) => {
-          const counts = pmSeksiMap.get(seksiName) || { total: 0, maintained: 0, unmaintained: 0, rusak: 0 };
-          const officialTotal = pmCatalogSeksiMap.get(seksiName) ?? counts.total;
-          return {
-            seksi: seksiName,
-            total: officialTotal,
-            maintained: counts.maintained,
-            unmaintained: Math.max(0, officialTotal - counts.maintained),
-            rusak: counts.rusak,
-          };
-        })
-        .sort((a, b) => b.total - a.total);
-
-      // Hitung persentase & target harian untuk summary PM
-      summary.unmaintainedUnits = Math.max(0, summary.totalUnits - summary.maintainedUnits);
-      summary.percentage = summary.totalUnits > 0 ? Math.round((summary.maintainedUnits / summary.totalUnits) * 100) : 0;
-      summary.dailyTarget = calculateDailyTarget(summary.unmaintainedUnits, remainingWorkDays);
-
-      // Hitung breakdown aktual hari ini & target
-      for (const log of targetTodayLogs) {
-        const canonical = getCanonicalPmJenis(log.jenis);
-        let key = canonical;
-        if (log.ukuran && log.ukuran !== 'NONE') {
-          key = `${canonical}_${log.ukuran}`;
+      // Sebaran Seluruh Armada Pabrik per Seksi (KPI Jumlah Daisha)
+      const allSeksiMap = new Map<string, { total: number; ok: number; rusak: number; jenisSet: Set<string> }>();
+      for (const u of allDaisha) {
+        const s = (u.seksi && u.seksi.trim() && u.seksi.toLowerCase() !== 'all seksi') ? u.seksi.trim() : 'Lainnya';
+        if (!allSeksiMap.has(s)) {
+          allSeksiMap.set(s, { total: 0, ok: 0, rusak: 0, jenisSet: new Set() });
         }
-        if (breakdown[key]) {
-          breakdown[key].todayActual++;
+        const entry = allSeksiMap.get(s)!;
+        entry.total++;
+        if (u.last_condition === 'RUSAK') {
+          entry.rusak++;
+        } else {
+          entry.ok++;
         }
+        if (u.nama_daisha) entry.jenisSet.add(u.nama_daisha);
+        else if (u.jenis) entry.jenisSet.add(u.jenis);
       }
 
-      for (const key of Object.keys(breakdown)) {
-        const b = breakdown[key];
-        b.percentage = b.total > 0 ? Math.round((b.maintained / b.total) * 100) : 0;
-        b.dailyTarget = calculateDailyTarget(b.unmaintained, remainingWorkDays);
-      }
-
-      // 3. Agregasi tren 14 hari di memori JS
-      const trendMap = new Map<string, { rutin: number; repair: number }>();
-      for (const row of trendLogRows) {
-        const dKey = formatDateKey(new Date(row.tanggal_pengerjaan));
-        if (!trendMap.has(dKey)) {
-          trendMap.set(dKey, { rutin: 0, repair: 0 });
-        }
-        const entry = trendMap.get(dKey)!;
-        if (row.jenis_pekerjaan === 'RUTIN') entry.rutin++;
-        else if (row.jenis_pekerjaan === 'REPAIR') entry.repair++;
-      }
-
-      const dailyTrend = [];
-      for (let i = trendDays - 1; i >= 0; i--) {
-        const targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-        const isWeekend = targetDate.getDay() === 0 || targetDate.getDay() === 6;
-        const dKey = formatDateKey(targetDate);
-        const counts = trendMap.get(dKey) || { rutin: 0, repair: 0 };
-        const actualCount = counts.rutin + counts.repair;
-
-        const dateLabel = targetDate.toLocaleDateString('id-ID', {
-          day: 'numeric',
-          month: 'short',
-        });
-
-        dailyTrend.push({
-          date: dKey,
-          dateLabel,
-          isWeekend,
-          target: isWeekend ? 0 : summary.dailyTarget,
-          actual: actualCount,
-          rutin: counts.rutin,
-          repair: counts.repair,
-        });
-      }
-
-      // Filter units jika ada parameter query
-      let filteredPmUnits = mappedPmUnits;
-      if (filterJenis) {
-        filteredPmUnits = filteredPmUnits.filter(
-          (u) =>
-            u.jenis.toLowerCase() === filterJenis.toLowerCase() ||
-            (filterJenis === 'VERTICAL' && u.jenis === 'Vertical') ||
-            (filterJenis === 'NAGARA_FILTER' && u.jenis === 'A-Truck Nagara Filler')
+      // Susun sebaran seksi lengkap
+      const seksiDistribution = Array.from(DAFTAR_SEKSI).map((seksiName) => {
+        const pmStats = pmSeksiMap.get(seksiName) || { total: 0, maintained: 0, unmaintained: 0, rusak: 0 };
+        const allStats = allSeksiMap.get(seksiName) || { total: 0, ok: 0, rusak: 0, jenisSet: new Set() };
+        
+        let officialSectionUnits = allStats.total;
+        const matchedKey = Array.from(catalogSeksiMap.keys()).find(
+          (k) => k.toLowerCase() === seksiName.toLowerCase()
         );
+        if (matchedKey && catalogSeksiMap.has(matchedKey)) {
+          officialSectionUnits = catalogSeksiMap.get(matchedKey)!;
+        }
+
+        const percentage = pmStats.total > 0 ? Math.round((pmStats.maintained / pmStats.total) * 100) : 0;
+        return {
+          seksi: seksiName,
+          total: officialSectionUnits,
+          actualFleetCount: allStats.total,
+          ok: allStats.ok,
+          rusak: allStats.rusak,
+          totalTypes: allStats.jenisSet.size,
+          pmTotal: pmStats.total,
+          pmMaintained: pmStats.maintained,
+          pmUnmaintained: pmStats.unmaintained,
+          pmPercentage: percentage,
+        };
+      });
+
+      // Filter grid units sesuai parameter jenis dan ukuran
+      let filteredGridUnits = mappedPmUnits;
+      if (filterJenis) {
+        filteredGridUnits = filteredGridUnits.filter((u) => u.jenis === filterJenis);
       }
       if (filterUkuran) {
-        filteredPmUnits = filteredPmUnits.filter((u) => u.ukuran === filterUkuran);
+        filteredGridUnits = filteredGridUnits.filter((u) => u.ukuran === filterUkuran);
       }
 
-      // Condition Stats dihitung dari armada targetPmDaisha
-      const okCount = targetPmDaisha.filter((d) => (d.last_condition || 'OK') !== 'RUSAK').length;
-      const rusakCount = targetPmDaisha.filter((d) => (d.last_condition || 'OK') === 'RUSAK').length;
-      const totalCondition = okCount + rusakCount;
-      const conditionStats = {
-        okCount,
-        rusakCount,
-        totalCondition,
-        okPercentage: totalCondition > 0 ? Number(((okCount / totalCondition) * 100).toFixed(1)) : 100,
-        rusakPercentage: totalCondition > 0 ? Number(((rusakCount / totalCondition) * 100).toFixed(1)) : 0,
-      };
+      // Urutkan unit Daisha berdasarkan serial number
+      filteredGridUnits.sort((a, b) => {
+        if (a.jenis !== b.jenis) return a.jenis.localeCompare(b.jenis);
+        if (a.ukuran !== b.ukuran) return a.ukuran.localeCompare(b.ukuran);
+        return a.serial_number - b.serial_number;
+      });
 
-      const finalRecentLogs = !isAllSeksi
-        ? recentLogs.filter((l) => targetPmUnitIds.has(l.daisha_id) || targetPmUnitNos.has((l.nomor_daisha || '').toUpperCase()))
-        : recentLogs;
+      // Hitung persentase total & target harian
+      summary.percentage = summary.totalUnits > 0
+        ? Math.round((summary.maintainedUnits / summary.totalUnits) * 100)
+        : 0;
 
-      const pmJenisList = [...DAFTAR_PM_DAISHA];
+      summary.dailyTarget = calculateDailyTarget(summary.unmaintainedUnits, remainingWorkDays);
+
+      // Hitung breakdown percentage & target harian
+      Object.keys(breakdown).forEach((k) => {
+        const b = breakdown[k];
+        b.percentage = b.total > 0 ? Math.round((b.maintained / b.total) * 100) : 0;
+        b.dailyTarget = calculateDailyTarget(b.unmaintained, remainingWorkDays);
+        b.todayActual = targetTodayLogs.filter((l) => {
+          const lCanon = getCanonicalPmJenis(l.jenis);
+          const lKey = l.ukuran && l.ukuran !== 'NONE' ? `${lCanon}_${l.ukuran}` : lCanon;
+          return lKey === k;
+        }).length;
+      });
+
+      // Format log terkini
+      const recentActivities = recentLogs.map((l) => ({
+        id: l.id,
+        nomor_daisha: l.nomor_daisha,
+        jenis: l.jenis,
+        ukuran: l.ukuran,
+        jenis_pekerjaan: l.jenis_pekerjaan,
+        kondisi: l.kondisi,
+        detail_kerusakan: l.detail_kerusakan,
+        tindakan: l.tindakan,
+        tanggal_pengerjaan: l.tanggal_pengerjaan,
+        waktu_masuk: l.waktu_masuk,
+        waktu_keluar: l.waktu_keluar,
+        admin_id: l.admin_id,
+        catatan: l.catatan,
+      }));
+
+      // Kondisi agregasi tahun berjalan
+      const kondisiCount: Record<string, number> = { OK: 0, RUSAK: 0, SCRAP: 0 };
+      conditionRows.forEach((r) => {
+        const k = (r.kondisi || 'OK').toUpperCase();
+        kondisiCount[k] = (kondisiCount[k] || 0) + r.count;
+      });
+
+      // Trend 14 hari terakhir
+      const dailyTrendMap = new Map<string, { total: number; rutin: number; repair: number; ok: number; rusak: number }>();
+      for (let i = 0; i <= trendDays; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (trendDays - i));
+        dailyTrendMap.set(formatDateKey(d), { total: 0, rutin: 0, repair: 0, ok: 0, rusak: 0 });
+      }
+
+      trendLogRows.forEach((r) => {
+        if (!r.tanggal_pengerjaan) return;
+        const key = formatDateKey(new Date(r.tanggal_pengerjaan));
+        if (dailyTrendMap.has(key)) {
+          const entry = dailyTrendMap.get(key)!;
+          entry.total++;
+          if (r.jenis_pekerjaan === 'RUTIN') entry.rutin++;
+          if (r.jenis_pekerjaan === 'REPAIR') entry.repair++;
+          if (r.kondisi === 'OK') entry.ok++;
+          if (r.kondisi === 'RUSAK') entry.rusak++;
+        }
+      });
+
+      const dailyTrend = Array.from(dailyTrendMap.entries()).map(([date, stats]) => ({
+        date,
+        ...stats,
+      }));
+
+      const finalAllDaishaUnits = includeAllUnits ? mappedAllUnits : [];
+      const totalAllDaishaFleet = catalogTotalAllUnits > 0 ? catalogTotalAllUnits : allDaisha.length;
 
       return {
-        success: true,
-        currentYear,
         summary,
-        conditionStats,
         breakdown,
+        seksiDistribution,
+        totalAllDaishaFleet,
+        allDaishaUnits: finalAllDaishaUnits,
+        totalCatalogJenisCount: catalogJenisSet.size,
+        catalogJenisList: Array.from(catalogJenisSet).sort(),
+        units: filteredGridUnits,
+        recentActivities,
+        kondisiStatus: kondisiCount,
         dailyTrend,
-        jenisList: pmJenisList,
-        seksiList: pmSeksiList,
-        seksiSummaries,
-        catalogStats: {
-          totalAllUnits: catalogTotalAllUnits,
-          totalPmUnits: pmCatalogTotalUnits,
-          bySeksi: Object.fromEntries(catalogSeksiMap),
-          pmBySeksi: Object.fromEntries(pmCatalogSeksiMap),
-          catalogs: catalogRows.map((cat) => ({
-            id: cat.id,
-            name: cat.name,
-            seksi: cat.seksi,
-            codePrefix: cat.codePrefix,
-            totalUnits: Number(cat.totalUnits) || 0,
-            components: Array.isArray(cat.components) ? cat.components : [],
-            variants: Array.isArray(cat.variants) ? cat.variants : [],
-          })),
+        activeRepairsCount: activeTicketRows.length,
+        meta: {
+          year: currentYear,
+          remainingWorkDays,
+          currentDate: now.toISOString(),
+          isPmCycleOctober: true,
+          pmCycleStart: startOfPmPeriod.toISOString(),
+          filterJenis: filterJenis || 'ALL',
+          filterUkuran: filterUkuran || 'ALL',
+          filterSeksi: filterSeksi || 'ALL',
+          cachedAt: new Date().toISOString(),
         },
-        units: filteredPmUnits,
-        pmUnits: mappedPmUnits,
-        allUnits: mappedAllUnits,
-        recentLogs: finalRecentLogs,
       };
     };
 
-    const promise = computePayload();
-    inFlightMaintenancePromises.set(cacheKey, promise);
-
-    try {
-      const responsePayload = await promise;
-      if (!bypassCache) {
-        maintenanceCacheMap.set(cacheKey, {
-          payload: responsePayload,
-          timestamp: Date.now(),
-        });
-        // Batasi ukuran cache map agar memori hemat
-        if (maintenanceCacheMap.size > 50) {
-          const oldestKey = maintenanceCacheMap.keys().next().value;
-          if (oldestKey) maintenanceCacheMap.delete(oldestKey);
-        }
-      }
-      return NextResponse.json(responsePayload, {
-        headers: {
-          'X-Cache': bypassCache ? 'BYPASS' : 'MISS',
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        },
-      });
-    } finally {
-      inFlightMaintenancePromises.delete(cacheKey);
+    const payloadPromise = computePayload();
+    if (!bypassCache) {
+      inFlightMaintenancePromises.set(cacheKey, payloadPromise);
     }
+
+    const payload = await payloadPromise;
+
+    if (!bypassCache) {
+      inFlightMaintenancePromises.delete(cacheKey);
+      maintenanceCacheMap.set(cacheKey, {
+        payload,
+        timestamp: Date.now(),
+      });
+    }
+
+    return NextResponse.json(payload, {
+      headers: {
+        'X-Cache': 'MISS',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : String(error);
     console.error('Error fetching maintenance analytics:', error);
     return NextResponse.json(
-      { error: 'Gagal mengambil data maintenance: ' + errMessage },
+      { error: 'Gagal memuat analitik maintenance: ' + errMessage },
       { status: 500 }
     );
   }
@@ -635,20 +642,17 @@ export async function GET(request: Request) {
 
 /**
  * POST /api/maintenance
- * Mencatat penyelesaian maintenance atau repair.
- * Menyediakan:
- * - Smart Validation: Cek 30 hari terakhir. Jika ada, warning message dikembalikan jika belum di-bypass.
- * - Sinkronisasi otomatis ke data Master Daisha (last_maintenance_date diperbarui ke tanggal pengerjaan).
- * - Sinkronisasi ke Ticket: jika kategori = REPAIR dan ada tiket berstatus Open/Progress untuk noDaisha ini, otomatis ditandai Done.
+ * Input hasil maintenance berkala atau perbaikan Daisha oleh Admin/Operator
  */
 export async function POST(request: Request) {
-  try {
-    const auth = await requireAuth(request, ['ADMIN', 'OPERATOR']);
-    if (!auth.authorized) return auth.errorResponse!;
+  const auth = await requireAuth(request, ['ADMIN', 'OPERATOR']);
+  if (!auth.authorized) return auth.errorResponse!;
 
+  try {
     const body = await request.json();
+
     const nomorDaisha = sanitizeText(body.nomor_daisha, 50).trim();
-    const jenis = sanitizeText(body.jenis, 30).toUpperCase();
+    const jenis = sanitizeText(body.jenis, 50);
     const ukuran = sanitizeText(body.ukuran, 20).toUpperCase();
     const kategori = sanitizeText(body.kategori, 20).toUpperCase(); // 'RUTIN' | 'REPAIR'
     const kondisi = sanitizeText(body.kondisi, 20).toUpperCase() || 'OK'; // 'OK' | 'RUSAK'
@@ -680,33 +684,31 @@ export async function POST(request: Request) {
     const waktuMasuk = waktuMasukStr ? new Date(waktuMasukStr) : tanggalPengerjaan;
     const waktuKeluar = waktuKeluarStr ? new Date(waktuKeluarStr) : tanggalPengerjaan;
 
-    // Cari daisha di database atau register otomatis bila belum tercatat
+    // Cari daisha di TWMSDaishaCatalog
     const daisha = await sql`
-      SELECT id, nomor_daisha, jenis, ukuran, last_maintenance_date
-      FROM "Daisha"
-      WHERE UPPER(nomor_daisha) = ${nomorDaisha.toUpperCase()}
+      SELECT "Id" AS id, "UnitCode" AS nomor_daisha, "DaishaType" AS jenis, "SizeSpec" AS ukuran, "SectionName" AS seksi, "LastPMDate" AS last_maintenance_date
+      FROM "TWMSDaishaCatalog"
+      WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${nomorDaisha}))
       LIMIT 1
     `;
 
-    let daishaId: string;
+    let targetSeksi = 'Building';
     let lastMaintenanceDate: Date | null = null;
 
     if (daisha.length === 0) {
-      // Buat master Daisha baru jika belum ada
-      const normalizedUkuran = jenis === 'VERTICAL' ? (ukuran || 'MEDIUM') : 'NONE';
-      const insertResult = await sql`
-        INSERT INTO "Daisha" ("nomor_daisha", "jenis", "ukuran", "last_maintenance_date")
-        VALUES (${nomorDaisha}, ${jenis}, ${normalizedUkuran}, ${tanggalPengerjaan})
-        RETURNING id, nomor_daisha, jenis, ukuran, last_maintenance_date
+      const normalizedUkuran = jenis.toUpperCase() === 'VERTICAL' ? (ukuran || 'MEDIUM') : 'NONE';
+      const [insertResult] = await sql`
+        INSERT INTO "TWMSDaishaCatalog" ("UnitCode", "DaishaType", "SizeSpec", "SectionName", "LastPMDate", "CurrentCondition", "UpdateDate")
+        VALUES (${nomorDaisha}, ${jenis}, ${normalizedUkuran}, 'Building', ${tanggalPengerjaan}, ${kondisi}, NOW())
+        RETURNING "Id" AS id, "UnitCode" AS nomor_daisha, "DaishaType" AS jenis, "SizeSpec" AS ukuran, "SectionName" AS seksi, "LastPMDate" AS last_maintenance_date
       `;
-      daishaId = insertResult[0].id;
+      targetSeksi = insertResult.seksi || 'Building';
     } else {
-      daishaId = daisha[0].id;
+      targetSeksi = daisha[0].seksi || 'Building';
       lastMaintenanceDate = daisha[0].last_maintenance_date ? new Date(daisha[0].last_maintenance_date) : null;
     }
 
-    // 2. SMART VALIDATION & WARNING SYSTEM
-    // "Jika nomor tersebut baru saja di-maintenance atau diperbaiki dalam rentang waktu yang terlalu dekat (misal: dalam 30 hari terakhir)"
+    // SMART VALIDATION & WARNING SYSTEM
     if (lastMaintenanceDate && !bypassWarning) {
       const diffMs = Math.abs(tanggalPengerjaan.getTime() - lastMaintenanceDate.getTime());
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -718,12 +720,11 @@ export async function POST(request: Request) {
           year: 'numeric',
         });
 
-        // Ambil log terakhir untuk keterangan tambahan
         const lastLog = await sql`
-          SELECT jenis_pekerjaan, tanggal_pengerjaan, admin_id, catatan
-          FROM "MaintenanceLog"
-          WHERE daisha_id = ${daishaId}
-          ORDER BY tanggal_pengerjaan DESC
+          SELECT "WorkType" AS jenis_pekerjaan, "CheckDate" AS tanggal_pengerjaan, "InspectorBy" AS admin_id, "Notes" AS catatan
+          FROM "TWMSMaintenanceLog"
+          WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${nomorDaisha})) AND "RecordType" = 'PM'
+          ORDER BY "CheckDate" DESC
           LIMIT 1
         `;
 
@@ -741,70 +742,52 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Update Master Daisha last_maintenance_date, timestamps, and condition
+    // Update TWMSDaishaCatalog
     await sql`
-      UPDATE "Daisha"
+      UPDATE "TWMSDaishaCatalog"
       SET 
-        "last_maintenance_date" = ${tanggalPengerjaan},
-        "last_condition" = ${kondisi},
-        "last_waktu_masuk" = ${waktuMasuk},
-        "last_waktu_keluar" = ${waktuKeluar},
-        "last_repair_date" = ${kondisi === 'RUSAK' || kategori === 'REPAIR' ? tanggalPengerjaan : sql`"last_repair_date"`},
-        "updated_at" = now()
-      WHERE id = ${daishaId}
+        "LastPMDate" = ${tanggalPengerjaan},
+        "CurrentCondition" = ${kondisi},
+        "UpdateDate" = NOW()
+      WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${nomorDaisha}))
     `;
 
-    // 4. Masukkan ke MaintenanceLog
-    const logInsert = await sql`
-      INSERT INTO "MaintenanceLog" (
-        "daisha_id",
-        "nomor_daisha",
-        "jenis_pekerjaan",
-        "kondisi",
-        "detail_kerusakan",
-        "tindakan",
-        "waktu_masuk",
-        "waktu_keluar",
-        "tanggal_pengerjaan",
-        "admin_id",
-        "catatan"
+    // Masukkan ke TWMSMaintenanceLog
+    const periodMonth = `${tanggalPengerjaan.getFullYear()}-${String(tanggalPengerjaan.getMonth() + 1).padStart(2, '0')}`;
+    const [logInsert] = await sql`
+      INSERT INTO "TWMSMaintenanceLog" (
+        "UnitCode", "SectionName", "RecordType", "PeriodMonth", "WorkType", "ChecklistResult",
+        "InspectionNote", "ActionTaken", "EntryTime", "ExitTime", "CheckDate",
+        "InspectorBy", "Notes", "UpdateDate"
       ) VALUES (
-        ${daishaId},
-        ${nomorDaisha},
-        ${kategori},
-        ${kondisi},
-        ${detailKerusakan || null},
-        ${tindakan || null},
-        ${waktuMasuk},
-        ${waktuKeluar},
-        ${tanggalPengerjaan},
-        ${adminId},
-        ${catatan || null}
+        ${nomorDaisha}, ${targetSeksi}, 'PM', ${periodMonth}, ${kategori}, ${kondisi},
+        ${detailKerusakan || null}, ${tindakan || null}, ${waktuMasuk}, ${waktuKeluar}, ${tanggalPengerjaan},
+        ${adminId}, ${catatan || null}, NOW()
       )
-      RETURNING id, nomor_daisha, jenis_pekerjaan, kondisi, tanggal_pengerjaan
+      RETURNING "Id" AS id, "UnitCode" AS nomor_daisha, "WorkType" AS jenis_pekerjaan, "ChecklistResult" AS kondisi, "CheckDate" AS tanggal_pengerjaan
     `;
 
-    // 5. Sinkronisasi dengan modul Repair:
-    // Jika Kategori Repair Rusak, periksa apakah ada tiket yang masih open/progress di tabel Ticket untuk nomor Daisha ini
+    // Sinkronisasi dengan modul Repair
     let syncedTicketId: string | null = null;
     if (kategori === 'REPAIR') {
       const openTicket = await sql`
-        SELECT "idTiket", "status"
-        FROM "Ticket"
-        WHERE "noDaisha" ILIKE ${'%' + nomorDaisha + '%'} AND "status" != 'Done' AND "status" != 'Scrap'
-        ORDER BY "waktuMasuk" DESC
+        SELECT "TicketNo" AS "idTiket", "Status" AS "status"
+        FROM "TWMSRepairTicket"
+        WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${nomorDaisha})) AND "Status" NOT IN ('Done', 'Scrap')
+        ORDER BY "ReportDate" DESC
         LIMIT 1
       `;
 
       if (openTicket.length > 0) {
         syncedTicketId = openTicket[0].idTiket;
         await sql`
-          UPDATE "Ticket"
+          UPDATE "TWMSRepairTicket"
           SET 
-            "status" = 'Done',
-            "waktuSelesai" = ${tanggalPengerjaan},
-            "catatan" = COALESCE("catatan", '') || ' [Diselesaikan otomatis via Modul Maintenance Daisha]'
-          WHERE "idTiket" = ${syncedTicketId}
+            "Status" = 'Done',
+            "CompletedDate" = ${tanggalPengerjaan},
+            "DamageDescription" = COALESCE("DamageDescription", '') || ' [Diselesaikan otomatis via Modul Maintenance Daisha]',
+            "UpdateDate" = NOW()
+          WHERE "TicketNo" = ${syncedTicketId}
         `;
       }
     }
@@ -814,7 +797,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: `Pencatatan ${kategori === 'REPAIR' ? 'perbaikan' : 'maintenance'} untuk Daisha [${nomorDaisha}] berhasil disimpan.`,
-      log: logInsert[0],
+      log: logInsert,
       syncedTicketId,
     });
   } catch (error: unknown) {

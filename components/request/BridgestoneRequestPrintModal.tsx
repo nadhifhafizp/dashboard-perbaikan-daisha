@@ -554,12 +554,6 @@ export default function BridgestoneRequestPrintModal({
           </td>
         </tr>
       </table>
-          </td>
-          <td style="padding: 3.5px 6px; line-height: 1.35;">
-            ${realisasiMaterialStr}
-          </td>
-        </tr>
-      </table>
 
       <!-- 6. Evaluasi & Keputusan Section -->
       <table class="table-box" style="margin-top: -1px;">

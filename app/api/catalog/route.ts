@@ -59,8 +59,6 @@ let cachedCatalogResponse: CatalogCacheData | null = null;
 let cachedCatalogTimestamp = 0;
 const CATALOG_CACHE_TTL_MS = 60 * 1000;
 
-const toJsonb = (data: unknown) => sql.json(data as never);
-
 function invalidateCatalogCache(): void {
   cachedCatalogResponse = null;
   cachedCatalogTimestamp = 0;
@@ -70,7 +68,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 /**
- * GET /api/catalog - Mengambil data katalog Daisha, Komponen, Gejala, Varian, dan Seksi
+ * GET /api/catalog - Mengambil data katalog Daisha, Komponen, dan Gejala dari TWMSDamageCatalog & TWMSDaishaCatalog
  */
 export async function GET(request: Request) {
   const auth = await requireAuth(request);
@@ -93,56 +91,55 @@ export async function GET(request: Request) {
   }
 
   try {
-    const rows = await sql<
-      Array<{
-        id: number;
-        name: string;
-        seksi: string;
-        codePrefix: string | null;
-        totalUnits: number | null;
-        components: ComponentObj[];
-        variants: VariantObj[];
-      }>
-    >`
+    // 1. Ambil seluruh data hierarki dari TWMSDamageCatalog
+    const rows = await sql`
       SELECT 
-        c.id, 
-        c.name, 
-        COALESCE(s.name, c.legacy_section_name) as seksi,
-        c.code_prefix as "codePrefix",
-        COALESCE(c.total_units, 0)::int as "totalUnits",
-        COALESCE(c.components, '[]'::jsonb) as components,
-        COALESCE(c.variants, '[]'::jsonb) as variants
-      FROM daisha_catalogs c
-      LEFT JOIN sections s ON s.id = c.section_id
-      ORDER BY c.name ASC
+        "Id" AS id,
+        "DaishaType" AS daisha_type,
+        COALESCE("SectionName", 'Building') AS section_name,
+        "ComponentName" AS component_name,
+        "SymptomDesc" AS symptom_desc
+      FROM "TWMSDamageCatalog"
+      ORDER BY "DaishaType" ASC, "ComponentName" ASC NULLS LAST, "SymptomDesc" ASC NULLS LAST
     `;
 
-    // Ambil data Section dari DB jika ada
-    let customSections: Array<{
-      id: number;
-      name: string;
-      colorName: string | null;
-      badgeBg: string | null;
-      textColor: string | null;
-      borderColor: string | null;
-      accentBorder: string | null;
-    }> = [];
-    try {
-      customSections = await sql`
-        SELECT 
-          id, 
-          name, 
-          color_name as "colorName", 
-          badge_bg as "badgeBg", 
-          text_color as "textColor", 
-          border_color as "borderColor", 
-          accent_border as "accentBorder" 
-        FROM sections 
-        ORDER BY id ASC
-      `;
-    } catch {
-      // Abaikan jika tabel sections belum terisi
-    }
+    // 2. Hitung jumlah unit armada per jenis dari TWMSDaishaCatalog
+    const unitStats = await sql`
+      SELECT 
+        "DaishaType" AS daisha_type,
+        COUNT(*)::int AS total_units
+      FROM "TWMSDaishaCatalog"
+      WHERE "IsActive" = TRUE
+      GROUP BY "DaishaType"
+    `;
+    const unitMap = new Map<string, number>();
+    unitStats.forEach((u) => {
+      if (u.daisha_type) unitMap.set(u.daisha_type.toLowerCase(), u.total_units);
+    });
+
+    // 3. Ambil varian ukuran dari TWMSDaishaCatalog
+    const sizeRows = await sql`
+      SELECT 
+        "DaishaType" AS daisha_type,
+        "SizeSpec" AS size,
+        COUNT(*)::int AS count
+      FROM "TWMSDaishaCatalog"
+      WHERE "IsActive" = TRUE AND "SizeSpec" IS NOT NULL AND "SizeSpec" != 'NONE'
+      GROUP BY "DaishaType", "SizeSpec"
+      ORDER BY "DaishaType", "SizeSpec"
+    `;
+    const sizeMap = new Map<string, VariantObj[]>();
+    sizeRows.forEach((s) => {
+      const key = s.daisha_type?.toLowerCase();
+      if (!key) return;
+      if (!sizeMap.has(key)) sizeMap.set(key, []);
+      sizeMap.get(key)!.push({
+        id: sizeMap.get(key)!.length + 1,
+        name: `${s.daisha_type} ${s.size}`,
+        ukuran: s.size,
+        totalUnits: s.count,
+      });
+    });
 
     const defaultSectionRows = Object.values(SECTION_METAS).map((s, idx) => ({
       id: idx + 1,
@@ -154,128 +151,103 @@ export async function GET(request: Request) {
       accentBorder: s.accentBorder,
     }));
 
-    const mergedSections = [...defaultSectionRows];
-    for (const cs of customSections) {
-      if (!mergedSections.some((ms) => ms.name.toLowerCase() === cs.name.toLowerCase())) {
-        mergedSections.push({
-          id: mergedSections.length + 1,
-          name: cs.name,
-          colorName: cs.colorName || 'Custom',
-          badgeBg: cs.badgeBg || 'bg-slate-100',
-          textColor: cs.textColor || 'text-slate-900',
-          borderColor: cs.borderColor || 'border-slate-300',
-          accentBorder: cs.accentBorder || 'border-slate-500',
+    // Kelompokkan per DaishaType
+    const groupedDaisha = new Map<
+      string,
+      {
+        id: number;
+        name: string;
+        seksi: string;
+        codePrefix: string;
+        totalUnits: number;
+        componentsMap: Map<string, { id: number; name: string; symptoms: SymptomObj[] }>;
+        variants: VariantObj[];
+      }
+    >();
+
+    let typeSeq = 1;
+    let compSeq = 1;
+    let symSeq = 1;
+
+    for (const r of rows) {
+      if (!r.daisha_type) continue;
+      const typeKey = r.daisha_type.trim();
+      if (!groupedDaisha.has(typeKey)) {
+        groupedDaisha.set(typeKey, {
+          id: typeSeq++,
+          name: typeKey,
+          seksi: r.section_name,
+          codePrefix: '',
+          totalUnits: unitMap.get(typeKey.toLowerCase()) || 0,
+          componentsMap: new Map(),
+          variants: sizeMap.get(typeKey.toLowerCase()) || [],
         });
+      }
+
+      const d = groupedDaisha.get(typeKey)!;
+      if (r.component_name && r.component_name.trim()) {
+        const compKey = r.component_name.trim();
+        if (!d.componentsMap.has(compKey)) {
+          d.componentsMap.set(compKey, {
+            id: compSeq++,
+            name: compKey,
+            symptoms: [],
+          });
+        }
+        const c = d.componentsMap.get(compKey)!;
+        if (r.symptom_desc && r.symptom_desc.trim()) {
+          const symDesc = r.symptom_desc.trim();
+          if (!c.symptoms.some((s) => s.description === symDesc)) {
+            c.symptoms.push({
+              id: symSeq++,
+              description: symDesc,
+            });
+          }
+        }
       }
     }
 
-    const rawCatalog: Record<
-      string,
-      {
-        seksi: string;
-        codePrefix?: string;
-        totalUnits?: number;
-        jenisKerusakan: Record<string, string[]>;
-        variants: Array<{
-          id: number;
-          name: string;
-          ukuran?: string;
-          susunan?: string;
-          tipe?: string;
-          codePrefix: string;
-          padLength: number;
-          minNumber: number;
-          maxNumber: number;
-          totalUnits: number;
-          rangeFormat: string;
-          badgeColor?: string;
-        }>;
-      }
-    > = {};
+    const rawCatalog: Record<string, unknown> = {};
+    const tree: Array<unknown> = [];
 
-    const detailedList = rows.map((d) => {
+    for (const [name, d] of groupedDaisha) {
       const jenisKerusakan: Record<string, string[]> = {};
-      const components = Array.isArray(d.components) ? d.components : [];
+      const components = Array.from(d.componentsMap.values());
       components.forEach((c) => {
-        jenisKerusakan[c.name] = (c.symptoms || []).map((s) => s.description);
+        jenisKerusakan[c.name] = c.symptoms.map((s) => s.description);
       });
 
-      const variants = Array.isArray(d.variants) ? d.variants : [];
-      const seenVariantKeys = new Set<string>();
-      const formattedVariants: Array<{
-        id: number;
-        name: string;
-        ukuran?: string;
-        susunan?: string;
-        tipe?: string;
-        codePrefix: string;
-        padLength: number;
-        minNumber: number;
-        maxNumber: number;
-        totalUnits: number;
-        rangeFormat: string;
-        badgeColor?: string;
-      }> = [];
-
-      for (const v of variants) {
-        const vKey = `${v.id}_${v.codePrefix || ''}_${v.name}_${v.ukuran || ''}_${v.susunan || ''}`;
-        if (seenVariantKeys.has(vKey)) continue;
-        seenVariantKeys.add(vKey);
-
-        formattedVariants.push({
-          id: v.id,
-          name: v.name,
-          ukuran: v.ukuran || undefined,
-          susunan: v.susunan || undefined,
-          tipe: v.tipe || undefined,
-          codePrefix: v.codePrefix || '',
-          padLength: v.padLength ?? 0,
-          minNumber: v.minNumber ?? 1,
-          maxNumber: v.maxNumber ?? 1,
-          totalUnits: v.totalUnits ?? 0,
-          rangeFormat: v.rangeFormat || '',
-          badgeColor: v.badgeColor || undefined,
-        });
-      }
-
-      rawCatalog[d.name] = {
+      rawCatalog[name] = {
         seksi: d.seksi,
-        codePrefix: d.codePrefix || '',
-        totalUnits: d.totalUnits || 0,
+        codePrefix: d.codePrefix,
+        totalUnits: d.totalUnits,
         jenisKerusakan,
-        variants: formattedVariants,
+        variants: d.variants,
       };
 
-      return {
+      tree.push({
         id: d.id,
         name: d.name,
         seksi: d.seksi,
-        codePrefix: d.codePrefix || '',
-        totalUnits: d.totalUnits || 0,
-        components: components.map((c) => ({
-          id: c.id,
-          name: c.name,
-          symptoms: (c.symptoms || []).map((s) => ({
-            id: s.id,
-            description: s.description,
-          })),
-        })),
-        variants: formattedVariants,
-      };
-    });
+        codePrefix: d.codePrefix,
+        totalUnits: d.totalUnits,
+        components,
+        variants: d.variants,
+      });
+    }
 
     const seksiSet = new Set<string>(DAFTAR_SEKSI);
-    mergedSections.forEach((s) => seksiSet.add(s.name));
-    rows.forEach((d) => {
+    defaultSectionRows.forEach((s) => seksiSet.add(s.name));
+    for (const [, d] of groupedDaisha) {
       if (d.seksi) seksiSet.add(d.seksi);
-    });
+    }
 
     const responsePayload: CatalogCacheData = {
       success: true,
       seksiList: Array.from(seksiSet).sort(),
-      sections: mergedSections,
+      sections: defaultSectionRows,
       catalog: rawCatalog,
-      tree: detailedList,
+      tree,
     };
 
     cachedCatalogResponse = responsePayload;
@@ -301,7 +273,7 @@ export async function GET(request: Request) {
 }
 
 /**
- * POST /api/catalog - Menambah Daisha Baru, Komponen Baru, atau Gejala Baru
+ * POST /api/catalog - Menambah Daisha Baru, Komponen Baru, atau Gejala Baru ke TWMSDamageCatalog
  */
 export async function POST(request: Request) {
   const auth = await requireAuth(request, ['ADMIN']);
@@ -320,10 +292,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const action = sanitizeText(body.action, 50);
 
-    // Tambah jenis daisha baru
+    // 1. Tambah jenis daisha baru
     if (action === 'ADD_DAISHA') {
       const name = sanitizeText(body.name, 100);
-      const seksi = sanitizeText(body.seksi, 50) || 'All seksi';
+      const seksi = sanitizeText(body.seksi, 50) || 'Building';
       const codePrefix = sanitizeText(body.codePrefix, 20);
       const totalUnits = validatePositiveInt(body.totalUnits ?? 0, 'Total Unit', 0, 10000).value;
 
@@ -331,56 +303,20 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama Daisha wajib diisi.' }, { status: 400 });
       }
 
-      const [existing] = await sql`SELECT id FROM daisha_catalogs WHERE LOWER(name) = LOWER(${name}) LIMIT 1`;
+      const [existing] = await sql`
+        SELECT "Id" FROM "TWMSDamageCatalog" 
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${name})) 
+        LIMIT 1
+      `;
       if (existing) {
         return NextResponse.json({ error: `Jenis Daisha "${name}" sudah ada.` }, { status: 400 });
       }
 
-      let sectionId: number | null = null;
-      if (seksi?.trim()) {
-        const [sec] = await sql`SELECT id FROM sections WHERE LOWER(TRIM(name)) = LOWER(TRIM(${seksi})) LIMIT 1`;
-        if (sec) sectionId = Number(sec.id);
-      }
-
       const [newDaisha] = await sql`
-        INSERT INTO daisha_catalogs (
-          name, 
-          section_id,
-          legacy_section_name, 
-          code_prefix, 
-          total_units, 
-          components, 
-          variants, 
-          created_at, 
-          updated_at
-        )
-        VALUES (
-          ${name},
-          ${sectionId},
-          ${seksi},
-          ${codePrefix || null},
-          ${totalUnits},
-          '[]'::jsonb,
-          '[]'::jsonb,
-          NOW(),
-          NOW()
-        )
-        RETURNING id, name, legacy_section_name as seksi, code_prefix as "codePrefix", total_units as "totalUnits"
+        INSERT INTO "TWMSDamageCatalog" ("DaishaType", "SectionName", "UpdateDate")
+        VALUES (${name}, ${seksi}, NOW())
+        RETURNING "Id" AS id, "DaishaType" AS name, "SectionName" AS seksi
       `;
-
-      // Dual-write ke legacy "DaishaCatalog"
-      try {
-        await sql`
-          INSERT INTO "DaishaCatalog" (id, name, seksi, "codePrefix", "totalUnits", components, variants, "createdAt", "updatedAt")
-          VALUES (${newDaisha.id}, ${name}, ${seksi}, ${codePrefix || null}, ${totalUnits}, '[]'::jsonb, '[]'::jsonb, NOW(), NOW())
-          ON CONFLICT (id) DO UPDATE SET 
-            name = EXCLUDED.name, 
-            seksi = EXCLUDED.seksi, 
-            "codePrefix" = EXCLUDED."codePrefix", 
-            "totalUnits" = EXCLUDED."totalUnits", 
-            "updatedAt" = NOW();
-        `;
-      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_ADD_DAISHA',
@@ -392,12 +328,10 @@ export async function POST(request: Request) {
         details: `Nama: ${newDaisha.name}, Seksi: ${newDaisha.seksi}`,
       });
 
-      // Registrasikan unit-unit fisik baru secara instan ke tabel "Daisha"
       if (totalUnits > 0) {
-        await insertNewDaishaUnits(newDaisha.name, newDaisha.seksi, newDaisha.codePrefix, totalUnits);
+        await insertNewDaishaUnits(newDaisha.name, newDaisha.seksi, codePrefix || null, totalUnits);
       }
-      
-      // Sinkronkan seluruh master Daisha dan bersihkan cache
+
       await syncDaishaMasterFromCatalog();
       invalidateMaintenanceCache();
 
@@ -410,55 +344,44 @@ export async function POST(request: Request) {
 
     // 2. Tambah Komponen Baru ke Jenis Daisha
     if (action === 'ADD_COMPONENT') {
-      const daishaId = validatePositiveInt(body.daishaId || body.daishaTypeId, 'ID Daisha', 1).value;
+      const daishaName = sanitizeText(body.daishaName || body.name_daisha, 100);
+      const daishaId = body.daishaId ? Number(body.daishaId) : null;
       const name = sanitizeText(body.name, 100);
 
-      if (!daishaId || !name) {
-        return NextResponse.json({ error: 'ID Daisha dan Nama Komponen wajib diisi.' }, { status: 400 });
+      if (!name) {
+        return NextResponse.json({ error: 'Nama Komponen wajib diisi.' }, { status: 400 });
       }
 
-      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
-        SELECT id, name, COALESCE(components, '[]'::jsonb) as components 
-        FROM daisha_catalogs 
-        WHERE id = ${daishaId} 
+      let targetDaishaType = daishaName;
+      let targetSection = 'Building';
+
+      if (!targetDaishaType && daishaId) {
+        const [dRow] = await sql`SELECT "DaishaType", "SectionName" FROM "TWMSDamageCatalog" WHERE "Id" = ${daishaId} LIMIT 1`;
+        if (dRow) {
+          targetDaishaType = dRow.DaishaType;
+          targetSection = dRow.SectionName || 'Building';
+        }
+      }
+
+      if (!targetDaishaType) {
+        return NextResponse.json({ error: 'Jenis Daisha tidak ditemukan.' }, { status: 404 });
+      }
+
+      const [exists] = await sql`
+        SELECT "Id" FROM "TWMSDamageCatalog"
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${targetDaishaType}))
+          AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${name}))
         LIMIT 1
       `;
-
-      if (!daisha) {
-        return NextResponse.json({ error: 'Daisha tidak ditemukan.' }, { status: 404 });
-      }
-
-      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
-      if (comps.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      if (exists) {
         return NextResponse.json({ error: `Komponen "${name}" sudah ada pada Daisha ini.` }, { status: 400 });
       }
 
-      const [seq] = await sql`SELECT nextval('"DaishaComponent_id_seq"') as id`;
-      const newCompId = Number(seq.id);
-
-      const newComponent: ComponentObj = {
-        id: newCompId,
-        name,
-        symptoms: [],
-      };
-
-      comps.push(newComponent);
-
-      await sql`
-        UPDATE daisha_catalogs
-        SET components = ${toJsonb(comps)},
-            updated_at = NOW()
-        WHERE id = ${daishaId}
+      const [newComp] = await sql`
+        INSERT INTO "TWMSDamageCatalog" ("DaishaType", "SectionName", "ComponentName", "UpdateDate")
+        VALUES (${targetDaishaType}, ${targetSection}, ${name}, NOW())
+        RETURNING "Id" AS id, "ComponentName" AS name
       `;
-
-      try {
-        await sql`
-          UPDATE "DaishaCatalog"
-          SET components = ${toJsonb(comps)},
-              "updatedAt" = NOW()
-          WHERE id = ${daishaId}
-        `;
-      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_ADD_COMPONENT',
@@ -466,82 +389,65 @@ export async function POST(request: Request) {
         user: auth.user?.username,
         role: auth.user?.role,
         status: 'SUCCESS',
-        targetId: newCompId,
-        details: `Komponen: ${name}, Daisha: ${daisha.name}`,
+        targetId: newComp.id,
+        details: `Komponen: ${name}, Daisha: ${targetDaishaType}`,
       });
 
       invalidateMaintenanceCache();
 
       return NextResponse.json({
         success: true,
-        message: `Komponen "${name}" berhasil ditambahkan ke ${daisha.name}.`,
-        data: newComponent,
+        message: `Komponen "${name}" berhasil ditambahkan ke ${targetDaishaType}.`,
+        data: { id: newComp.id, name, symptoms: [] },
       });
     }
 
     // 3. Tambah Detail Gejala Kerusakan ke Komponen
     if (action === 'ADD_SYMPTOM') {
-      const componentId = validatePositiveInt(body.componentId, 'ID Komponen', 1).value;
+      const daishaName = sanitizeText(body.daishaName, 100);
+      const componentName = sanitizeText(body.componentName, 100);
       const description = sanitizeText(body.description, 255);
 
-      if (!componentId || !description) {
-        return NextResponse.json({ error: 'ID Komponen dan Gejala Kerusakan wajib diisi.' }, { status: 400 });
+      if (!description) {
+        return NextResponse.json({ error: 'Deskripsi gejala kerusakan wajib diisi.' }, { status: 400 });
       }
 
-      // Cari record daisha_catalogs yang memiliki componentId
-      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
-        SELECT id, name, COALESCE(components, '[]'::jsonb) as components
-        FROM daisha_catalogs
-        WHERE EXISTS (
-          SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp
-          WHERE (comp->>'id')::int = ${componentId}
-        )
-        LIMIT 1
-      `;
+      let targetType = daishaName;
+      let targetComp = componentName;
+      let targetSeksi = 'Building';
 
-      if (!daisha) {
+      if (!targetType || !targetComp) {
+        const compId = body.componentId ? Number(body.componentId) : null;
+        if (compId) {
+          const [cRow] = await sql`SELECT "DaishaType", "ComponentName", "SectionName" FROM "TWMSDamageCatalog" WHERE "Id" = ${compId} LIMIT 1`;
+          if (cRow) {
+            targetType = cRow.DaishaType;
+            targetComp = cRow.ComponentName;
+            targetSeksi = cRow.SectionName || 'Building';
+          }
+        }
+      }
+
+      if (!targetType || !targetComp) {
         return NextResponse.json({ error: 'Komponen tidak ditemukan di katalog.' }, { status: 404 });
       }
 
-      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
-      const targetComp = comps.find((c) => c.id === componentId);
-      if (!targetComp) {
-        return NextResponse.json({ error: 'Komponen tidak ditemukan.' }, { status: 404 });
-      }
-
-      if (!targetComp.symptoms) {
-        targetComp.symptoms = [];
-      }
-
-      if (targetComp.symptoms.some((s) => s.description.toLowerCase() === description.toLowerCase())) {
+      const [exists] = await sql`
+        SELECT "Id" FROM "TWMSDamageCatalog"
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${targetType}))
+          AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${targetComp}))
+          AND LOWER(TRIM("SymptomDesc")) = LOWER(TRIM(${description}))
+        LIMIT 1
+      `;
+      if (exists) {
         return NextResponse.json({ error: 'Gejala kerusakan ini sudah ada pada komponen tersebut.' }, { status: 400 });
       }
 
-      const [seq] = await sql`SELECT nextval('"DaishaSymptom_id_seq"') as id`;
-      const newSymptomId = Number(seq.id);
-
-      const newSymptom: SymptomObj = {
-        id: newSymptomId,
-        description,
-      };
-
-      targetComp.symptoms.push(newSymptom);
-
-      await sql`
-        UPDATE daisha_catalogs
-        SET components = ${toJsonb(comps)},
-            updated_at = NOW()
-        WHERE id = ${daisha.id}
+      const [newSym] = await sql`
+        INSERT INTO "TWMSDamageCatalog" ("DaishaType", "SectionName", "ComponentName", "SymptomDesc", "UpdateDate")
+        VALUES (${targetType}, ${targetSeksi}, ${targetComp}, ${description}, NOW())
+        RETURNING "Id" AS id, "SymptomDesc" AS description
       `;
-
-      try {
-        await sql`
-          UPDATE "DaishaCatalog"
-          SET components = ${toJsonb(comps)},
-              "updatedAt" = NOW()
-          WHERE id = ${daisha.id}
-        `;
-      } catch {}
 
       recordAuditLog({
         action: 'CATALOG_ADD_SYMPTOM',
@@ -549,8 +455,8 @@ export async function POST(request: Request) {
         user: auth.user?.username,
         role: auth.user?.role,
         status: 'SUCCESS',
-        targetId: newSymptomId,
-        details: `Gejala: ${description}, Komponen: ${targetComp.name}`,
+        targetId: newSym.id,
+        details: `Gejala: ${description}, Komponen: ${targetComp}`,
       });
 
       invalidateMaintenanceCache();
@@ -558,509 +464,94 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         message: `Gejala kerusakan berhasil ditambahkan.`,
-        data: newSymptom,
+        data: { id: newSym.id, description },
       });
     }
 
-    // 4. Tambah Varian Baru ke Jenis Daisha
-    if (action === 'ADD_VARIANT') {
-      const daishaId = validatePositiveInt(body.daishaTypeId || body.daishaId, 'ID Daisha', 1).value;
-      const name = sanitizeText(body.name, 150);
-      const ukuran = sanitizeText(body.ukuran, 50);
-      const susunan = sanitizeText(body.susunan, 50);
-      const tipe = sanitizeText(body.tipe, 50);
-      const codePrefix = sanitizeText(body.codePrefix, 50);
-      const padLength = validatePositiveInt(body.padLength ?? 0, 'Pad Length', 0, 10).value;
-      const minNumber = validatePositiveInt(body.minNumber ?? 1, 'Nomor Min', 0, 1000000).value;
-      const maxNumber = validatePositiveInt(body.maxNumber ?? 1, 'Nomor Max', 0, 1000000).value;
-      const totalUnits = validatePositiveInt(body.totalUnits ?? 0, 'Total Units', 0, 1000000).value;
-      const rangeFormat = sanitizeText(body.rangeFormat, 100);
-      const badgeColor = sanitizeText(body.badgeColor, 50);
-
-      if (!daishaId || !name) {
-        return NextResponse.json({ error: 'ID Daisha dan Nama Varian wajib diisi.' }, { status: 400 });
-      }
-
-      const [daisha] = await sql<Array<{ id: number; name: string; variants: VariantObj[] }>>`
-        SELECT id, name, COALESCE(variants, '[]'::jsonb) as variants 
-        FROM daisha_catalogs 
-        WHERE id = ${daishaId} 
-        LIMIT 1
-      `;
-
-      if (!daisha) {
-        return NextResponse.json({ error: 'Daisha tidak ditemukan.' }, { status: 404 });
-      }
-
-      const variants: VariantObj[] = Array.isArray(daisha.variants) ? daisha.variants : [];
-      const [seq] = await sql`SELECT nextval('"DaishaVariant_id_seq"') as id`;
-      const newVarId = Number(seq.id);
-
-      const newVariant: VariantObj = {
-        id: newVarId,
-        name,
-        ukuran: ukuran || null,
-        susunan: susunan || null,
-        tipe: tipe || null,
-        codePrefix: codePrefix || null,
-        padLength,
-        minNumber,
-        maxNumber,
-        totalUnits,
-        rangeFormat: rangeFormat || null,
-        badgeColor: badgeColor || null,
-      };
-
-      variants.push(newVariant);
-      const totalUnitsSum = variants.reduce((acc, v) => acc + (Number(v.totalUnits) || 0), 0);
-
-      await sql`
-        UPDATE daisha_catalogs
-        SET variants = ${toJsonb(variants)},
-            total_units = ${totalUnitsSum},
-            updated_at = NOW()
-        WHERE id = ${daishaId}
-      `;
-
-      try {
-        await sql`
-          UPDATE "DaishaCatalog"
-          SET variants = ${toJsonb(variants)},
-              "totalUnits" = ${totalUnitsSum},
-              "updatedAt" = NOW()
-          WHERE id = ${daishaId}
-        `;
-      } catch {}
-
-      recordAuditLog({
-        action: 'CATALOG_ADD_VARIANT',
-        ip: auth.ip,
-        user: auth.user?.username,
-        role: auth.user?.role,
-        status: 'SUCCESS',
-        targetId: newVarId,
-        details: `Varian: ${name}, Daisha: ${daisha.name}`,
-      });
-
-      await syncDaishaMasterFromCatalog();
-      invalidateMaintenanceCache();
-
-      return NextResponse.json({
-        success: true,
-        message: `Varian "${name}" berhasil ditambahkan.`,
-        data: newVariant,
-      });
-    }
-
-    // 5. Tambah Seksi Baru
-    if (action === 'ADD_SECTION') {
-      const name = sanitizeText(body.name, 50);
-      const colorName = sanitizeText(body.colorName, 50) || 'Custom';
-      const badgeBg = sanitizeText(body.badgeBg, 50) || 'bg-slate-100';
-      const textColor = sanitizeText(body.textColor, 50) || 'text-slate-900';
-      const borderColor = sanitizeText(body.borderColor, 50) || 'border-slate-300';
-      const accentBorder = sanitizeText(body.accentBorder, 50) || 'border-slate-500';
-
-      if (!name) {
-        return NextResponse.json({ error: 'Nama Seksi wajib diisi.' }, { status: 400 });
-      }
-
-      const [newSection] = await sql`
-        INSERT INTO sections (name, color_name, badge_bg, text_color, border_color, accent_border, updated_at)
-        VALUES (${name}, ${colorName}, ${badgeBg}, ${textColor}, ${borderColor}, ${accentBorder}, NOW())
-        ON CONFLICT (LOWER(TRIM(name))) DO UPDATE SET 
-          color_name = EXCLUDED.color_name,
-          badge_bg = EXCLUDED.badge_bg,
-          text_color = EXCLUDED.text_color,
-          border_color = EXCLUDED.border_color,
-          accent_border = EXCLUDED.accent_border,
-          updated_at = NOW()
-        RETURNING id, name, color_name as "colorName", badge_bg as "badgeBg", text_color as "textColor", border_color as "borderColor", accent_border as "accentBorder"
-      `;
-
-      try {
-        await sql`
-          INSERT INTO "Section" (id, name, "colorName", "badgeBg", "textColor", "borderColor", "accentBorder", "updatedAt")
-          VALUES (${newSection.id}, ${name}, ${colorName}, ${badgeBg}, ${textColor}, ${borderColor}, ${accentBorder}, NOW())
-          ON CONFLICT (name) DO UPDATE SET 
-            "colorName" = EXCLUDED."colorName",
-            "badgeBg" = EXCLUDED."badgeBg",
-            "textColor" = EXCLUDED."textColor",
-            "borderColor" = EXCLUDED."borderColor",
-            "accentBorder" = EXCLUDED."accentBorder",
-            "updatedAt" = NOW();
-        `;
-      } catch {}
-
-      recordAuditLog({
-        action: 'CATALOG_ADD_SECTION',
-        ip: auth.ip,
-        user: auth.user?.username,
-        role: auth.user?.role,
-        status: 'SUCCESS',
-        targetId: newSection.id,
-        details: `Seksi: ${newSection.name}`,
-      });
-
-      return NextResponse.json({
-        success: true,
-        message: `Seksi "${newSection.name}" berhasil disimpan.`,
-        data: newSection,
-      });
-    }
-
-    return NextResponse.json({ error: 'Aksi katalog tidak dikenali.' }, { status: 400 });
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Terjadi kesalahan saat memproses katalog.';
-    console.error('Error in POST /api/catalog:', error);
-    recordAuditLog({
-      action: 'CATALOG_POST_ERROR',
-      ip: auth.ip,
-      user: auth.user?.username,
-      status: 'FAILED',
-      details: msg,
-    });
-    return NextResponse.json({ error: msg }, { status: 500 });
-  }
-}
-
-/**
- * PUT /api/catalog - Edit Nama Daisha, Komponen, atau Gejala Kerusakan
- */
-export async function PUT(request: Request) {
-  const auth = await requireAuth(request, ['ADMIN']);
-  if (!auth.authorized) return auth.errorResponse!;
-
-  const sizeCheck = validatePayloadSize(request, 256 * 1024);
-  if (!sizeCheck.ok) return sizeCheck.errorResponse!;
-
-  const rateLimit = checkRateLimit(`catalog_put:${auth.ip}`, 30, 60 * 1000);
-  if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Terlalu banyak permintaan update katalog.' }, { status: 429 });
-  }
-
-  try {
-    invalidateCatalogCache();
-    const body = await request.json();
-    const action = sanitizeText(body.action, 50);
-
-    // Perbarui metadata daisha
+    // 4. Update Daisha / Komponen / Gejala
     if (action === 'EDIT_DAISHA' || action === 'UPDATE_DAISHA') {
-      const id = validatePositiveInt(body.id, 'ID Daisha', 1).value;
-      const name = sanitizeText(body.name, 100);
-      const seksi = sanitizeText(body.seksi, 50) || 'All seksi';
-      const codePrefix = sanitizeText(body.codePrefix, 20);
-      const totalUnits = validatePositiveInt(body.totalUnits ?? 0, 'Total Unit', 0, 10000).value;
+      const oldName = sanitizeText(body.oldName || body.name, 100);
+      const newName = sanitizeText(body.newName || body.name, 100);
+      const seksi = sanitizeText(body.seksi, 50);
 
-      if (!id || !name) {
-        return NextResponse.json({ error: 'ID dan Nama Daisha wajib diisi.' }, { status: 400 });
+      if (!oldName || !newName) {
+        return NextResponse.json({ error: 'Nama Daisha wajib diisi.' }, { status: 400 });
       }
 
-      let sectionId: number | null = null;
-      if (seksi?.trim()) {
-        const [sec] = await sql`SELECT id FROM sections WHERE LOWER(TRIM(name)) = LOWER(TRIM(${seksi})) LIMIT 1`;
-        if (sec) sectionId = Number(sec.id);
-      }
-
-      const [updated] = await sql`
-        UPDATE daisha_catalogs
-        SET name = ${name},
-            section_id = ${sectionId},
-            legacy_section_name = ${seksi},
-            code_prefix = ${codePrefix || null},
-            total_units = ${totalUnits},
-            updated_at = NOW()
-        WHERE id = ${id}
-        RETURNING id, name, legacy_section_name as seksi, code_prefix as "codePrefix", total_units as "totalUnits"
+      await sql`
+        UPDATE "TWMSDamageCatalog"
+        SET 
+          "DaishaType" = ${newName},
+          "SectionName" = COALESCE(${seksi}, "SectionName"),
+          "UpdateDate" = NOW()
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${oldName}))
       `;
 
-      try {
-        await sql`
-          UPDATE "DaishaCatalog"
-          SET name = ${name},
-              seksi = ${seksi},
-              "codePrefix" = ${codePrefix || null},
-              "totalUnits" = ${totalUnits},
-              "updatedAt" = NOW()
-          WHERE id = ${id}
-        `;
-      } catch {}
+      await sql`
+        UPDATE "TWMSDaishaCatalog"
+        SET 
+          "DaishaType" = ${newName},
+          "SectionName" = COALESCE(${seksi}, "SectionName"),
+          "UpdateDate" = NOW()
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${oldName}))
+      `;
 
-      if (!updated) {
-        return NextResponse.json({ error: 'Jenis Daisha tidak ditemukan.' }, { status: 404 });
-      }
-
-      recordAuditLog({
-        action: 'CATALOG_UPDATE_DAISHA',
-        ip: auth.ip,
-        user: auth.user?.username,
-        role: auth.user?.role,
-        status: 'SUCCESS',
-        targetId: id,
-        details: `Nama: ${updated.name}`,
-      });
-
-      await syncDaishaMasterFromCatalog();
       invalidateMaintenanceCache();
-
-      return NextResponse.json({
-        success: true,
-        message: `Jenis Daisha berhasil diperbarui menjadi "${updated.name}".`,
-        data: updated,
-      });
+      return NextResponse.json({ success: true, message: `Jenis Daisha "${newName}" berhasil diperbarui.` });
     }
 
-    // 2. Edit Komponen
     if (action === 'EDIT_COMPONENT' || action === 'UPDATE_COMPONENT') {
-      const id = validatePositiveInt(body.id, 'ID Komponen', 1).value;
-      const name = sanitizeText(body.name, 100);
+      const daishaName = sanitizeText(body.daishaName, 100);
+      const oldName = sanitizeText(body.oldName, 100);
+      const newName = sanitizeText(body.newName, 100);
 
-      if (!id || !name) {
-        return NextResponse.json({ error: 'ID dan Nama Komponen wajib diisi.' }, { status: 400 });
+      if (!daishaName || !oldName || !newName) {
+        return NextResponse.json({ error: 'Parameter komponen tidak lengkap.' }, { status: 400 });
       }
-
-      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
-        SELECT id, name, COALESCE(components, '[]'::jsonb) as components
-        FROM daisha_catalogs
-        WHERE EXISTS (
-          SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp
-          WHERE (comp->>'id')::int = ${id}
-        )
-        LIMIT 1
-      `;
-
-      if (!daisha) {
-        return NextResponse.json({ error: 'Komponen tidak ditemukan.' }, { status: 404 });
-      }
-
-      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
-      const comp = comps.find((c) => c.id === id);
-      if (!comp) {
-        return NextResponse.json({ error: 'Komponen tidak ditemukan di katalog Daisha.' }, { status: 404 });
-      }
-
-      comp.name = name;
 
       await sql`
-        UPDATE daisha_catalogs
-        SET components = ${toJsonb(comps)},
-            updated_at = NOW()
-        WHERE id = ${daisha.id}
+        UPDATE "TWMSDamageCatalog"
+        SET "ComponentName" = ${newName}, "UpdateDate" = NOW()
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+          AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${oldName}))
       `;
 
-      try {
-        await sql`
-          UPDATE "DaishaCatalog"
-          SET components = ${toJsonb(comps)},
-              "updatedAt" = NOW()
-          WHERE id = ${daisha.id}
-        `;
-      } catch {}
-
-      recordAuditLog({
-        action: 'CATALOG_UPDATE_COMPONENT',
-        ip: auth.ip,
-        user: auth.user?.username,
-        role: auth.user?.role,
-        status: 'SUCCESS',
-        targetId: id,
-        details: `Nama: ${name}, Daisha: ${daisha.name}`,
-      });
-
       invalidateMaintenanceCache();
-
-      return NextResponse.json({
-        success: true,
-        message: `Komponen berhasil diperbarui menjadi "${name}".`,
-        data: comp,
-      });
+      return NextResponse.json({ success: true, message: `Komponen "${newName}" berhasil diperbarui.` });
     }
 
-    // 3. Edit Gejala
     if (action === 'EDIT_SYMPTOM' || action === 'UPDATE_SYMPTOM') {
-      const id = validatePositiveInt(body.id, 'ID Gejala', 1).value;
-      const description = sanitizeText(body.description || body.name, 255);
+      const daishaName = sanitizeText(body.daishaName, 100);
+      const componentName = sanitizeText(body.componentName, 100);
+      const oldDesc = sanitizeText(body.oldDescription || body.oldDesc, 255);
+      const newDesc = sanitizeText(body.newDescription || body.newDesc, 255);
 
-      if (!id || !description) {
-        return NextResponse.json({ error: 'ID dan Deskripsi Gejala wajib diisi.' }, { status: 400 });
-      }
-
-      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
-        SELECT id, name, COALESCE(components, '[]'::jsonb) as components
-        FROM daisha_catalogs
-        WHERE EXISTS (
-          SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp,
-          LATERAL jsonb_array_elements(COALESCE(comp->'symptoms', '[]'::jsonb)) sym
-          WHERE (sym->>'id')::int = ${id}
-        )
-        LIMIT 1
-      `;
-
-      if (!daisha) {
-        return NextResponse.json({ error: 'Gejala tidak ditemukan di katalog.' }, { status: 404 });
-      }
-
-      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
-      let foundSymptom: SymptomObj | null = null;
-
-      for (const comp of comps) {
-        if (comp.symptoms) {
-          const s = comp.symptoms.find((item) => item.id === id);
-          if (s) {
-            s.description = description;
-            foundSymptom = s;
-            break;
-          }
-        }
-      }
-
-      if (!foundSymptom) {
-        return NextResponse.json({ error: 'Gejala tidak ditemukan.' }, { status: 404 });
+      if (!daishaName || !componentName || !oldDesc || !newDesc) {
+        return NextResponse.json({ error: 'Parameter gejala tidak lengkap.' }, { status: 400 });
       }
 
       await sql`
-        UPDATE daisha_catalogs
-        SET components = ${toJsonb(comps)},
-            updated_at = NOW()
-        WHERE id = ${daisha.id}
+        UPDATE "TWMSDamageCatalog"
+        SET "SymptomDesc" = ${newDesc}, "UpdateDate" = NOW()
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+          AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${componentName}))
+          AND LOWER(TRIM("SymptomDesc")) = LOWER(TRIM(${oldDesc}))
       `;
-
-      try {
-        await sql`
-          UPDATE "DaishaCatalog"
-          SET components = ${toJsonb(comps)},
-              "updatedAt" = NOW()
-          WHERE id = ${daisha.id}
-        `;
-      } catch {}
-
-      recordAuditLog({
-        action: 'CATALOG_UPDATE_SYMPTOM',
-        ip: auth.ip,
-        user: auth.user?.username,
-        role: auth.user?.role,
-        status: 'SUCCESS',
-        targetId: id,
-        details: `Gejala: ${description}`,
-      });
 
       invalidateMaintenanceCache();
-
-      return NextResponse.json({
-        success: true,
-        message: `Gejala kerusakan berhasil diperbarui.`,
-        data: foundSymptom,
-      });
+      return NextResponse.json({ success: true, message: `Gejala kerusakan berhasil diperbarui.` });
     }
 
-    // 4. Edit Varian
-    if (action === 'EDIT_VARIANT' || action === 'UPDATE_VARIANT') {
-      const id = validatePositiveInt(body.id, 'ID Varian', 1).value;
-      const name = sanitizeText(body.name, 150);
-      const ukuran = sanitizeText(body.ukuran, 50);
-      const susunan = sanitizeText(body.susunan, 50);
-      const tipe = sanitizeText(body.tipe, 50);
-      const codePrefix = sanitizeText(body.codePrefix, 50);
-      const padLength = validatePositiveInt(body.padLength ?? 0, 'Pad Length', 0, 10).value;
-      const minNumber = validatePositiveInt(body.minNumber ?? 1, 'Nomor Min', 0, 1000000).value;
-      const maxNumber = validatePositiveInt(body.maxNumber ?? 1, 'Nomor Max', 0, 1000000).value;
-      const totalUnits = validatePositiveInt(body.totalUnits ?? 0, 'Total Units', 0, 1000000).value;
-      const rangeFormat = sanitizeText(body.rangeFormat, 100);
-      const badgeColor = sanitizeText(body.badgeColor, 50);
-
-      if (!id || !name) {
-        return NextResponse.json({ error: 'ID dan Nama Varian wajib diisi.' }, { status: 400 });
-      }
-
-      const [daisha] = await sql<Array<{ id: number; name: string; variants: VariantObj[] }>>`
-        SELECT id, name, COALESCE(variants, '[]'::jsonb) as variants
-        FROM daisha_catalogs
-        WHERE EXISTS (
-          SELECT 1 FROM jsonb_array_elements(COALESCE(variants, '[]'::jsonb)) v
-          WHERE (v->>'id')::int = ${id}
-        )
-        LIMIT 1
-      `;
-
-      if (!daisha) {
-        return NextResponse.json({ error: 'Varian tidak ditemukan di katalog.' }, { status: 404 });
-      }
-
-      const variants: VariantObj[] = Array.isArray(daisha.variants) ? daisha.variants : [];
-      const variant = variants.find((v) => v.id === id);
-      if (!variant) {
-        return NextResponse.json({ error: 'Varian tidak ditemukan.' }, { status: 404 });
-      }
-
-      variant.name = name;
-      variant.ukuran = ukuran || null;
-      variant.susunan = susunan || null;
-      variant.tipe = tipe || null;
-      variant.codePrefix = codePrefix || null;
-      variant.padLength = padLength;
-      variant.minNumber = minNumber;
-      variant.maxNumber = maxNumber;
-      variant.totalUnits = totalUnits;
-      variant.rangeFormat = rangeFormat || null;
-      variant.badgeColor = badgeColor || null;
-
-      const totalUnitsSum = variants.reduce((acc, v) => acc + (Number(v.totalUnits) || 0), 0);
-
-      await sql`
-        UPDATE daisha_catalogs
-        SET variants = ${toJsonb(variants)},
-            total_units = ${totalUnitsSum},
-            updated_at = NOW()
-        WHERE id = ${daisha.id}
-      `;
-
-      try {
-        await sql`
-          UPDATE "DaishaCatalog"
-          SET variants = ${toJsonb(variants)},
-              "totalUnits" = ${totalUnitsSum},
-              "updatedAt" = NOW()
-          WHERE id = ${daisha.id}
-        `;
-      } catch {}
-
-      recordAuditLog({
-        action: 'CATALOG_UPDATE_VARIANT',
-        ip: auth.ip,
-        user: auth.user?.username,
-        role: auth.user?.role,
-        status: 'SUCCESS',
-        targetId: id,
-        details: `Varian: ${name}, Daisha: ${daisha.name}`,
-      });
-
-      await syncDaishaMasterFromCatalog();
-      invalidateMaintenanceCache();
-
-      return NextResponse.json({
-        success: true,
-        message: `Varian berhasil diperbarui menjadi "${name}".`,
-        data: variant,
-      });
-    }
-
-    return NextResponse.json({ error: 'Aksi edit tidak dikenali.' }, { status: 400 });
+    return NextResponse.json({ error: 'Aksi tidak valid.' }, { status: 400 });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Gagal memperbarui katalog.';
-    console.error('Error in PUT /api/catalog:', error);
-    recordAuditLog({
-      action: 'CATALOG_PUT_ERROR',
-      ip: auth.ip,
-      user: auth.user?.username,
-      status: 'FAILED',
-      details: msg,
-    });
+    const msg = error instanceof Error ? error.message : 'Gagal memproses katalog.';
+    console.error('Error in POST /api/catalog:', error);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
 /**
- * DELETE /api/catalog - Hapus data katalog (Khusus role ADMIN)
+ * DELETE /api/catalog - Hapus data dari TWMSDamageCatalog (Khusus role ADMIN)
  */
 export async function DELETE(request: Request) {
   const auth = await requireAuth(request, ['ADMIN']);
@@ -1076,247 +567,63 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     let type = searchParams.get('type');
     let idParam = searchParams.get('id');
+    const daishaName = sanitizeText(searchParams.get('daisha') || searchParams.get('name') || '', 100);
+    const componentName = sanitizeText(searchParams.get('component') || '', 100);
+    const symptomDesc = sanitizeText(searchParams.get('symptom') || '', 255);
 
-    if (!type || !idParam) {
+    if (!type) {
       try {
         const body = await request.json();
-        if (body.action) {
-          if (body.action.includes('DAISHA')) type = 'daisha';
-          else if (body.action.includes('COMPONENT')) type = 'component';
-          else if (body.action.includes('SYMPTOM')) type = 'symptom';
-          else if (body.action.includes('VARIANT')) type = 'variant';
-        }
         if (body.type) type = body.type;
         if (body.id) idParam = String(body.id);
-      } catch {
-        // Abaikan jika tidak ada body JSON
-      }
-    }
-
-    if (!type || !idParam) {
-      return NextResponse.json({ error: 'Parameter type dan id wajib disertakan.' }, { status: 400 });
-    }
-
-    const id = validatePositiveInt(idParam, 'ID', 1).value;
-
-    // Hapus jenis daisha
-    if (type === 'daisha') {
-      const [deleted] = await sql`DELETE FROM daisha_catalogs WHERE id = ${id} RETURNING id, name`;
-      if (!deleted) {
-        return NextResponse.json({ error: 'Jenis Daisha tidak ditemukan.' }, { status: 404 });
-      }
-
-      // Dual-delete ke legacy "DaishaCatalog"
-      try {
-        await sql`DELETE FROM "DaishaCatalog" WHERE id = ${id}`;
       } catch {}
-
-      // Bersihkan seluruh unit armada yang terasosiasi dengan jenis daisha yang dihapus
-      try {
-        await sql`
-          DELETE FROM daisha_units
-          WHERE LOWER(TRIM(nama_daisha)) = LOWER(TRIM(${deleted.name}))
-        `;
-      } catch (err) {
-        console.warn('Gagal menghapus unit fisik daisha_units saat katalog dihapus:', err);
-      }
-
-      try {
-        await sql`
-          DELETE FROM "Daisha"
-          WHERE LOWER(TRIM(COALESCE(nama_daisha, jenis))) = LOWER(TRIM(${deleted.name}))
-             OR LOWER(TRIM(jenis)) = LOWER(TRIM(${deleted.name}))
-        `;
-      } catch (err) {
-        console.warn('Gagal menghapus unit fisik legacy "Daisha" saat katalog dihapus:', err);
-      }
-
-      recordAuditLog({
-        action: 'CATALOG_DELETE_DAISHA',
-        ip: auth.ip,
-        user: auth.user?.username,
-        role: auth.user?.role,
-        status: 'SUCCESS',
-        targetId: id,
-        details: `Nama: ${deleted.name}`,
-      });
-
-      await syncDaishaMasterFromCatalog();
-      invalidateMaintenanceCache();
-
-      return NextResponse.json({ success: true, message: `Jenis Daisha "${deleted.name}" beserta komponennya berhasil dihapus.` });
     }
 
-    // 2. Hapus Komponen
-    if (type === 'component') {
-      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
-        SELECT id, name, COALESCE(components, '[]'::jsonb) as components
-        FROM daisha_catalogs
-        WHERE EXISTS (
-          SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp
-          WHERE (comp->>'id')::int = ${id}
-        )
-        LIMIT 1
-      `;
-
-      if (!daisha) {
-        return NextResponse.json({ error: 'Komponen tidak ditemukan di katalog.' }, { status: 404 });
-      }
-
-      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
-      const updatedComps = comps.filter((c) => c.id !== id);
-
+    if (type === 'daisha' && daishaName) {
       await sql`
-        UPDATE daisha_catalogs
-        SET components = ${toJsonb(updatedComps)},
-            updated_at = NOW()
-        WHERE id = ${daisha.id}
+        DELETE FROM "TWMSDamageCatalog"
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
       `;
-
-      try {
-        await sql`
-          UPDATE "DaishaCatalog"
-          SET components = ${toJsonb(updatedComps)},
-              "updatedAt" = NOW()
-          WHERE id = ${daisha.id}
-        `;
-      } catch {}
-
-      recordAuditLog({
-        action: 'CATALOG_DELETE_COMPONENT',
-        ip: auth.ip,
-        user: auth.user?.username,
-        role: auth.user?.role,
-        status: 'SUCCESS',
-        targetId: id,
-        details: `Daisha: ${daisha.name}`,
-      });
-
-      invalidateMaintenanceCache();
-
-      return NextResponse.json({ success: true, message: 'Komponen beserta gejalanya berhasil dihapus.' });
-    }
-
-    // 3. Hapus Gejala
-    if (type === 'symptom') {
-      const [daisha] = await sql<Array<{ id: number; name: string; components: ComponentObj[] }>>`
-        SELECT id, name, COALESCE(components, '[]'::jsonb) as components
-        FROM daisha_catalogs
-        WHERE EXISTS (
-          SELECT 1 FROM jsonb_array_elements(COALESCE(components, '[]'::jsonb)) comp,
-          LATERAL jsonb_array_elements(COALESCE(comp->'symptoms', '[]'::jsonb)) sym
-          WHERE (sym->>'id')::int = ${id}
-        )
-        LIMIT 1
-      `;
-
-      if (!daisha) {
-        return NextResponse.json({ error: 'Gejala tidak ditemukan di katalog.' }, { status: 404 });
-      }
-
-      const comps: ComponentObj[] = Array.isArray(daisha.components) ? daisha.components : [];
-      for (const comp of comps) {
-        if (comp.symptoms) {
-          comp.symptoms = comp.symptoms.filter((s) => s.id !== id);
-        }
-      }
-
       await sql`
-        UPDATE daisha_catalogs
-        SET components = ${toJsonb(comps)},
-            updated_at = NOW()
-        WHERE id = ${daisha.id}
+        DELETE FROM "TWMSDaishaCatalog"
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
       `;
-
-      try {
-        await sql`
-          UPDATE "DaishaCatalog"
-          SET components = ${toJsonb(comps)},
-              "updatedAt" = NOW()
-          WHERE id = ${daisha.id}
-        `;
-      } catch {}
-
-      recordAuditLog({
-        action: 'CATALOG_DELETE_SYMPTOM',
-        ip: auth.ip,
-        user: auth.user?.username,
-        role: auth.user?.role,
-        status: 'SUCCESS',
-        targetId: id,
-        details: `Daisha: ${daisha.name}`,
-      });
-
       invalidateMaintenanceCache();
-
-      return NextResponse.json({ success: true, message: 'Gejala kerusakan berhasil dihapus.' });
+      return NextResponse.json({ success: true, message: `Jenis Daisha "${daishaName}" berhasil dihapus.` });
     }
 
-    // 4. Hapus Varian
-    if (type === 'variant') {
-      const [daisha] = await sql<Array<{ id: number; name: string; variants: VariantObj[] }>>`
-        SELECT id, name, COALESCE(variants, '[]'::jsonb) as variants
-        FROM daisha_catalogs
-        WHERE EXISTS (
-          SELECT 1 FROM jsonb_array_elements(COALESCE(variants, '[]'::jsonb)) v
-          WHERE (v->>'id')::int = ${id}
-        )
-        LIMIT 1
-      `;
-
-      if (!daisha) {
-        return NextResponse.json({ error: 'Varian tidak ditemukan di katalog.' }, { status: 404 });
-      }
-
-      const variants: VariantObj[] = Array.isArray(daisha.variants) ? daisha.variants : [];
-      const updatedVariants = variants.filter((v) => v.id !== id);
-      const totalUnitsSum = updatedVariants.reduce((acc, v) => acc + (Number(v.totalUnits) || 0), 0);
-
+    if (type === 'component' && daishaName && componentName) {
       await sql`
-        UPDATE daisha_catalogs
-        SET variants = ${toJsonb(updatedVariants)},
-            total_units = ${totalUnitsSum},
-            updated_at = NOW()
-        WHERE id = ${daisha.id}
+        DELETE FROM "TWMSDamageCatalog"
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+          AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${componentName}))
       `;
-
-      try {
-        await sql`
-          UPDATE "DaishaCatalog"
-          SET variants = ${toJsonb(updatedVariants)},
-              "totalUnits" = ${totalUnitsSum},
-              "updatedAt" = NOW()
-          WHERE id = ${daisha.id}
-        `;
-      } catch {}
-
-      recordAuditLog({
-        action: 'CATALOG_DELETE_VARIANT',
-        ip: auth.ip,
-        user: auth.user?.username,
-        role: auth.user?.role,
-        status: 'SUCCESS',
-        targetId: id,
-        details: `Daisha: ${daisha.name}`,
-      });
-
-      await syncDaishaMasterFromCatalog();
       invalidateMaintenanceCache();
-
-      return NextResponse.json({ success: true, message: 'Varian Daisha berhasil dihapus dari database.' });
+      return NextResponse.json({ success: true, message: `Komponen "${componentName}" berhasil dihapus.` });
     }
 
-    return NextResponse.json({ error: 'Tipe penghapusan tidak valid.' }, { status: 400 });
+    if (type === 'symptom' && daishaName && componentName && symptomDesc) {
+      await sql`
+        DELETE FROM "TWMSDamageCatalog"
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+          AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${componentName}))
+          AND LOWER(TRIM("SymptomDesc")) = LOWER(TRIM(${symptomDesc}))
+      `;
+      invalidateMaintenanceCache();
+      return NextResponse.json({ success: true, message: `Gejala "${symptomDesc}" berhasil dihapus.` });
+    }
+
+    if (idParam) {
+      const id = validatePositiveInt(idParam, 'ID', 1).value;
+      await sql`DELETE FROM "TWMSDamageCatalog" WHERE "Id" = ${id}`;
+      invalidateMaintenanceCache();
+      return NextResponse.json({ success: true, message: 'Item katalog berhasil dihapus.' });
+    }
+
+    return NextResponse.json({ error: 'Parameter penghapusan tidak lengkap.' }, { status: 400 });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Gagal menghapus data dari katalog.';
     console.error('Error in DELETE /api/catalog:', error);
-    recordAuditLog({
-      action: 'CATALOG_DELETE_ERROR',
-      ip: auth.ip,
-      user: auth.user?.username,
-      status: 'FAILED',
-      details: msg,
-    });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

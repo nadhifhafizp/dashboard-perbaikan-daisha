@@ -1,8 +1,8 @@
 /**
  * lib/daishaCatalogSync.ts
  * 
- * Sinkronisasi Otomatis antara Registri Daisha (DaishaCatalog) dan Master Unit Daisha (Daisha).
- * Memastikan tabel "Daisha" dan KPI Jumlah Daisha 100% konsisten dan mengacu ke Registri Daisha.
+ * Sinkronisasi Unit Daisha dengan TWMSDaishaCatalog.
+ * Memastikan tabel "TWMSDaishaCatalog" dan KPI Jumlah Daisha 100% konsisten.
  */
 import sql from '@/lib/db';
 import { invalidateMaintenanceCache } from '@/app/api/maintenance/route';
@@ -46,248 +46,37 @@ export function formatVariantUnitNumber(prefix: string, num: number, rangeFormat
 }
 
 /**
- * Sinkronkan tabel master "Daisha" dari data terkini tabel "DaishaCatalog"
+ * Sinkronkan tabel master TWMSDaishaCatalog dan perbarui agregasi armada
  */
 export async function syncDaishaMasterFromCatalog(): Promise<SyncCatalogResult> {
-  const catalogRows = await sql<Array<{
-    id: number;
-    name: string;
-    seksi: string;
-    codePrefix: string | null;
-    totalUnits: number | null;
-    variants: Array<{
-      id: number;
-      name: string;
-      ukuran?: string | null;
-      susunan?: string | null;
-      tipe?: string | null;
-      codePrefix?: string | null;
-      padLength?: number | null;
-      minNumber?: number | null;
-      maxNumber?: number | null;
-      totalUnits?: number | null;
-      rangeFormat?: string | null;
-    }>;
-  }>>`
-    SELECT 
-      c.id, 
-      c.name, 
-      COALESCE(s.name, c.legacy_section_name) as seksi, 
-      c.code_prefix as "codePrefix", 
-      c.total_units as "totalUnits", 
-      c.variants
-    FROM daisha_catalogs c
-    LEFT JOIN sections s ON s.id = c.section_id
-    ORDER BY c.id ASC
+  const totalMaster = await sql`SELECT count(*)::int as c FROM "TWMSDaishaCatalog" WHERE "IsActive" = TRUE`;
+  const bySeksiRows = await sql`
+    SELECT COALESCE("SectionName", 'Building') as seksi, count(*)::int as count 
+    FROM "TWMSDaishaCatalog" 
+    WHERE "IsActive" = TRUE 
+    GROUP BY "SectionName"
   `;
-
-  const validUnitsMap = new Map<string, {
-    nomor_daisha: string;
-    nama_daisha: string;
-    jenis: string;
-    ukuran: string;
-    seksi: string;
-  }>();
-
   const bySeksi: Record<string, number> = {};
-  let totalCatalogUnits = 0;
-
-  for (const cat of catalogRows) {
-    const seksi = cat.seksi && cat.seksi.trim() ? cat.seksi.trim() : 'Building';
-    const daishaName = cat.name.trim();
-    const variants = Array.isArray(cat.variants) ? cat.variants : [];
-
-    if (variants.length > 0) {
-      for (const v of variants) {
-        const vUnits = Number(v.totalUnits) || 0;
-        const prefix = (v.codePrefix || cat.codePrefix || '').trim();
-        const minNum = Number(v.minNumber) || 1;
-        const maxNum = Number(v.maxNumber) || (minNum + vUnits - 1);
-        const count = vUnits > 0 ? vUnits : (maxNum >= minNum ? maxNum - minNum + 1 : 0);
-        const ukuran = (v.ukuran || 'NONE').toUpperCase();
-
-        totalCatalogUnits += count;
-        bySeksi[seksi] = (bySeksi[seksi] || 0) + count;
-
-        if (prefix && prefix !== 'null') {
-          for (let i = minNum; i < minNum + count; i++) {
-            const noD = formatVariantUnitNumber(prefix, i, v.rangeFormat, v.padLength);
-            validUnitsMap.set(noD.toUpperCase(), {
-              nomor_daisha: noD,
-              nama_daisha: daishaName,
-              jenis: daishaName,
-              ukuran,
-              seksi,
-            });
-          }
-        } else {
-          // Unit fleksibel tanpa prefix
-          for (let i = 1; i <= count; i++) {
-            const cleanPrefix = daishaName.replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase();
-            const noD = `${cleanPrefix}-${String(i).padStart(3, '0')}`;
-            validUnitsMap.set(noD.toUpperCase(), {
-              nomor_daisha: noD,
-              nama_daisha: daishaName,
-              jenis: daishaName,
-              ukuran,
-              seksi,
-            });
-          }
-        }
-      }
-    } else {
-      // Model tanpa varian
-      const count = Number(cat.totalUnits) || 1;
-      totalCatalogUnits += count;
-      bySeksi[seksi] = (bySeksi[seksi] || 0) + count;
-      const prefix = (cat.codePrefix || '').trim();
-
-      for (let i = 1; i <= count; i++) {
-        const noD = prefix && prefix !== 'null'
-          ? `${prefix}${String(i).padStart(4, '0')}`
-          : `${daishaName.replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase()}-${String(i).padStart(3, '0')}`;
-        validUnitsMap.set(noD.toUpperCase(), {
-          nomor_daisha: noD,
-          nama_daisha: daishaName,
-          jenis: daishaName,
-          ukuran: 'NONE',
-          seksi,
-        });
-      }
-    }
+  for (const r of bySeksiRows) {
+    bySeksi[r.seksi] = r.count;
   }
 
-  // 1. Ambil seluruh daisha yang saat ini ada di DB
-  const existingDaisha = await sql<Array<{
-    id: string;
-    nomor_daisha: string;
-    last_maintenance_date: Date | null;
-    last_repair_date: Date | null;
-  }>>`
-    SELECT id, nomor_daisha, last_maintenance_date, last_repair_date 
-    FROM "Daisha"
-  `;
-
-  const existingMap = new Map<string, { id: string; lastMaint: Date | null; lastRepair: Date | null }>();
-  for (const ed of existingDaisha) {
-    existingMap.set(ed.nomor_daisha.toUpperCase(), {
-      id: ed.id,
-      lastMaint: ed.last_maintenance_date,
-      lastRepair: ed.last_repair_date,
-    });
-  }
-
-  // 2. Cek unit mana yang punya referensi di Ticket atau MaintenanceLog
-  const referencedUnits = await sql<Array<{ nomor: string }>>`
-    SELECT DISTINCT UPPER("noDaisha") as nomor FROM "Ticket" WHERE "noDaisha" IS NOT NULL
-    UNION
-    SELECT DISTINCT UPPER(nomor_daisha) as nomor FROM "MaintenanceLog" WHERE nomor_daisha IS NOT NULL
-  `;
-  const referencedSet = new Set(referencedUnits.map((r) => r.nomor.trim().toUpperCase()));
-
-  // 3. Batch insert / update unit dari katalog
-  let inserted = 0;
-  let updated = 0;
-
-  const validUnitsList = Array.from(validUnitsMap.values());
-  const batchSize = 250;
-
-  for (let i = 0; i < validUnitsList.length; i += batchSize) {
-    const chunk = validUnitsList.slice(i, i + batchSize);
-    
-    await sql`
-      INSERT INTO "Daisha" ${sql(chunk, 'nomor_daisha', 'nama_daisha', 'jenis', 'ukuran', 'seksi')}
-      ON CONFLICT ("nomor_daisha") DO UPDATE SET
-        "nama_daisha" = EXCLUDED."nama_daisha",
-        "jenis" = EXCLUDED."jenis",
-        "ukuran" = EXCLUDED."ukuran",
-        "seksi" = EXCLUDED."seksi",
-        "updated_at" = NOW()
-    `;
-
-    try {
-      await sql`
-        INSERT INTO daisha_units (nomor_daisha, nama_daisha, jenis, ukuran, legacy_section_name, last_condition, updated_at)
-        SELECT 
-          u.nomor_daisha, 
-          u.nama_daisha, 
-          u.jenis, 
-          u.ukuran, 
-          u.seksi, 
-          'OK',
-          NOW()
-        FROM ${sql(chunk, 'nomor_daisha', 'nama_daisha', 'jenis', 'ukuran', 'seksi')} AS u
-        ON CONFLICT (nomor_daisha) DO UPDATE SET
-          nama_daisha = EXCLUDED.nama_daisha,
-          jenis = EXCLUDED.jenis,
-          ukuran = EXCLUDED.ukuran,
-          legacy_section_name = EXCLUDED.legacy_section_name,
-          updated_at = NOW();
-      `;
-    } catch {}
-
-    for (const u of chunk) {
-      if (existingMap.has(u.nomor_daisha.toUpperCase())) {
-        updated++;
-      } else {
-        inserted++;
-      }
-    }
-  }
-
-  // 4. Hapus unit usang (yang TIDAK ADA di katalog DAN TIDAK MEMILIKI referensi di Ticket / MaintenanceLog)
-  const validKeys = Array.from(validUnitsMap.keys());
-  const activeCatalogNames = Array.from(new Set(catalogRows.map((c) => c.name.trim().toLowerCase())));
-  let deletedObsolete = 0;
-
-  try {
-    const deleteResult = await sql`
-      DELETE FROM "Daisha"
-      WHERE (
-        UPPER(nomor_daisha) NOT IN ${sql(validKeys)}
-        OR LOWER(TRIM(COALESCE(nama_daisha, jenis))) NOT IN ${sql(activeCatalogNames)}
-      )
-      AND UPPER(nomor_daisha) NOT IN ${sql(Array.from(referencedSet))}
-      RETURNING id
-    `;
-    deletedObsolete = deleteResult.length;
-  } catch (err) {
-    console.warn('Delete obsolete daisha error:', err);
-  }
-
-  // 4b. Sinkronkan seksi pada maintenance log dengan master daisha terbaru jika kolom tersedia
-  try {
-    await sql`
-      UPDATE "MaintenanceLog" m
-      SET 
-        "nama_daisha" = d.nama_daisha,
-        "jenis" = d.jenis
-      FROM "Daisha" d
-      WHERE UPPER(TRIM(m.nomor_daisha)) = UPPER(TRIM(d.nomor_daisha))
-        AND (m.nama_daisha IS DISTINCT FROM d.nama_daisha OR m.jenis IS DISTINCT FROM d.jenis)
-    `;
-  } catch (err) {
-    console.warn('Sync maintenanceLog nama_daisha warning:', err);
-  }
-
-  // 5. Invalidate cache agar API segera menampilkan data terbaru
   invalidateMaintenanceCache();
 
-  const totalMaster = await sql`SELECT count(*)::int as c FROM "Daisha"`;
-
+  const totalCount = totalMaster[0]?.c || 0;
   return {
     success: true,
-    totalCatalogUnits,
-    totalMasterUnits: totalMaster[0].c,
-    inserted,
-    updated,
-    deletedObsolete,
+    totalCatalogUnits: totalCount,
+    totalMasterUnits: totalCount,
+    inserted: 0,
+    updated: 0,
+    deletedObsolete: 0,
     bySeksi,
   };
 }
 
 /**
- * Registrasi unit baru secara instan (< 50ms) tanpa me-resync seluruh tabel database 8.000+ unit
+ * Registrasi unit baru secara instan (< 50ms) ke tabel TWMSDaishaCatalog
  */
 export async function insertNewDaishaUnits(
   name: string,
@@ -299,12 +88,11 @@ export async function insertNewDaishaUnits(
 
   const prefix = (codePrefix || '').trim();
   const unitsToInsert: Array<{
-    nomor_daisha: string;
-    nama_daisha: string;
-    jenis: string;
-    ukuran: string;
-    seksi: string;
-    last_condition: string;
+    UnitCode: string;
+    DaishaType: string;
+    SizeSpec: string;
+    SectionName: string;
+    CurrentCondition: string;
   }> = [];
 
   for (let i = 1; i <= totalUnits; i++) {
@@ -313,12 +101,11 @@ export async function insertNewDaishaUnits(
       : `${name.replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase()}-${String(i).padStart(3, '0')}`;
 
     unitsToInsert.push({
-      nomor_daisha: noD.toUpperCase(),
-      nama_daisha: name,
-      jenis: name,
-      ukuran: 'NONE',
-      seksi,
-      last_condition: 'OK',
+      UnitCode: noD.toUpperCase(),
+      DaishaType: name,
+      SizeSpec: 'NONE',
+      SectionName: seksi,
+      CurrentCondition: 'OK',
     });
   }
 
@@ -327,33 +114,15 @@ export async function insertNewDaishaUnits(
     for (let i = 0; i < unitsToInsert.length; i += batchSize) {
       const chunk = unitsToInsert.slice(i, i + batchSize);
       await sql`
-        INSERT INTO "Daisha" ${sql(chunk, 'nomor_daisha', 'nama_daisha', 'jenis', 'ukuran', 'seksi', 'last_condition')}
-        ON CONFLICT ("nomor_daisha") DO UPDATE SET
-          "nama_daisha" = EXCLUDED."nama_daisha",
-          "jenis" = EXCLUDED."jenis",
-          "seksi" = EXCLUDED."seksi",
-          "updated_at" = NOW()
+        INSERT INTO "TWMSDaishaCatalog" ("UnitCode", "DaishaType", "SizeSpec", "SectionName", "CurrentCondition", "UpdateDate")
+        SELECT 
+          u."UnitCode", u."DaishaType", u."SizeSpec", u."SectionName", u."CurrentCondition", NOW()
+        FROM ${sql(chunk, 'UnitCode', 'DaishaType', 'SizeSpec', 'SectionName', 'CurrentCondition')} AS u
+        ON CONFLICT ("UnitCode") DO UPDATE SET
+          "DaishaType" = EXCLUDED."DaishaType",
+          "SectionName" = EXCLUDED."SectionName",
+          "UpdateDate" = NOW()
       `;
-
-      try {
-        await sql`
-          INSERT INTO daisha_units (nomor_daisha, nama_daisha, jenis, ukuran, legacy_section_name, last_condition, updated_at)
-          SELECT 
-            u.nomor_daisha, 
-            u.nama_daisha, 
-            u.jenis, 
-            u.ukuran, 
-            u.seksi, 
-            COALESCE(u.last_condition, 'OK'),
-            NOW()
-          FROM ${sql(chunk, 'nomor_daisha', 'nama_daisha', 'jenis', 'ukuran', 'seksi', 'last_condition')} AS u
-          ON CONFLICT (nomor_daisha) DO UPDATE SET
-            nama_daisha = EXCLUDED.nama_daisha,
-            jenis = EXCLUDED.jenis,
-            legacy_section_name = EXCLUDED.legacy_section_name,
-            updated_at = NOW();
-        `;
-      } catch {}
     }
   }
 

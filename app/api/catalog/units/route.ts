@@ -66,24 +66,17 @@ export async function GET(request: Request) {
     let cached = unitsCache.get(cacheKey);
 
     if (!cached || Date.now() - cached.timestamp > CACHE_TTL_MS) {
-      // Query dari gabungan MasterDaisha dan tabel Daisha aktual
+      // Query langsung dari TWMSDaishaCatalog (10-tabel relational)
       const rows = await sql<SectionDaishaUnit[]>`
-        SELECT DISTINCT ON (UPPER("noDaisha")) 
-          "noDaisha",
-          COALESCE("namaDaisha", 'Daisha ' || ${targetSeksi}) as "namaDaisha",
-          COALESCE("ukuran", 'STANDARD') as "ukuran",
-          "seksi"
-        FROM (
-          SELECT "noDaisha", "namaDaisha", "ukuran", "seksi" 
-          FROM "MasterDaisha" 
-          WHERE LOWER("seksi") = LOWER(${targetSeksi})
-          UNION
-          SELECT "nomor_daisha" as "noDaisha", "nama_daisha" as "namaDaisha", "ukuran", "seksi" 
-          FROM "Daisha" 
-          WHERE LOWER("seksi") = LOWER(${targetSeksi})
-        ) sub
-        WHERE "noDaisha" IS NOT NULL AND TRIM("noDaisha") != '' AND TRIM("noDaisha") != '-'
-        ORDER BY UPPER("noDaisha") ASC
+        SELECT 
+          "UnitCode" AS "noDaisha",
+          COALESCE("DaishaType", 'Daisha ' || ${targetSeksi}) AS "namaDaisha",
+          COALESCE("SizeSpec", 'STANDARD') AS "ukuran",
+          "SectionName" AS "seksi"
+        FROM "TWMSDaishaCatalog"
+        WHERE LOWER("SectionName") = LOWER(${targetSeksi})
+          AND "UnitCode" IS NOT NULL AND TRIM("UnitCode") != '' AND TRIM("UnitCode") != '-'
+        ORDER BY UPPER("UnitCode") ASC
       `;
 
       // Ekstrak tipe Daisha unik yang ada di seksi ini
@@ -94,14 +87,18 @@ export async function GET(request: Request) {
         }
       });
 
-      // Tambahkan juga dari DaishaType jika ada tipe resmi yang belum punya unit di MasterDaisha
-      const catalogTypes = await sql<Array<{ name: string }>>`
-        SELECT "name" 
-        FROM "DaishaType" 
-        WHERE LOWER("seksi") = LOWER(${targetSeksi})
-        ORDER BY "name" ASC
-      `;
-      catalogTypes.forEach((t) => typesSet.add(t.name));
+      // Tambahkan juga dari TWMSDamageCatalog jika ada jenis resmi yang belum memiliki unit aktif
+      try {
+        const catalogTypes = await sql<Array<{ name: string }>>`
+          SELECT DISTINCT "DaishaType" AS "name"
+          FROM "TWMSDamageCatalog"
+          WHERE LOWER("SectionName") = LOWER(${targetSeksi}) AND "DaishaType" IS NOT NULL
+          ORDER BY "DaishaType" ASC
+        `;
+        catalogTypes.forEach((t) => {
+          if (t.name) typesSet.add(t.name);
+        });
+      } catch {}
 
       cached = {
         timestamp: Date.now(),
