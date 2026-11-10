@@ -49,8 +49,29 @@ export function useEvaluationForm(
     emailData?: { toEmail?: string; subject: string; bodyText: string; mailtoUrl: string };
   } | null>(null);
 
-  const [prevRequest, setPrevRequest] = useState(requestData);
-  if (requestData !== prevRequest) {
+  // Helper verifikasi kelayakan approval Atasan Special Project secara komprehensif
+  const checkIsSProjectApproved = (
+    req: SectionRequestFull | null,
+    fData?: EvaluationFormData
+  ) => {
+    if (!req) return false;
+    if (req.statusApprovalAtasanSpecialProject === 'APPROVED') return true;
+    if (req.ttdAtasanSpecialProject && req.ttdAtasanSpecialProject !== 'NONE' && req.ttdAtasanSpecialProject !== 'DITOLAK') return true;
+    if (fData) {
+      if (['Dikerjakan', 'Pending: Material Habis', 'Pekerjaan Fisik Selesai', 'Selesai'].includes(fData.status)) return true;
+      if (['STEP_6_DALAM_PENGERJAAN', 'STEP_7_PEKERJAAN_SELESAI', 'STEP_8_SELESAI'].includes(fData.flowStep)) return true;
+    }
+    if (['Dikerjakan', 'Pending: Material Habis', 'Pekerjaan Fisik Selesai', 'Selesai'].includes(req.status || '')) return true;
+    if (['STEP_6_DALAM_PENGERJAAN', 'STEP_7_PEKERJAAN_SELESAI', 'STEP_8_SELESAI'].includes(req.flowStep || '')) return true;
+    return false;
+  };
+
+  const [prevRequest, setPrevRequest] = useState<SectionRequestFull | null>(null);
+  const [wasOpen, setWasOpen] = useState(false);
+
+  // Inisialisasi data form saat modal dibuka atau request berganti
+  if (isOpen && (!wasOpen || requestData?.id !== prevRequest?.id)) {
+    setWasOpen(true);
     setPrevRequest(requestData);
     if (requestData) {
       setFormData({
@@ -92,7 +113,7 @@ export function useEvaluationForm(
       setNotifSuccessData(null);
       setShowPendingDialog(false);
 
-      const isSProjectApproved = requestData.statusApprovalAtasanSpecialProject === 'APPROVED';
+      const isSProjectApproved = checkIsSProjectApproved(requestData);
       if (!isSProjectApproved) {
         setActiveTab('evaluasi');
       } else if (requestData.status?.includes('Material Habis') || requestData.status === 'Dikerjakan') {
@@ -103,6 +124,8 @@ export function useEvaluationForm(
         setActiveTab('evaluasi');
       }
     }
+  } else if (!isOpen && wasOpen) {
+    setWasOpen(false);
   }
 
   const handleUnauthorized = () => {
@@ -204,12 +227,16 @@ export function useEvaluationForm(
       catatanAdmin: cat,
       status: 'Dikerjakan',
       flowStep: 'STEP_6_DALAM_PENGERJAAN',
+      ttdAtasanSpecialProject: 'VERIFIED_DIGITAL',
     });
+    // Langsung buka tab pengerjaan untuk kenyamanan workshop
+    setActiveTab('pengerjaan');
   };
 
   const handleSetPendingMaterial = async () => {
     if (!requestData) return;
-    if (requestData.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+    const isApproved = checkIsSProjectApproved(requestData, formData);
+    if (!isApproved) {
       setErrorMsg('Pengerjaan belum aktif karena belum disetujui / di-assign oleh Atasan Special Project.');
       return;
     }
@@ -253,7 +280,8 @@ export function useEvaluationForm(
 
   const handleResumeProgress = async () => {
     if (!requestData) return;
-    if (requestData.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+    const isApproved = checkIsSProjectApproved(requestData, formData);
+    if (!isApproved) {
       setErrorMsg('Pengerjaan belum aktif karena belum disetujui / di-assign oleh Atasan Special Project.');
       return;
     }
@@ -290,7 +318,8 @@ export function useEvaluationForm(
   };
 
   const handleOperatorSelesai = () => {
-    if (requestData?.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+    const isApproved = checkIsSProjectApproved(requestData, formData);
+    if (!isApproved) {
       setErrorMsg('Pekerjaan belum dapat diselesaikan karena permohonan ini belum disetujui / di-assign oleh Atasan Special Project.');
       return;
     }
@@ -302,19 +331,27 @@ export function useEvaluationForm(
   };
 
   const handleFinalFinish = () => {
-    if (requestData?.statusApprovalAtasanSpecialProject !== 'APPROVED') {
+    const isApproved = checkIsSProjectApproved(requestData, formData);
+    if (!isApproved) {
       setErrorMsg('Request belum dapat diselesaikan karena permohonan ini belum disetujui / di-assign oleh Atasan Special Project.');
       return;
     }
     void handleSaveAction('FINISH_REQUEST', {
       status: 'Selesai',
       flowStep: 'STEP_8_SELESAI',
+      hasilCheck: formData.hasilCheck,
+      hasilCheckPemohon: formData.hasilCheckPemohon,
+      waktuActual: formData.waktuActual,
+      orangJamActual: formData.orangJamActual,
+      biayaActual: formData.biayaActual,
+      scheduleActual: formData.scheduleActual,
     });
   };
 
   return {
     activeTab,
     setActiveTab,
+    isApprovedBySpecialProject: checkIsSProjectApproved(requestData, formData),
     loading,
     errorMsg,
     setErrorMsg,

@@ -50,6 +50,13 @@ export async function GET(request: Request) {
         sr."WorkshopEmail" AS "emailMentorWorkshop",
         sr."WorkshopSignature" AS "ttdAdminWorkshop",
         sr."SpecialProjectSignature" AS "ttdAtasanSpecialProject",
+        CASE
+          WHEN sr."SpecialProjectSignature" IS NOT NULL AND length(sr."SpecialProjectSignature") > 0 AND sr."SpecialProjectSignature" != 'NONE' AND sr."SpecialProjectSignature" != 'DITOLAK' THEN 'APPROVED'
+          WHEN sr."WorkflowStatus" IN ('Dikerjakan', 'Pending: Material Habis', 'Pekerjaan Fisik Selesai', 'Selesai') THEN 'APPROVED'
+          WHEN sr."FlowStep" IN ('STEP_6_DALAM_PENGERJAAN', 'STEP_7_PEKERJAAN_SELESAI', 'STEP_8_SELESAI') THEN 'APPROVED'
+          WHEN sr."WorkflowStatus" = 'Ditolak' OR sr."FlowStep" = 'STEP_5_DITOLAK' OR sr."Decision8210" = 'DITOLAK' THEN 'REJECTED'
+          ELSE 'PENDING'
+        END AS "statusApprovalAtasanSpecialProject",
         sr."EstCost" AS "biayaEstimate",
         sr."ActCost" AS "biayaActual",
         sr."EstManHour" AS "orangJamEstimate",

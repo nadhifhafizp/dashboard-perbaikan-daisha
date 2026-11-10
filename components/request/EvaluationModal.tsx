@@ -58,7 +58,7 @@ export default function EvaluationModal({
 
   const currentStep = (form.formData.flowStep || 'STEP_4_EVALUASI_WORKSHOP') as FlowStepCode;
   const isPendingMaterial = form.formData.status?.toLowerCase().includes('material habis');
-  const isApprovedBySpecialProject = requestData.statusApprovalAtasanSpecialProject === 'APPROVED';
+  const isApprovedBySpecialProject = form.isApprovedBySpecialProject;
 
   return (
     <div

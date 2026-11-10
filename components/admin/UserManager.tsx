@@ -15,11 +15,21 @@ import {
   Plus,
   X,
   RefreshCw,
+  Mail,
+  Save,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function UserManager() {
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Email Special Project (SPV & Manager 8236)
+  const [specialProjectEmails, setSpecialProjectEmails] = useState({
+    spvEmail: 'spv.sproject@bridgestone.co.id',
+    managerEmail: 'manager.sproject@bridgestone.co.id',
+  });
+  const [savingSPEmails, setSavingSPEmails] = useState(false);
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -36,6 +46,7 @@ export default function UserManager() {
     password: '',
     name: '',
     role: 'OPERATOR' as UserRole,
+    email: '',
     description: '',
   });
 
@@ -43,6 +54,7 @@ export default function UserManager() {
     username: '',
     name: '',
     role: 'OPERATOR' as UserRole,
+    email: '',
     description: '',
   });
 
@@ -88,6 +100,9 @@ export default function UserManager() {
       if (data.success && data.users) {
         setUsers(data.users);
       }
+      if (data.specialProjectEmails) {
+        setSpecialProjectEmails(data.specialProjectEmails);
+      }
     } catch (err) {
       console.error('Failed to load users:', err);
       showFeedback('error', 'Gagal Memuat Akun', 'Tidak dapat mengambil daftar akun dari server.');
@@ -99,6 +114,39 @@ export default function UserManager() {
   useEffect(() => {
     void fetchUsers();
   }, [fetchUsers]);
+
+  // Handle Save Special Project Emails
+  const handleSaveSPEmails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSPEmails(true);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'UPDATE_SP_EMAILS',
+          spvEmail: specialProjectEmails.spvEmail,
+          managerEmail: specialProjectEmails.managerEmail,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showFeedback(
+          'success',
+          'Email Special Project Tersimpan',
+          data.message || 'Email SPV dan Manager Special Project berhasil diperbarui.'
+        );
+        void fetchUsers();
+      } else {
+        showFeedback('error', 'Gagal Menyimpan Email', data.error || 'Terjadi kesalahan.');
+      }
+    } catch (err) {
+      console.error(err);
+      showFeedback('error', 'Koneksi Terputus', 'Gagal menghubungi server.');
+    } finally {
+      setSavingSPEmails(false);
+    }
+  };
 
   // Handle Create User
   const handleAddSubmit = async (e: React.FormEvent) => {
@@ -124,7 +172,7 @@ export default function UserManager() {
       if (res.ok) {
         showFeedback('success', 'Akun Berhasil Dibuat', data.message);
         setIsAddModalOpen(false);
-        setAddForm({ username: '', password: '', name: '', role: 'OPERATOR', description: '' });
+        setAddForm({ username: '', password: '', name: '', role: 'OPERATOR', email: '', description: '' });
         void fetchUsers();
       } else {
         showFeedback('error', 'Gagal Membuat Akun', data.error || 'Terjadi kesalahan.');
@@ -231,6 +279,83 @@ export default function UserManager() {
 
   return (
     <div className="space-y-6">
+      {/* KARTU PENGATURAN: Email Khusus SPV dan Manager Special Project */}
+      <div className="bg-white p-5 rounded-xl border border-purple-200/90 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-purple-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center shrink-0">
+              <Mail className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                <span>Pengaturan Email Notifikasi Special Project (8236)</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                  Approval &amp; Assign
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Konfigurasi alamat email SPV dan Manager Special Project untuk menerima tautan tanda tangan resmi form ENG-KP-011. Akun seksi pabrik tidak memerlukan email.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSaveSPEmails} className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                <span>Email SPV Special Project</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={specialProjectEmails.spvEmail}
+                onChange={(e) =>
+                  setSpecialProjectEmails({ ...specialProjectEmails, spvEmail: e.target.value.trim() })
+                }
+                placeholder="spv.sproject@bridgestone.co.id"
+                className="w-full h-9 px-3 bg-slate-50 hover:bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:bg-white focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
+              />
+              <span className="text-[11px] text-slate-400 mt-0.5 block">
+                Menerima notifikasi setelah evaluasi workshop disetujui (Tahap 5).
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                <span>Email Manager Special Project (8236)</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={specialProjectEmails.managerEmail}
+                onChange={(e) =>
+                  setSpecialProjectEmails({ ...specialProjectEmails, managerEmail: e.target.value.trim() })
+                }
+                placeholder="manager.sproject@bridgestone.co.id"
+                className="w-full h-9 px-3 bg-slate-50 hover:bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:bg-white focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
+              />
+              <span className="text-[11px] text-slate-400 mt-0.5 block">
+                Menerima notifikasi untuk penetapan status pengerjaan (Assign resmi &amp; penomoran).
+              </span>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-1">
+            <button
+              type="submit"
+              disabled={savingSPEmails}
+              className="h-9 px-4 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>{savingSPEmails ? 'Menyimpan...' : 'Simpan Email Special Project'}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
       {/* Header Manajemen User */}
       <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -284,6 +409,12 @@ export default function UserManager() {
                     <td className="py-3.5 px-4">
                       <div className="font-semibold text-slate-900">{u.name}</div>
                       <div className="text-xs text-slate-400">ID #{u.id}</div>
+                      {u.email && u.role !== 'USER_SEKSI' && (
+                        <div className="text-[11px] text-purple-700 flex items-center gap-1 mt-0.5 font-medium">
+                          <Mail className="w-3 h-3 text-purple-500" />
+                          <span>{u.email}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="py-3.5 px-4 font-semibold text-slate-700">
                       @{u.username}
@@ -341,6 +472,7 @@ export default function UserManager() {
                             username: u.username,
                             name: u.name,
                             role: u.role,
+                            email: u.email || '',
                             description: u.description || '',
                           });
                           setIsEditModalOpen(true);
@@ -384,6 +516,12 @@ export default function UserManager() {
                 <div>
                   <div className="font-semibold text-sm text-slate-900">{u.name}</div>
                   <div className="text-xs text-slate-500 font-medium">@{u.username}</div>
+                  {u.email && u.role !== 'USER_SEKSI' && (
+                    <div className="text-xs text-purple-700 flex items-center gap-1 mt-1 font-medium">
+                      <Mail className="w-3.5 h-3.5 text-purple-500" />
+                      <span>{u.email}</span>
+                    </div>
+                  )}
                 </div>
                 <span
                   className={`inline-flex items-center gap-1 h-6 px-2.5 rounded-full text-xs font-semibold uppercase ${
@@ -440,6 +578,7 @@ export default function UserManager() {
                       username: u.username,
                       name: u.name,
                       role: u.role,
+                      email: u.email || '',
                       description: u.description || '',
                     });
                     setIsEditModalOpen(true);
@@ -520,6 +659,25 @@ export default function UserManager() {
                   </select>
                 </div>
               </div>
+
+              {/* Input Email: Khusus untuk Special Project / Admin / Operator, TIDAK untuk User Seksi */}
+              {addForm.role !== 'USER_SEKSI' && (
+                <div>
+                  <label className="font-medium text-slate-700 block mb-1">
+                    Email (Khusus SPV / Manager Special Project &amp; Admin)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="contoh: nama.pegawai@bridgestone.co.id"
+                    value={addForm.email}
+                    onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
+                    className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none text-slate-900"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Alamat email untuk menerima notifikasi sistem (khusus Special Project / Admin).
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="font-medium text-slate-700 block mb-1">Password (Min. 6 Karakter)</label>
@@ -619,6 +777,25 @@ export default function UserManager() {
                   </select>
                 </div>
               </div>
+
+              {/* Input Email: Khusus untuk Special Project / Admin / Operator, TIDAK untuk User Seksi */}
+              {editForm.role !== 'USER_SEKSI' && (
+                <div>
+                  <label className="font-medium text-slate-700 block mb-1">
+                    Email (Khusus SPV / Manager Special Project &amp; Admin)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="contoh: nama.pegawai@bridgestone.co.id"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none text-slate-900"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Alamat email untuk menerima notifikasi sistem (khusus Special Project / Admin).
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="font-medium text-slate-700 block mb-1">Deskripsi</label>

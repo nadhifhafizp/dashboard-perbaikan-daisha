@@ -178,6 +178,11 @@ export function useSectionRequests() {
         const data = await res.json();
         if (data.success) {
           setRequests(data.requests);
+          setEvalModalRequest((current) => {
+            if (!current) return null;
+            const updated = data.requests?.find((r: SectionRequestFull) => r.id === current.id);
+            return updated || current;
+          });
         }
       } catch (err) {
         console.error('Fetch requests error:', err);
@@ -364,14 +369,21 @@ export function useSectionRequests() {
           return false;
       } else if (filterFlow === 'workshop') {
         if (
+          r.flowStep !== 'STEP_3_DITERIMA_WORKSHOP' &&
+          r.flowStep !== 'STEP_4_EVALUASI_WORKSHOP' &&
+          r.flowStep !== 'STEP_5_MENUNGGU_ATASAN_SPROJECT' &&
           r.flowStep !== 'STEP_3_EVALUASI_PIC_WORKSHOP' &&
           r.flowStep !== 'STEP_4_ASSIGN_SPECIAL_PROJECT'
         )
           return false;
       } else if (filterFlow === 'process') {
         if (
+          r.flowStep !== 'STEP_6_DALAM_PENGERJAAN' &&
+          r.flowStep !== 'STEP_7_PEKERJAAN_SELESAI' &&
           r.flowStep !== 'STEP_5_PENGERJAAN' &&
-          r.flowStep !== 'STEP_6_VERIFIKASI_SELESAI'
+          r.flowStep !== 'STEP_6_VERIFIKASI_SELESAI' &&
+          r.status !== 'Dikerjakan' &&
+          r.status !== 'Pekerjaan Fisik Selesai'
         )
           return false;
       } else if (filterFlow === 'pending_material') {
@@ -381,7 +393,9 @@ export function useSectionRequests() {
       } else if (filterFlow === 'rejected') {
         if (
           r.statusApprovalAtasanSeksi !== 'REJECTED' &&
-          r.flowStep !== 'STEP_REJECTED'
+          r.flowStep !== 'STEP_5_DITOLAK' &&
+          r.flowStep !== 'STEP_REJECTED' &&
+          r.status !== 'Ditolak'
         )
           return false;
       }

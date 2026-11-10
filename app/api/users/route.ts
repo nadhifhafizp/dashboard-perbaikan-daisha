@@ -5,6 +5,8 @@ import {
   updateUser,
   changeUserPassword,
   deleteUser,
+  getSpecialProjectEmails,
+  updateSpecialProjectEmails,
   UserRole,
 } from '@/lib/users';
 import {
@@ -31,8 +33,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const users = await getAllUsers();
-    return NextResponse.json({ success: true, users });
+    const [users, specialProjectEmails] = await Promise.all([
+      getAllUsers(),
+      getSpecialProjectEmails(),
+    ]);
+    return NextResponse.json({ success: true, users, specialProjectEmails });
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json({ error: 'Gagal mengambil data pengguna.' }, { status: 500 });
@@ -91,12 +96,47 @@ export async function POST(request: Request) {
       });
     }
 
-    // 2. Buat Akun Baru
+    // 2. Pembaruan Email Khusus SPV dan Manager Special Project
+    if (action === 'UPDATE_SP_EMAILS') {
+      const spvEmail = body.spvEmail !== undefined ? sanitizeText(body.spvEmail, 255) : undefined;
+      const managerEmail = body.managerEmail !== undefined ? sanitizeText(body.managerEmail, 255) : undefined;
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (spvEmail && !emailRegex.test(spvEmail)) {
+        return NextResponse.json({ error: 'Format email SPV Special Project tidak valid.' }, { status: 400 });
+      }
+      if (managerEmail && !emailRegex.test(managerEmail)) {
+        return NextResponse.json({ error: 'Format email Manager Special Project tidak valid.' }, { status: 400 });
+      }
+
+      const updatedEmails = await updateSpecialProjectEmails({
+        spvEmail,
+        managerEmail,
+      });
+
+      recordAuditLog({
+        action: 'USER_SP_EMAILS_UPDATE',
+        ip: auth.ip,
+        user: auth.user?.username,
+        role: auth.user?.role,
+        status: 'SUCCESS',
+        details: `SPV: ${updatedEmails.spvEmail}, Manager: ${updatedEmails.managerEmail}`,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Email resmi SPV dan Manager Special Project berhasil diperbarui.',
+        specialProjectEmails: updatedEmails,
+      });
+    }
+
+    // 3. Buat Akun Baru
     const username = sanitizeText(body.username, 50).toLowerCase();
     const password = typeof body.password === 'string' ? body.password.trim() : '';
     const name = sanitizeText(body.name, 100);
     const roleInput = sanitizeText(body.role, 20);
     const seksi = sanitizeText(body.seksi, 50);
+    const email = sanitizeText(body.email, 255);
     const description = sanitizeText(body.description, 255);
 
     if (!username || !password || !name) {
@@ -127,6 +167,7 @@ export async function POST(request: Request) {
       name,
       role: assignedRole,
       seksi: seksi || undefined,
+      email: email || undefined,
       description: description || undefined,
     });
 
@@ -184,6 +225,7 @@ export async function PUT(request: Request) {
     const name = body.name ? sanitizeText(body.name, 100) : undefined;
     const roleInput = body.role ? sanitizeText(body.role, 20) : undefined;
     const seksi = body.seksi !== undefined ? sanitizeText(body.seksi, 50) : undefined;
+    const email = body.email !== undefined ? sanitizeText(body.email, 255) : undefined;
     const description = body.description !== undefined ? sanitizeText(body.description, 255) : undefined;
 
     if (!body.id) {
@@ -202,6 +244,7 @@ export async function PUT(request: Request) {
       name,
       role: assignedRole,
       seksi,
+      email,
       description,
     });
 

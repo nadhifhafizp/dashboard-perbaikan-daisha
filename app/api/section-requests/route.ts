@@ -13,6 +13,7 @@ import {
 import { createInAppNotification, buildAtasanSpecialProjectEmailContent, sendEmailAsync } from '@/lib/emailNotification';
 import { DEFAULT_ATASAN_SPROJECT_EMAIL } from '@/lib/workflowConstants';
 import { generateNextNomorSurat } from '@/lib/nomorSuratServer';
+import { getSpecialProjectEmails } from '@/lib/users';
 
 // Parse base64/URL image safely
 function parseImageString(val: unknown): string | null {
@@ -227,6 +228,13 @@ export async function GET(request: Request) {
         sr."SectionHeadSignature" AS "ttdAtasanSeksi",
         sr."WorkshopSignature" AS "ttdAdminWorkshop",
         sr."SpecialProjectSignature" AS "ttdAtasanSpecialProject",
+        CASE
+          WHEN sr."SpecialProjectSignature" IS NOT NULL AND length(sr."SpecialProjectSignature") > 0 AND sr."SpecialProjectSignature" != 'NONE' AND sr."SpecialProjectSignature" != 'DITOLAK' THEN 'APPROVED'
+          WHEN sr."WorkflowStatus" IN ('Dikerjakan', 'Pending: Material Habis', 'Pekerjaan Fisik Selesai', 'Selesai') THEN 'APPROVED'
+          WHEN sr."FlowStep" IN ('STEP_6_DALAM_PENGERJAAN', 'STEP_7_PEKERJAAN_SELESAI', 'STEP_8_SELESAI') THEN 'APPROVED'
+          WHEN sr."WorkflowStatus" = 'Ditolak' OR sr."FlowStep" = 'STEP_5_DITOLAK' OR sr."Decision8210" = 'DITOLAK' THEN 'REJECTED'
+          ELSE 'PENDING'
+        END AS "statusApprovalAtasanSpecialProject",
         COALESCE(
           (
             SELECT jsonb_agg(
@@ -569,8 +577,14 @@ export async function POST(request: Request) {
         finalNomorSurat = await generateNextNomorSurat(current.RequesterSection, new Date());
       }
 
+      const isAssigningSpecialProject = Boolean(body.assignAtasanSpecialProject || action === 'ASSIGN_ATASAN_SPROJECT');
       const prevTtdWorkshop = current.WorkshopSignature || null;
       const prevTtdSpecialProject = current.SpecialProjectSignature || null;
+
+      // Jika Special Project di-assign / Fast Track, pastikan tanda tangan digital terisi agar step selanjutnya tidak terkunci
+      const finalTtdSpecialProject = ttdAtasanSpecialProject !== undefined 
+        ? (ttdAtasanSpecialProject || null) 
+        : (isAssigningSpecialProject ? (prevTtdSpecialProject || 'VERIFIED_DIGITAL') : prevTtdSpecialProject);
 
       const [updated] = await sql<Array<{ RequestNo: string; NomorSurat: string | null }>>`
         UPDATE "TWMSSectionRequest"
@@ -579,7 +593,7 @@ export async function POST(request: Request) {
           "FlowStep" = ${nextFlowStep},
           "NomorSurat" = ${finalNomorSurat},
           "WorkshopSignature" = ${ttdAdminWorkshop !== undefined ? (ttdAdminWorkshop || null) : prevTtdWorkshop},
-          "SpecialProjectSignature" = ${ttdAtasanSpecialProject !== undefined ? (ttdAtasanSpecialProject || null) : prevTtdSpecialProject},
+          "SpecialProjectSignature" = ${finalTtdSpecialProject},
           "PendingReason" = ${alasanTolak !== undefined ? (alasanTolak || null) : null},
           "UpdateBy" = ${picBengkel !== undefined ? (picBengkel || null) : null},
           "EstDuration" = ${waktuEstimate !== undefined ? (waktuEstimate || null) : (estimasi !== undefined ? (estimasi || null) : null)},
@@ -617,8 +631,10 @@ export async function POST(request: Request) {
       });
 
       if (atasanSProjectEmail) {
+        const spEmails = await getSpecialProjectEmails();
+        const targetEmail = [spEmails.spvEmail, spEmails.managerEmail].filter(Boolean).join(', ') || DEFAULT_ATASAN_SPROJECT_EMAIL;
         sendEmailAsync({
-          to: DEFAULT_ATASAN_SPROJECT_EMAIL,
+          to: targetEmail,
           subject: atasanSProjectEmail.subject,
           bodyText: atasanSProjectEmail.bodyText,
         });
@@ -641,6 +657,10 @@ export async function POST(request: Request) {
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
       const hasilCheck = sanitizeText(body.hasilCheck, 2000);
       const hasilCheckPemohon = sanitizeText(body.hasilCheckPemohon, 100);
+      const waktuActual = sanitizeText(body.waktuActual, 100);
+      const orangJamActual = sanitizeText(body.orangJamActual, 100);
+      const biayaActual = sanitizeText(body.biayaActual, 100);
+      const scheduleActual = sanitizeText(body.scheduleActual, 1000);
 
       const [current] = await sql<Array<{ Id: number; RequestNo: string; SpecialProjectSignature: string | null }>>`
         SELECT "Id", "RequestNo", "SpecialProjectSignature" FROM "TWMSSectionRequest" WHERE "Id" = ${id} LIMIT 1
@@ -661,6 +681,10 @@ export async function POST(request: Request) {
         SET
           "WorkflowStatus" = 'Selesai',
           "FlowStep" = 'STEP_8_SELESAI',
+          "ActDuration" = COALESCE(${waktuActual || null}, "ActDuration"),
+          "ActManHour" = COALESCE(${orangJamActual || null}, "ActManHour"),
+          "ActCost" = COALESCE(${biayaActual || null}, "ActCost"),
+          "ScheduleActual" = COALESCE(${scheduleActual || null}, "ScheduleActual"),
           "CheckResult" = ${hasilCheck || null},
           "CheckResultRequester" = ${hasilCheckPemohon || null},
           "FinishDate" = NOW(),
