@@ -113,7 +113,7 @@ export default function PmMeetingHeader({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Tren 14 Hari
+              Tren Harian
             </button>
             <button
               type="button"

@@ -129,13 +129,9 @@ export default function PmMeetingCharts({
 
   return (
     <div className="space-y-6">
-      {/* Visual Charts: Bar Stacked & Tren 14 Hari */}
+      {/* Visual Charts: Masing-masing 1 kartu penuh (Full-Width) agar lega dan tidak terhimpit */}
       {(chartView === 'ALL' || chartView === 'JENIS' || chartView === 'TREND') && (
-        <div
-          className={`grid gap-6 ${
-            chartView === 'ALL' ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'
-          }`}
-        >
+        <div className="flex flex-col gap-6 w-full">
           {/* CHART 1: Realisasi PM per Jenis Daisha (Style Flow Throughput Masuk vs Keluar tanpa Garis Backlog) */}
           {(chartView === 'ALL' || chartView === 'JENIS') && (
             <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-2xs">
