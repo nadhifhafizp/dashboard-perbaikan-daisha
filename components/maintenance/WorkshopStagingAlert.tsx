@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   Check,
   AlertTriangle,
+  PlusCircle,
 } from 'lucide-react';
 import { PmStagingRecord } from './SectionPmHandover';
 import { FleetUnit } from './FleetExplorer';
@@ -165,7 +166,43 @@ export default function WorkshopStagingAlert({
   };
 
   if (activeStagings.length === 0) {
-    return null;
+    return (
+      <div className="bg-white rounded-xl border border-slate-200/90 p-8 sm:p-10 text-center flex flex-col items-center justify-center shadow-2xs">
+        <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3.5 border border-emerald-100">
+          <CheckCircle2 className="w-7 h-7" />
+        </div>
+        <h3 className="text-base sm:text-lg font-bold text-slate-800">
+          Tidak Ada Antrean Penjemputan
+        </h3>
+        <p className="text-xs sm:text-sm text-slate-500 max-w-md mt-1 mb-5">
+          {seksiFilter && seksiFilter !== 'all'
+            ? `Semua unit daisha untuk Seksi ${seksiFilter} telah selesai ditarik atau belum ada permintaan penjemputan baru.`
+            : 'Semua unit daisha yang disiapkan oleh seksi produksi telah berhasil ditarik ke workshop bengkel atau belum ada permohonan penjemputan baru.'}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2.5">
+          {onInputPm && (
+            <button
+              type="button"
+              onClick={() => onInputPm('', seksiFilter || '')}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Catat PM Langsung</span>
+            </button>
+          )}
+          {onRefreshData && (
+            <button
+              type="button"
+              onClick={onRefreshData}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+              <span>Segarkan Antrean</span>
+            </button>
+          )}
+        </div>
+      </div>
+    );
   }
 
   const waitingCount = activeStagings.filter((r) => r.status === 'WAITING_PICKUP').length;

@@ -139,7 +139,7 @@ function SidebarInner({
       icon: Target,
       items: [
         { href: '/maintenance?tab=staging', label: 'Penjemputan PM', icon: Truck },
-        { href: '/maintenance?tab=fleet', label: 'Katalog Armada', icon: Target },
+        { href: '/maintenance?tab=fleet', label: 'Armada PM', icon: Target },
         { href: '/maintenance?tab=logs', label: 'Riwayat PM', icon: ClipboardList },
         { href: '/catalog', label: 'Registri Daisha', icon: Layers },
       ],

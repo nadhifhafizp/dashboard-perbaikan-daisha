@@ -19,16 +19,10 @@ import {
   Building2,
   CheckCircle2,
   Truck,
-  LayoutDashboard,
-  BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 import { DAFTAR_SEKSI } from '@/lib/masterData';
-import MaintenanceKPICards, { BreakdownItem } from '@/components/maintenance/MaintenanceKPICards';
-import TargetVsActualChart from '@/components/maintenance/TargetVsActualChart';
-import { type SeksiSummaryItem } from '@/components/maintenance/SectionPopulationChart';
-import SectionComplianceTable from '@/components/maintenance/SectionComplianceTable';
 import FleetExplorer, { FleetUnit } from '@/components/maintenance/FleetExplorer';
 import MaintenanceLogsTable, { MaintenanceLogRow } from '@/components/maintenance/MaintenanceLogsTable';
 import MaintenanceInputModal from '@/components/maintenance/MaintenanceInputModal';
@@ -36,8 +30,6 @@ import UnitDetailModal from '@/components/maintenance/UnitDetailModal';
 import SectionPmHandover, { PmStagingRecord } from '@/components/maintenance/SectionPmHandover';
 import WorkshopStagingAlert from '@/components/maintenance/WorkshopStagingAlert';
 import QuickStageModal from '@/components/maintenance/QuickStageModal';
-import SectionVariantChart from '@/components/maintenance/SectionVariantChart';
-import { getSectionDaishaList } from '@/lib/masterData';
 
 interface MaintenanceSummaryState {
   totalUnits: number;
@@ -67,6 +59,25 @@ interface DailyTrendItem {
   actual: number;
   rutin: number;
   repair: number;
+}
+
+interface BreakdownItem {
+  total: number;
+  maintained: number;
+  unmaintained: number;
+  percentage: number;
+  dailyTarget: number;
+  todayActual: number;
+}
+
+interface SeksiSummaryItem {
+  seksi: string;
+  total: number;
+  maintained: number;
+  unmaintained: number;
+  percentage: number;
+  targetHarian?: number;
+  realisasiHariIni?: number;
 }
 
 function MaintenanceModuleContent() {
@@ -117,26 +128,24 @@ function MaintenanceModuleContent() {
   const [recentLogs, setRecentLogs] = useState<MaintenanceLogRow[]>([]);
   const [stagingRecords, setStagingRecords] = useState<PmStagingRecord[]>([]);
 
-  // Navigation Panel: STAGING vs FLEET vs LOGS (Dashboard dipusatkan di /kpi?tab=pm)
+  // Navigation Panel: STAGING vs FLEET vs LOGS (Pusat Operasional PM)
   const queryTab = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'STAGING' | 'FLEET' | 'LOGS'>('STAGING');
+  const [activeTab, setActiveTab] = useState<'STAGING' | 'FLEET' | 'LOGS'>('STAGING');
 
   useEffect(() => {
     if (queryTab) {
       const lower = queryTab.toLowerCase();
-      if (lower === 'staging' || lower === 'handover' || lower === 'penyiapan') {
-        setActiveTab('STAGING');
-      } else if (lower === 'fleet' || lower === 'armada' || lower === 'katalog') {
+      if (lower === 'fleet' || lower === 'armada' || lower === 'katalog') {
         setActiveTab('FLEET');
       } else if (lower === 'logs' || lower === 'riwayat') {
         setActiveTab('LOGS');
-      } else if (lower === 'dashboard' || lower === 'analitik') {
-        setActiveTab('DASHBOARD');
+      } else {
+        setActiveTab('STAGING');
       }
     }
   }, [queryTab]);
 
-  const handleTabChange = useCallback((newTab: 'DASHBOARD' | 'STAGING' | 'FLEET' | 'LOGS') => {
+  const handleTabChange = useCallback((newTab: 'STAGING' | 'FLEET' | 'LOGS') => {
     setActiveTab(newTab);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
@@ -415,7 +424,7 @@ function MaintenanceModuleContent() {
             {activeSeksi ? `PM Seksi ${activeSeksi}` : 'PM Daisha'}
           </h1>
           <p className="t-caption text-slate-500">
-            Target kepatuhan armada tahun {currentYear}
+            Pusat operasional penjemputan unit, armada PM, dan pencatatan pemeliharaan bengkel
           </p>
         </div>
 
@@ -473,36 +482,29 @@ function MaintenanceModuleContent() {
       </header>
 
       {/* 2. Primary Module Panel Navigation (Segmented Switcher) */}
-      <nav aria-label="Navigasi Panel Maintenance" className="flex items-center gap-1.5 border-b border-slate-200 pb-2 overflow-x-auto text-xs">
-        <button
-          type="button"
-          onClick={() => handleTabChange('DASHBOARD')}
-          className={`h-9 px-3 rounded-lg font-semibold transition flex items-center gap-1.5 cursor-pointer border shrink-0 ${
-            activeTab === 'DASHBOARD'
-              ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-              : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
-          }`}
-        >
-          <LayoutDashboard className="w-3.5 h-3.5" />
-          <span>Ringkasan PM</span>
-        </button>
-
+      <nav aria-label="Navigasi Panel Maintenance" className="flex items-center gap-2 border-b border-slate-200 pb-2.5 overflow-x-auto text-xs">
         <button
           type="button"
           onClick={() => handleTabChange('STAGING')}
-          className={`h-9 px-3 rounded-lg font-semibold transition flex items-center gap-1.5 cursor-pointer border shrink-0 ${
+          className={`h-9 px-3.5 rounded-lg font-bold transition flex items-center gap-2 cursor-pointer border shrink-0 ${
             activeTab === 'STAGING'
               ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
               : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
           }`}
         >
-          <Truck className="w-3.5 h-3.5" />
-          <span>{activeSeksi ? 'Penjemputan PM' : 'Antrean Penjemputan'}</span>
-          {waitingStagingCount > 0 && (
-            <span className={`px-1.5 py-0.2 rounded text-[11px] font-bold tabular-nums ${
-              activeTab === 'STAGING' ? 'bg-white/20 text-white' : 'bg-amber-500 text-white'
+          <Truck className="w-4 h-4 text-emerald-500" />
+          <span>{activeSeksi ? `Penjemputan Seksi ${activeSeksi}` : 'Penjemputan PM'}</span>
+          {waitingStagingCount > 0 ? (
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums ${
+              activeTab === 'STAGING' ? 'bg-amber-500 text-white' : 'bg-amber-100 text-amber-800'
             }`}>
               {waitingStagingCount}
+            </span>
+          ) : (
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium tabular-nums ${
+              activeTab === 'STAGING' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+            }`}>
+              0
             </span>
           )}
         </button>
@@ -510,39 +512,28 @@ function MaintenanceModuleContent() {
         <button
           type="button"
           onClick={() => handleTabChange('FLEET')}
-          className={`h-9 px-3 rounded-lg font-semibold transition flex items-center gap-1.5 cursor-pointer border shrink-0 ${
+          className={`h-9 px-3.5 rounded-lg font-bold transition flex items-center gap-2 cursor-pointer border shrink-0 ${
             activeTab === 'FLEET'
               ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
               : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
           }`}
         >
-          <Grid className="w-3.5 h-3.5" />
-          <span>Katalog Armada ({units.length})</span>
+          <Grid className="w-4 h-4 text-sky-500" />
+          <span>Armada PM ({units.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('LOGS')}
-          className={`h-9 px-3 rounded-lg font-semibold transition flex items-center gap-1.5 cursor-pointer border shrink-0 ${
+          className={`h-9 px-3.5 rounded-lg font-bold transition flex items-center gap-2 cursor-pointer border shrink-0 ${
             activeTab === 'LOGS'
               ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
               : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
           }`}
         >
-          <FileText className="w-3.5 h-3.5" />
+          <FileText className="w-4 h-4 text-slate-500" />
           <span>Riwayat PM ({recentLogs.length})</span>
         </button>
-
-        <div className="ml-auto hidden sm:flex items-center gap-1 shrink-0">
-          <Link
-            href={`/kpi?tab=pm${activeSeksi ? `&seksi=${encodeURIComponent(activeSeksi)}` : ''}`}
-            className="h-9 px-3 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer border bg-white text-slate-700 hover:bg-slate-50 border-slate-200 hover:border-slate-300"
-            title="Buka Dashboard Rapat & Evaluasi Manajemen Eksekutif"
-          >
-            <BarChart3 className="w-3.5 h-3.5 text-slate-500" />
-            <span>Rapat & Analitik PM ↗</span>
-          </Link>
-        </div>
       </nav>
 
       {/* Error Alert */}
@@ -563,133 +554,11 @@ function MaintenanceModuleContent() {
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center gap-3">
           <div className="w-8 h-8 border-3 border-red-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs text-slate-500 font-medium">Memuat data analitik PM {activeSeksi ? `Seksi ${activeSeksi}` : ''}...</p>
+          <p className="text-xs text-slate-500 font-medium">Memuat data operasional PM {activeSeksi ? `Seksi ${activeSeksi}` : ''}...</p>
         </div>
       ) : (
         <>
-          {/* PANEL 1: DASHBOARD & ANALITIK PM */}
-          {activeTab === 'DASHBOARD' && (
-            <div className="space-y-6">
-              {/* Top KPI Cards */}
-              <MaintenanceKPICards
-                summary={summary}
-                breakdown={breakdown}
-                conditionStats={conditionStats}
-                currentYear={currentYear}
-                isSeksiUser={isSeksi}
-                seksi={activeSeksi}
-                onOpenInputModal={() => handleOpenInput()}
-              />
-
-              {/* Visual Charts & Compliance Matrix */}
-              {activeSeksi ? (
-                <div className="space-y-4">
-                  <TargetVsActualChart
-                    data={dailyTrend}
-                    dailyTarget={summary.dailyTarget}
-                    breakdown={breakdown}
-                    units={seksiUnits}
-                    remainingWorkDays={summary.remainingWorkDays}
-                    title={`Grafik Target vs Realisasi PM Seksi ${activeSeksi}`}
-                    subtitle={`Monitoring target harian, real actual, dan sisa backlog armada Seksi ${activeSeksi}`}
-                  />
-                  <SectionVariantChart
-                    seksi={activeSeksi}
-                    data={variantChartData}
-                    totalUnits={seksiUnits.length}
-                    totalDailyTarget={variantChartTotalTarget}
-                  />
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Grafik Realisasi vs Target Harian PM Pabrik */}
-                  <TargetVsActualChart
-                    data={dailyTrend}
-                    dailyTarget={summary.dailyTarget}
-                    breakdown={breakdown}
-                    units={units}
-                    remainingWorkDays={summary.remainingWorkDays}
-                    title="Grafik Target vs Realisasi PM & Backlog per Jenis Daisha"
-                    subtitle="Komparasi visual target harian dan aktual pengerjaan terpisah per jenis daisha beserta sisa antrean backlog belum PM"
-                  />
-
-                  {/* Matriks Kepatuhan PM Lintas Seksi Pabrik (Table-first Operational View) */}
-                  <SectionComplianceTable
-                    seksiSummaries={seksiSummaries}
-                    stagingRecords={stagingRecords}
-                    remainingWorkDays={summary.remainingWorkDays}
-                    selectedSeksi={selectedDrilldownSeksi}
-                    onSelectSeksi={handleSelectDrilldownSeksi}
-                  />
-
-                  {/* Rincian Kepatuhan Varian per Seksi (Muncul Langsung di Bawah Tabel Tanpa Pindah Halaman) */}
-                  {selectedDrilldownSeksi && (
-                    <section
-                      id="section-drilldown-panel"
-                      aria-label={`Rincian Kepatuhan PM Seksi ${selectedDrilldownSeksi}`}
-                      className="scroll-mt-6 rounded-2xl bg-white border border-slate-200/90 p-4 sm:p-5 space-y-4"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                            {selectedDrilldownSeksi.slice(0, 2).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
-                                Rincian Kepatuhan PM Seksi {selectedDrilldownSeksi}
-                              </h3>
-                              <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                {targetUnits.length.toLocaleString('id-ID')} Unit
-                              </span>
-                              <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                Target {variantChartTotalTarget} Unit/Hari
-                              </span>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                              Distribusi armada per jenis & ukuran daisha beserta status kepatuhan PM tahun {currentYear}.
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              handleSeksiFilterChange(selectedDrilldownSeksi);
-                              handleTabChange('FLEET');
-                            }}
-                            className="h-10 px-4 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <span>Katalog Armada</span>
-                            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedDrilldownSeksi('')}
-                            className="h-10 px-3.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
-                            title="Tutup rincian seksi"
-                          >
-                            <X className="w-4 h-4 text-slate-500" />
-                            <span>Tutup Rincian</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <SectionVariantChart
-                        seksi={selectedDrilldownSeksi}
-                        data={variantChartData}
-                        totalUnits={targetUnits.length}
-                        totalDailyTarget={variantChartTotalTarget}
-                      />
-                    </section>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* PANEL 2: PENSIAPAN & PENJEMPUTAN PM KE BENGKEL */}
+          {/* PANEL 1: PENSIAPAN & PENJEMPUTAN PM KE BENGKEL */}
           {activeTab === 'STAGING' && (
             <div className="space-y-6">
               {/* Jika Admin / Bengkel membuka seksi tertentu, tetap tampilkan antrean penjemputan unit seksi tersebut di atas form */}
@@ -738,7 +607,7 @@ function MaintenanceModuleContent() {
                   <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <div>
                       <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <Truck className="w-4 h-4 text-red-600" />
+                        <Truck className="w-4.5 h-4.5 text-red-600" />
                         <span>Antrean Penjemputan PM dari Seluruh Seksi Pabrik</span>
                       </h2>
                       <p className="text-xs text-slate-500 mt-0.5">
@@ -746,15 +615,16 @@ function MaintenanceModuleContent() {
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => fetchData(true)}
-                      disabled={loading || refreshing}
-                      className="h-10 px-4 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 self-end sm:self-auto"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${refreshing ? 'animate-spin' : ''}`} />
-                      <span>Segarkan</span>
-                    </button>
+                    <div className="flex items-center gap-2 text-xs font-semibold flex-wrap">
+                      <span className="p-1.5 px-2.5 rounded-lg bg-white border border-slate-200 text-slate-700">
+                        Total Permintaan: <strong className="text-slate-900">{stagingRecords.length}</strong>
+                      </span>
+                      {waitingStagingCount > 0 && (
+                        <span className="p-1.5 px-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
+                          Menunggu Ditarik: <strong className="text-amber-900">{waitingStagingCount}</strong>
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <WorkshopStagingAlert
