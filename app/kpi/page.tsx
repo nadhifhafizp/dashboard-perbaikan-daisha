@@ -14,7 +14,6 @@ import DaishaCharts from '@/components/dashboard/DaishaCharts';
 import DamageCharts from '@/components/dashboard/DamageCharts';
 import ThroughputCharts from '@/components/dashboard/ThroughputCharts';
 import SectionCharts from '@/components/dashboard/SectionCharts';
-import TicketTable from '@/components/dashboard/TicketTable';
 import FleetHealthCharts from '@/components/dashboard/FleetHealthCharts';
 
 import { BreakdownItem } from '@/components/maintenance/MaintenanceKPICards';
@@ -52,7 +51,6 @@ export type KpiTab =
   | 'jumlah_daisha'
   | 'perbaikan_daisha'
   | 'pm_daisha'
-  | 'data_mentah'
   | 'request'
   | 'spareparts';
 
@@ -72,14 +70,13 @@ function KpiDashboardContent() {
     if (tabParam === 'pm' || subtabParam === 'pm_daisha') return 'pm_daisha';
     if (subtabParam === 'jumlah_daisha') return 'jumlah_daisha';
     if (tabParam === 'daisha' || subtabParam === 'perbaikan_daisha') return 'perbaikan_daisha';
-    if (!isSeksi && subtabParam === 'data_mentah') return 'data_mentah';
     if (tabParam === 'request') return 'request';
     if (!isSeksi && tabParam === 'spareparts') return 'spareparts';
     if (
       tabParam &&
-      ['jumlah_daisha', 'perbaikan_daisha', 'pm_daisha', 'data_mentah', 'request', 'spareparts'].includes(tabParam)
+      ['jumlah_daisha', 'perbaikan_daisha', 'pm_daisha', 'request', 'spareparts'].includes(tabParam)
     ) {
-      if (isSeksi && (tabParam === 'data_mentah' || tabParam === 'spareparts')) {
+      if (isSeksi && tabParam === 'spareparts') {
         return 'jumlah_daisha';
       }
       return tabParam as KpiTab;
@@ -88,7 +85,7 @@ function KpiDashboardContent() {
   });
 
   useEffect(() => {
-    if (isSeksi && (activeTab === 'data_mentah' || activeTab === 'spareparts')) {
+    if (isSeksi && activeTab === 'spareparts') {
       setActiveTab('jumlah_daisha');
       return;
     }
@@ -99,13 +96,11 @@ function KpiDashboardContent() {
       setActiveTab('jumlah_daisha');
     } else if (subtabParam === 'perbaikan_daisha') {
       setActiveTab('perbaikan_daisha');
-    } else if (!isSeksi && subtabParam === 'data_mentah') {
-      setActiveTab('data_mentah');
     } else if (
       tabParam &&
-      ['jumlah_daisha', 'perbaikan_daisha', 'pm_daisha', 'data_mentah', 'request', 'spareparts'].includes(tabParam)
+      ['jumlah_daisha', 'perbaikan_daisha', 'pm_daisha', 'request', 'spareparts'].includes(tabParam)
     ) {
-      if (isSeksi && (tabParam === 'data_mentah' || tabParam === 'spareparts')) {
+      if (isSeksi && tabParam === 'spareparts') {
         setActiveTab('jumlah_daisha');
       } else {
         setActiveTab(tabParam as KpiTab);
@@ -115,7 +110,7 @@ function KpiDashboardContent() {
 
   const handleTabChange = (newTab: KpiTab) => {
     let targetTab = newTab;
-    if (isSeksi && (targetTab === 'data_mentah' || targetTab === 'spareparts')) {
+    if (isSeksi && targetTab === 'spareparts') {
       targetTab = 'jumlah_daisha';
     }
     setActiveTab(targetTab);
@@ -395,8 +390,7 @@ function KpiDashboardContent() {
     if (
       activeTab === 'jumlah_daisha' ||
       activeTab === 'perbaikan_daisha' ||
-      activeTab === 'pm_daisha' ||
-      (!isSeksi && activeTab === 'data_mentah')
+      activeTab === 'pm_daisha'
     ) {
       refreshTickets();
       void fetchPmData();
@@ -408,8 +402,7 @@ function KpiDashboardContent() {
   const isCurrentTabLoading =
     ((activeTab === 'jumlah_daisha' ||
       activeTab === 'perbaikan_daisha' ||
-      activeTab === 'pm_daisha' ||
-      (!isSeksi && activeTab === 'data_mentah')) &&
+      activeTab === 'pm_daisha') &&
       (loadingTickets || isRefreshingTickets || loadingPm)) ||
     (activeTab === 'request' && loadingRequests) ||
     (!isSeksi && activeTab === 'spareparts' && loadingSpareparts);
@@ -564,79 +557,46 @@ function KpiDashboardContent() {
             )}
           </button>
 
-          {/* 4. Request Seksi (Khusus USER_SEKSI menjadi pilar ke-4, tab lainnya dihapus) */}
-          {isSeksi ? (
+          {/* 4. Request Seksi */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('request')}
+            className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'request'
+              ? 'border-red-600 text-red-600 bg-red-50/50'
+              : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+          >
+            <SendHorizonal className="w-4.5 h-4.5" />
+            <span>4. Request Seksi</span>
+            {(isSeksi ? visibleRequests : requests).length > 0 && (
+              <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-900 font-mono font-bold border border-blue-200">
+                {(isSeksi ? visibleRequests : requests).length}
+              </span>
+            )}
+          </button>
+
+          {/* 5. Stok Sparepart (Hanya untuk Non-Seksi) */}
+          {!isSeksi && (
             <button
               type="button"
-              onClick={() => handleTabChange('request')}
-              className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'request'
+              onClick={() => handleTabChange('spareparts')}
+              className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'spareparts'
                 ? 'border-red-600 text-red-600 bg-red-50/50'
                 : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                 }`}
             >
-              <SendHorizonal className="w-4.5 h-4.5" />
-              <span>4. Request Seksi</span>
-              {visibleRequests.length > 0 && (
-                <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-900 font-mono font-bold border border-blue-200">
-                  {visibleRequests.length}
+              <Package className="w-4.5 h-4.5" />
+              <span>5. Stok Sparepart</span>
+              {spareparts.length > 0 && (
+                <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-900 font-mono font-bold border border-amber-200">
+                  {spareparts.length}
                 </span>
               )}
             </button>
-          ) : (
-            <>
-              {/* Non-Seksi: Data Tiket */}
-              <button
-                type="button"
-                onClick={() => handleTabChange('data_mentah')}
-                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'data_mentah'
-                  ? 'border-red-600 text-red-600 bg-red-50/50'
-                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-              >
-                <FileSpreadsheet className="w-4.5 h-4.5" />
-                <span>Data Tiket</span>
-              </button>
-
-              {/* Non-Seksi: Request Seksi */}
-              <button
-                type="button"
-                onClick={() => handleTabChange('request')}
-                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'request'
-                  ? 'border-red-600 text-red-600 bg-red-50/50'
-                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-              >
-                <SendHorizonal className="w-4.5 h-4.5" />
-                <span>Request Seksi</span>
-                {requests.length > 0 && (
-                  <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-900 font-mono font-bold border border-blue-200">
-                    {requests.length}
-                  </span>
-                )}
-              </button>
-
-              {/* Non-Seksi: Stok Sparepart */}
-              <button
-                type="button"
-                onClick={() => handleTabChange('spareparts')}
-                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap cursor-pointer ${activeTab === 'spareparts'
-                  ? 'border-red-600 text-red-600 bg-red-50/50'
-                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-              >
-                <Package className="w-4.5 h-4.5" />
-                <span>Stok Sparepart</span>
-                {spareparts.length > 0 && (
-                  <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-900 font-mono font-bold border border-amber-200">
-                    {spareparts.length}
-                  </span>
-                )}
-              </button>
-            </>
           )}
         </div>
 
-        {/* Toolbar Kanan: Ekspor Excel jika di perbaikan / data tiket, atau Tahun PM jika di PM */}
+        {/* Toolbar Kanan: Ekspor Excel jika di perbaikan, atau Tahun PM jika di PM */}
         <div className="hidden sm:flex items-center gap-2 shrink-0 pb-1">
           {activeTab === 'pm_daisha' && (
             <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200">
@@ -655,7 +615,7 @@ function KpiDashboardContent() {
             </div>
           )}
 
-          {(!isSeksi && activeTab === 'data_mentah') || activeTab === 'perbaikan_daisha' ? (
+          {activeTab === 'perbaikan_daisha' ? (
             <button
               type="button"
               onClick={exportToExcel}
@@ -804,42 +764,7 @@ function KpiDashboardContent() {
           </div>
         )}
 
-        {/* 4. DATA MENTAH TIKET (Hanya untuk Non-Seksi) */}
-        {!isSeksi && activeTab === 'data_mentah' && (
-          <div className="space-y-6">
-            {/* Filter Panel Data Mentah */}
-            <FilterPanel
-              search={search}
-              setSearch={setSearch}
-              filterSeksi={filterSeksi}
-              setFilterSeksi={setFilterSeksi}
-              filterDaisha={filterDaisha}
-              setFilterDaisha={setFilterDaisha}
-              filterStatus={filterStatus}
-              setFilterStatus={setFilterStatus}
-              startDate={startDate}
-              setStartDate={setStartDate}
-              endDate={endDate}
-              setEndDate={setEndDate}
-              filterHanyaBerulang={filterHanyaBerulang}
-              setFilterHanyaBerulang={setFilterHanyaBerulang}
-              pilihanDaishaFiltered={filterOptions.pilihanDaisha}
-              handleQuickPreset={handleQuickPreset}
-              handleResetFilter={handleResetFilter}
-              filteredCount={filteredData.length}
-              totalCount={dataRaw.length}
-            />
-
-            {/* Tabel Raw Data Tiket Tanpa Grafik */}
-            <TicketTable
-              filteredData={filteredData}
-              loading={loadingTickets}
-              exportToExcel={exportToExcel}
-            />
-          </div>
-        )}
-
-        {/* TAB 4: KPI REQUEST SEKSI */}
+        {/* 4. KPI REQUEST SEKSI */}
         {activeTab === 'request' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
