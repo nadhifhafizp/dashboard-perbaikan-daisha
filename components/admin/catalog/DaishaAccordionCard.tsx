@@ -24,6 +24,10 @@ interface DaishaAccordionCardProps {
     id: number;
     title: string;
     description: string;
+    daishaName?: string;
+    componentName?: string;
+    symptomDesc?: string;
+    ukuran?: string;
   }) => void;
 }
 
@@ -108,6 +112,7 @@ export default function DaishaAccordionCard({
               onDeleteItem({
                 type: 'daisha',
                 id: daisha.id,
+                daishaName: daisha.name,
                 title: `Hapus Jenis Daisha: ${daisha.name}`,
                 description: `Apakah Anda yakin ingin menghapus "${daisha.name}"? Semua ${daisha.components.length} komponen dan ${totalSymptoms} gejala di dalamnya akan ikut terhapus.`,
               })

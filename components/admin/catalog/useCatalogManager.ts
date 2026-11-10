@@ -57,6 +57,10 @@ export function useCatalogManager() {
     id: number;
     title: string;
     description: string;
+    daishaName?: string;
+    componentName?: string;
+    symptomDesc?: string;
+    ukuran?: string;
   } | null>(null);
 
   // Form inputs
@@ -246,6 +250,8 @@ export function useCatalogManager() {
         body: JSON.stringify({
           action: 'ADD_COMPONENT',
           daishaId: addComponentTarget.id,
+          daishaName: addComponentTarget.name,
+          seksi: addComponentTarget.seksi,
           name: newComponentName.trim(),
         }),
       });
@@ -280,6 +286,8 @@ export function useCatalogManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'ADD_SYMPTOM',
+          daishaName: addSymptomTarget.daishaName,
+          componentName: addSymptomTarget.componentName,
           componentId: addSymptomTarget.componentId,
           description: newSymptomText.trim(),
         }),
@@ -316,6 +324,8 @@ export function useCatalogManager() {
         body: JSON.stringify({
           action: 'ADD_VARIANT',
           daishaTypeId: addVariantTarget.id,
+          daishaName: addVariantTarget.name,
+          seksi: addVariantTarget.seksi,
           name: newVariantForm.name.trim(),
           ukuran: newVariantForm.ukuran,
           susunan: newVariantForm.susunan,
@@ -365,7 +375,7 @@ export function useCatalogManager() {
 
     try {
       const res = await fetch('/api/catalog', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action:
@@ -378,6 +388,12 @@ export function useCatalogManager() {
               : 'UPDATE_SYMPTOM',
           id: editItem.id,
           name: editItem.name.trim(),
+          oldName: editItem.oldName || editItem.name.trim(),
+          newName: editItem.name.trim(),
+          daishaName: editItem.daishaName,
+          componentName: editItem.componentName,
+          oldDescription: editItem.oldDescription,
+          newDescription: editItem.name.trim(),
           description: editItem.name.trim(),
           seksi: editItem.seksi,
           codePrefix: editItem.codePrefix?.trim(),
@@ -426,7 +442,12 @@ export function useCatalogManager() {
               : deleteItem.type === 'component'
               ? 'DELETE_COMPONENT'
               : 'DELETE_SYMPTOM',
+          type: deleteItem.type,
           id: deleteItem.id,
+          daishaName: deleteItem.daishaName,
+          componentName: deleteItem.componentName,
+          symptomDesc: deleteItem.symptomDesc,
+          ukuran: deleteItem.ukuran,
         }),
       });
       const data = await res.json();

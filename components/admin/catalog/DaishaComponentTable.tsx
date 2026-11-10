@@ -18,6 +18,9 @@ interface DaishaComponentTableProps {
     id: number;
     title: string;
     description: string;
+    daishaName?: string;
+    componentName?: string;
+    symptomDesc?: string;
   }) => void;
 }
 
@@ -89,6 +92,8 @@ export default function DaishaComponentTable({
                         type: 'component',
                         id: comp.id,
                         name: comp.name,
+                        oldName: comp.name,
+                        daishaName: daisha.name,
                       })
                     }
                     className="p-1 text-slate-400 hover:text-slate-700 rounded cursor-pointer"
@@ -104,6 +109,8 @@ export default function DaishaComponentTable({
                       onDeleteItem({
                         type: 'component',
                         id: comp.id,
+                        daishaName: daisha.name,
+                        componentName: comp.name,
                         title: `Hapus Komponen: ${comp.name}`,
                         description: `Apakah Anda yakin ingin menghapus komponen "${comp.name}"? Semua ${comp.symptoms.length} gejala di dalamnya akan ikut terhapus.`,
                       })
@@ -140,6 +147,9 @@ export default function DaishaComponentTable({
                               type: 'symptom',
                               id: symptom.id,
                               name: symptom.description,
+                              oldDescription: symptom.description,
+                              daishaName: daisha.name,
+                              componentName: comp.name,
                             })
                           }
                           className="p-0.5 text-slate-400 hover:text-slate-600 rounded cursor-pointer"
@@ -154,6 +164,9 @@ export default function DaishaComponentTable({
                             onDeleteItem({
                               type: 'symptom',
                               id: symptom.id,
+                              daishaName: daisha.name,
+                              componentName: comp.name,
+                              symptomDesc: symptom.description,
                               title: `Hapus Gejala: ${symptom.description}`,
                               description: `Apakah Anda yakin ingin menghapus gejala "${symptom.description}"?`,
                             })

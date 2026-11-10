@@ -14,6 +14,8 @@ interface DaishaVariantTableProps {
     id: number;
     title: string;
     description: string;
+    daishaName?: string;
+    ukuran?: string;
   }) => void;
 }
 
@@ -125,6 +127,8 @@ export default function DaishaVariantTable({
                     onDeleteVariant({
                       type: 'variant',
                       id: v.id,
+                      daishaName: daisha.name,
+                      ukuran: v.ukuran || undefined,
                       title: `Hapus Varian: ${v.name}`,
                       description: `Apakah Anda yakin ingin menghapus varian "${v.name}"?`,
                     })

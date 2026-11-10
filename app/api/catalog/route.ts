@@ -165,16 +165,12 @@ export async function GET(request: Request) {
       }
     >();
 
-    let typeSeq = 1;
-    let compSeq = 1;
-    let symSeq = 1;
-
     for (const r of rows) {
       if (!r.daisha_type) continue;
       const typeKey = r.daisha_type.trim();
       if (!groupedDaisha.has(typeKey)) {
         groupedDaisha.set(typeKey, {
-          id: typeSeq++,
+          id: r.id,
           name: typeKey,
           seksi: r.section_name,
           codePrefix: '',
@@ -189,7 +185,7 @@ export async function GET(request: Request) {
         const compKey = r.component_name.trim();
         if (!d.componentsMap.has(compKey)) {
           d.componentsMap.set(compKey, {
-            id: compSeq++,
+            id: r.id,
             name: compKey,
             symptoms: [],
           });
@@ -199,7 +195,7 @@ export async function GET(request: Request) {
           const symDesc = r.symptom_desc.trim();
           if (!c.symptoms.some((s) => s.description === symDesc)) {
             c.symptoms.push({
-              id: symSeq++,
+              id: r.id,
               description: symDesc,
             });
           }
@@ -353,9 +349,18 @@ export async function POST(request: Request) {
       }
 
       let targetDaishaType = daishaName;
-      let targetSection = 'Building';
+      let targetSection = sanitizeText(body.seksi, 50) || 'Building';
 
-      if (!targetDaishaType && daishaId) {
+      if (targetDaishaType) {
+        const [dRow] = await sql`
+          SELECT "SectionName" FROM "TWMSDamageCatalog" 
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${targetDaishaType})) 
+          LIMIT 1
+        `;
+        if (dRow && dRow.SectionName) {
+          targetSection = dRow.SectionName;
+        }
+      } else if (daishaId) {
         const [dRow] = await sql`SELECT "DaishaType", "SectionName" FROM "TWMSDamageCatalog" WHERE "Id" = ${daishaId} LIMIT 1`;
         if (dRow) {
           targetDaishaType = dRow.DaishaType;
@@ -377,11 +382,29 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `Komponen "${name}" sudah ada pada Daisha ini.` }, { status: 400 });
       }
 
-      const [newComp] = await sql`
-        INSERT INTO "TWMSDamageCatalog" ("DaishaType", "SectionName", "ComponentName", "UpdateDate")
-        VALUES (${targetDaishaType}, ${targetSection}, ${name}, NOW())
-        RETURNING "Id" AS id, "ComponentName" AS name
+      // Jika ada baris placeholder daisha yang ComponentName-nya NULL, kita update baris itu
+      const [placeholder] = await sql`
+        SELECT "Id" FROM "TWMSDamageCatalog"
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${targetDaishaType}))
+          AND "ComponentName" IS NULL
+        LIMIT 1
       `;
+
+      let newComp;
+      if (placeholder) {
+        [newComp] = await sql`
+          UPDATE "TWMSDamageCatalog"
+          SET "ComponentName" = ${name}, "SectionName" = ${targetSection}, "UpdateDate" = NOW()
+          WHERE "Id" = ${placeholder.Id}
+          RETURNING "Id" AS id, "ComponentName" AS name
+        `;
+      } else {
+        [newComp] = await sql`
+          INSERT INTO "TWMSDamageCatalog" ("DaishaType", "SectionName", "ComponentName", "UpdateDate")
+          VALUES (${targetDaishaType}, ${targetSection}, ${name}, NOW())
+          RETURNING "Id" AS id, "ComponentName" AS name
+        `;
+      }
 
       recordAuditLog({
         action: 'CATALOG_ADD_COMPONENT',
@@ -414,9 +437,17 @@ export async function POST(request: Request) {
 
       let targetType = daishaName;
       let targetComp = componentName;
-      let targetSeksi = 'Building';
+      let targetSeksi = sanitizeText(body.seksi, 50) || 'Building';
 
-      if (!targetType || !targetComp) {
+      if (targetType && targetComp) {
+        const [cRow] = await sql`
+          SELECT "SectionName" FROM "TWMSDamageCatalog" 
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${targetType}))
+            AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${targetComp}))
+          LIMIT 1
+        `;
+        if (cRow && cRow.SectionName) targetSeksi = cRow.SectionName;
+      } else {
         const compId = body.componentId ? Number(body.componentId) : null;
         if (compId) {
           const [cRow] = await sql`SELECT "DaishaType", "ComponentName", "SectionName" FROM "TWMSDamageCatalog" WHERE "Id" = ${compId} LIMIT 1`;
@@ -443,11 +474,30 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Gejala kerusakan ini sudah ada pada komponen tersebut.' }, { status: 400 });
       }
 
-      const [newSym] = await sql`
-        INSERT INTO "TWMSDamageCatalog" ("DaishaType", "SectionName", "ComponentName", "SymptomDesc", "UpdateDate")
-        VALUES (${targetType}, ${targetSeksi}, ${targetComp}, ${description}, NOW())
-        RETURNING "Id" AS id, "SymptomDesc" AS description
+      // Jika ada baris komponen yang SymptomDesc-nya NULL, kita isi baris itu
+      const [placeholder] = await sql`
+        SELECT "Id" FROM "TWMSDamageCatalog"
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${targetType}))
+          AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${targetComp}))
+          AND "SymptomDesc" IS NULL
+        LIMIT 1
       `;
+
+      let newSym;
+      if (placeholder) {
+        [newSym] = await sql`
+          UPDATE "TWMSDamageCatalog"
+          SET "SymptomDesc" = ${description}, "UpdateDate" = NOW()
+          WHERE "Id" = ${placeholder.Id}
+          RETURNING "Id" AS id, "SymptomDesc" AS description
+        `;
+      } else {
+        [newSym] = await sql`
+          INSERT INTO "TWMSDamageCatalog" ("DaishaType", "SectionName", "ComponentName", "SymptomDesc", "UpdateDate")
+          VALUES (${targetType}, ${targetSeksi}, ${targetComp}, ${description}, NOW())
+          RETURNING "Id" AS id, "SymptomDesc" AS description
+        `;
+      }
 
       recordAuditLog({
         action: 'CATALOG_ADD_SYMPTOM',
@@ -468,7 +518,32 @@ export async function POST(request: Request) {
       });
     }
 
-    // 4. Update Daisha / Komponen / Gejala
+    // 4. Tambah Varian Baru
+    if (action === 'ADD_VARIANT') {
+      const daishaName = sanitizeText(body.daishaName || body.name_daisha, 100);
+      const seksi = sanitizeText(body.seksi, 50) || 'Building';
+      const ukuran = sanitizeText(body.ukuran, 20) || 'NONE';
+      const codePrefix = sanitizeText(body.codePrefix, 20);
+      const totalUnits = validatePositiveInt(body.totalUnits ?? 0, 'Total Unit', 0, 10000).value;
+
+      if (!daishaName) {
+        return NextResponse.json({ error: 'Nama Daisha wajib ditentukan.' }, { status: 400 });
+      }
+
+      if (totalUnits > 0) {
+        await insertNewDaishaUnits(daishaName, seksi, codePrefix || null, totalUnits, ukuran);
+      }
+
+      await syncDaishaMasterFromCatalog();
+      invalidateMaintenanceCache();
+
+      return NextResponse.json({
+        success: true,
+        message: `Varian "${body.name || ukuran}" berhasil ditambahkan ke ${daishaName}.`,
+      });
+    }
+
+    // 5. Update Daisha / Komponen / Gejala
     if (action === 'EDIT_DAISHA' || action === 'UPDATE_DAISHA') {
       const oldName = sanitizeText(body.oldName || body.name, 100);
       const newName = sanitizeText(body.newName || body.name, 100);
@@ -501,42 +576,71 @@ export async function POST(request: Request) {
     }
 
     if (action === 'EDIT_COMPONENT' || action === 'UPDATE_COMPONENT') {
-      const daishaName = sanitizeText(body.daishaName, 100);
-      const oldName = sanitizeText(body.oldName, 100);
-      const newName = sanitizeText(body.newName, 100);
+      let daishaName = sanitizeText(body.daishaName, 100);
+      const oldName = sanitizeText(body.oldName || body.name, 100);
+      const newName = sanitizeText(body.newName || body.name, 100);
 
-      if (!daishaName || !oldName || !newName) {
+      if (!oldName || !newName) {
         return NextResponse.json({ error: 'Parameter komponen tidak lengkap.' }, { status: 400 });
       }
 
-      await sql`
-        UPDATE "TWMSDamageCatalog"
-        SET "ComponentName" = ${newName}, "UpdateDate" = NOW()
-        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-          AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${oldName}))
-      `;
+      if (!daishaName && body.id) {
+        const [row] = await sql`SELECT "DaishaType" FROM "TWMSDamageCatalog" WHERE "Id" = ${Number(body.id)} LIMIT 1`;
+        if (row) daishaName = row.DaishaType;
+      }
+
+      if (daishaName) {
+        await sql`
+          UPDATE "TWMSDamageCatalog"
+          SET "ComponentName" = ${newName}, "UpdateDate" = NOW()
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${oldName}))
+        `;
+      } else {
+        await sql`
+          UPDATE "TWMSDamageCatalog"
+          SET "ComponentName" = ${newName}, "UpdateDate" = NOW()
+          WHERE LOWER(TRIM("ComponentName")) = LOWER(TRIM(${oldName}))
+        `;
+      }
 
       invalidateMaintenanceCache();
       return NextResponse.json({ success: true, message: `Komponen "${newName}" berhasil diperbarui.` });
     }
 
     if (action === 'EDIT_SYMPTOM' || action === 'UPDATE_SYMPTOM') {
-      const daishaName = sanitizeText(body.daishaName, 100);
-      const componentName = sanitizeText(body.componentName, 100);
-      const oldDesc = sanitizeText(body.oldDescription || body.oldDesc, 255);
-      const newDesc = sanitizeText(body.newDescription || body.newDesc, 255);
+      let daishaName = sanitizeText(body.daishaName, 100);
+      let componentName = sanitizeText(body.componentName, 100);
+      const oldDesc = sanitizeText(body.oldDescription || body.oldDesc || body.description, 255);
+      const newDesc = sanitizeText(body.newDescription || body.newDesc || body.name || body.description, 255);
 
-      if (!daishaName || !componentName || !oldDesc || !newDesc) {
+      if (!oldDesc || !newDesc) {
         return NextResponse.json({ error: 'Parameter gejala tidak lengkap.' }, { status: 400 });
       }
 
-      await sql`
-        UPDATE "TWMSDamageCatalog"
-        SET "SymptomDesc" = ${newDesc}, "UpdateDate" = NOW()
-        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-          AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${componentName}))
-          AND LOWER(TRIM("SymptomDesc")) = LOWER(TRIM(${oldDesc}))
-      `;
+      if ((!daishaName || !componentName) && body.id) {
+        const [row] = await sql`SELECT "DaishaType", "ComponentName" FROM "TWMSDamageCatalog" WHERE "Id" = ${Number(body.id)} LIMIT 1`;
+        if (row) {
+          daishaName = row.DaishaType;
+          componentName = row.ComponentName;
+        }
+      }
+
+      if (daishaName && componentName) {
+        await sql`
+          UPDATE "TWMSDamageCatalog"
+          SET "SymptomDesc" = ${newDesc}, "UpdateDate" = NOW()
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${componentName}))
+            AND LOWER(TRIM("SymptomDesc")) = LOWER(TRIM(${oldDesc}))
+        `;
+      } else if (body.id) {
+        await sql`
+          UPDATE "TWMSDamageCatalog"
+          SET "SymptomDesc" = ${newDesc}, "UpdateDate" = NOW()
+          WHERE "Id" = ${Number(body.id)}
+        `;
+      }
 
       invalidateMaintenanceCache();
       return NextResponse.json({ success: true, message: `Gejala kerusakan berhasil diperbarui.` });
@@ -551,13 +655,20 @@ export async function POST(request: Request) {
 }
 
 /**
+ * PUT /api/catalog - Mengupdate Daisha / Komponen / Gejala
+ */
+export async function PUT(request: Request) {
+  return POST(request);
+}
+
+/**
  * DELETE /api/catalog - Hapus data dari TWMSDamageCatalog (Khusus role ADMIN)
  */
 export async function DELETE(request: Request) {
   const auth = await requireAuth(request, ['ADMIN']);
   if (!auth.authorized) return auth.errorResponse!;
 
-  const rateLimit = checkRateLimit(`catalog_delete:${auth.ip}`, 20, 60 * 1000);
+  const rateLimit = checkRateLimit(`catalog_delete:${auth.ip}`, 30, 60 * 1000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak permintaan penghapusan.' }, { status: 429 });
   }
@@ -565,54 +676,143 @@ export async function DELETE(request: Request) {
   try {
     invalidateCatalogCache();
     const { searchParams } = new URL(request.url);
-    let type = searchParams.get('type');
+    let type = searchParams.get('type') || '';
+    let action = searchParams.get('action') || '';
     let idParam = searchParams.get('id');
-    const daishaName = sanitizeText(searchParams.get('daisha') || searchParams.get('name') || '', 100);
-    const componentName = sanitizeText(searchParams.get('component') || '', 100);
-    const symptomDesc = sanitizeText(searchParams.get('symptom') || '', 255);
+    let daishaName = sanitizeText(searchParams.get('daisha') || searchParams.get('daishaName') || searchParams.get('name') || '', 100);
+    let componentName = sanitizeText(searchParams.get('component') || searchParams.get('componentName') || '', 100);
+    let symptomDesc = sanitizeText(searchParams.get('symptom') || searchParams.get('symptomDesc') || searchParams.get('description') || '', 255);
+    let ukuran = sanitizeText(searchParams.get('ukuran') || '', 20);
 
-    if (!type) {
-      try {
-        const body = await request.json();
-        if (body.type) type = body.type;
-        if (body.id) idParam = String(body.id);
-      } catch {}
+    try {
+      const body = await request.json();
+      if (body.type) type = body.type;
+      if (body.action) action = body.action;
+      if (body.id) idParam = String(body.id);
+      if (body.daishaName) daishaName = sanitizeText(body.daishaName, 100);
+      if (body.componentName) componentName = sanitizeText(body.componentName, 100);
+      if (body.symptomDesc) symptomDesc = sanitizeText(body.symptomDesc, 255);
+      if (body.ukuran) ukuran = sanitizeText(body.ukuran, 20);
+      if (body.name && !daishaName) daishaName = sanitizeText(body.name, 100);
+    } catch {}
+
+    const isDaisha = type === 'daisha' || action === 'DELETE_DAISHA';
+    const isComponent = type === 'component' || action === 'DELETE_COMPONENT';
+    const isSymptom = type === 'symptom' || action === 'DELETE_SYMPTOM';
+    const isVariant = type === 'variant' || action === 'DELETE_VARIANT';
+
+    // 1. HAPUS DAISHA
+    if (isDaisha) {
+      if (!daishaName && idParam) {
+        const [row] = await sql`SELECT "DaishaType" FROM "TWMSDamageCatalog" WHERE "Id" = ${Number(idParam)} LIMIT 1`;
+        if (row) daishaName = row.DaishaType;
+      }
+
+      if (daishaName) {
+        await sql`
+          DELETE FROM "TWMSDamageCatalog"
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+        `;
+        await sql`
+          DELETE FROM "TWMSDaishaCatalog"
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+        `;
+        invalidateMaintenanceCache();
+        return NextResponse.json({ success: true, message: `Jenis Daisha "${daishaName}" beserta seluruh komponennya berhasil dihapus.` });
+      }
     }
 
-    if (type === 'daisha' && daishaName) {
-      await sql`
-        DELETE FROM "TWMSDamageCatalog"
-        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-      `;
-      await sql`
-        DELETE FROM "TWMSDaishaCatalog"
-        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-      `;
+    // 2. HAPUS KOMPONEN
+    if (isComponent) {
+      if ((!daishaName || !componentName) && idParam) {
+        const [row] = await sql`SELECT "DaishaType", "ComponentName" FROM "TWMSDamageCatalog" WHERE "Id" = ${Number(idParam)} LIMIT 1`;
+        if (row) {
+          daishaName = row.DaishaType;
+          componentName = row.ComponentName;
+        }
+      }
+
+      if (daishaName && componentName) {
+        await sql`
+          DELETE FROM "TWMSDamageCatalog"
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${componentName}))
+        `;
+
+        // Cek apakah masih ada baris lain untuk DaishaType ini di TWMSDamageCatalog
+        const [remaining] = await sql`
+          SELECT "Id" FROM "TWMSDamageCatalog"
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+          LIMIT 1
+        `;
+        // Jika tidak ada baris sama sekali, pertahankan nama DaishaType dengan membuat placeholder ComponentName NULL
+        if (!remaining) {
+          await sql`
+            INSERT INTO "TWMSDamageCatalog" ("DaishaType", "SectionName", "UpdateDate")
+            VALUES (${daishaName}, 'Building', NOW())
+          `;
+        }
+
+        invalidateMaintenanceCache();
+        return NextResponse.json({ success: true, message: `Komponen "${componentName}" berhasil dihapus dari ${daishaName}.` });
+      }
+    }
+
+    // 3. HAPUS GEJALA
+    if (isSymptom) {
+      if (daishaName && componentName && symptomDesc) {
+        await sql`
+          DELETE FROM "TWMSDamageCatalog"
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${componentName}))
+            AND LOWER(TRIM("SymptomDesc")) = LOWER(TRIM(${symptomDesc}))
+        `;
+      } else if (idParam) {
+        const [sRow] = await sql`SELECT "DaishaType", "ComponentName" FROM "TWMSDamageCatalog" WHERE "Id" = ${Number(idParam)} LIMIT 1`;
+        if (sRow) {
+          daishaName = sRow.DaishaType;
+          componentName = sRow.ComponentName;
+        }
+        await sql`DELETE FROM "TWMSDamageCatalog" WHERE "Id" = ${Number(idParam)}`;
+      }
+
+      if (daishaName && componentName) {
+        // Cek apakah masih ada baris komponen ini
+        const [compRem] = await sql`
+          SELECT "Id" FROM "TWMSDamageCatalog"
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${componentName}))
+          LIMIT 1
+        `;
+        // Jika baris komponen habis karena semua gejala terhapus, sisakan baris komponen tanpa gejala
+        if (!compRem) {
+          await sql`
+            INSERT INTO "TWMSDamageCatalog" ("DaishaType", "SectionName", "ComponentName", "UpdateDate")
+            VALUES (${daishaName}, 'Building', ${componentName}, NOW())
+          `;
+        }
+      }
+
       invalidateMaintenanceCache();
-      return NextResponse.json({ success: true, message: `Jenis Daisha "${daishaName}" berhasil dihapus.` });
+      return NextResponse.json({ success: true, message: 'Gejala kerusakan berhasil dihapus.' });
     }
 
-    if (type === 'component' && daishaName && componentName) {
-      await sql`
-        DELETE FROM "TWMSDamageCatalog"
-        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-          AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${componentName}))
-      `;
+    // 4. HAPUS VARIAN
+    if (isVariant) {
+      if (daishaName && ukuran && ukuran !== 'NONE') {
+        await sql`
+          DELETE FROM "TWMSDaishaCatalog"
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${ukuran}))
+        `;
+      } else if (idParam) {
+        await sql`DELETE FROM "TWMSDaishaCatalog" WHERE "Id" = ${Number(idParam)}`;
+      }
       invalidateMaintenanceCache();
-      return NextResponse.json({ success: true, message: `Komponen "${componentName}" berhasil dihapus.` });
+      return NextResponse.json({ success: true, message: 'Varian daisha berhasil dihapus.' });
     }
 
-    if (type === 'symptom' && daishaName && componentName && symptomDesc) {
-      await sql`
-        DELETE FROM "TWMSDamageCatalog"
-        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-          AND LOWER(TRIM("ComponentName")) = LOWER(TRIM(${componentName}))
-          AND LOWER(TRIM("SymptomDesc")) = LOWER(TRIM(${symptomDesc}))
-      `;
-      invalidateMaintenanceCache();
-      return NextResponse.json({ success: true, message: `Gejala "${symptomDesc}" berhasil dihapus.` });
-    }
-
+    // Fallback: hapus by raw id
     if (idParam) {
       const id = validatePositiveInt(idParam, 'ID', 1).value;
       await sql`DELETE FROM "TWMSDamageCatalog" WHERE "Id" = ${id}`;

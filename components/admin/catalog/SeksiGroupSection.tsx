@@ -31,6 +31,10 @@ interface SeksiGroupSectionProps {
     id: number;
     title: string;
     description: string;
+    daishaName?: string;
+    componentName?: string;
+    symptomDesc?: string;
+    ukuran?: string;
   }) => void;
 }
 

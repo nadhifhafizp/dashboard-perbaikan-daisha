@@ -553,6 +553,10 @@ export interface EditCatalogItemState {
   type: 'daisha' | 'component' | 'symptom' | 'variant';
   id: number;
   name: string;
+  oldName?: string;
+  daishaName?: string;
+  componentName?: string;
+  oldDescription?: string;
   seksi?: string;
   codePrefix?: string;
   totalUnits?: number;

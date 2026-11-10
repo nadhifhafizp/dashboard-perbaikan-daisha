@@ -82,11 +82,13 @@ export async function insertNewDaishaUnits(
   name: string,
   seksi: string,
   codePrefix: string | null,
-  totalUnits: number
+  totalUnits: number,
+  sizeSpec: string = 'NONE'
 ): Promise<number> {
   if (totalUnits <= 0) return 0;
 
   const prefix = (codePrefix || '').trim();
+  const cleanSize = (sizeSpec || 'NONE').trim().toUpperCase();
   const unitsToInsert: Array<{
     UnitCode: string;
     DaishaType: string;
@@ -103,7 +105,7 @@ export async function insertNewDaishaUnits(
     unitsToInsert.push({
       UnitCode: noD.toUpperCase(),
       DaishaType: name,
-      SizeSpec: 'NONE',
+      SizeSpec: cleanSize || 'NONE',
       SectionName: seksi,
       CurrentCondition: 'OK',
     });
