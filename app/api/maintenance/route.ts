@@ -658,14 +658,16 @@ export async function GET(request: Request) {
       const finalAllDaishaUnits = includeAllUnits ? mappedAllUnits : [];
       const totalAllDaishaFleet = catalogTotalAllUnits > 0 ? catalogTotalAllUnits : allDaisha.length;
 
-      // Condition Stats
-      const totalConditionCount = kondisiCount.OK + kondisiCount.RUSAK + kondisiCount.SCRAP;
+      // Condition Stats riil dari unit armada PM
+      const totalUnitsInPm = mappedPmUnits.length;
+      const fleetRusakCount = mappedPmUnits.filter((u) => u.last_condition === 'RUSAK').length;
+      const fleetOkCount = totalUnitsInPm - fleetRusakCount;
       const conditionStats = {
-        okCount: kondisiCount.OK,
-        rusakCount: kondisiCount.RUSAK,
-        totalCondition: totalConditionCount,
-        okPercentage: totalConditionCount > 0 ? Math.round((kondisiCount.OK / totalConditionCount) * 100) : 0,
-        rusakPercentage: totalConditionCount > 0 ? Math.round((kondisiCount.RUSAK / totalConditionCount) * 100) : 0,
+        okCount: fleetOkCount,
+        rusakCount: fleetRusakCount,
+        totalCondition: totalUnitsInPm,
+        okPercentage: totalUnitsInPm > 0 ? Math.round((fleetOkCount / totalUnitsInPm) * 100) : 100,
+        rusakPercentage: totalUnitsInPm > 0 ? Math.round((fleetRusakCount / totalUnitsInPm) * 100) : 0,
       };
 
       const catalogStats = {

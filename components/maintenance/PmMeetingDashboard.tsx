@@ -167,22 +167,16 @@ export default function PmMeetingDashboard({
     return sortMatrixList(filteredByQuery, sortBy);
   }, [groupingMode, jenisList, seksiList, searchQuery, sortBy]);
 
-  // Status OK vs Rusak
+  // Status Fisik Armada (Siap Operasi / OK vs Rusak) dihitung dari unit armada riil di pabrik
   const okUnitsCount = useMemo(() => {
-    if (conditionStats && conditionStats.totalCondition > 0 && !hasActiveFilters) {
-      return conditionStats.okCount;
-    }
     return filteredUnits.filter((u) => (u.last_condition || 'OK') !== 'RUSAK')
       .length;
-  }, [conditionStats, filteredUnits, hasActiveFilters]);
+  }, [filteredUnits]);
 
   const rusakUnitsCount = useMemo(() => {
-    if (conditionStats && conditionStats.totalCondition > 0 && !hasActiveFilters) {
-      return conditionStats.rusakCount;
-    }
     return filteredUnits.filter((u) => (u.last_condition || 'OK') === 'RUSAK')
       .length;
-  }, [conditionStats, filteredUnits, hasActiveFilters]);
+  }, [filteredUnits]);
 
   return (
     <div className="space-y-6 font-sans">
