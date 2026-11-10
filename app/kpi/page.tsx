@@ -246,18 +246,22 @@ function KpiDashboardContent() {
     catalogs?: any[];
   } | null>(null);
 
-  const fetchPmData = useCallback(async () => {
+  const fetchPmData = useCallback(async (forceRefresh = false) => {
     try {
       setLoadingPm(true);
       const seksiParam = userSeksi ? `&seksi=${encodeURIComponent(userSeksi)}` : '&seksi=all';
       const allUnitsParam = activeTab === 'jumlah_daisha' ? '&allUnits=true' : '';
-      const res = await fetch(`/api/maintenance?year=${pmYear}${seksiParam}${allUnitsParam}&_t=${Date.now()}&nocache=1`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          Pragma: 'no-cache',
-        },
-      });
+      const refreshParam = forceRefresh ? '&refresh=true' : '';
+      const res = await fetch(
+        `/api/maintenance?year=${pmYear}${seksiParam}${allUnitsParam}${refreshParam}&_t=${Date.now()}`,
+        {
+          cache: 'no-store',
+        }
+      );
+      if (!res.ok) {
+        console.warn(`Fetch PM KPI responded with status ${res.status}`);
+        return;
+      }
       const json = await res.json();
       if (json.success) {
         setPmSummary(json.summary || pmSummary);
@@ -368,12 +372,14 @@ function KpiDashboardContent() {
       };
     } catch {}
 
-    // Polling halus setiap 10 detik khusus pada tab Jumlah Seluruh Daisha
+    // Polling halus setiap 60 detik khusus pada tab Jumlah Seluruh Daisha saat tab aktif & terlihat
     let intervalId: NodeJS.Timeout | null = null;
     if (activeTab === 'jumlah_daisha') {
       intervalId = setInterval(() => {
-        void fetchPmData();
-      }, 10000);
+        if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+          void fetchPmData();
+        }
+      }, 60000);
     }
 
     return () => {
@@ -393,7 +399,7 @@ function KpiDashboardContent() {
       activeTab === 'pm_daisha'
     ) {
       refreshTickets();
-      void fetchPmData();
+      void fetchPmData(true);
     }
     if (activeTab === 'request') void fetchRequests();
     if (!isSeksi && activeTab === 'spareparts') void fetchSpareparts();

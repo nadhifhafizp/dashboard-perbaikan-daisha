@@ -19,6 +19,7 @@ import {
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+export const maxDuration = 60;
 
 // In-Memory Multi-Key Cache untuk Response Payload (TTL: 2 menit per filter)
 interface CacheEntry {
@@ -89,12 +90,10 @@ export async function GET(request: Request) {
         ? 'all'
         : filterSeksi.trim().toLowerCase();
     
-    // Selalu bypass cache jika diminta armada penuh (KPI Jumlah Daisha) atau ada timestamp _t
+    // Hanya bypass cache jika parameter refresh=true atau force=true
     const bypassCache =
-      includeAllUnits ||
-      searchParams.has('_t') ||
-      searchParams.has('nocache') ||
-      searchParams.has('t');
+      searchParams.get('refresh') === 'true' ||
+      searchParams.get('force') === 'true';
 
     const cacheKey = `maint_${currentYear}_${filterJenis || 'all'}_${filterUkuran || 'all'}_${normalizedSeksi}_${includeAllUnits ? 'all' : 'pm'}`;
     
@@ -134,38 +133,69 @@ export async function GET(request: Request) {
       const workDaysInfo = calculateRemainingWorkDaysInYear(now, true);
       const remainingWorkDays = workDaysInfo.remainingWorkDays;
 
-      // Ambil master daisha dari TWMSDaishaCatalog
-      let allDaisha: DaishaRow[];
+      const pmTypes = ['Vertical', 'Slide B-Truck', 'GT Ring', 'Inner Liner', 'A-Truck Nagara Filler', 'Tire Roller'];
       const nowMs = Date.now();
-      const cached = globalForMaint.cachedAllDaisha;
-      if (!bypassCache && cached && nowMs - cached.timestamp < ALL_DAISHA_TTL) {
-        allDaisha = cached.data;
-      } else {
-        allDaisha = await sql<DaishaRow[]>`
-          SELECT 
-            d."Id" AS id,
-            d."UnitCode" AS nomor_daisha,
-            d."DaishaType" AS jenis,
-            COALESCE(d."SizeSpec", 'NONE') AS ukuran,
-            COALESCE(d."DaishaType", 'Vertical') AS nama_daisha,
-            COALESCE(d."SectionName", 'All seksi') AS seksi,
-            d."LastPMDate" AS last_maintenance_date,
-            COALESCE(d."CurrentCondition", 'OK') AS last_condition,
-            d."LastPMDate" AS last_repair_date,
-            NULL AS last_waktu_masuk,
-            NULL AS last_waktu_keluar,
-            d."UpdateDate" AS updated_at
-          FROM "TWMSDaishaCatalog" d
-          WHERE d."IsActive" = TRUE
-        `;
-        globalForMaint.cachedAllDaisha = {
-          data: allDaisha,
-          timestamp: nowMs,
-        };
-      }
 
-      // Query tabel log, master katalog, dan tiket aktif secara paralel
-      const [todayLogs, recentLogs, trendLogRows, conditionRows, catalogRows, activeTicketRows] = await Promise.all([
+      // Query daisha master (Jika includeAllUnits dan cache valid, gunakan cache)
+      const cachedAll = globalForMaint.cachedAllDaisha;
+      const canUseCachedAll = !bypassCache && cachedAll && nowMs - cachedAll.timestamp < ALL_DAISHA_TTL;
+
+      const daishaQueryPromise = canUseCachedAll
+        ? Promise.resolve(cachedAll.data)
+        : includeAllUnits
+        ? sql<DaishaRow[]>`
+            SELECT 
+              d."Id" AS id,
+              d."UnitCode" AS nomor_daisha,
+              d."DaishaType" AS jenis,
+              COALESCE(d."SizeSpec", 'NONE') AS ukuran,
+              COALESCE(d."DaishaType", 'Vertical') AS nama_daisha,
+              COALESCE(d."SectionName", 'All seksi') AS seksi,
+              d."LastPMDate" AS last_maintenance_date,
+              COALESCE(d."CurrentCondition", 'OK') AS last_condition,
+              d."LastPMDate" AS last_repair_date,
+              NULL AS last_waktu_masuk,
+              NULL AS last_waktu_keluar,
+              d."UpdateDate" AS updated_at
+            FROM "TWMSDaishaCatalog" d
+            WHERE d."IsActive" = TRUE
+          `.then((rows) => {
+            globalForMaint.cachedAllDaisha = {
+              data: rows,
+              timestamp: nowMs,
+            };
+            return rows;
+          })
+        : sql<DaishaRow[]>`
+            SELECT 
+              d."Id" AS id,
+              d."UnitCode" AS nomor_daisha,
+              d."DaishaType" AS jenis,
+              COALESCE(d."SizeSpec", 'NONE') AS ukuran,
+              COALESCE(d."DaishaType", 'Vertical') AS nama_daisha,
+              COALESCE(d."SectionName", 'All seksi') AS seksi,
+              d."LastPMDate" AS last_maintenance_date,
+              COALESCE(d."CurrentCondition", 'OK') AS last_condition,
+              d."LastPMDate" AS last_repair_date,
+              NULL AS last_waktu_masuk,
+              NULL AS last_waktu_keluar,
+              d."UpdateDate" AS updated_at
+            FROM "TWMSDaishaCatalog" d
+            WHERE d."IsActive" = TRUE AND d."DaishaType" IN ${sql(pmTypes)}
+          `;
+
+      // Eksekusi seluruh kueri secara paralel dan efisien
+      const [
+        allDaisha,
+        todayLogs,
+        recentLogs,
+        trendLogRows,
+        conditionRows,
+        catalogRows,
+        activeTicketRows,
+        seksiAggRows,
+      ] = await Promise.all([
+        daishaQueryPromise,
         sql`
           SELECT 
             l."Id" AS id,
@@ -183,7 +213,7 @@ export async function GET(request: Request) {
             d."DaishaType" AS jenis,
             d."SizeSpec" AS ukuran
           FROM "TWMSMaintenanceLog" l
-          LEFT JOIN "TWMSDaishaCatalog" d ON UPPER(TRIM(d."UnitCode")) = UPPER(TRIM(l."UnitCode"))
+          LEFT JOIN "TWMSDaishaCatalog" d ON d."UnitCode" = l."UnitCode"
           WHERE l."RecordType" = 'PM'
             AND l."CheckDate" >= ${startOfToday} AND l."CheckDate" <= ${endOfToday}
         `,
@@ -204,7 +234,7 @@ export async function GET(request: Request) {
             d."DaishaType" AS jenis,
             d."SizeSpec" AS ukuran
           FROM "TWMSMaintenanceLog" l
-          LEFT JOIN "TWMSDaishaCatalog" d ON UPPER(TRIM(d."UnitCode")) = UPPER(TRIM(l."UnitCode"))
+          LEFT JOIN "TWMSDaishaCatalog" d ON d."UnitCode" = l."UnitCode"
           WHERE l."RecordType" = 'PM'
           ORDER BY l."CheckDate" DESC
           LIMIT 50
@@ -254,7 +284,23 @@ export async function GET(request: Request) {
             AND "UnitCode" IS NOT NULL
             AND "UnitCode" != '-'
         `,
+        sql<Array<{ seksi: string; total: number; rusak: number; ok: number; total_types: number }>>`
+          SELECT 
+            COALESCE("SectionName", 'Lainnya') AS seksi,
+            count(*)::int AS total,
+            count(CASE WHEN "CurrentCondition" = 'RUSAK' THEN 1 END)::int AS rusak,
+            count(CASE WHEN "CurrentCondition" != 'RUSAK' OR "CurrentCondition" IS NULL THEN 1 END)::int AS ok,
+            count(DISTINCT "DaishaType")::int AS total_types
+          FROM "TWMSDaishaCatalog"
+          WHERE "IsActive" = TRUE
+          GROUP BY "SectionName"
+        `,
       ]);
+
+      const seksiAggMap = new Map<string, { total: number; rusak: number; ok: number; total_types: number }>();
+      for (const row of seksiAggRows) {
+        seksiAggMap.set(row.seksi, row);
+      }
 
       // Sinkronisasi status kondisi unit dengan tiket perbaikan aktif
       const activeRepairNoSet = new Set(
@@ -466,9 +512,15 @@ export async function GET(request: Request) {
       // Susun sebaran seksi lengkap
       const seksiDistribution = Array.from(DAFTAR_SEKSI).map((seksiName) => {
         const pmStats = pmSeksiMap.get(seksiName) || { total: 0, maintained: 0, unmaintained: 0, rusak: 0 };
-        const allStats = allSeksiMap.get(seksiName) || { total: 0, ok: 0, rusak: 0, jenisSet: new Set() };
+        const seksiAgg = seksiAggMap.get(seksiName) || { total: 0, ok: 0, rusak: 0, total_types: 0 };
+        const allStats = allSeksiMap.get(seksiName) || {
+          total: seksiAgg.total,
+          ok: seksiAgg.ok,
+          rusak: seksiAgg.rusak,
+          jenisSet: new Set<string>(),
+        };
         
-        let officialSectionUnits = allStats.total;
+        let officialSectionUnits = seksiAgg.total > 0 ? seksiAgg.total : allStats.total;
         const matchedKey = Array.from(catalogSeksiMap.keys()).find(
           (k) => k.toLowerCase() === seksiName.toLowerCase()
         );
@@ -480,10 +532,10 @@ export async function GET(request: Request) {
         return {
           seksi: seksiName,
           total: officialSectionUnits,
-          actualFleetCount: allStats.total,
-          ok: allStats.ok,
-          rusak: allStats.rusak,
-          totalTypes: allStats.jenisSet.size,
+          actualFleetCount: seksiAgg.total > 0 ? seksiAgg.total : allStats.total,
+          ok: seksiAgg.total > 0 ? seksiAgg.ok : allStats.ok,
+          rusak: seksiAgg.total > 0 ? seksiAgg.rusak : allStats.rusak,
+          totalTypes: allStats.jenisSet.size > 0 ? allStats.jenisSet.size : seksiAgg.total_types,
           pmTotal: pmStats.total,
           pmMaintained: pmStats.maintained,
           pmUnmaintained: pmStats.unmaintained,
