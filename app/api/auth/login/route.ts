@@ -115,7 +115,10 @@ export async function POST(request: Request) {
       details: error instanceof Error ? error.message : 'Internal Server Error',
     });
     return NextResponse.json(
-      { error: 'Terjadi kesalahan pada server saat login.' },
+      {
+        error: 'Terjadi kesalahan pada server saat login.',
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
