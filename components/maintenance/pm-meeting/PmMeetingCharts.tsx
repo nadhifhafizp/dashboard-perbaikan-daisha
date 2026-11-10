@@ -204,20 +204,45 @@ export default function PmMeetingCharts({
                         interval={0}
                         tick={({ x, y, payload }) => {
                           const text = String(payload.value || '');
-                          const isLong = text.length > 11;
+                          // Pisahkan menjadi 2 baris jika teks panjang agar tetap lurus (horizontal) tanpa miring
+                          let lines = [text];
+                          if (text === 'A-Truck Nagara Filler') {
+                            lines = ['A-Truck', 'Nagara Filler'];
+                          } else if (text === 'Slide B-Truck') {
+                            lines = ['Slide', 'B-Truck'];
+                          } else if (text === 'Inner Liner') {
+                            lines = ['Inner', 'Liner'];
+                          } else if (text.length > 12 && text.includes(' ')) {
+                            const splitIdx = text.lastIndexOf(' ');
+                            lines = [text.slice(0, splitIdx), text.slice(splitIdx + 1)];
+                          }
+
+                          const baseY = chartOrientation === 'opposing' ? 14 : 8;
+
                           return (
                             <g transform={`translate(${x},${y})`}>
                               <text
                                 x={0}
-                                y={chartOrientation === 'opposing' ? 14 : 6}
-                                dy={4}
-                                textAnchor={isLong ? 'end' : 'middle'}
-                                transform={isLong ? 'rotate(-18)' : undefined}
+                                y={baseY}
+                                textAnchor="middle"
                                 fill="#0f172a"
                                 fontSize={11}
                                 fontWeight={800}
                               >
-                                {text.length > 15 ? text.slice(0, 13) + '…' : text}
+                                {lines.length === 1 ? (
+                                  <tspan x={0} dy="0">
+                                    {lines[0]}
+                                  </tspan>
+                                ) : (
+                                  <>
+                                    <tspan x={0} dy="0">
+                                      {lines[0]}
+                                    </tspan>
+                                    <tspan x={0} dy="13">
+                                      {lines[1]}
+                                    </tspan>
+                                  </>
+                                )}
                               </text>
                             </g>
                           );
