@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import {
+  calculateRemainingWorkDaysInPmCycle,
   calculateRemainingWorkDaysInYear,
   calculateDailyTarget,
   formatDateKey,
+  isWeekendOrHoliday,
 } from '@/lib/maintenanceWorkdays';
 import {
   requireAuth,
@@ -121,19 +123,28 @@ export async function GET(request: Request) {
     }
 
     const computePayload = async (): Promise<Record<string, unknown>> => {
-      // Siklus PM Daisha resmi dimulai per 1 Oktober (Oktober tahun berjalan)
-      const startOfPmPeriod = new Date(currentYear, 9, 1, 0, 0, 0, 0);
-      const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+      // Siklus 1 Tahun PM Daisha resmi dimulai 1 Oktober s/d 31 Oktober tahun berikutnya
+      const pmCycleInfo = calculateRemainingWorkDaysInPmCycle(now, true);
+      const startOfPmPeriod = pmCycleInfo.cycleStart;
+      const endOfPmPeriod = pmCycleInfo.cycleEnd;
+      const remainingWorkDays = pmCycleInfo.remainingWorkDays;
+
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
       const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
       const trendDays = 14;
       const trendStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - trendDays, 0, 0, 0, 0);
 
-      // Hitung sisa hari kerja di tahun berjalan
-      const workDaysInfo = calculateRemainingWorkDaysInYear(now, true);
-      const remainingWorkDays = workDaysInfo.remainingWorkDays;
-
-      const pmTypes = ['Vertical', 'Slide B-Truck', 'GT Ring', 'Inner Liner', 'A-Truck Nagara Filler', 'Tire Roller'];
+      // 6 Kategori Daisha Resmi PM Workshop
+      const pmTypes = [
+        'Vertical',
+        'Ply',
+        'Slide B-Truck',
+        'B-Truck Side',
+        'GT Ring',
+        'Inner Liner',
+        'A-Truck Nagara Filler',
+        'Tire Roller',
+      ];
       const nowMs = Date.now();
 
       // Query daisha master (Jika includeAllUnits dan cache valid, gunakan cache)
@@ -252,7 +263,7 @@ export async function GET(request: Request) {
             COALESCE("ChecklistResult", 'OK') AS kondisi,
             COUNT(*)::int AS count
           FROM "TWMSMaintenanceLog"
-          WHERE "RecordType" = 'PM' AND "CheckDate" >= ${startOfPmPeriod} AND "CheckDate" <= ${endOfYear}
+          WHERE "RecordType" = 'PM' AND "CheckDate" >= ${startOfPmPeriod} AND "CheckDate" <= ${endOfPmPeriod}
           GROUP BY COALESCE("ChecklistResult", 'OK')
         `,
         sql<Array<{
@@ -406,7 +417,7 @@ export async function GET(request: Request) {
         const effectiveLastDate = (lastMaint && lastRepair)
           ? (lastMaint > lastRepair ? lastMaint : lastRepair)
           : (lastMaint || lastRepair);
-        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfPmPeriod && effectiveLastDate <= endOfYear;
+        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfPmPeriod && effectiveLastDate <= endOfPmPeriod;
         
         const canonicalJenis = getCanonicalPmJenis(u.jenis);
 
@@ -480,7 +491,7 @@ export async function GET(request: Request) {
         const effectiveLastDate = (lastMaint && lastRepair)
           ? (lastMaint > lastRepair ? lastMaint : lastRepair)
           : (lastMaint || lastRepair);
-        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfPmPeriod && effectiveLastDate <= endOfYear;
+        const isMaintainedThisYear = effectiveLastDate !== null && effectiveLastDate >= startOfPmPeriod && effectiveLastDate <= endOfPmPeriod;
         if (isMaintainedThisYear) {
           entry.maintained++;
         } else {
@@ -622,10 +633,26 @@ export async function GET(request: Request) {
         }
       });
 
-      const dailyTrend = Array.from(dailyTrendMap.entries()).map(([date, stats]) => ({
-        date,
-        ...stats,
-      }));
+      const dailyTrend = Array.from(dailyTrendMap.entries()).map(([dateStr, stats]) => {
+        const parts = dateStr.split('-');
+        const dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        const isOffDay = isWeekendOrHoliday(dateObj, true);
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dateLabel = `${day}/${month}`;
+
+        return {
+          date: dateStr,
+          dateLabel,
+          isWeekend: isOffDay,
+          target: isOffDay ? 0 : summary.dailyTarget,
+          actual: stats.total,
+          rutin: stats.rutin,
+          repair: stats.repair,
+          ok: stats.ok,
+          rusak: stats.rusak,
+        };
+      });
 
       const finalAllDaishaUnits = includeAllUnits ? mappedAllUnits : [];
       const totalAllDaishaFleet = catalogTotalAllUnits > 0 ? catalogTotalAllUnits : allDaisha.length;

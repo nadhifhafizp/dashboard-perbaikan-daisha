@@ -267,11 +267,19 @@ export default function PmMeetingCharts({
                                     {d.maintained} Unit ({d.percentage}%)
                                   </span>
                                 </div>
-                                <div className="pt-1 border-t border-slate-100 flex justify-between text-slate-500 text-xs">
-                                  <span>Target / Real Hari Ini:</span>
-                                  <span className="font-semibold text-slate-800">
-                                    {d.todayActual} / {d.dailyTarget} unit
-                                  </span>
+                                <div className="pt-1.5 border-t border-slate-100 space-y-1 text-xs">
+                                  <div className="flex justify-between items-center text-slate-600">
+                                    <span>Target Wajib:</span>
+                                    <span className="font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded">
+                                      {d.dailyTarget} unit / hari
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-slate-500">
+                                    <span>Realisasi Hari Ini:</span>
+                                    <span className="font-semibold text-slate-800">
+                                      {d.todayActual} unit
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             );
