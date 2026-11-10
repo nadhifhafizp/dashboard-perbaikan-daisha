@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -246,9 +246,13 @@ function KpiDashboardContent() {
     catalogs?: any[];
   } | null>(null);
 
+  const hasLoadedPmOnceRef = useRef(false);
+
   const fetchPmData = useCallback(async (forceRefresh = false) => {
     try {
-      setLoadingPm(true);
+      if (!hasLoadedPmOnceRef.current || forceRefresh) {
+        setLoadingPm(true);
+      }
       const seksiParam = userSeksi ? `&seksi=${encodeURIComponent(userSeksi)}` : '&seksi=all';
       const allUnitsParam = activeTab === 'jumlah_daisha' ? '&allUnits=true' : '';
       const refreshParam = forceRefresh ? '&refresh=true' : '';
@@ -264,6 +268,7 @@ function KpiDashboardContent() {
       }
       const json = await res.json();
       if (json.success) {
+        hasLoadedPmOnceRef.current = true;
         setPmSummary(json.summary || pmSummary);
         setPmCondition(json.conditionStats || pmCondition);
         setPmBreakdown(json.breakdown || {});
@@ -346,14 +351,6 @@ function KpiDashboardContent() {
     };
 
     window.addEventListener('daisha-catalog-updated', handleSync);
-    window.addEventListener('focus', handleSync);
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        handleSync();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'daisha_catalog_updated_at') {
@@ -384,8 +381,6 @@ function KpiDashboardContent() {
 
     return () => {
       window.removeEventListener('daisha-catalog-updated', handleSync);
-      window.removeEventListener('focus', handleSync);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('storage', handleStorage);
       if (channel) channel.close();
       if (intervalId) clearInterval(intervalId);
@@ -743,7 +738,7 @@ function KpiDashboardContent() {
         {/* 3. KPI PM DAISHA */}
         {activeTab === 'pm_daisha' && (
           <div className="space-y-6">
-            {loadingPm ? (
+            {loadingPm && pmUnits.length === 0 ? (
               <div className="flex items-center justify-center min-h-[250px] bg-white rounded-xl border border-slate-200">
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="w-6 h-6 animate-spin text-red-600" />
