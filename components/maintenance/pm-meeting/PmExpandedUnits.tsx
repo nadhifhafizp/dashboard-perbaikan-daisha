@@ -57,9 +57,9 @@ export default function PmExpandedUnits({
                 <button
                   type="button"
                   onClick={() => setUnitStatusFilter('all')}
-                  className={`h-7 px-2.5 rounded-md transition cursor-pointer ${
+                  className={`h-7 px-2.5 rounded-md transition cursor-pointer font-semibold ${
                     unitStatusFilter === 'all'
-                      ? 'bg-slate-900 text-white font-semibold'
+                      ? 'bg-slate-900 text-white shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -68,10 +68,10 @@ export default function PmExpandedUnits({
                 <button
                   type="button"
                   onClick={() => setUnitStatusFilter('unmaintained')}
-                  className={`h-7 px-2.5 rounded-md transition cursor-pointer ${
+                  className={`h-7 px-2.5 rounded-md transition cursor-pointer font-bold ${
                     unitStatusFilter === 'unmaintained'
-                      ? 'bg-slate-900 text-white font-semibold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-rose-600 text-white shadow-2xs'
+                      : 'text-rose-700 hover:bg-rose-50'
                   }`}
                 >
                   Belum PM ({item.unmaintained})
@@ -79,10 +79,10 @@ export default function PmExpandedUnits({
                 <button
                   type="button"
                   onClick={() => setUnitStatusFilter('maintained')}
-                  className={`h-7 px-2.5 rounded-md transition cursor-pointer ${
+                  className={`h-7 px-2.5 rounded-md transition cursor-pointer font-bold ${
                     unitStatusFilter === 'maintained'
-                      ? 'bg-slate-900 text-white font-semibold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-emerald-600 text-white shadow-2xs'
+                      : 'text-emerald-700 hover:bg-emerald-50'
                   }`}
                 >
                   Sudah PM ({item.maintained})
@@ -91,10 +91,10 @@ export default function PmExpandedUnits({
                   <button
                     type="button"
                     onClick={() => setUnitStatusFilter('rusak')}
-                    className={`h-7 px-2.5 rounded-md transition cursor-pointer ${
+                    className={`h-7 px-2.5 rounded-md transition cursor-pointer font-bold ${
                       unitStatusFilter === 'rusak'
-                        ? 'bg-rose-700 text-white font-semibold'
-                        : 'text-rose-700 font-medium hover:bg-rose-50'
+                        ? 'bg-rose-700 text-white shadow-2xs'
+                        : 'text-rose-700 hover:bg-rose-50'
                     }`}
                   >
                     Rusak ({item.rusakCount})
@@ -113,7 +113,7 @@ export default function PmExpandedUnits({
             </div>
           </div>
 
-          {/* Grid Unit Kartu Precision */}
+          {/* Grid Unit Kartu Precision - Warna Merah untuk Belum PM & Hijau untuk Sudah PM */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-80 overflow-y-auto pr-1">
             {filteredUnits.length === 0 ? (
               <div className="col-span-full py-6 text-center text-xs text-slate-400">
@@ -133,55 +133,70 @@ export default function PmExpandedUnits({
                 return (
                   <div
                     key={u.id || u.nomor_daisha}
-                    className={`p-2.5 rounded-lg border text-left bg-white transition ${
-                      isDamaged
-                        ? 'border-rose-300'
-                        : isDone
-                        ? 'border-slate-200'
-                        : 'border-slate-200'
+                    className={`p-2.5 rounded-lg border text-left transition shadow-2xs ${
+                      isDone
+                        ? 'bg-emerald-50/70 border-emerald-300 hover:border-emerald-500'
+                        : 'bg-rose-50/60 border-rose-300 hover:border-rose-500'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-semibold text-xs text-slate-900 tracking-tight font-mono">
+                      <span
+                        className={`font-bold text-xs tracking-tight font-mono ${
+                          isDone ? 'text-emerald-950' : 'text-rose-950'
+                        }`}
+                      >
                         {u.nomor_daisha}
                       </span>
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          isDamaged
-                            ? 'bg-rose-600'
-                            : isDone
-                            ? 'bg-emerald-600'
-                            : 'bg-amber-400'
-                        }`}
-                        title={isDamaged ? 'Rusak' : isDone ? 'Sudah PM' : 'Belum PM'}
-                      />
+                      <div className="flex items-center gap-1.5">
+                        {isDamaged && (
+                          <span className="text-[9px] font-black uppercase px-1 py-0.5 rounded bg-rose-600 text-white">
+                            RUSAK
+                          </span>
+                        )}
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            isDone ? 'bg-emerald-600' : 'bg-rose-600'
+                          }`}
+                          title={isDone ? 'Sudah PM' : 'Belum PM'}
+                        />
+                      </div>
                     </div>
 
-                    <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
-                      <span className="truncate">{u.seksi || 'Pabrik'}</span>
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
+                      <span className="truncate font-medium">{u.seksi || 'Pabrik'}</span>
                       <span
-                        className={`font-medium ${
-                          isDamaged ? 'text-rose-700' : 'text-slate-600'
+                        className={`font-semibold ${
+                          isDamaged ? 'text-rose-700 font-bold' : 'text-slate-600'
                         }`}
                       >
                         {isDamaged ? 'RUSAK' : 'OK'}
                       </span>
                     </div>
 
-                    <div className="mt-1 pt-1 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                    <div
+                      className={`mt-1.5 pt-1.5 border-t flex items-center justify-between text-[11px] ${
+                        isDone ? 'border-emerald-200' : 'border-rose-200'
+                      }`}
+                    >
                       <span
-                        className={
+                        className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
                           isDone
-                            ? 'text-emerald-700 font-medium'
-                            : 'text-slate-400'
-                        }
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-rose-100 text-rose-800'
+                        }`}
                       >
                         {isDone ? 'Sudah PM' : 'Belum PM'}
                       </span>
                       {dateStr ? (
-                        <span className="text-slate-400 tabular-nums">{dateStr}</span>
+                        <span
+                          className={`tabular-nums font-semibold text-[10px] ${
+                            isDone ? 'text-emerald-800' : 'text-rose-700'
+                          }`}
+                        >
+                          {dateStr}
+                        </span>
                       ) : (
-                        <span className="text-slate-300">-</span>
+                        <span className="text-slate-400 text-[10px]">-</span>
                       )}
                     </div>
                   </div>
