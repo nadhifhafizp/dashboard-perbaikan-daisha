@@ -50,6 +50,14 @@ export default function UnitDetailModal({
       })
     : 'Belum pernah dicatat';
 
+  const formattedNextDate = unit.next_pm_date
+    ? new Date(unit.next_pm_date).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : null;
+
   const formattedWaktuMasuk = unit.last_waktu_masuk
     ? new Date(unit.last_waktu_masuk).toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -129,6 +137,25 @@ export default function UnitDetailModal({
                 Maintenance Terakhir:
               </span>
               <span className="font-semibold text-slate-800">{formattedLastDate}</span>
+            </div>
+
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+              <span className="text-slate-500 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                Jatuh Tempo PM Berikutnya:
+              </span>
+              {formattedNextDate ? (
+                <div className="text-right">
+                  <span className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-xs">
+                    {formattedNextDate}
+                  </span>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Siklus PM {currentYear + 1}</p>
+                </div>
+              ) : (
+                <span className="font-bold text-rose-800 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded text-xs">
+                  Prioritas Siklus {currentYear}
+                </span>
+              )}
             </div>
 
             <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">

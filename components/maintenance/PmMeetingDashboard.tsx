@@ -15,6 +15,7 @@ import PmMeetingHeader, { ChartViewType } from './pm-meeting/PmMeetingHeader';
 import PmMeetingCharts from './pm-meeting/PmMeetingCharts';
 import PmMeetingFilterBar from './pm-meeting/PmMeetingFilterBar';
 import PmMatrixTable from './pm-meeting/PmMatrixTable';
+import PmNextYearForecast, { NextYearProjectionData } from './pm-meeting/PmNextYearForecast';
 
 export type { UnifiedMatrixItem };
 
@@ -36,6 +37,7 @@ interface PmMeetingDashboardProps {
   onExportRepair?: () => void;
   repairTicketsCount?: number;
   onYearChange?: (year: number) => void;
+  projection?: NextYearProjectionData | null;
 }
 
 export default function PmMeetingDashboard({
@@ -48,6 +50,7 @@ export default function PmMeetingDashboard({
   onExportRepair,
   repairTicketsCount = 0,
   onYearChange,
+  projection,
 }: PmMeetingDashboardProps) {
   // State interaksi tabel & chart
   const [groupingMode, setGroupingMode] = useState<'JENIS' | 'SEKSI'>('JENIS');
@@ -208,6 +211,13 @@ export default function PmMeetingDashboard({
         okUnitsCount={okUnitsCount}
         rusakUnitsCount={rusakUnitsCount}
         currentYear={currentYear}
+      />
+
+      {/* 2.5 Proyeksi & Jadwal PM Tahun Depan */}
+      <PmNextYearForecast
+        currentYear={currentYear}
+        projection={projection}
+        totalFleetCount={totalPopulasi}
       />
 
       {/* 3. Tabel Mapping Lengkap Status PM per Jenis/Seksi */}

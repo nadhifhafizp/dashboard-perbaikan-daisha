@@ -444,6 +444,13 @@ export async function GET(request: Request) {
         const numMatch = u.nomor_daisha.match(/\d+/);
         const serialNumber = numMatch ? parseInt(numMatch[0], 10) : 0;
 
+        // Hitung Jatuh Tempo PM Berikutnya (+1 tahun / 365 hari dari effectiveLastDate)
+        let nextPmDate: Date | null = null;
+        if (effectiveLastDate) {
+          nextPmDate = new Date(effectiveLastDate);
+          nextPmDate.setFullYear(nextPmDate.getFullYear() + 1);
+        }
+
         return {
           id: u.id,
           nomor_daisha: u.nomor_daisha,
@@ -459,6 +466,8 @@ export async function GET(request: Request) {
           last_waktu_keluar: u.last_waktu_keluar,
           is_maintained: isMaintainedThisYear,
           days_since_last: daysSinceLast,
+          next_pm_date: nextPmDate ? nextPmDate.toISOString() : null,
+          is_due_next_year: isMaintainedThisYear,
         };
       });
 
@@ -686,6 +695,67 @@ export async function GET(request: Request) {
         })),
       };
 
+      // Kalkulasi Proyeksi Beban PM Tahun Depan (Siklus 2027)
+      const targetYearNext = currentYear + 1;
+      const unitsScheduledNextYear = mappedPmUnits.filter((u) => u.is_maintained);
+      const totalScheduledNextYear = unitsScheduledNextYear.length;
+      const totalFleetPmTarget = mappedPmUnits.length;
+      const totalRemainingToSchedule = totalFleetPmTarget - totalScheduledNextYear;
+      const projectedDailyTargetNextYear = summary.dailyTarget;
+
+      // Grouping per bulan jatuh tempo tahun depan
+      const monthNamesIndo = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ];
+      
+      const monthMap = new Map<string, { monthKey: string; monthName: string; year: number; month: number; count: number; types: Record<string, number> }>();
+      
+      for (const u of unitsScheduledNextYear) {
+        if (!u.next_pm_date) continue;
+        const d = new Date(u.next_pm_date);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const key = `${y}-${String(m + 1).padStart(2, '0')}`;
+        const monthName = `${monthNamesIndo[m]} ${y}`;
+        
+        if (!monthMap.has(key)) {
+          monthMap.set(key, { monthKey: key, monthName, year: y, month: m, count: 0, types: {} });
+        }
+        const item = monthMap.get(key)!;
+        item.count++;
+        item.types[u.jenis] = (item.types[u.jenis] || 0) + 1;
+      }
+
+      const monthlySchedule = Array.from(monthMap.values()).sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+
+      // Breakdown per jenis daisha untuk tahun depan
+      const breakdownByJenisNextYear = Array.from(
+        new Set(mappedPmUnits.map((u) => u.jenis))
+      ).map((jenis) => {
+        const total = mappedPmUnits.filter((u) => u.jenis === jenis).length;
+        const alreadyScheduled = unitsScheduledNextYear.filter((u) => u.jenis === jenis).length;
+        const remainingWorkDays = summary.remainingWorkDays > 0 ? summary.remainingWorkDays : 237;
+        const projectedTargetDaily = total > 0 ? Math.max(1, Math.round(total / remainingWorkDays)) : 0;
+        return {
+          jenis,
+          total,
+          alreadyScheduled,
+          projectedTargetDaily,
+        };
+      }).sort((a, b) => b.total - a.total);
+
+      const nextYearProjection = {
+        targetYear: targetYearNext,
+        totalScheduledNextYear,
+        totalFleetTarget: totalFleetPmTarget,
+        totalRemainingToSchedule,
+        projectedDailyTarget: projectedDailyTargetNextYear,
+        projectedWorkDays: summary.remainingWorkDays,
+        monthlySchedule,
+        breakdownByJenis: breakdownByJenisNextYear,
+      };
+
       return {
         success: true,
         summary,
@@ -705,6 +775,7 @@ export async function GET(request: Request) {
         kondisiStatus: kondisiCount,
         dailyTrend,
         activeRepairsCount: activeTicketRows.length,
+        nextYearProjection,
         meta: {
           year: currentYear,
           remainingWorkDays,

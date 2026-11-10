@@ -34,6 +34,8 @@ export interface FleetUnit {
   last_waktu_keluar?: string | null;
   is_maintained: boolean;
   days_since_last: number | null;
+  next_pm_date?: string | null;
+  is_due_next_year?: boolean;
 }
 
 export interface StagedUnitInfo {
@@ -73,7 +75,7 @@ export default function FleetExplorer({
   const [search, setSearch] = useState<string>('');
   const [filterSeksi, setFilterSeksi] = useState<string>(() => (isSeksiUser && seksi) ? seksi : (seksi || 'ALL'));
   const [filterJenis, setFilterJenis] = useState<string>('ALL');
-  const [filterStatus, setFilterStatus] = useState<'ALL' | 'MAINTAINED' | 'UNMAINTAINED'>('ALL');
+  const [filterStatus, setFilterStatus] = useState<'ALL' | 'MAINTAINED' | 'UNMAINTAINED' | 'DUE_NEXT_YEAR'>('ALL');
   const [viewMode, setViewMode] = useState<'GRID' | 'TABLE'>('TABLE');
 
   useEffect(() => {
@@ -141,6 +143,7 @@ export default function FleetExplorer({
       // Filter Status PM
       if (filterStatus === 'MAINTAINED' && !u.is_maintained) return false;
       if (filterStatus === 'UNMAINTAINED' && u.is_maintained) return false;
+      if (filterStatus === 'DUE_NEXT_YEAR' && !u.is_due_next_year) return false;
 
       // Filter Search
       if (search.trim()) {
@@ -221,6 +224,7 @@ export default function FleetExplorer({
       'Seksi',
       `Status PM ${currentYear}`,
       'Terakhir Maintenance',
+      'Jatuh Tempo PM Berikutnya',
       'Status Staging',
       'Lokasi Staging',
       'Jadwal Masuk Bengkel',
@@ -234,6 +238,7 @@ export default function FleetExplorer({
       const statusStaging = stagingInfo ? 'Di Staging' : '-';
       const lokasiStaging = stagingInfo ? stagingInfo.lokasi : '-';
       const tglMaint = u.last_maintenance_date ? formatDate(u.last_maintenance_date) : '-';
+      const tglNextPm = u.next_pm_date ? formatDate(u.next_pm_date) : 'Siklus Berjalan';
       const tglMasuk = u.last_waktu_masuk ? formatDate(u.last_waktu_masuk) : '-';
       const tglKeluar = u.last_waktu_keluar ? formatDate(u.last_waktu_keluar) : '-';
 
@@ -244,6 +249,7 @@ export default function FleetExplorer({
         `"${u.seksi || '-'}"`,
         `"${statusPM}"`,
         `"${tglMaint}"`,
+        `"${tglNextPm}"`,
         `"${statusStaging}"`,
         `"${lokasiStaging}"`,
         `"${tglMasuk}"`,
@@ -383,12 +389,13 @@ export default function FleetExplorer({
           <div className="lg:col-span-2">
             <select
               value={filterStatus}
-              onChange={(e) => handleFilterChange(setFilterStatus, e.target.value as 'ALL' | 'MAINTAINED' | 'UNMAINTAINED')}
+              onChange={(e) => handleFilterChange(setFilterStatus, e.target.value as 'ALL' | 'MAINTAINED' | 'UNMAINTAINED' | 'DUE_NEXT_YEAR')}
               className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 bg-white focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
             >
               <option value="ALL">Semua Status PM</option>
               <option value="MAINTAINED">Sudah Maintenance</option>
               <option value="UNMAINTAINED">Belum Maintenance</option>
+              <option value="DUE_NEXT_YEAR">Jatuh Tempo Tahun Depan ({currentYear + 1})</option>
             </select>
           </div>
 
@@ -470,7 +477,7 @@ export default function FleetExplorer({
                     {formatJenisLabel(u.jenis, u.ukuran)}
                   </div>
 
-                  {/* Bottom: Seksi & Timestamp */}
+                  {/* Bottom: Seksi & Timestamp PM */}
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs w-full">
                     <span className="font-semibold text-slate-700">
                       {u.seksi ? `Seksi ${u.seksi}` : 'Pabrik'}
@@ -484,6 +491,23 @@ export default function FleetExplorer({
                           })
                         : 'Belum PM'}
                     </span>
+                  </div>
+
+                  {/* Next PM Due Date Indicator */}
+                  <div className="flex items-center justify-between pt-1 border-t border-dashed border-slate-200/80 text-[11px] w-full">
+                    <span className="text-slate-500 font-medium">Jatuh Tempo:</span>
+                    {u.next_pm_date ? (
+                      <span className="font-bold text-emerald-800 bg-emerald-100/90 px-1.5 py-0.2 rounded text-[10px] tabular-nums">
+                        {new Date(u.next_pm_date).toLocaleDateString('id-ID', {
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    ) : (
+                      <span className="font-bold text-rose-800 bg-rose-100/90 px-1.5 py-0.2 rounded text-[10px]">
+                        Siklus {currentYear}
+                      </span>
+                    )}
                   </div>
                 </button>
               );
@@ -535,6 +559,7 @@ export default function FleetExplorer({
                   )}
                   <th className="py-3 px-3.5">Status PM {currentYear}</th>
                   <th className="py-3 px-3.5">Terakhir Maintenance</th>
+                  <th className="py-3 px-3.5">Jatuh Tempo PM</th>
                   <th className="py-3 px-3.5">Jadwal Masuk / Keluar</th>
                   <th className="py-3 px-3.5 text-center">Aksi Cepat</th>
                 </tr>
@@ -589,6 +614,17 @@ export default function FleetExplorer({
                       </td>
                       <td className="py-3 px-3.5 text-slate-600 tabular-nums">
                         {formatDate(u.last_maintenance_date)}
+                      </td>
+                      <td className="py-3 px-3.5 text-xs tabular-nums">
+                        {u.next_pm_date ? (
+                          <span className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                            {formatDate(u.next_pm_date)}
+                          </span>
+                        ) : (
+                          <span className="font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
+                            Siklus {currentYear}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-3.5 text-xs text-slate-600 tabular-nums">
                         {u.last_waktu_masuk || u.last_waktu_keluar ? (

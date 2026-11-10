@@ -199,6 +199,18 @@ export default function PmExpandedUnits({
                         <span className="text-slate-400 text-[10px]">-</span>
                       )}
                     </div>
+
+                    {isDone && u.next_pm_date && (
+                      <div className="mt-1 pt-1 border-t border-dashed border-emerald-200/80 flex items-center justify-between text-[10px] text-emerald-900">
+                        <span className="text-slate-500 font-medium">Jatuh Tempo:</span>
+                        <span className="font-bold bg-emerald-100/90 px-1 py-0.2 rounded tabular-nums">
+                          {new Date(u.next_pm_date).toLocaleDateString('id-ID', {
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })

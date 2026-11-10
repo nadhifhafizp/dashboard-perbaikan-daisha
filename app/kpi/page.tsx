@@ -238,6 +238,7 @@ function KpiDashboardContent() {
   const [pmDailyTrend, setPmDailyTrend] = useState<DailyTrendItem[]>([]);
   const [pmUnits, setPmUnits] = useState<FleetUnit[]>([]);
   const [allFleetUnits, setAllFleetUnits] = useState<FleetUnit[]>([]);
+  const [pmNextYearProjection, setPmNextYearProjection] = useState<any>(null);
   const [catalogStats, setCatalogStats] = useState<{
     totalAllUnits: number;
     totalPmUnits?: number;
@@ -275,6 +276,9 @@ function KpiDashboardContent() {
         setPmDailyTrend(json.dailyTrend || []);
         setPmUnits(json.units || json.pmUnits || []);
         setAllFleetUnits(json.allUnits || json.units || []);
+        if (json.nextYearProjection) {
+          setPmNextYearProjection(json.nextYearProjection);
+        }
         if (json.catalogStats) {
           setCatalogStats(json.catalogStats);
         }
@@ -760,6 +764,7 @@ function KpiDashboardContent() {
                 conditionStats={pmCondition}
                 onExportRepair={exportToExcel}
                 repairTicketsCount={visibleTickets.filter((t) => (t.status === 'Open' || t.status === 'Progress') && isPmEligibleDaisha(t.namaDaisha)).length}
+                projection={pmNextYearProjection}
               />
             )}
           </div>
