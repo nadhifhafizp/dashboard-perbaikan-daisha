@@ -239,15 +239,11 @@ export async function GET(request: Request) {
             "DaishaType" AS name, 
             COALESCE("SectionName", 'Building') AS seksi, 
             NULL AS "codePrefix",
-            (
-              SELECT count(*)::int 
-              FROM "TWMSDaishaCatalog" dc 
-              WHERE dc."DaishaType" = c."DaishaType" AND dc."IsActive" = TRUE
-            ) AS "totalUnits", 
+            count(*)::int AS "totalUnits", 
             '[]'::jsonb AS components,
             '[]'::jsonb AS variants
-          FROM "TWMSDamageCatalog" c
-          WHERE "DaishaType" IS NOT NULL
+          FROM "TWMSDaishaCatalog"
+          WHERE "IsActive" = TRUE AND "DaishaType" IS NOT NULL
           GROUP BY "DaishaType", "SectionName"
           ORDER BY "DaishaType" ASC
         `,
@@ -582,16 +578,48 @@ export async function GET(request: Request) {
       const finalAllDaishaUnits = includeAllUnits ? mappedAllUnits : [];
       const totalAllDaishaFleet = catalogTotalAllUnits > 0 ? catalogTotalAllUnits : allDaisha.length;
 
+      // Condition Stats
+      const totalConditionCount = kondisiCount.OK + kondisiCount.RUSAK + kondisiCount.SCRAP;
+      const conditionStats = {
+        okCount: kondisiCount.OK,
+        rusakCount: kondisiCount.RUSAK,
+        totalCondition: totalConditionCount,
+        okPercentage: totalConditionCount > 0 ? Math.round((kondisiCount.OK / totalConditionCount) * 100) : 0,
+        rusakPercentage: totalConditionCount > 0 ? Math.round((kondisiCount.RUSAK / totalConditionCount) * 100) : 0,
+      };
+
+      const catalogStats = {
+        totalAllUnits: allDaisha.length,
+        totalPmUnits: pmCatalogTotalUnits > 0 ? pmCatalogTotalUnits : targetPmDaisha.length,
+        bySeksi: Object.fromEntries(catalogSeksiMap),
+        pmBySeksi: Object.fromEntries(pmCatalogSeksiMap),
+        catalogs: catalogRows.map((cat) => ({
+          id: cat.id,
+          name: cat.name,
+          seksi: cat.seksi,
+          codePrefix: cat.codePrefix,
+          totalUnits: Number(cat.totalUnits) || 0,
+          components: Array.isArray(cat.components) ? cat.components : [],
+          variants: Array.isArray(cat.variants) ? cat.variants : [],
+        })),
+      };
+
       return {
+        success: true,
         summary,
+        conditionStats,
         breakdown,
         seksiDistribution,
         totalAllDaishaFleet,
+        allUnits: finalAllDaishaUnits,
         allDaishaUnits: finalAllDaishaUnits,
+        pmUnits: mappedPmUnits,
+        units: filteredGridUnits,
+        catalogStats,
         totalCatalogJenisCount: catalogJenisSet.size,
         catalogJenisList: Array.from(catalogJenisSet).sort(),
-        units: filteredGridUnits,
         recentActivities,
+        recentLogs: recentActivities,
         kondisiStatus: kondisiCount,
         dailyTrend,
         activeRepairsCount: activeTicketRows.length,
