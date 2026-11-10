@@ -131,7 +131,8 @@ export async function GET(request: Request) {
 
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
       const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-      const trendDays = 14;
+      // Ambil data tren hingga 35 hari terakhir (cukup untuk rentang 7 hari, 30 hari, dan bulan berjalan)
+      const trendDays = 35;
       const trendStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - trendDays, 0, 0, 0, 0);
 
       // 6 Kategori Daisha Resmi PM Workshop

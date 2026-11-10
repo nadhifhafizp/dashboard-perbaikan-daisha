@@ -81,10 +81,30 @@ export default function PmMeetingCharts({
     [maxUnm, maxMain]
   );
 
-  // Headroom untuk Tren 14 Hari
+  // Filter Rentang Waktu Tren Kinerja Workshop (7 Hari, 30 Hari, Bulan Ini)
+  const [trendTimeRange, setTrendTimeRange] = useState<'7D' | '30D' | 'MONTH'>('30D');
+
+  const filteredDailyTrend = useMemo(() => {
+    if (!dailyTrend || dailyTrend.length === 0) return [];
+    if (trendTimeRange === '7D') {
+      return dailyTrend.slice(-7);
+    }
+    if (trendTimeRange === '30D') {
+      return dailyTrend.slice(-30);
+    }
+    if (trendTimeRange === 'MONTH') {
+      const today = new Date();
+      const currentYearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+      const thisMonthItems = dailyTrend.filter((d) => d.date.startsWith(currentYearMonth));
+      return thisMonthItems.length > 0 ? thisMonthItems : dailyTrend.slice(-30);
+    }
+    return dailyTrend;
+  }, [dailyTrend, trendTimeRange]);
+
+  // Headroom untuk Tren Kinerja Harian
   const maxDailyVal = useMemo(
-    () => Math.max(...dailyTrend.map((d) => Math.max(d.target, d.actual)), 10),
-    [dailyTrend]
+    () => Math.max(...filteredDailyTrend.map((d) => Math.max(d.target, d.actual)), 10),
+    [filteredDailyTrend]
   );
   const yDailyDomain = useMemo(
     () => Math.ceil(maxDailyVal * 1.2),
@@ -410,25 +430,57 @@ export default function PmMeetingCharts({
           {(chartView === 'ALL' || chartView === 'TREND') && (
             <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-2xs">
               <div>
-                <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 flex-wrap">
                   <div>
                     <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
                       <TrendingUp className="w-7 h-7 sm:w-8 sm:h-8 text-sky-600 shrink-0" />
-                      <span>Tren Kinerja Harian Workshop (14 Hari)</span>
+                      <span>Tren Kinerja Harian Workshop</span>
                     </h3>
                     <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-                      Konsistensi target harian wajib vs realisasi pengerjaan aktual bengkel
+                      Target harian wajib vs realisasi bengkel ({trendTimeRange === '7D' ? '7 Hari Terakhir' : trendTimeRange === '30D' ? '30 Hari Terakhir' : 'Bulan Berjalan'})
                     </p>
                   </div>
-                  <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded">
-                    Harian
-                  </span>
+                  <div className="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setTrendTimeRange('7D')}
+                      className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                        trendTimeRange === '7D'
+                          ? 'bg-white text-sky-800 shadow-xs font-bold'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      7 Hari
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTrendTimeRange('30D')}
+                      className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                        trendTimeRange === '30D'
+                          ? 'bg-white text-sky-800 shadow-xs font-bold'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      30 Hari
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTrendTimeRange('MONTH')}
+                      className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                        trendTimeRange === 'MONTH'
+                          ? 'bg-white text-sky-800 shadow-xs font-bold'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Bulan Ini
+                    </button>
+                  </div>
                 </div>
 
                 <div className="h-[440px] sm:h-[480px] w-full pt-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={dailyTrend}
+                      data={filteredDailyTrend}
                       margin={{ top: 25, right: 20, left: -10, bottom: 20 }}
                       barGap={4}
                       barCategoryGap="8%"
@@ -528,7 +580,7 @@ export default function PmMeetingCharts({
                         name="Target Harian"
                         fill="#94a3b8"
                         radius={[4, 4, 0, 0]}
-                        barSize={28}
+                        maxBarSize={28}
                         isAnimationActive={false}
                       >
                         <LabelList
@@ -547,7 +599,7 @@ export default function PmMeetingCharts({
                         stackId="act"
                         fill="#059669"
                         radius={[0, 0, 0, 0]}
-                        barSize={28}
+                        maxBarSize={28}
                         isAnimationActive={false}
                       >
                         {/* Jika repair == 0, tampilkan total aktual di atas rutin */}
@@ -584,7 +636,7 @@ export default function PmMeetingCharts({
                         stackId="act"
                         fill="#0284c7"
                         radius={[4, 4, 0, 0]}
-                        barSize={28}
+                        maxBarSize={28}
                         isAnimationActive={false}
                       >
                         {/* Jika repair > 0, tampilkan total aktual di atas repair */}
@@ -620,10 +672,10 @@ export default function PmMeetingCharts({
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                 <span className="italic text-xs">
-                  Target dihitung proporsional terhadap sisa hari kerja aktif
+                  Target dihitung proporsional terhadap sisa hari kerja aktif (Senin–Jumat)
                 </span>
                 <span className="font-semibold text-slate-700">
-                  {dailyTrend.length} Hari Kerja Terakhir
+                  {filteredDailyTrend.length} Hari Terpantau
                 </span>
               </div>
             </div>
