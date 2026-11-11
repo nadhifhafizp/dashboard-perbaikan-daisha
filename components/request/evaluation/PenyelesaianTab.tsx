@@ -1,8 +1,10 @@
 import React from 'react';
-import { CheckCircle2, Send, Clock, Users, DollarSign, CalendarCheck, Lock } from 'lucide-react';
+import { CheckCircle2, Send, Clock, Users, DollarSign, CalendarCheck, Lock, Wrench, Package } from 'lucide-react';
 import { EvaluationFormData } from './types';
+import { SectionRequestFull } from '../BridgestoneRequestPrintModal';
 
 interface PenyelesaianTabProps {
+  requestData?: SectionRequestFull | null;
   formData: EvaluationFormData;
   loading: boolean;
   isApprovedBySpecialProject?: boolean;
@@ -11,6 +13,7 @@ interface PenyelesaianTabProps {
 }
 
 export default function PenyelesaianTab({
+  requestData,
   formData,
   loading,
   isApprovedBySpecialProject = false,
@@ -98,6 +101,57 @@ export default function PenyelesaianTab({
               placeholder="Mis: Rp 210.000"
               value={formData.biayaActual}
               onChange={(e) => setFormData((p) => ({ ...p, biayaActual: e.target.value }))}
+              className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:border-red-600 outline-none"
+            />
+          </div>
+        </div>
+
+        {/* 1.2 Kebutuhan Sparepart & Material (Target VS Actual) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {/* Sparepart Actual */}
+          <div className="p-3 rounded-lg border border-purple-200 bg-purple-50/40 space-y-1.5">
+            <div className="flex items-center justify-between text-xs font-bold text-purple-900">
+              <span className="flex items-center gap-1.5">
+                <Wrench className="w-3.5 h-3.5 text-purple-600" />
+                <span>Kebutuhan Sparepart</span>
+              </span>
+              <span
+                title={formData.kebutuhanSparepart || requestData?.kebutuhanSparepart || '-'}
+                className="text-[10px] font-semibold text-purple-700 bg-purple-100/70 px-1.5 py-0.2 rounded truncate max-w-[140px]"
+              >
+                Est: {formData.kebutuhanSparepart || requestData?.kebutuhanSparepart || '-'}
+              </span>
+            </div>
+            <label className="text-[11px] text-slate-600 block">Realisasi Sparepart (Actual)</label>
+            <input
+              type="text"
+              placeholder="Mis: Roda PU 6 inch (4 Pcs), Bearing 6204 (4 Pcs)"
+              value={formData.sparepartActual || ''}
+              onChange={(e) => setFormData((p) => ({ ...p, sparepartActual: e.target.value }))}
+              className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:border-red-600 outline-none"
+            />
+          </div>
+
+          {/* Material Actual */}
+          <div className="p-3 rounded-lg border border-teal-200 bg-teal-50/40 space-y-1.5">
+            <div className="flex items-center justify-between text-xs font-bold text-teal-900">
+              <span className="flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5 text-teal-600" />
+                <span>Kebutuhan Material</span>
+              </span>
+              <span
+                title={formData.kebutuhanMaterial || requestData?.kebutuhanMaterial || '-'}
+                className="text-[10px] font-semibold text-teal-700 bg-teal-100/70 px-1.5 py-0.2 rounded truncate max-w-[140px]"
+              >
+                Est: {formData.kebutuhanMaterial || requestData?.kebutuhanMaterial || '-'}
+              </span>
+            </div>
+            <label className="text-[11px] text-slate-600 block">Realisasi Material (Actual)</label>
+            <input
+              type="text"
+              placeholder="Mis: Plat Besi SPHC 3mm [100x50 cm], Besi Hollow 40x40"
+              value={formData.materialActual || ''}
+              onChange={(e) => setFormData((p) => ({ ...p, materialActual: e.target.value }))}
               className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:border-red-600 outline-none"
             />
           </div>

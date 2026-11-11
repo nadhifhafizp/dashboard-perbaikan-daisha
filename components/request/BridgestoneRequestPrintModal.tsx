@@ -74,7 +74,9 @@ export interface SectionRequestFull {
   statusApprovalAtasanSpecialProject?: string;
   waktuApprovalAtasanSpecialProject?: string;
   kebutuhanSparepart?: string;
+  sparepartActual?: string;
   kebutuhanMaterial?: string;
+  materialActual?: string;
   flowStep?: string;
   alasanPending?: string;
   ttdAtasanSeksi?: string;
@@ -198,19 +200,23 @@ export default function BridgestoneRequestPrintModal({
       (m) => (m.tipe || '').toUpperCase() !== 'SPAREPART' && (m.tipe || '').toUpperCase() !== 'MATERIAL'
     );
 
-    const realisasiSparepartStr = sparepartMaterials.length > 0
-      ? sparepartMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
-      : (requestData.kebutuhanSparepart && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan')
-          ? requestData.kebutuhanSparepart
-          : '-');
-
-    const realisasiMaterialStr = rawMaterials.length > 0
-      ? rawMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Unit'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')
-      : (otherMaterials.length > 0
-          ? otherMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
-          : (requestData.kebutuhanMaterial && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan')
-              ? requestData.kebutuhanMaterial
+    const realisasiSparepartStr = requestData.sparepartActual?.trim()
+      ? requestData.sparepartActual.trim()
+      : (sparepartMaterials.length > 0
+          ? sparepartMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
+          : (requestData.kebutuhanSparepart && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan' || requestData.status === 'Pekerjaan Fisik Selesai')
+              ? requestData.kebutuhanSparepart
               : '-'));
+
+    const realisasiMaterialStr = requestData.materialActual?.trim()
+      ? requestData.materialActual.trim()
+      : (rawMaterials.length > 0
+          ? rawMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Unit'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')
+          : (otherMaterials.length > 0
+              ? otherMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
+              : (requestData.kebutuhanMaterial && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan' || requestData.status === 'Pekerjaan Fisik Selesai')
+                  ? requestData.kebutuhanMaterial
+                  : '-')));
 
     const makePrintBadge = (isVerified: boolean, manualImg?: string | null) => {
       if (manualImg && manualImg.startsWith('data:image')) {
@@ -668,19 +674,23 @@ export default function BridgestoneRequestPrintModal({
     (m) => (m.tipe || '').toUpperCase() !== 'SPAREPART' && (m.tipe || '').toUpperCase() !== 'MATERIAL'
   );
 
-  const realisasiSparepartPreview = previewSparepartMaterials.length > 0
-    ? previewSparepartMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
-    : (requestData.kebutuhanSparepart && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan')
-        ? requestData.kebutuhanSparepart
-        : '-');
-
-  const realisasiMaterialPreview = previewRawMaterials.length > 0
-    ? previewRawMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Unit'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')
-    : (previewOtherMaterials.length > 0
-        ? previewOtherMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
-        : (requestData.kebutuhanMaterial && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan')
-            ? requestData.kebutuhanMaterial
+  const realisasiSparepartPreview = requestData.sparepartActual?.trim()
+    ? requestData.sparepartActual.trim()
+    : (previewSparepartMaterials.length > 0
+        ? previewSparepartMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
+        : (requestData.kebutuhanSparepart && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan' || requestData.status === 'Pekerjaan Fisik Selesai')
+            ? requestData.kebutuhanSparepart
             : '-'));
+
+  const realisasiMaterialPreview = requestData.materialActual?.trim()
+    ? requestData.materialActual.trim()
+    : (previewRawMaterials.length > 0
+        ? previewRawMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Unit'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')
+        : (previewOtherMaterials.length > 0
+            ? previewOtherMaterials.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
+            : (requestData.kebutuhanMaterial && (requestData.status === 'Selesai' || requestData.status === 'Dikerjakan' || requestData.status === 'Pekerjaan Fisik Selesai')
+                ? requestData.kebutuhanMaterial
+                : '-')));
 
   return (
     <div

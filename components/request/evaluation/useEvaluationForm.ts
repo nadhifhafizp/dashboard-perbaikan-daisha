@@ -16,7 +16,9 @@ const initialFormData: EvaluationFormData = {
   orangJamEstimate: '',
   orangJamActual: '',
   kebutuhanSparepart: '',
+  sparepartActual: '',
   kebutuhanMaterial: '',
+  materialActual: '',
   biayaEstimate: '',
   biayaActual: '',
   tglPelaksanaanEstimate: '',
@@ -74,6 +76,19 @@ export function useEvaluationForm(
     setWasOpen(true);
     setPrevRequest(requestData);
     if (requestData) {
+      const spParts = (requestData.materials || []).filter(
+        (m) => (m.tipe || '').toUpperCase() === 'SPAREPART'
+      );
+      const rawMats = (requestData.materials || []).filter(
+        (m) => (m.tipe || '').toUpperCase() === 'MATERIAL'
+      );
+      const defaultActualSparepart = spParts.length > 0
+        ? spParts.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Pcs'})`).join('; ')
+        : '';
+      const defaultActualMaterial = rawMats.length > 0
+        ? rawMats.map(m => `${m.namaKomponen} (${m.qty} ${m.satuan || 'Unit'}${m.dimensi ? ` - ${m.dimensi}` : ''})`).join('; ')
+        : '';
+
       setFormData({
         status: requestData.status || 'Diajukan',
         flowStep: requestData.flowStep || 'STEP_4_EVALUASI_WORKSHOP',
@@ -87,8 +102,10 @@ export function useEvaluationForm(
         waktuActual: requestData.waktuActual || '',
         orangJamEstimate: requestData.orangJamEstimate || '',
         orangJamActual: requestData.orangJamActual || '',
-        kebutuhanSparepart: '',
-        kebutuhanMaterial: '',
+        kebutuhanSparepart: requestData.kebutuhanSparepart || '',
+        sparepartActual: requestData.sparepartActual || defaultActualSparepart,
+        kebutuhanMaterial: requestData.kebutuhanMaterial || '',
+        materialActual: requestData.materialActual || defaultActualMaterial,
         biayaEstimate: requestData.biayaEstimate || '',
         biayaActual: requestData.biayaActual || '',
         tglPelaksanaanEstimate: requestData.tglPelaksanaanEstimate || '',
@@ -344,6 +361,8 @@ export function useEvaluationForm(
       waktuActual: formData.waktuActual,
       orangJamActual: formData.orangJamActual,
       biayaActual: formData.biayaActual,
+      sparepartActual: formData.sparepartActual,
+      materialActual: formData.materialActual,
       scheduleActual: formData.scheduleActual,
     });
   };

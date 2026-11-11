@@ -218,6 +218,10 @@ export async function GET(request: Request) {
         sr."CheckResultRequester" AS "hasilCheckPemohon",
         sr."SchedulePlan" AS "schedulePlanning",
         sr."ScheduleActual" AS "scheduleActual",
+        sr."EstSparepart" AS "kebutuhanSparepart",
+        sr."ActSparepart" AS "sparepartActual",
+        sr."EstMaterial" AS "kebutuhanMaterial",
+        sr."ActMaterial" AS "materialActual",
         sr."SectionHeadEmail" AS "emailAtasanSeksi",
         sr."SectionHeadName" AS "namaAtasanSeksi",
         sr."SectionHeadStatus" AS "statusApprovalAtasanSeksi",
@@ -443,7 +447,9 @@ export async function POST(request: Request) {
       const orangJamEstimate = sanitizeText(body.orangJamEstimate, 100);
       const orangJamActual = sanitizeText(body.orangJamActual, 100);
       const kebutuhanSparepart = sanitizeText(body.kebutuhanSparepart, 2000);
+      const sparepartActual = sanitizeText(body.sparepartActual ?? body.kebutuhanSparepartActual, 2000);
       const kebutuhanMaterial = sanitizeText(body.kebutuhanMaterial, 2000);
+      const materialActual = sanitizeText(body.materialActual ?? body.kebutuhanMaterialActual, 2000);
       const biayaEstimate = sanitizeText(body.biayaEstimate, 100);
       const biayaActual = sanitizeText(body.biayaActual, 100);
 
@@ -614,6 +620,10 @@ export async function POST(request: Request) {
           "CheckResultRequester" = ${hasilCheckPemohon !== undefined ? (hasilCheckPemohon || null) : null},
           "SchedulePlan" = ${schedulePlanning !== undefined ? (schedulePlanning || null) : null},
           "ScheduleActual" = ${scheduleActual !== undefined ? (scheduleActual || null) : null},
+          "EstSparepart" = ${kebutuhanSparepart !== undefined ? (kebutuhanSparepart || null) : sql`"EstSparepart"`},
+          "ActSparepart" = ${sparepartActual !== undefined ? (sparepartActual || null) : sql`"ActSparepart"`},
+          "EstMaterial" = ${kebutuhanMaterial !== undefined ? (kebutuhanMaterial || null) : sql`"EstMaterial"`},
+          "ActMaterial" = ${materialActual !== undefined ? (materialActual || null) : sql`"ActMaterial"`},
           "FinishDate" = ${nextStatus === 'Selesai' ? (current.FinishDate || new Date()) : current.FinishDate},
           "UpdateDate" = NOW()
         WHERE "Id" = ${id}
@@ -660,6 +670,8 @@ export async function POST(request: Request) {
       const waktuActual = sanitizeText(body.waktuActual, 100);
       const orangJamActual = sanitizeText(body.orangJamActual, 100);
       const biayaActual = sanitizeText(body.biayaActual, 100);
+      const sparepartActual = sanitizeText(body.sparepartActual ?? body.kebutuhanSparepartActual, 2000);
+      const materialActual = sanitizeText(body.materialActual ?? body.kebutuhanMaterialActual, 2000);
       const scheduleActual = sanitizeText(body.scheduleActual, 1000);
 
       const [current] = await sql<Array<{ Id: number; RequestNo: string; SpecialProjectSignature: string | null }>>`
@@ -684,6 +696,8 @@ export async function POST(request: Request) {
           "ActDuration" = COALESCE(${waktuActual || null}, "ActDuration"),
           "ActManHour" = COALESCE(${orangJamActual || null}, "ActManHour"),
           "ActCost" = COALESCE(${biayaActual || null}, "ActCost"),
+          "ActSparepart" = COALESCE(${sparepartActual || null}, "ActSparepart"),
+          "ActMaterial" = COALESCE(${materialActual || null}, "ActMaterial"),
           "ScheduleActual" = COALESCE(${scheduleActual || null}, "ScheduleActual"),
           "CheckResult" = ${hasilCheck || null},
           "CheckResultRequester" = ${hasilCheckPemohon || null},

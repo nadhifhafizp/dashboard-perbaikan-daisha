@@ -27,7 +27,9 @@ export interface EvaluationFormData {
   orangJamEstimate: string;
   orangJamActual: string;
   kebutuhanSparepart: string;
+  sparepartActual?: string;
   kebutuhanMaterial: string;
+  materialActual?: string;
   biayaEstimate: string;
   biayaActual: string;
   tglPelaksanaanEstimate: string;

@@ -276,6 +276,7 @@ export default function EvaluationModal({
           {/* Tab 4: Hasil Check & Penyelesaian */}
           {form.activeTab === 'penyelesaian' && (
             <PenyelesaianTab
+              requestData={requestData}
               formData={form.formData}
               loading={form.loading}
               isApprovedBySpecialProject={isApprovedBySpecialProject}
