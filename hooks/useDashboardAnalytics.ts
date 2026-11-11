@@ -485,12 +485,19 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
       }
     });
 
+    const isUmum = (k: string) => {
+      const lower = k.trim().toLowerCase();
+      return lower === 'umum' || lower === 'kerusakan umum' || lower === 'kerusakan komponen' || lower === '-';
+    };
+
     const kategori = Object.entries(katMap)
+      .filter(([kat]) => !isUmum(kat))
       .map(([kat, val]) => ({ kategori: kat, total: val.total, totalPcs: val.totalPcs }))
       .sort((a, b) => b.totalPcs - a.totalPcs || b.total - a.total)
       .slice(0, 12);
 
     const detailGejala = Object.entries(gejMap)
+      .filter(([gejala]) => !isUmum(gejala))
       .map(([gejala, val]) => ({
         gejala,
         total: val.total,
@@ -502,11 +509,13 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
 
     // Prioritas kebutuhan suku cadang untuk antrean aktif (default)
     const sparepartKebutuhan = Object.values(partNeedsActiveMap)
+      .filter((p) => !isUmum(p.nama) && !isUmum(p.gejala))
       .sort((a, b) => b.gantiPcs - a.gantiPcs || b.totalPcs - a.totalPcs)
       .slice(0, 8);
 
     // Kebutuhan suku cadang seluruh riwayat (untuk referensi audit pengadaan)
     const sparepartKebutuhanSemua = Object.values(partNeedsAllMap)
+      .filter((p) => !isUmum(p.nama) && !isUmum(p.gejala))
       .sort((a, b) => b.gantiPcs - a.gantiPcs || b.totalPcs - a.totalPcs)
       .slice(0, 8);
 

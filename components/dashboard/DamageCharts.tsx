@@ -80,15 +80,26 @@ export default function DamageCharts({
   const [metricMode, setMetricMode] = useState<'kasus' | 'pcs'>('kasus');
 
 
-  const dataKategori = chartKategori.map((item) => ({
-    ...item,
-    displayVal: metricMode === 'pcs' ? (item.totalPcs || item.total) : item.total,
-  }));
+  const isUmum = (str?: string) => {
+    if (!str) return true;
+    const lower = str.trim().toLowerCase();
+    return lower === 'umum' || lower === 'kerusakan umum' || lower === 'kerusakan komponen' || lower === '-';
+  };
 
-  const dataGejala = chartDetailGejala.slice(0, 10).map((item) => ({
-    ...item,
-    displayVal: metricMode === 'pcs' ? (item.totalPcs || item.total) : item.total,
-  }));
+  const dataKategori = chartKategori
+    .filter((item) => !isUmum(item.kategori))
+    .map((item) => ({
+      ...item,
+      displayVal: metricMode === 'pcs' ? (item.totalPcs || item.total) : item.total,
+    }));
+
+  const dataGejala = chartDetailGejala
+    .filter((item) => !isUmum(item.gejala))
+    .slice(0, 10)
+    .map((item) => ({
+      ...item,
+      displayVal: metricMode === 'pcs' ? (item.totalPcs || item.total) : item.total,
+    }));
 
   const repairVal = metricMode === 'pcs' ? (tindakanStats?.repairPcs || tindakanStats?.repairCount || 0) : (tindakanStats?.repairCount || 0);
   const gantiVal = metricMode === 'pcs' ? (tindakanStats?.gantiPcs || tindakanStats?.gantiCount || 0) : (tindakanStats?.gantiCount || 0);
