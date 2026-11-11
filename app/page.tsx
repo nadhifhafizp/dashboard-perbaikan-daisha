@@ -31,7 +31,6 @@ export default function WorkshopPortalPage() {
   const { tickets } = useTickets({ autoRefreshIntervalMs: 60000 });
 
   const [stagingCount, setStagingCount] = React.useState<number>(0);
-  const [activeRequestCount, setActiveRequestCount] = React.useState<number>(0);
 
   useEffect(() => {
     if (isOperator || isAdmin) {
@@ -41,15 +40,6 @@ export default function WorkshopPortalPage() {
           if (data?.data && Array.isArray(data.data)) {
             const waiting = data.data.filter((d: { status?: string }) => d.status === 'WAITING_PICKUP').length;
             setStagingCount(waiting);
-          }
-        })
-        .catch(() => {});
-
-      fetch('/api/section-requests?status=Dikerjakan')
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data?.requests && Array.isArray(data.requests)) {
-            setActiveRequestCount(data.requests.length);
           }
         })
         .catch(() => {});
@@ -332,7 +322,7 @@ export default function WorkshopPortalPage() {
               Portal Kerja Operator Workshop
             </h1>
             <p className="text-xs text-slate-500">
-              Pusat pelaksanaan tindakan perbaikan, pemeliharaan rutin (PM), penjemputan staging, dan request seksi.
+              Pusat pelaksanaan tindakan perbaikan dan pemeliharaan berkala (PM) armada Daisha pabrik.
             </p>
           </div>
 
@@ -347,7 +337,7 @@ export default function WorkshopPortalPage() {
           </div>
         </header>
 
-        {/* 4 Kartu Modul Operasional untuk Operator (Simetris 2x2) */}
+        {/* 2 Kartu Modul Utama untuk Operator (Perbaikan & PM Daisha) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Card 1: Perbaikan Daisha */}
           <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-xs transition flex flex-col justify-between p-5">
@@ -456,96 +446,9 @@ export default function WorkshopPortalPage() {
               </div>
             </div>
           </div>
-
-          {/* Card 3: Request Seksi */}
-          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-xs transition flex flex-col justify-between p-5">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
-                  <SendHorizonal className="w-5 h-5" />
-                </div>
-                {activeRequestCount > 0 ? (
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                    {activeRequestCount} Dikerjakan
-                  </span>
-                ) : (
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                    Modifikasi Unit
-                  </span>
-                )}
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-slate-900">
-                  Request Seksi
-                </h2>
-                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
-                  Pengerjaan modifikasi fisik, pembuatan unit daisha baru, serta evaluasi hasil check penyelesaian request.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2.5">
-              <Link
-                href="/request/tracking"
-                className="w-full h-10 px-4 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-              >
-                <span>Daftar Request Seksi</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
-                <Link
-                  href="/request/tracking?new=true"
-                  className="hover:text-blue-600 transition inline-flex items-center gap-1 font-medium"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Buat Request Baru</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 4: Stok Sparepart */}
-          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-xs transition flex flex-col justify-between p-5">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center">
-                  <Package className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                  Inventaris Gudang
-                </span>
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-slate-900">
-                  Stok Sparepart
-                </h2>
-                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
-                  Cek ketersediaan suku cadang roda PU, bearing, plat besi, material hollow, dan komponen perbaikan.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2.5">
-              <Link
-                href="/spareparts"
-                className="w-full h-10 px-4 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-              >
-                <span>Cek Stok Suku Cadang</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
-                <Link
-                  href="/catalog"
-                  className="hover:text-amber-700 transition"
-                >
-                  <span>Registri Daisha</span>
-                </Link>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Ringkasan Status Harian Bengkel */}
+        {/* Ringkasan Status Harian Bengkel (2 Kolom Seimbang) */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -559,7 +462,7 @@ export default function WorkshopPortalPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/70 flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-500 font-medium">Antrean Servis Bengkel</p>
@@ -587,21 +490,6 @@ export default function WorkshopPortalPage() {
                 className="text-xs font-semibold px-2.5 py-1 bg-white hover:bg-slate-100 text-emerald-700 border border-emerald-200 rounded-lg transition"
               >
                 Staging &rarr;
-              </Link>
-            </div>
-
-            <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/70 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500 font-medium">Request Dalam Pengerjaan</p>
-                <p className="text-xl font-bold text-slate-900 mt-0.5">
-                  {activeRequestCount} <span className="text-xs font-normal text-slate-500">proyek</span>
-                </p>
-              </div>
-              <Link
-                href="/request/tracking"
-                className="text-xs font-semibold px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 border border-blue-200 rounded-lg transition"
-              >
-                Request &rarr;
               </Link>
             </div>
           </div>

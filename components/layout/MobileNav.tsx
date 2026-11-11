@@ -86,7 +86,6 @@ export default function MobileNav({
       { href: '/riwayat', icon: ClipboardList, label: 'Tindakan' },
       { href: '/input', icon: PenSquare, label: 'Lapor' },
       { href: '/maintenance', icon: Target, label: 'PM Daisha' },
-      { href: '/request/tracking', icon: LayoutDashboard, label: 'Request' },
     );
   } else if (isSeksi) {
     navItems.push(
