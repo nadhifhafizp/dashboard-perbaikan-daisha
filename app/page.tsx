@@ -30,6 +30,32 @@ export default function WorkshopPortalPage() {
   const { currentUser, isOperator, isSeksi, isAdmin, isLoading: authLoading } = useAuth();
   const { tickets } = useTickets({ autoRefreshIntervalMs: 60000 });
 
+  const [stagingCount, setStagingCount] = React.useState<number>(0);
+  const [activeRequestCount, setActiveRequestCount] = React.useState<number>(0);
+
+  useEffect(() => {
+    if (isOperator || isAdmin) {
+      fetch('/api/maintenance/staging')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.data && Array.isArray(data.data)) {
+            const waiting = data.data.filter((d: { status?: string }) => d.status === 'WAITING_PICKUP').length;
+            setStagingCount(waiting);
+          }
+        })
+        .catch(() => {});
+
+      fetch('/api/section-requests?status=Dikerjakan')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.requests && Array.isArray(data.requests)) {
+            setActiveRequestCount(data.requests.length);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOperator, isAdmin]);
+
   const userSeksi = currentUser?.seksi || 'Plant';
 
   const seksiTickets = useMemo(() => {
@@ -276,6 +302,306 @@ export default function WorkshopPortalPage() {
                 className="text-xs font-semibold px-2.5 py-1 bg-white hover:bg-slate-100 text-emerald-700 border border-emerald-200 rounded-lg transition"
               >
                 Katalog &rarr;
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Portal Khusus Operator Workshop (Fokus Eksekusi Operasional)
+  if (isOperator) {
+    const workshopQueueCount = tickets.filter((t) => t.status === 'Open' || t.status === 'Progress').length;
+
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto font-sans">
+        {/* Header Operator Workshop */}
+        <header className="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
+                <Wrench className="w-3.5 h-3.5 text-blue-600" />
+                <span>Operator Bengkel</span>
+              </span>
+              <span className="text-xs text-slate-500 font-medium">
+                Akun: <strong className="text-slate-800 font-semibold">{currentUser?.username}</strong>
+              </span>
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Portal Kerja Operator Workshop
+            </h1>
+            <p className="text-xs text-slate-500">
+              Pusat pelaksanaan tindakan perbaikan, pemeliharaan rutin (PM), penjemputan staging, dan request seksi.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-center">
+            <Link
+              href="/riwayat"
+              className="h-10 min-h-[40px] px-4 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 transition shadow-xs"
+            >
+              <ClipboardList className="w-4 h-4" />
+              <span>Tindakan Bengkel</span>
+            </Link>
+          </div>
+        </header>
+
+        {/* 4 Kartu Modul Operasional untuk Operator (Simetris 2x2) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Card 1: Perbaikan Daisha */}
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-xs transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-red-50 border border-red-100 text-red-600 flex items-center justify-center">
+                  <Wrench className="w-5 h-5" />
+                </div>
+                {workshopQueueCount > 0 ? (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
+                    {workshopQueueCount} Unit Antrean
+                  </span>
+                ) : (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                    Antrean Bersih
+                  </span>
+                )}
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">
+                  Perbaikan Daisha
+                </h2>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                  Tangani antrean servis unit rusak, update tindakan mekanik, atau input kerusakan baru langsung di workshop.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2.5">
+              <Link
+                href="/riwayat"
+                className="w-full h-10 px-4 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <span>Buka Tindakan Bengkel</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+                <Link
+                  href="/input"
+                  className="hover:text-red-600 transition inline-flex items-center gap-1 font-medium"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Input Kerusakan</span>
+                </Link>
+                <span className="text-slate-300">/</span>
+                <Link
+                  href="/riwayat"
+                  className="hover:text-slate-900 transition"
+                >
+                  <span>Riwayat Servis</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Preventive Maintenance (PM) */}
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-xs transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <Target className="w-5 h-5" />
+                </div>
+                {stagingCount > 0 ? (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                    <Truck className="w-3 h-3 text-amber-600" />
+                    <span>{stagingCount} Siap Jemput</span>
+                  </span>
+                ) : (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    PM Terjadwal
+                  </span>
+                )}
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">
+                  PM Daisha
+                </h2>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                  Ambil unit di titik staging seksi, laksanakan checklist 9-komponen PM, dan catat pemeliharaan berkala.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2.5">
+              <Link
+                href="/maintenance?tab=staging"
+                className="w-full h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <span>Buka Penjemputan &amp; PM</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+                <Link
+                  href="/maintenance?tab=fleet"
+                  className="hover:text-emerald-700 transition"
+                >
+                  <span>Katalog Armada</span>
+                </Link>
+                <span className="text-slate-300">/</span>
+                <Link
+                  href="/catalog"
+                  className="hover:text-slate-900 transition"
+                >
+                  <span>Registri Daisha</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Request Seksi */}
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-xs transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
+                  <SendHorizonal className="w-5 h-5" />
+                </div>
+                {activeRequestCount > 0 ? (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    {activeRequestCount} Dikerjakan
+                  </span>
+                ) : (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    Modifikasi Unit
+                  </span>
+                )}
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">
+                  Request Seksi
+                </h2>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                  Pengerjaan modifikasi fisik, pembuatan unit daisha baru, serta evaluasi hasil check penyelesaian request.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2.5">
+              <Link
+                href="/request/tracking"
+                className="w-full h-10 px-4 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <span>Daftar Request Seksi</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+                <Link
+                  href="/request/tracking?new=true"
+                  className="hover:text-blue-600 transition inline-flex items-center gap-1 font-medium"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Buat Request Baru</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Stok Sparepart */}
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-xs transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center">
+                  <Package className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                  Inventaris Gudang
+                </span>
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">
+                  Stok Sparepart
+                </h2>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                  Cek ketersediaan suku cadang roda PU, bearing, plat besi, material hollow, dan komponen perbaikan.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3.5 border-t border-slate-100 space-y-2.5">
+              <Link
+                href="/spareparts"
+                className="w-full h-10 px-4 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <span>Cek Stok Suku Cadang</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+                <Link
+                  href="/catalog"
+                  className="hover:text-amber-700 transition"
+                >
+                  <span>Registri Daisha</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Ringkasan Status Harian Bengkel */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Status Operasional Bengkel Terkini
+              </h3>
+            </div>
+            <span className="text-xs text-slate-400 font-normal">
+              Diperbarui otomatis tiap 60 dtk
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/70 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-500 font-medium">Antrean Servis Bengkel</p>
+                <p className="text-xl font-bold text-slate-900 mt-0.5">
+                  {workshopQueueCount} <span className="text-xs font-normal text-slate-500">unit</span>
+                </p>
+              </div>
+              <Link
+                href="/riwayat"
+                className="text-xs font-semibold px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition"
+              >
+                Tindakan &rarr;
+              </Link>
+            </div>
+
+            <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/70 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-500 font-medium">Permintaan Penjemputan PM</p>
+                <p className="text-xl font-bold text-slate-900 mt-0.5">
+                  {stagingCount} <span className="text-xs font-normal text-slate-500">permohonan</span>
+                </p>
+              </div>
+              <Link
+                href="/maintenance?tab=staging"
+                className="text-xs font-semibold px-2.5 py-1 bg-white hover:bg-slate-100 text-emerald-700 border border-emerald-200 rounded-lg transition"
+              >
+                Staging &rarr;
+              </Link>
+            </div>
+
+            <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/70 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-500 font-medium">Request Dalam Pengerjaan</p>
+                <p className="text-xl font-bold text-slate-900 mt-0.5">
+                  {activeRequestCount} <span className="text-xs font-normal text-slate-500">proyek</span>
+                </p>
+              </div>
+              <Link
+                href="/request/tracking"
+                className="text-xs font-semibold px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 border border-blue-200 rounded-lg transition"
+              >
+                Request &rarr;
               </Link>
             </div>
           </div>
