@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import CatalogManager from '@/components/admin/CatalogManager';
 
 export default function CatalogPage() {
-  const { currentUser, isAdmin, isLoading } = useAuth();
+  const { currentUser, isAdmin, isOperator, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -20,7 +20,7 @@ export default function CatalogPage() {
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isOperator) {
     return (
       <div className="p-6 max-w-lg mx-auto text-center space-y-4 my-12">
         <div className="w-12 h-12 rounded-full bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
@@ -28,7 +28,7 @@ export default function CatalogPage() {
         </div>
         <h1 className="text-lg font-bold text-slate-900">Akses Terbatas</h1>
         <p className="text-xs text-slate-600 leading-relaxed">
-          Halaman Katalog Master Daisha hanya dapat diakses oleh Administrator Workshop.
+          Halaman Katalog Master Daisha hanya dapat diakses oleh Tim Workshop (Admin & Operator).
         </p>
         <Link
           href="/"

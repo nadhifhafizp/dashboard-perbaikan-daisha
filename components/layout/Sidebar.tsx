@@ -224,6 +224,7 @@ function SidebarInner({
           ],
         },
         ...allModules.filter((m) => m.id === 'FLEET'),
+        ...allModules.filter((m) => m.id === 'REQUEST'),
       ];
     }
     // Admin memiliki akses ke seluruh modul

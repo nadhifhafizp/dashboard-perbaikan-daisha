@@ -272,7 +272,7 @@ export async function GET(request: Request) {
  * POST /api/catalog - Menambah Daisha Baru, Komponen Baru, atau Gejala Baru ke TWMSDamageCatalog
  */
 export async function POST(request: Request) {
-  const auth = await requireAuth(request, ['ADMIN']);
+  const auth = await requireAuth(request, ['ADMIN', 'OPERATOR']);
   if (!auth.authorized) return auth.errorResponse!;
 
   const sizeCheck = validatePayloadSize(request, 256 * 1024);
@@ -665,7 +665,7 @@ export async function PUT(request: Request) {
  * DELETE /api/catalog - Hapus data dari TWMSDamageCatalog (Khusus role ADMIN)
  */
 export async function DELETE(request: Request) {
-  const auth = await requireAuth(request, ['ADMIN']);
+  const auth = await requireAuth(request, ['ADMIN', 'OPERATOR']);
   if (!auth.authorized) return auth.errorResponse!;
 
   const rateLimit = checkRateLimit(`catalog_delete:${auth.ip}`, 30, 60 * 1000);

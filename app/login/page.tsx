@@ -32,11 +32,11 @@ function LoginForm() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        let target = data.redirectUrl || '/input';
+        let target = data.redirectUrl || '/';
         if (from && from !== '/login') {
-          if (data.user?.role === 'OPERATOR' && (from === '/' || from.startsWith('/admin') || from.startsWith('/request') || from.startsWith('/spareparts'))) {
-            target = '/input';
-          } else if (data.user?.role === 'USER_SEKSI' && (from === '/' || from.startsWith('/admin') || from.startsWith('/input') || from.startsWith('/spareparts'))) {
+          if (data.user?.role === 'OPERATOR' && (from.startsWith('/admin') || from.startsWith('/users'))) {
+            target = '/riwayat';
+          } else if (data.user?.role === 'USER_SEKSI' && (from === '/' || from.startsWith('/admin') || from.startsWith('/input') || from.startsWith('/spareparts') || from.startsWith('/users'))) {
             target = '/request';
           } else {
             target = from;

@@ -30,14 +30,6 @@ export default function WorkshopPortalPage() {
   const { currentUser, isOperator, isSeksi, isAdmin, isLoading: authLoading } = useAuth();
   const { tickets } = useTickets({ autoRefreshIntervalMs: 60000 });
 
-  useEffect(() => {
-    if (!authLoading && currentUser) {
-      if (isOperator) {
-        router.replace('/input');
-      }
-    }
-  }, [authLoading, currentUser, isOperator, router]);
-
   const userSeksi = currentUser?.seksi || 'Plant';
 
   const seksiTickets = useMemo(() => {
@@ -51,12 +43,12 @@ export default function WorkshopPortalPage() {
   const activeRepairCount = seksiTickets.filter((t) => t.status !== 'Done' && t.status !== 'Scrap').length;
   const completedRepairCount = seksiTickets.filter((t) => t.status === 'Done').length;
 
-  if (authLoading || isOperator) {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-2.5">
           <div className="w-8 h-8 border-3 border-red-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-medium text-slate-500">Mengarahkan ke halaman kerja Anda...</p>
+          <p className="text-xs font-medium text-slate-500">Memuat Portal Workshop...</p>
         </div>
       </div>
     );
@@ -361,10 +353,10 @@ export default function WorkshopPortalPage() {
 
           <div className="mt-5 pt-3 border-t border-slate-100 space-y-2">
             <Link
-              href="/admin"
+              href={isOperator ? '/riwayat' : '/admin'}
               className="w-full h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <span>Buka Panel</span>
+              <span>{isOperator ? 'Tindakan Bengkel' : 'Buka Panel'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
             <div className="flex items-center justify-center gap-3">
@@ -489,32 +481,34 @@ export default function WorkshopPortalPage() {
           </div>
         </div>
 
-        {/* Module 6: Akun Pengguna */}
-        <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
-          <div className="space-y-3">
-            <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
-              <Users className="w-5 h-5" />
+        {/* Module 6: Akun Pengguna (Khusus Admin) */}
+        {isAdmin && (
+          <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between p-5">
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="t-section text-slate-900">
+                  Akun Pengguna
+                </h2>
+                <p className="t-body text-slate-600 mt-1 line-clamp-2">
+                  Daftar akun bengkel, operator, dan hak akses seksi pabrik.
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="t-section text-slate-900">
-                Akun Pengguna
-              </h2>
-              <p className="t-body text-slate-600 mt-1 line-clamp-2">
-                Daftar akun bengkel, operator, dan hak akses seksi pabrik.
-              </p>
-            </div>
-          </div>
 
-          <div className="mt-5 pt-3 border-t border-slate-100 space-y-2">
-            <Link
-              href="/users"
-              className="w-full h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>Kelola Akun</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            <div className="mt-5 pt-3 border-t border-slate-100 space-y-2">
+              <Link
+                href="/users"
+                className="w-full h-11 sm:h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>Kelola Akun</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

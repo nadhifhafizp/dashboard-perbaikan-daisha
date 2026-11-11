@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     });
 
     // 6. AUTHORIZATION REDIRECT
-    const redirectUrl = user.role === 'OPERATOR' ? '/input' : '/';
+    const redirectUrl = '/';
 
     const response = NextResponse.json({
       success: true,
