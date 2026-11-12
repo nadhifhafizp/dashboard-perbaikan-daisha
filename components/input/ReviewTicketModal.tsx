@@ -225,16 +225,16 @@ export default function ReviewTicketModal({
               type="button"
               disabled={isLoading}
               onClick={onCancel}
-              className="w-full h-9 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium text-xs rounded-lg transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="w-full h-11 sm:h-9 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium text-xs rounded-lg transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 active:bg-slate-100"
             >
-              <Edit3 className="w-3.5 h-3.5" />
+              <Edit3 className="w-3.5 h-3.5 shrink-0" />
               <span>Koreksi Lagi</span>
             </button>
             <button
               type="button"
               onClick={onConfirm}
               disabled={isLoading}
-              className={`w-full h-9 font-medium text-xs rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+              className={`w-full h-11 sm:h-9 font-medium text-xs rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:opacity-90 ${
                 payload.status === 'Pending'
                   ? 'bg-amber-600 hover:bg-amber-700 focus-visible:ring-amber-500'
                   : payload.status === 'Progress'

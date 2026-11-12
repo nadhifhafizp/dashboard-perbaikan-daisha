@@ -78,7 +78,7 @@ export default function InputUnitSection({
           value={formData.jenisDaisha}
           onChange={handleChange}
           required
-          className="w-full h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
+          className="w-full h-11 sm:h-10 px-3 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none cursor-pointer"
         >
           <option value="">-- Pilih Jenis Daisha --</option>
           {pilihanDaishaTersedia.map((d) => (
@@ -153,10 +153,11 @@ export default function InputUnitSection({
           <button
             type="button"
             onClick={() => setIsScanning(true)}
-            className="h-11 px-4 bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-2 cursor-pointer shrink-0"
+            className="h-11 px-3.5 sm:px-4 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-medium text-xs rounded-lg transition inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
             title="Scan barcode fisik menggunakan kamera perangkat"
           >
-            <Camera className="w-4 h-4 text-red-400" />
+            <Camera className="w-4 h-4 text-red-400 shrink-0" />
+            <span className="inline sm:hidden font-semibold">Scan</span>
             <span className="hidden sm:inline">Scan Kamera</span>
           </button>
         </div>

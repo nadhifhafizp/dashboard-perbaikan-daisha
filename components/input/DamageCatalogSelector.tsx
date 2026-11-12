@@ -169,7 +169,7 @@ export default function DamageCatalogSelector({
                       );
                     })()}
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {filteredGejala.map((gejala) => {
                       const key = `${komponen}:::${gejala}`;
                       const isSelected = selectedKerusakan.includes(key);
@@ -181,12 +181,12 @@ export default function DamageCatalogSelector({
                           key={gejala}
                           type="button"
                           onClick={() => onToggleKerusakan(komponen, gejala)}
-                          className={`px-3 py-1.5 text-xs rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer text-left ${
+                          className={`min-h-[38px] sm:min-h-[32px] px-3.5 py-2 sm:px-3 sm:py-1.5 text-xs rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer text-left active:scale-[0.98] ${
                             isSelected
                               ? tindakan === 'Ganti'
-                                ? 'bg-blue-600 text-white font-bold shadow-2xs'
-                                : 'bg-amber-600 text-white font-bold shadow-2xs'
-                              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 hover:border-slate-300'
+                                ? 'bg-blue-600 text-white font-bold shadow-xs ring-2 ring-blue-600/30'
+                                : 'bg-amber-600 text-white font-bold shadow-xs ring-2 ring-amber-600/30'
+                              : 'bg-white text-slate-700 hover:bg-slate-100 active:bg-slate-200 border border-slate-200 hover:border-slate-300'
                           }`}
                         >
                           {isSelected ? (
@@ -196,7 +196,7 @@ export default function DamageCatalogSelector({
                           )}
                           <span>{gejala}</span>
                           {isSelected && (
-                            <span className="text-xs px-1.5 py-0.5 bg-black/20 rounded font-semibold flex items-center gap-1 tabular-nums">
+                            <span className="text-[11px] px-2 py-0.5 bg-black/25 rounded font-bold flex items-center gap-1 tabular-nums ml-1">
                               {currentQty > 1 && <span>({currentQty}x)</span>}
                               <span>{tindakan}</span>
                             </span>
@@ -254,12 +254,12 @@ export default function DamageCatalogSelector({
                   }
                 }}
                 placeholder="Ketik rincian kerusakan lain, lalu tekan Enter atau klik Tambah..."
-                className="flex-1 px-3 h-10 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none placeholder-slate-400"
+                className="flex-1 px-3 h-11 sm:h-10 border border-slate-300 rounded-lg text-xs text-slate-900 bg-white focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none placeholder-slate-400"
               />
               <button
                 type="button"
                 onClick={() => handleAddManualSubmit()}
-                className="px-4 h-10 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1 shrink-0"
+                className="px-4 h-11 sm:h-10 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1 shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Tambah</span>
@@ -288,78 +288,83 @@ export default function DamageCatalogSelector({
                   return (
                     <div
                       key={key}
-                      className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs hover:border-slate-300 transition space-y-2"
+                      className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs hover:border-slate-300 transition space-y-2.5"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1 leading-snug">
-                          <span className="text-xs font-semibold text-slate-900 block truncate">
+                          <span className="text-xs font-bold text-slate-900 block truncate">
                             {komponen}
                           </span>
-                          <span className="text-xs text-slate-600 font-medium block truncate">
+                          <span className="text-xs text-slate-600 font-medium block">
                             {detail}
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                          {/* Qty Stepper */}
+                        {/* Hapus button dengan touch target yang aman */}
+                        <button
+                          type="button"
+                          onClick={() => onToggleKerusakan(komponen, detail)}
+                          className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 active:text-red-700 hover:bg-red-50 active:bg-red-100 rounded-lg transition cursor-pointer shrink-0"
+                          title="Hapus kerusakan ini"
+                          aria-label="Hapus kerusakan"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Baris Action: Stepper Qty & Toggle Tindakan */}
+                      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        {/* Qty Stepper */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-semibold text-slate-500">Qty:</span>
                           <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-0.5">
                             <button
                               type="button"
                               onClick={() => onSetQty?.(key, Math.max(1, currentQty - 1))}
-                              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
+                              className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-white active:bg-slate-200 rounded-md font-bold text-sm cursor-pointer transition"
                               title="Kurang"
                             >
                               -
                             </button>
-                            <span className="w-7 text-center font-bold text-xs text-slate-900 tabular-nums">
+                            <span className="w-8 text-center font-bold text-xs text-slate-900 tabular-nums">
                               {currentQty}
                             </span>
                             <button
                               type="button"
                               onClick={() => onSetQty?.(key, currentQty + 1)}
-                              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
+                              className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-white active:bg-slate-200 rounded-md font-bold text-sm cursor-pointer transition"
                               title="Tambah"
                             >
                               +
                             </button>
                           </div>
+                        </div>
 
-                          {/* Tindakan Toggle Pills */}
-                          <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                            <button
-                              type="button"
-                              onClick={() => onSetTindakan(key, 'Repair')}
-                              className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
-                                currentTindakan === 'Repair'
-                                  ? 'bg-amber-500 text-white shadow-2xs'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
-                            >
-                              <Wrench className="w-3 h-3" />
-                              <span>Repair</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onSetTindakan(key, 'Ganti')}
-                              className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
-                                currentTindakan === 'Ganti'
-                                  ? 'bg-blue-600 text-white shadow-2xs'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
-                            >
-                              <RefreshCw className="w-3 h-3" />
-                              <span>Ganti</span>
-                            </button>
-                          </div>
-
-                          {/* Hapus button */}
+                        {/* Tindakan Toggle Pills */}
+                        <div className="flex-1 sm:flex-initial inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 min-h-[38px] sm:min-h-[34px]">
                           <button
                             type="button"
-                            onClick={() => onToggleKerusakan(komponen, detail)}
-                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer"
-                            title="Hapus kerusakan ini"
+                            onClick={() => onSetTindakan(key, 'Repair')}
+                            className={`flex-1 sm:flex-initial px-3.5 py-1.5 text-xs font-bold rounded-md transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                              currentTindakan === 'Repair'
+                                ? 'bg-amber-500 text-white shadow-2xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Wrench className="w-3.5 h-3.5 shrink-0" />
+                            <span>Repair</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onSetTindakan(key, 'Ganti')}
+                            className={`flex-1 sm:flex-initial px-3.5 py-1.5 text-xs font-bold rounded-md transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                              currentTindakan === 'Ganti'
+                                ? 'bg-blue-600 text-white shadow-2xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+                            <span>Ganti</span>
                           </button>
                         </div>
                       </div>
@@ -431,71 +436,77 @@ export default function DamageCatalogSelector({
                       key={text}
                       className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs hover:border-slate-300 transition space-y-2"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="min-w-0 flex-1 leading-snug">
-                          <span className="text-xs font-semibold text-slate-900 block truncate">
+                      {/* Baris 1: Header Kerusakan Manual & Tombol Hapus */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 inline-block mb-0.5">
                             Kerusakan Manual
                           </span>
-                          <span className="text-xs text-slate-600 font-medium block truncate">
+                          <p className="text-xs sm:text-sm font-semibold text-slate-800 break-words leading-snug">
                             {text}
-                          </span>
+                          </p>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => onRemoveCustom(text)}
+                          className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 rounded-lg transition cursor-pointer shrink-0"
+                          title="Hapus kerusakan manual"
+                          aria-label={`Hapus ${text}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
 
-                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                          <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-0.5">
-                            <button
-                              type="button"
-                              onClick={() => onSetCustomQty?.(text, Math.max(1, currentQty - 1))}
-                              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
-                            >
-                              -
-                            </button>
-                            <span className="w-7 text-center font-bold text-xs text-slate-900 tabular-nums">
-                              {currentQty}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => onSetCustomQty?.(text, currentQty + 1)}
-                              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white rounded font-bold text-xs cursor-pointer transition"
-                            >
-                              +
-                            </button>
-                          </div>
-
-                          <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                            <button
-                              type="button"
-                              onClick={() => onSetCustomTindakan(text, 'Repair')}
-                              className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
-                                currentTindakan === 'Repair'
-                                  ? 'bg-amber-500 text-white shadow-2xs'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
-                            >
-                              <Wrench className="w-3 h-3" />
-                              <span>Repair</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onSetCustomTindakan(text, 'Ganti')}
-                              className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1 ${
-                                currentTindakan === 'Ganti'
-                                  ? 'bg-blue-600 text-white shadow-2xs'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
-                            >
-                              <RefreshCw className="w-3 h-3" />
-                              <span>Ganti</span>
-                            </button>
-                          </div>
-
+                      {/* Baris 2: Kontrol Qty Stepper & Tindakan (Repair / Ganti) */}
+                      <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 pt-1 border-t border-slate-100">
+                        {/* Qty Stepper */}
+                        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-0.5 shrink-0">
                           <button
                             type="button"
-                            onClick={() => onRemoveCustom(text)}
-                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer"
-                            title="Hapus kerusakan manual"
+                            onClick={() => onSetCustomQty?.(text, Math.max(1, currentQty - 1))}
+                            className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-white active:bg-slate-200 rounded font-bold text-sm cursor-pointer transition"
+                            aria-label="Kurangi jumlah"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            -
+                          </button>
+                          <span className="w-8 text-center font-bold text-xs sm:text-sm text-slate-900 tabular-nums">
+                            {currentQty}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => onSetCustomQty?.(text, currentQty + 1)}
+                            className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-white active:bg-slate-200 rounded font-bold text-sm cursor-pointer transition"
+                            aria-label="Tambah jumlah"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        {/* Tindakan Toggle: Repair vs Ganti */}
+                        <div className="flex-1 min-w-[170px] grid grid-cols-2 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                          <button
+                            type="button"
+                            onClick={() => onSetCustomTindakan(text, 'Repair')}
+                            className={`min-h-[38px] sm:min-h-[32px] px-2 text-xs font-bold rounded-md transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.98] ${
+                              currentTindakan === 'Repair'
+                                ? 'bg-amber-500 text-white shadow-2xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            <Wrench className="w-3.5 h-3.5 shrink-0" />
+                            <span>Repair</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onSetCustomTindakan(text, 'Ganti')}
+                            className={`min-h-[38px] sm:min-h-[32px] px-2 text-xs font-bold rounded-md transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.98] ${
+                              currentTindakan === 'Ganti'
+                                ? 'bg-blue-600 text-white shadow-2xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+                            <span>Ganti</span>
                           </button>
                         </div>
                       </div>

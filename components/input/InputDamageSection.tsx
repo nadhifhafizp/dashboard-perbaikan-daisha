@@ -73,31 +73,31 @@ export default function InputDamageSection({
             </p>
           </div>
 
-          <div className="inline-flex bg-white p-1 rounded-lg border border-slate-200 text-xs shrink-0 shadow-2xs self-start sm:self-auto">
+          <div className="flex flex-col sm:flex-row bg-white p-1 rounded-xl border border-slate-200 text-xs shrink-0 shadow-2xs w-full sm:w-auto gap-1 sm:gap-0">
             <button
               type="button"
               onClick={() => setIsDiagnosaBengkel?.(false)}
-              className={`px-3 py-1.5 rounded-md font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-2.5 sm:py-2 rounded-lg font-bold transition cursor-pointer flex items-center justify-center gap-2 min-h-[42px] sm:min-h-[36px] ${
                 !isDiagnosaBengkel
                   ? 'bg-red-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <CheckCircle2 className="w-3.5 h-3.5" />
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>Input Kerusakan Sekarang</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsDiagnosaBengkel?.(true)}
-              className={`px-3 py-1.5 rounded-md font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-2.5 sm:py-2 rounded-lg font-bold transition cursor-pointer flex items-center justify-center gap-2 min-h-[42px] sm:min-h-[36px] ${
                 isDiagnosaBengkel
                   ? 'bg-amber-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Clock className="w-3.5 h-3.5" />
-              <span>Jangan Input Dulu (Cek di Bengkel)</span>
+              <Clock className="w-4 h-4 shrink-0" />
+              <span>Cek di Bengkel (Ditunda)</span>
             </button>
           </div>
         </div>

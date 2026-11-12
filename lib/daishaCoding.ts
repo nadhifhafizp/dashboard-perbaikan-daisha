@@ -426,3 +426,4 @@ export function formatCanonicalDaishaNumber(prefix: string, num: number): string
 
   return `${p}${String(num).padStart(4, '0')}`;
 }
+

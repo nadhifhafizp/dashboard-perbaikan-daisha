@@ -76,3 +76,4 @@ describe('Standar Pengkodean 29 Daisha Plant Bridgestone', () => {
     expect(formatVariantUnitNumber('OHA-LY-', 1)).toBe('OHA-LY-001');
   });
 });
+
