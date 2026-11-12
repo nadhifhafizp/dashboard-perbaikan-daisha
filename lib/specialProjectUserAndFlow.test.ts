@@ -59,5 +59,62 @@ describe('Special Project Email & Workflow Evaluation Logic', () => {
       flowStep: 'STEP_7_PEKERJAAN_SELESAI'
     })).toBe(true);
   });
+
+  it('harus mempertahankan status pengerjaan saat di-save dan tidak me-revert Dikerjakan kembali ke Step 5', () => {
+    // Fungsi resolusi alur state machine yang telah diperbaiki
+    const resolveNextFlow = (current: { WorkflowStatus: string; FlowStep: string }, body: { status?: string; flowStep?: string; keputusan?: string }) => {
+      const isAlreadyWorking =
+        current.WorkflowStatus === 'Dikerjakan' ||
+        current.WorkflowStatus === 'Pending: Material Habis' ||
+        current.WorkflowStatus === 'Pekerjaan Fisik Selesai' ||
+        current.FlowStep === 'STEP_6_DALAM_PENGERJAAN' ||
+        current.FlowStep === 'STEP_7_PEKERJAAN_SELESAI';
+
+      let nextStatus = body.status || current.WorkflowStatus;
+      let nextFlowStep = current.FlowStep;
+
+      if (isAlreadyWorking || ['STEP_8_SELESAI'].includes(current.FlowStep) || current.WorkflowStatus === 'Selesai') {
+        if (body.status) nextStatus = body.status;
+        if (body.flowStep) {
+          nextFlowStep = body.flowStep;
+        } else if (nextStatus === 'Pekerjaan Fisik Selesai') {
+          nextFlowStep = 'STEP_7_PEKERJAAN_SELESAI';
+        } else if (nextStatus === 'Selesai') {
+          nextFlowStep = 'STEP_8_SELESAI';
+        } else if (nextStatus === 'Dikerjakan') {
+          nextFlowStep = 'STEP_6_DALAM_PENGERJAAN';
+        }
+      } else if (body.keputusan === 'GO') {
+        nextFlowStep = 'STEP_5_MENUNGGU_ATASAN_SPROJECT';
+        nextStatus = 'Menunggu Assign S.Project';
+      }
+
+      return { nextStatus, nextFlowStep };
+    };
+
+    // Simulasi: Tiket sudah Dikerjakan, user klik simpan actual di Tab 3
+    const res1 = resolveNextFlow(
+      { WorkflowStatus: 'Dikerjakan', FlowStep: 'STEP_6_DALAM_PENGERJAAN' },
+      { status: 'Dikerjakan', keputusan: 'GO' }
+    );
+    expect(res1.nextStatus).toBe('Dikerjakan');
+    expect(res1.nextFlowStep).toBe('STEP_6_DALAM_PENGERJAAN');
+
+    // Simulasi: Operator klik Pekerjaan Fisik Selesai
+    const res2 = resolveNextFlow(
+      { WorkflowStatus: 'Dikerjakan', FlowStep: 'STEP_6_DALAM_PENGERJAAN' },
+      { status: 'Pekerjaan Fisik Selesai', flowStep: 'STEP_7_PEKERJAAN_SELESAI', keputusan: 'GO' }
+    );
+    expect(res2.nextStatus).toBe('Pekerjaan Fisik Selesai');
+    expect(res2.nextFlowStep).toBe('STEP_7_PEKERJAAN_SELESAI');
+
+    // Simulasi: User menyelesaikan request
+    const res3 = resolveNextFlow(
+      { WorkflowStatus: 'Dikerjakan', FlowStep: 'STEP_6_DALAM_PENGERJAAN' },
+      { status: 'Selesai', flowStep: 'STEP_8_SELESAI', keputusan: 'GO' }
+    );
+    expect(res3.nextStatus).toBe('Selesai');
+    expect(res3.nextFlowStep).toBe('STEP_8_SELESAI');
+  });
 });
 

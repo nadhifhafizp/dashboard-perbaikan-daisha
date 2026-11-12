@@ -433,7 +433,7 @@ export async function POST(request: Request) {
       action === 'UPDATE_STATUS' ||
       action === 'ASSIGN_ATASAN_SPROJECT'
     ) {
-      if (auth.user!.role !== 'ADMIN') {
+      if (auth.user!.role !== 'ADMIN' && auth.user!.role !== 'OPERATOR') {
         return NextResponse.json({ error: 'Hanya PIC Workshop / Admin yang dapat melakukan evaluasi pekerjaan.' }, { status: 403 });
       }
 
@@ -513,7 +513,14 @@ export async function POST(request: Request) {
         body.flowStep === 'STEP_7_PEKERJAAN_SELESAI' ||
         body.flowStep === 'STEP_8_SELESAI';
 
-      if (isCompletingWork && !current.SpecialProjectSignature) {
+      const isAlreadyWorking =
+        current.WorkflowStatus === 'Dikerjakan' ||
+        current.WorkflowStatus === 'Pending: Material Habis' ||
+        current.WorkflowStatus === 'Pekerjaan Fisik Selesai' ||
+        current.FlowStep === 'STEP_6_DALAM_PENGERJAAN' ||
+        current.FlowStep === 'STEP_7_PEKERJAAN_SELESAI';
+
+      if (isCompletingWork && !current.SpecialProjectSignature && !isAlreadyWorking) {
         return NextResponse.json(
           {
             error:
@@ -545,28 +552,41 @@ export async function POST(request: Request) {
           alasanTolak: alasanTolak || komentarActual || 'Tidak memenuhi kriteria workshop',
           detailLink: `${origin}/request`,
         });
-      } else if (keputusan === 'GO' || body.assignAtasanSpecialProject || action === 'ASSIGN_ATASAN_SPROJECT') {
-        if (body.assignAtasanSpecialProject || action === 'ASSIGN_ATASAN_SPROJECT') {
-          nextFlowStep = 'STEP_6_DALAM_PENGERJAAN';
-          nextStatus = newStatus === 'Disetujui' ? 'Dikerjakan' : (newStatus || 'Dikerjakan');
-        } else {
-          nextFlowStep = 'STEP_5_MENUNGGU_ATASAN_SPROJECT';
-          nextStatus = 'Menunggu Assign S.Project';
-
-          atasanSProjectEmail = buildAtasanSpecialProjectEmailContent({
-            action: 'GO',
-            nomorRequest: current.RequestNo,
-            perihal: current.Subject || current.ItemTitle || '-',
-            seksiPemohon: current.RequesterSection,
-            picPemohon: current.RequesterName,
-            waktuEstimate,
-            orangJamEstimate,
-            kebutuhanSparepart,
-            kebutuhanMaterial,
-            biayaEstimate,
-            detailLink: `${origin}/request`,
-          });
+      } else if (body.assignAtasanSpecialProject || action === 'ASSIGN_ATASAN_SPROJECT') {
+        nextFlowStep = 'STEP_6_DALAM_PENGERJAAN';
+        nextStatus = newStatus === 'Disetujui' ? 'Dikerjakan' : (newStatus || 'Dikerjakan');
+      } else if (isAlreadyWorking || ['STEP_8_SELESAI'].includes(current.FlowStep) || current.WorkflowStatus === 'Selesai') {
+        // Request sudah dalam proses pengerjaan fisik atau penyelesaian, jangan kembalikan ke Step 5!
+        if (newStatus) {
+          nextStatus = newStatus;
         }
+        if (body.flowStep) {
+          nextFlowStep = sanitizeText(body.flowStep, 50);
+        } else if (nextStatus === 'Pekerjaan Fisik Selesai') {
+          nextFlowStep = 'STEP_7_PEKERJAAN_SELESAI';
+        } else if (nextStatus === 'Selesai') {
+          nextFlowStep = 'STEP_8_SELESAI';
+        } else if (nextStatus === 'Dikerjakan') {
+          nextFlowStep = 'STEP_6_DALAM_PENGERJAAN';
+        }
+      } else if (keputusan === 'GO') {
+        // Hanya jika baru selesai evaluasi awal workshop dan menunggu persetujuan Atasan Special Project
+        nextFlowStep = 'STEP_5_MENUNGGU_ATASAN_SPROJECT';
+        nextStatus = 'Menunggu Assign S.Project';
+
+        atasanSProjectEmail = buildAtasanSpecialProjectEmailContent({
+          action: 'GO',
+          nomorRequest: current.RequestNo,
+          perihal: current.Subject || current.ItemTitle || '-',
+          seksiPemohon: current.RequesterSection,
+          picPemohon: current.RequesterName,
+          waktuEstimate,
+          orangJamEstimate,
+          kebutuhanSparepart,
+          kebutuhanMaterial,
+          biayaEstimate,
+          detailLink: `${origin}/request`,
+        });
       }
 
       if (body.flowStep) {
@@ -660,7 +680,7 @@ export async function POST(request: Request) {
 
     // 3. FINISH_REQUEST: Selesaikan pengerjaan dan serah terima
     if (action === 'FINISH_REQUEST') {
-      if (auth.user!.role !== 'ADMIN') {
+      if (auth.user!.role !== 'ADMIN' && auth.user!.role !== 'OPERATOR') {
         return NextResponse.json({ error: 'Hanya PIC Workshop yang dapat menyelesaikan request.' }, { status: 403 });
       }
 
@@ -674,14 +694,20 @@ export async function POST(request: Request) {
       const materialActual = sanitizeText(body.materialActual ?? body.kebutuhanMaterialActual, 2000);
       const scheduleActual = sanitizeText(body.scheduleActual, 1000);
 
-      const [current] = await sql<Array<{ Id: number; RequestNo: string; SpecialProjectSignature: string | null }>>`
-        SELECT "Id", "RequestNo", "SpecialProjectSignature" FROM "TWMSSectionRequest" WHERE "Id" = ${id} LIMIT 1
+      const [current] = await sql<Array<{ Id: number; RequestNo: string; SpecialProjectSignature: string | null; WorkflowStatus: string; FlowStep: string }>>`
+        SELECT "Id", "RequestNo", "SpecialProjectSignature", "WorkflowStatus", "FlowStep" FROM "TWMSSectionRequest" WHERE "Id" = ${id} LIMIT 1
       `;
       if (!current) {
         return NextResponse.json({ error: 'Request tidak ditemukan.' }, { status: 404 });
       }
 
-      if (!current.SpecialProjectSignature) {
+      const isAlreadyWorking =
+        current.WorkflowStatus === 'Dikerjakan' ||
+        current.WorkflowStatus === 'Pekerjaan Fisik Selesai' ||
+        current.FlowStep === 'STEP_6_DALAM_PENGERJAAN' ||
+        current.FlowStep === 'STEP_7_PEKERJAAN_SELESAI';
+
+      if (!current.SpecialProjectSignature && !isAlreadyWorking) {
         return NextResponse.json(
           { error: 'Pekerjaan belum dapat diselesaikan karena permohonan ini belum disetujui / di-assign oleh Atasan Special Project.' },
           { status: 400 }
@@ -693,6 +719,7 @@ export async function POST(request: Request) {
         SET
           "WorkflowStatus" = 'Selesai',
           "FlowStep" = 'STEP_8_SELESAI',
+          "SpecialProjectSignature" = COALESCE("SpecialProjectSignature", 'VERIFIED_DIGITAL'),
           "ActDuration" = COALESCE(${waktuActual || null}, "ActDuration"),
           "ActManHour" = COALESCE(${orangJamActual || null}, "ActManHour"),
           "ActCost" = COALESCE(${biayaActual || null}, "ActCost"),
@@ -716,8 +743,8 @@ export async function POST(request: Request) {
 
     // 4. ADD_MATERIAL: Tambah pemakaian sparepart atau material
     if (action === 'ADD_MATERIAL') {
-      if (auth.user!.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Hanya admin yang dapat menambah pemakaian sparepart/material.' }, { status: 403 });
+      if (auth.user!.role !== 'ADMIN' && auth.user!.role !== 'OPERATOR') {
+        return NextResponse.json({ error: 'Hanya PIC workshop yang dapat menambah pemakaian sparepart/material.' }, { status: 403 });
       }
 
       const sectionRequestId = validatePositiveInt(body.sectionRequestId, 'ID Request', 1).value;
@@ -842,8 +869,8 @@ export async function POST(request: Request) {
 
     // 5. REMOVE_MATERIAL: Batalkan pemakaian sparepart/material
     if (action === 'REMOVE_MATERIAL') {
-      if (auth.user!.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Hanya admin yang dapat membatalkan sparepart/material.' }, { status: 403 });
+      if (auth.user!.role !== 'ADMIN' && auth.user!.role !== 'OPERATOR') {
+        return NextResponse.json({ error: 'Hanya PIC workshop yang dapat membatalkan sparepart/material.' }, { status: 403 });
       }
 
       const sectionRequestId = validatePositiveInt(body.sectionRequestId, 'ID Request', 1).value;
@@ -919,8 +946,8 @@ export async function POST(request: Request) {
 
     // 6. SET_PENDING_MATERIAL: Tunda pengerjaan karena sparepart habis
     if (action === 'SET_PENDING_MATERIAL') {
-      if (auth.user!.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Hanya admin yang dapat mengubah status pending.' }, { status: 403 });
+      if (auth.user!.role !== 'ADMIN' && auth.user!.role !== 'OPERATOR') {
+        return NextResponse.json({ error: 'Hanya PIC workshop yang dapat mengubah status pending.' }, { status: 403 });
       }
 
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;
@@ -969,8 +996,8 @@ export async function POST(request: Request) {
 
     // 7. RESUME_PROGRESS: Lanjutkan pengerjaan setelah material tersedia
     if (action === 'RESUME_PROGRESS') {
-      if (auth.user!.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Hanya admin yang dapat melanjutkan proses.' }, { status: 403 });
+      if (auth.user!.role !== 'ADMIN' && auth.user!.role !== 'OPERATOR') {
+        return NextResponse.json({ error: 'Hanya PIC workshop yang dapat melanjutkan proses.' }, { status: 403 });
       }
 
       const id = validatePositiveInt(body.id, 'ID Request', 1).value;

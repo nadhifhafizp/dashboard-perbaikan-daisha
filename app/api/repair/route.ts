@@ -414,19 +414,19 @@ export async function POST(request: Request) {
       });
     }
 
-    // 2.2 UPDATE STATUS & CATATAN (KHUSUS ROLE ADMIN)
+    // 2.2 UPDATE STATUS & CATATAN (ROLE ADMIN & OPERATOR WORKSHOP)
     else if (action === 'UPDATE') {
-      if (auth.user?.role !== 'ADMIN') {
+      if (auth.user?.role !== 'ADMIN' && auth.user?.role !== 'OPERATOR') {
         recordAuditLog({
           action: 'TICKET_STATUS_UPDATE',
           ip: auth.ip,
           user: auth.user?.username,
           role: auth.user?.role,
           status: 'DENIED',
-          details: 'Upaya update status oleh non-admin',
+          details: 'Upaya update status oleh non-workshop',
         });
         return NextResponse.json(
-          { error: "Akses ditolak. Hanya akun ADMIN yang berhak memperbarui status perbaikan tiket." },
+          { error: "Akses ditolak. Hanya akun workshop (ADMIN & OPERATOR) yang berhak memperbarui status perbaikan tiket." },
           { status: 403 }
         );
       }

@@ -77,11 +77,10 @@ export default function InputDamageSection({
             <button
               type="button"
               onClick={() => setIsDiagnosaBengkel?.(false)}
-              className={`px-3.5 py-2.5 sm:py-2 rounded-lg font-bold transition cursor-pointer flex items-center justify-center gap-2 min-h-[42px] sm:min-h-[36px] ${
-                !isDiagnosaBengkel
+              className={`px-3.5 py-2.5 sm:py-2 rounded-lg font-bold transition cursor-pointer flex items-center justify-center gap-2 min-h-[42px] sm:min-h-[36px] ${!isDiagnosaBengkel
                   ? 'bg-red-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
+                }`}
             >
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>Input Kerusakan Sekarang</span>
@@ -90,11 +89,10 @@ export default function InputDamageSection({
             <button
               type="button"
               onClick={() => setIsDiagnosaBengkel?.(true)}
-              className={`px-3.5 py-2.5 sm:py-2 rounded-lg font-bold transition cursor-pointer flex items-center justify-center gap-2 min-h-[42px] sm:min-h-[36px] ${
-                isDiagnosaBengkel
+              className={`px-3.5 py-2.5 sm:py-2 rounded-lg font-bold transition cursor-pointer flex items-center justify-center gap-2 min-h-[42px] sm:min-h-[36px] ${isDiagnosaBengkel
                   ? 'bg-amber-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
+                }`}
             >
               <Clock className="w-4 h-4 shrink-0" />
               <span>Cek di Bengkel (Ditunda)</span>
