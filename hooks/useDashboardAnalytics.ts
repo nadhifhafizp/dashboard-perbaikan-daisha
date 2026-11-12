@@ -492,8 +492,8 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     const kategori = Object.entries(katMap)
       .filter(([kat]) => !isUmum(kat))
       .map(([kat, val]) => ({ kategori: kat, total: val.total, totalPcs: val.totalPcs }))
-      .sort((a, b) => b.totalPcs - a.totalPcs || b.total - a.total)
-      .slice(0, 12);
+      .sort((a, b) => b.total - a.total || b.totalPcs - a.totalPcs)
+      .slice(0, 25);
 
     const detailGejala = Object.entries(gejMap)
       .filter(([gejala]) => !isUmum(gejala))
@@ -503,8 +503,8 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
         totalPcs: val.totalPcs,
         komponen: val.komponen,
       }))
-      .sort((a, b) => b.totalPcs - a.totalPcs || b.total - a.total)
-      .slice(0, 10);
+      .sort((a, b) => b.total - a.total || b.totalPcs - a.totalPcs)
+      .slice(0, 25);
 
     // Prioritas kebutuhan suku cadang untuk antrean aktif (default)
     const sparepartKebutuhan = Object.values(partNeedsActiveMap)

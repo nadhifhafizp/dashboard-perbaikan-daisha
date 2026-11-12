@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -17,6 +17,33 @@ import {
 import { Wrench, PieChart as PieIcon, RefreshCw, Hammer } from 'lucide-react';
 import { CHART, DONUT } from '@/lib/chart-colors';
 import ActiveFilterBadge, { ActiveFiltersInfo } from './ActiveFilterBadge';
+
+// Gradasi warna dari muda (kiri/awal) ke tua (kanan/ujung) & dari pekat (paling atas) ke lembut (bawah)
+const KOMPONEN_GRADIENTS = [
+  { id: 'grad-kat-0', from: '#3b82f6', to: '#1e3a8a' }, // Rank 1: Royal to Navy (Paling Banyak)
+  { id: 'grad-kat-1', from: '#60a5fa', to: '#1d4ed8' }, // Rank 2: Bright Blue to Royal
+  { id: 'grad-kat-2', from: '#60a5fa', to: '#2563eb' }, // Rank 3: Blue to Deep Blue
+  { id: 'grad-kat-3', from: '#93c5fd', to: '#2563eb' }, // Rank 4: Sky to Blue
+  { id: 'grad-kat-4', from: '#93c5fd', to: '#3b82f6' }, // Rank 5: Soft Sky to Blue
+  { id: 'grad-kat-5', from: '#bfdbfe', to: '#3b82f6' }, // Rank 6: Light to Medium Blue
+  { id: 'grad-kat-6', from: '#bfdbfe', to: '#60a5fa' }, // Rank 7: Pale to Bright Blue
+  { id: 'grad-kat-7', from: '#dbeafe', to: '#60a5fa' }, // Rank 8: Ice to Bright Blue
+  { id: 'grad-kat-8', from: '#dbeafe', to: '#93c5fd' }, // Rank 9: Ice to Sky Blue
+  { id: 'grad-kat-9', from: '#e2e8f0', to: '#94a3b8' }, // Rank 10: Slate Muda (Paling Sedikit)
+];
+
+const GEJALA_GRADIENTS = [
+  { id: 'grad-gej-0', from: '#8b5cf6', to: '#4c1d95' }, // Rank 1: Violet to Deep Purple (Paling Banyak)
+  { id: 'grad-gej-1', from: '#a78bfa', to: '#5b21b6' }, // Rank 2: Purple to Indigo
+  { id: 'grad-gej-2', from: '#a78bfa', to: '#6d28d9' }, // Rank 3: Purple to Violet
+  { id: 'grad-gej-3', from: '#c4b5fd', to: '#6d28d9' }, // Rank 4: Soft Purple to Violet
+  { id: 'grad-gej-4', from: '#c4b5fd', to: '#7c3aed' }, // Rank 5: Soft Purple to Purple
+  { id: 'grad-gej-5', from: '#ddd6fe', to: '#7c3aed' }, // Rank 6: Lavender to Purple
+  { id: 'grad-gej-6', from: '#ddd6fe', to: '#8b5cf6' }, // Rank 7: Lavender to Violet
+  { id: 'grad-gej-7', from: '#ede9fe', to: '#8b5cf6' }, // Rank 8: Pale to Violet
+  { id: 'grad-gej-8', from: '#ede9fe', to: '#a78bfa' }, // Rank 9: Pale to Soft Purple
+  { id: 'grad-gej-9', from: '#e2e8f0', to: '#94a3b8' }, // Rank 10: Slate Muda (Paling Sedikit)
+];
 
 interface DamageChartsProps {
   chartKategori: { kategori: string; total: number; totalPcs?: number }[];
@@ -86,20 +113,27 @@ export default function DamageCharts({
     return lower === 'umum' || lower === 'kerusakan umum' || lower === 'kerusakan komponen' || lower === '-';
   };
 
-  const dataKategori = chartKategori
-    .filter((item) => !isUmum(item.kategori))
-    .map((item) => ({
-      ...item,
-      displayVal: metricMode === 'pcs' ? (item.totalPcs || item.total) : item.total,
-    }));
+  const dataKategori = useMemo(() => {
+    return chartKategori
+      .filter((item) => !isUmum(item.kategori))
+      .map((item) => ({
+        ...item,
+        displayVal: metricMode === 'pcs' ? (item.totalPcs || item.total) : item.total,
+      }))
+      .sort((a, b) => b.displayVal - a.displayVal)
+      .slice(0, 10);
+  }, [chartKategori, metricMode]);
 
-  const dataGejala = chartDetailGejala
-    .filter((item) => !isUmum(item.gejala))
-    .slice(0, 10)
-    .map((item) => ({
-      ...item,
-      displayVal: metricMode === 'pcs' ? (item.totalPcs || item.total) : item.total,
-    }));
+  const dataGejala = useMemo(() => {
+    return chartDetailGejala
+      .filter((item) => !isUmum(item.gejala))
+      .map((item) => ({
+        ...item,
+        displayVal: metricMode === 'pcs' ? (item.totalPcs || item.total) : item.total,
+      }))
+      .sort((a, b) => b.displayVal - a.displayVal)
+      .slice(0, 10);
+  }, [chartDetailGejala, metricMode]);
 
   const repairVal = metricMode === 'pcs' ? (tindakanStats?.repairPcs || tindakanStats?.repairCount || 0) : (tindakanStats?.repairCount || 0);
   const gantiVal = metricMode === 'pcs' ? (tindakanStats?.gantiPcs || tindakanStats?.gantiCount || 0) : (tindakanStats?.gantiCount || 0);
@@ -184,6 +218,14 @@ export default function DamageCharts({
             {dataKategori.length > 0 ? (
               <ResponsiveContainer width="100%" height={heightKategori}>
                 <BarChart data={dataKategori} layout="vertical" margin={{ top: 10, right: 45, left: 10, bottom: 10 }}>
+                  <defs>
+                    {KOMPONEN_GRADIENTS.map((g) => (
+                      <linearGradient id={g.id} key={g.id} x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor={g.from} />
+                        <stop offset="100%" stopColor={g.to} />
+                      </linearGradient>
+                    ))}
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                   <XAxis type="number" tick={{ fontSize: 13, fill: '#475569', fontWeight: 600 }} allowDecimals={false} axisLine={false} tickLine={false} />
                   <YAxis
@@ -232,7 +274,7 @@ export default function DamageCharts({
                     {dataKategori.map((entry, idx) => (
                       <Cell
                         key={`cell-kat-${idx}`}
-                        fill={idx === 0 ? CHART.main : CHART.muted}
+                        fill={`url(#${KOMPONEN_GRADIENTS[idx % KOMPONEN_GRADIENTS.length].id})`}
                       />
                     ))}
                     <LabelList
@@ -272,6 +314,14 @@ export default function DamageCharts({
             {dataGejala.length > 0 ? (
               <ResponsiveContainer width="100%" height={heightGejala}>
                 <BarChart data={dataGejala} layout="vertical" margin={{ top: 10, right: 45, left: 10, bottom: 10 }}>
+                  <defs>
+                    {GEJALA_GRADIENTS.map((g) => (
+                      <linearGradient id={g.id} key={g.id} x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor={g.from} />
+                        <stop offset="100%" stopColor={g.to} />
+                      </linearGradient>
+                    ))}
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                   <XAxis type="number" tick={{ fontSize: 12, fill: '#64748b' }} allowDecimals={false} axisLine={false} tickLine={false} />
                   <YAxis
@@ -320,7 +370,7 @@ export default function DamageCharts({
                     {dataGejala.map((entry, idx) => (
                       <Cell
                         key={`cell-gejala-${idx}`}
-                        fill={idx === 0 ? CHART.main : CHART.muted}
+                        fill={`url(#${GEJALA_GRADIENTS[idx % GEJALA_GRADIENTS.length].id})`}
                       />
                     ))}
                     <LabelList dataKey="displayVal" position="right" fill="#0f172a" fontSize={13} fontWeight={800} />
