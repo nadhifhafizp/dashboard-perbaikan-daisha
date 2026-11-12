@@ -52,3 +52,4 @@ describe('Deteksi Varian & Ukuran Daisha (Vertical & GT Ring)', () => {
     expect(detectDaishaSize('12345')).toBeNull();
   });
 });
+

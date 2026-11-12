@@ -145,7 +145,7 @@ export default function InputUnitSection({
               onKeyDown={(e) => {
                 if (e.key === 'Enter') e.preventDefault();
               }}
-              placeholder="Ketik atau scan barcode (Cth: M00287, I/L-0071, S00064)"
+              placeholder="Ketik atau scan barcode (Cth: M00001, S30001, B/P---0001, I/L---0001, FIL-A-0001)"
               required
               className="w-full h-11 px-3.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 bg-slate-50/50 focus:bg-white focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none uppercase placeholder:font-normal placeholder-slate-400 tracking-wide"
             />

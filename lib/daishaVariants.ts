@@ -100,3 +100,11 @@ export const SECTION_METAS: Record<string, SectionMeta> = {
     accentBorder: 'border-indigo-600',
   },
 };
+
+export {
+  DAISHA_CANONICAL_SPECS,
+  findDaishaCodeSpec,
+  detectDaishaByUnitCode,
+  formatCanonicalDaishaNumber,
+  type DaishaCodeSpec,
+} from './daishaCoding';

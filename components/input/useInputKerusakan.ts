@@ -7,6 +7,7 @@ import { getInitialDateTime, cleanInputDateTime } from '@/lib/date';
 import { FeedbackType } from '@/components/FeedbackModal';
 import { TindakanType } from '@/components/input/DamageCatalogSelector';
 import { detectDaishaSize } from '@/lib/daishaSize';
+import { detectDaishaByUnitCode } from '@/lib/daishaCoding';
 import { useDaishaCatalog } from '@/hooks/useDaishaCatalog';
 import { useTickets, broadcastTicketChange } from '@/hooks/useTickets';
 import {
@@ -137,6 +138,16 @@ export function useInputKerusakan() {
           }
         }
       }
+    }
+
+    // 3. Cek dari standar pengkodean resmi 29 Daisha Plant Bridgestone (lib/daishaCoding)
+    const canonicalMatch = detectDaishaByUnitCode(normalizedNoDaisha);
+    if (canonicalMatch) {
+      return {
+        source: 'catalog' as const,
+        seksi: canonicalMatch.seksi,
+        jenisDaisha: canonicalMatch.jenisDaisha,
+      };
     }
 
     return null;

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { DAFTAR_SEKSI } from '@/lib/masterData';
-import { SECTION_METAS } from '@/lib/daishaVariants';
+import { SECTION_METAS, findDaishaCodeSpec } from '@/lib/daishaVariants';
 import {
   requireAuth,
   checkRateLimit,
@@ -137,12 +137,21 @@ export async function GET(request: Request) {
       if (!sizeMap.has(key)) sizeMap.set(key, []);
 
       const upperSize = (s.size || '').toUpperCase().trim();
-      const isGtRing = (s.daisha_type || '').toLowerCase().includes('gt ring');
+      const isVertical = key.includes('vertical');
+      const isGtRing = key.includes('gt ring');
       let codePrefix = '';
+      let variantName = `${s.daisha_type} ${s.size}`;
 
-      if (upperSize === 'LARGE') codePrefix = 'L';
-      else if (upperSize === 'MEDIUM') codePrefix = 'M';
-      else if (upperSize === 'SMALL') codePrefix = 'S';
+      if (upperSize === 'LARGE') {
+        codePrefix = 'L';
+        if (isVertical) variantName = 'Vertical-Big/Large';
+      } else if (upperSize === 'MEDIUM') {
+        codePrefix = 'M';
+        if (isVertical) variantName = 'Vertical-Medium';
+      } else if (upperSize === 'SMALL') {
+        codePrefix = 'S';
+        if (isVertical) variantName = 'Vertical-Small';
+      }
 
       // Jika unit berkategori GT Ring dan min_code memiliki prefix susunan (S3, S4, M3, L3)
       if (s.min_code) {
@@ -157,13 +166,63 @@ export async function GET(request: Request) {
 
       sizeMap.get(key)!.push({
         id: sizeMap.get(key)!.length + 1,
-        name: `${s.daisha_type} ${s.size}`,
+        name: variantName,
         ukuran: s.size,
         totalUnits: s.count,
         codePrefix: codePrefix,
+        padLength: isVertical ? 5 : isGtRing ? 4 : 4,
         rangeFormat: s.min_code && s.max_code ? `${s.min_code} s/d ${s.max_code}` : '',
       });
     });
+
+    // Standarisasi Varian GT Ring (S3, S4, M3, L3) sesuai pengkodean resmi 29 Daisha
+    const gtRingKey = 'gt ring';
+    if (!sizeMap.has(gtRingKey) || sizeMap.get(gtRingKey)!.length <= 3) {
+      const existingUnits = unitMap.get(gtRingKey) || 0;
+      const quarter = Math.floor(existingUnits / 4);
+      sizeMap.set(gtRingKey, [
+        {
+          id: 1,
+          name: 'GT Ring Small Susun 3',
+          ukuran: 'Small',
+          susunan: 'Susun 3',
+          codePrefix: 'S3',
+          padLength: 4,
+          totalUnits: quarter,
+          rangeFormat: 'S30001 s/d S3...',
+        },
+        {
+          id: 2,
+          name: 'GT Ring Small Susun 4',
+          ukuran: 'Small',
+          susunan: 'Susun 4',
+          codePrefix: 'S4',
+          padLength: 4,
+          totalUnits: quarter,
+          rangeFormat: 'S40001 s/d S4...',
+        },
+        {
+          id: 3,
+          name: 'GT Ring Medium Susun 3',
+          ukuran: 'Medium',
+          susunan: 'Susun 3',
+          codePrefix: 'M3',
+          padLength: 4,
+          totalUnits: quarter,
+          rangeFormat: 'M30001 s/d M3...',
+        },
+        {
+          id: 4,
+          name: 'GT Ring Large Susun 3',
+          ukuran: 'Large',
+          susunan: 'Susun 3',
+          codePrefix: 'L3',
+          padLength: 4,
+          totalUnits: existingUnits - quarter * 3,
+          rangeFormat: 'L30001 s/d L3...',
+        },
+      ]);
+    }
 
     const defaultSectionRows = Object.values(SECTION_METAS).map((s, idx) => ({
       id: idx + 1,
@@ -193,11 +252,12 @@ export async function GET(request: Request) {
       if (!r.daisha_type) continue;
       const typeKey = r.daisha_type.trim();
       if (!groupedDaisha.has(typeKey)) {
+        const canonical = findDaishaCodeSpec(typeKey);
         groupedDaisha.set(typeKey, {
           id: r.id,
           name: typeKey,
           seksi: r.section_name,
-          codePrefix: '',
+          codePrefix: canonical?.codePrefix || '',
           totalUnits: unitMap.get(typeKey.toLowerCase()) || 0,
           componentsMap: new Map(),
           variants: sizeMap.get(typeKey.toLowerCase()) || [],

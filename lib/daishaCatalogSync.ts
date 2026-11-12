@@ -6,6 +6,7 @@
  */
 import sql from '@/lib/db';
 import { invalidateMaintenanceCache } from '@/app/api/maintenance/route';
+import { formatCanonicalDaishaNumber } from '@/lib/daishaCoding';
 
 export interface SyncCatalogResult {
   success: boolean;
@@ -18,7 +19,7 @@ export interface SyncCatalogResult {
 }
 
 /**
- * Format nomor Daisha dari varian katalog secara presisi
+ * Format nomor Daisha dari varian katalog secara presisi sesuai standar pengkodean 29 Daisha
  */
 export function formatVariantUnitNumber(prefix: string, num: number, rangeFormat?: string | null, customPad?: number | null): string {
   const p = (prefix || '').trim();
@@ -26,10 +27,26 @@ export function formatVariantUnitNumber(prefix: string, num: number, rangeFormat
     return `UNIT-${String(num).padStart(3, '0')}`;
   }
 
-  // Khusus Building Vertical (S00, M00, L00) & GT Ring (S30, S40, M30, L30): panjang total 6 karakter!
-  if (p.startsWith('S0') || p.startsWith('M0') || p.startsWith('L0') || p.startsWith('S3') || p.startsWith('S4') || p.startsWith('M3') || p.startsWith('L3')) {
+  // Khusus Building Vertical (S, M, L / S00, M00, L00): total 6 karakter (cth: S00001, M00001, L00001)
+  if (
+    p === 'S' || p === 'M' || p === 'L' ||
+    p.startsWith('S0') || p.startsWith('M0') || p.startsWith('L0')
+  ) {
     const letter = p.charAt(0);
     return `${letter}${String(num).padStart(5, '0')}`;
+  }
+
+  // Khusus Building GT Ring (S3, S4, M3, L3): awalan 2 char + 4 digit (cth: S30001, S40001, M30001, L30001)
+  if (
+    p.startsWith('S3') || p.startsWith('S4') || p.startsWith('M3') || p.startsWith('L3')
+  ) {
+    const prefix2 = p.substring(0, 2);
+    return `${prefix2}${String(num).padStart(4, '0')}`;
+  }
+
+  // Jika ada spesifikasi kanonikal resmi
+  if (!customPad && !rangeFormat) {
+    return formatCanonicalDaishaNumber(p, num);
   }
 
   let padLen = customPad && customPad > 0 ? customPad : 4;
