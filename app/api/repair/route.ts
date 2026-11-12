@@ -493,7 +493,6 @@ export async function POST(request: Request) {
             SET 
               "LastPMDate" = ${completionDate},
               "CurrentCondition" = 'OK',
-              "TotalRepairs" = COALESCE("TotalRepairs", 0) + 1,
               "UpdateDate" = NOW()
             WHERE UPPER(TRIM("UnitCode")) = UPPER(TRIM(${noD}))
             RETURNING "SectionName"
