@@ -325,7 +325,6 @@ export function useDashboardAnalytics(dataRaw: Ticket[], filters: DashboardFilte
     });
     const trenHarian = Object.values(datesMap)
       .sort((a, b) => a.tanggal.localeCompare(b.tanggal))
-      .slice(-14)
       .map(item => ({
         ...item,
         tanggal: formatDisplayDate(item.tanggal).split(' ')[0]
