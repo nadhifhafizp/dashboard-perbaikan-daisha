@@ -117,7 +117,8 @@ export function useInputKerusakan() {
 
     // 2. Cek dari prefix varian katalog jika belum ada match histori
     for (const [jenis, data] of Object.entries(catalog)) {
-      if (data.codePrefix && normalizedNoDaisha.startsWith(data.codePrefix.toUpperCase())) {
+      const mainPrefix = (data.codePrefix || '').trim();
+      if (mainPrefix && normalizedNoDaisha.startsWith(mainPrefix.toUpperCase())) {
         return {
           source: 'catalog' as const,
           seksi: data.seksi !== 'All seksi' ? data.seksi : '',
@@ -126,7 +127,8 @@ export function useInputKerusakan() {
       }
       if (data.variants && data.variants.length > 0) {
         for (const v of data.variants) {
-          if (v.codePrefix && normalizedNoDaisha.startsWith(v.codePrefix.toUpperCase())) {
+          const vPrefix = (v.codePrefix || '').trim();
+          if (vPrefix && normalizedNoDaisha.startsWith(vPrefix.toUpperCase())) {
             return {
               source: 'catalog' as const,
               seksi: data.seksi !== 'All seksi' ? data.seksi : '',

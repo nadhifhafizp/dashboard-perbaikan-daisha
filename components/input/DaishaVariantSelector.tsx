@@ -63,13 +63,52 @@ export default function DaishaVariantSelector({
   const activeVariantId = useMemo(() => {
     if (!currentNoDaisha || variants.length === 0) return null;
     const cleanNo = currentNoDaisha.trim().toUpperCase().replace(/[\s\-_]/g, '');
+    if (!cleanNo) return null;
 
-    for (const v of variants) {
-      const cleanPrefix = v.codePrefix.replace(/[\s\-_]/g, '').toUpperCase();
-      if (cleanNo.startsWith(cleanPrefix)) {
+    // 1. Prioritaskan kecocokan prefix eksplisit non-kosong (prefix terpanjang lebih dulu)
+    const sortedVariants = [...variants]
+      .filter((v) => (v.codePrefix || '').trim().length > 0)
+      .sort((a, b) => (b.codePrefix || '').length - (a.codePrefix || '').length);
+
+    for (const v of sortedVariants) {
+      const cleanPrefix = (v.codePrefix || '').replace(/[\s\-_]/g, '').toUpperCase();
+      if (cleanPrefix && cleanNo.startsWith(cleanPrefix)) {
         return v.id;
       }
     }
+
+    // 2. Deteksi cerdas berdasarkan karakter pertama / ukuran (S / M / L)
+    // Cth: 'M00378' -> firstChar = 'M' -> targetSize = 'MEDIUM'
+    // Cth: 'S00123' -> firstChar = 'S' -> targetSize = 'SMALL'
+    // Cth: 'L00456' -> firstChar = 'L' -> targetSize = 'LARGE'
+    const firstChar = cleanNo.charAt(0);
+    let targetSize = '';
+    if (firstChar === 'M') targetSize = 'MEDIUM';
+    else if (firstChar === 'L') targetSize = 'LARGE';
+    else if (firstChar === 'S') targetSize = 'SMALL';
+
+    if (targetSize) {
+      // Jika GT Ring atau varian punya spesifikasi susunan (Susun 3 / Susun 4)
+      const isSusun3 = cleanNo.startsWith('S3') || cleanNo.startsWith('M3') || cleanNo.startsWith('L3');
+      const isSusun4 = cleanNo.startsWith('S4') || cleanNo.startsWith('M4') || cleanNo.startsWith('L4');
+
+      if (isSusun3 || isSusun4) {
+        const expectedSusun = isSusun3 ? 'Susun 3' : 'Susun 4';
+        const susunMatch = variants.find(
+          (v) =>
+            (v.ukuran || '').toUpperCase() === targetSize &&
+            (v.susunan || '').toLowerCase() === expectedSusun.toLowerCase()
+        );
+        if (susunMatch) return susunMatch.id;
+      }
+
+      // Cocokkan varian dengan ukuran yang sesuai (LARGE / MEDIUM / SMALL)
+      const sizeMatch = variants.find(
+        (v) => (v.ukuran || '').toUpperCase() === targetSize
+      );
+      if (sizeMatch) return sizeMatch.id;
+    }
+
     return null;
   }, [currentNoDaisha, variants]);
 
@@ -103,12 +142,15 @@ export default function DaishaVariantSelector({
   }
 
   const isGTRing = jenisDaisha.toLowerCase().includes('gt ring');
+  const hasSusunanVariants = useMemo(() => {
+    return variants.some((v) => Boolean(v.susunan));
+  }, [variants]);
 
   // Filter khusus GT Ring (Ukuran S/M/L dan Susun 3/4)
   // Penting: Jika BUKAN GT Ring (misal Vertical), jangan terapkan filter ukuran/susunan agar varian tidak hilang tersaring
   const filteredVariants = variants.filter((v) => {
     if (filterUkuran !== 'ALL' && (v.ukuran || '').toLowerCase() !== filterUkuran.toLowerCase()) return false;
-    if (filterSusunan !== 'ALL' && (v.susunan || '').toLowerCase() !== filterSusunan.toLowerCase()) return false;
+    if (hasSusunanVariants && filterSusunan !== 'ALL' && (v.susunan || '').toLowerCase() !== filterSusunan.toLowerCase()) return false;
     return true;
   });
 
@@ -159,23 +201,25 @@ export default function DaishaVariantSelector({
             ))}
           </div>
 
-          <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs">
-            <span className="text-xs font-bold text-slate-500 px-1.5">Susunan:</span>
-            {['ALL', 'Susun 3', 'Susun 4'].map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => setFilterSusunan(opt)}
-                className={`px-2 py-1 rounded text-xs font-semibold transition cursor-pointer ${
-                  filterSusunan === opt
-                    ? 'bg-red-600 text-white'
-                    : 'text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                {opt === 'ALL' ? 'Semua Susunan' : opt}
-              </button>
-            ))}
-          </div>
+          {hasSusunanVariants && (
+            <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs">
+              <span className="text-xs font-bold text-slate-500 px-1.5">Susunan:</span>
+              {['ALL', 'Susun 3', 'Susun 4'].map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setFilterSusunan(opt)}
+                  className={`px-2 py-1 rounded text-xs font-semibold transition cursor-pointer ${
+                    filterSusunan === opt
+                      ? 'bg-red-600 text-white'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  {opt === 'ALL' ? 'Semua Susunan' : opt}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -183,6 +227,7 @@ export default function DaishaVariantSelector({
       <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         {filteredVariants.map((v) => {
           const isSelected = activeVariantId === v.id;
+          const displayPrefix = v.codePrefix || (v.ukuran ? v.ukuran.charAt(0).toUpperCase() : '-');
 
           return (
             <button
@@ -201,7 +246,7 @@ export default function DaishaVariantSelector({
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1">
                   <span className="px-2 py-0.5 rounded text-xs font-black font-mono bg-slate-100 text-slate-800 border border-slate-200">
-                    {v.codePrefix}
+                    {displayPrefix}
                   </span>
                   <span className="text-xs font-bold text-slate-500 uppercase">
                     {v.totalUnits} Unit
@@ -212,9 +257,15 @@ export default function DaishaVariantSelector({
                   {v.name}
                 </div>
 
-                <div className="text-xs font-mono text-slate-600 font-medium mt-1">
-                  {v.rangeFormat}
-                </div>
+                {v.rangeFormat ? (
+                  <div className="text-xs font-mono text-slate-600 font-medium mt-1">
+                    {v.rangeFormat}
+                  </div>
+                ) : displayPrefix && displayPrefix !== '-' ? (
+                  <div className="text-xs font-mono text-slate-500 font-medium mt-1">
+                    Awalan: {displayPrefix}
+                  </div>
+                ) : null}
               </div>
 
               <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">

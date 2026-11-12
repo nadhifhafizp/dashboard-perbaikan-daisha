@@ -122,7 +122,9 @@ export async function GET(request: Request) {
       SELECT 
         "DaishaType" AS daisha_type,
         "SizeSpec" AS size,
-        COUNT(*)::int AS count
+        COUNT(*)::int AS count,
+        MIN("UnitCode") AS min_code,
+        MAX("UnitCode") AS max_code
       FROM "TWMSDaishaCatalog"
       WHERE "IsActive" = TRUE AND "SizeSpec" IS NOT NULL AND "SizeSpec" != 'NONE'
       GROUP BY "DaishaType", "SizeSpec"
@@ -133,11 +135,33 @@ export async function GET(request: Request) {
       const key = s.daisha_type?.toLowerCase();
       if (!key) return;
       if (!sizeMap.has(key)) sizeMap.set(key, []);
+
+      const upperSize = (s.size || '').toUpperCase().trim();
+      const isGtRing = (s.daisha_type || '').toLowerCase().includes('gt ring');
+      let codePrefix = '';
+
+      if (upperSize === 'LARGE') codePrefix = 'L';
+      else if (upperSize === 'MEDIUM') codePrefix = 'M';
+      else if (upperSize === 'SMALL') codePrefix = 'S';
+
+      // Jika unit berkategori GT Ring dan min_code memiliki prefix susunan (S3, S4, M3, L3)
+      if (s.min_code) {
+        const cleanMin = s.min_code.trim().toUpperCase().replace(/[\s\-_]/g, '');
+        if (isGtRing) {
+          const gtMatch = cleanMin.match(/^([SML][34]?)/);
+          if (gtMatch && gtMatch[1]) {
+            codePrefix = gtMatch[1];
+          }
+        }
+      }
+
       sizeMap.get(key)!.push({
         id: sizeMap.get(key)!.length + 1,
         name: `${s.daisha_type} ${s.size}`,
         ukuran: s.size,
         totalUnits: s.count,
+        codePrefix: codePrefix,
+        rangeFormat: s.min_code && s.max_code ? `${s.min_code} s/d ${s.max_code}` : '',
       });
     });
 
