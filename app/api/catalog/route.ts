@@ -723,6 +723,13 @@ export async function POST(request: Request) {
 
         // Deaktivasi unit non-varian lama (SizeSpec NONE) agar tidak menjadi unit orphan/hantu yang tercampur
         await sql`
+          DELETE FROM "TWMSDaishaCatalog"
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            AND ("SizeSpec" IS NULL OR "SizeSpec" = 'NONE')
+            AND "UnitCode" NOT IN (SELECT "UnitCode" FROM "TWMSRepairTicket" WHERE "UnitCode" IS NOT NULL)
+            AND "UnitCode" NOT IN (SELECT "UnitCode" FROM "TWMSMaintenanceLog" WHERE "UnitCode" IS NOT NULL)
+        `;
+        await sql`
           UPDATE "TWMSDaishaCatalog"
           SET "IsActive" = FALSE, "UpdateDate" = NOW()
           WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
@@ -760,128 +767,143 @@ export async function POST(request: Request) {
       }
       const actualOldName = oldName || newName;
 
-      // Update di TWMSDamageCatalog
-      await sql`
-        UPDATE "TWMSDamageCatalog"
-        SET 
-          "DaishaType" = ${newName},
-          "SectionName" = COALESCE(${seksi}, "SectionName"),
-          "UpdateDate" = NOW()
-        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${actualOldName}))
-      `;
-
-      // Update di TWMSDaishaCatalog
-      await sql`
-        UPDATE "TWMSDaishaCatalog"
-        SET 
-          "DaishaType" = ${newName},
-          "SectionName" = COALESCE(${seksi}, "SectionName"),
-          "UpdateDate" = NOW()
-        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${actualOldName}))
-      `;
-
-      const oldCodePrefix = sanitizeText(body.oldCodePrefix, 20)?.toUpperCase().trim() || '';
-      const cleanPrefix = codePrefix !== undefined && codePrefix !== null ? sanitizeText(codePrefix, 20)?.toUpperCase().trim() : '';
-
-      // Periksa apakah Daisha ini memiliki varian
-      const [variantCheck] = await sql`
-        SELECT COUNT(*)::int as count 
-        FROM "TWMSDaishaCatalog" 
-        WHERE "IsActive" = TRUE 
-          AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
-          AND "SizeSpec" IS NOT NULL AND "SizeSpec" != 'NONE'
-      `;
-      const hasVariants = (variantCheck?.count || 0) > 0;
-
-      // Sinkronkan prefix dan populasi unit HANYA untuk Daisha yang tidak menggunakan sistem varian
-      if (!hasVariants) {
-        // Ambil seluruh unit aktif saat ini
-        const activeUnits = await sql`
-          SELECT "Id", "UnitCode"
-          FROM "TWMSDaishaCatalog"
-          WHERE "IsActive" = TRUE AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
-          ORDER BY "Id" ASC
+      await sql.begin(async (tx) => {
+        // Update di TWMSDamageCatalog
+        await tx`
+          UPDATE "TWMSDamageCatalog"
+          SET 
+            "DaishaType" = ${newName},
+            "SectionName" = COALESCE(${seksi}, "SectionName"),
+            "UpdateDate" = NOW()
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${actualOldName}))
         `;
-        const currentCount = activeUnits.length;
 
-        // 1. Rename Prefix jika cleanPrefix diisi dan berbeda dari prefix unit saat ini
-        if (cleanPrefix && activeUnits.length > 0) {
-          const needsRename = activeUnits.some(
-            (u) => !u.UnitCode.startsWith(cleanPrefix)
-          );
-          if (needsRename) {
-            // Step A: Berikan prefix sementara untuk mencegah tabrakan unique constraint
-            const tempPrefix = `__TMP_${Date.now()}_`;
-            for (const u of activeUnits) {
-              await sql`
-                UPDATE "TWMSDaishaCatalog"
-                SET "UnitCode" = ${tempPrefix} || "Id", "UpdateDate" = NOW()
-                WHERE "Id" = ${u.Id}
-              `;
-            }
+        // Update di TWMSDaishaCatalog
+        await tx`
+          UPDATE "TWMSDaishaCatalog"
+          SET 
+            "DaishaType" = ${newName},
+            "SectionName" = COALESCE(${seksi}, "SectionName"),
+            "UpdateDate" = NOW()
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${actualOldName}))
+        `;
 
-            // Cari nomor urut awal yang aman jika ada unit di daisha lain yang sudah memakai prefix ini
-            let startNum = 1;
-            const existingOther = await sql`
-              SELECT "UnitCode" FROM "TWMSDaishaCatalog"
-              WHERE "UnitCode" LIKE ${cleanPrefix + '%'}
-                AND "IsActive" = TRUE
-                AND LOWER(TRIM("DaishaType")) != LOWER(TRIM(${newName}))
-            `;
-            if (existingOther.length > 0) {
-              let maxConflict = 0;
-              for (const row of existingOther) {
-                const match = row.UnitCode.match(/\d+$/);
-                if (match) {
-                  const n = parseInt(match[0], 10);
-                  if (n > maxConflict) maxConflict = n;
-                }
-              }
-              startNum = maxConflict + 1;
-            }
+        const oldCodePrefix = sanitizeText(body.oldCodePrefix, 20)?.toUpperCase().trim() || '';
+        const cleanPrefix = codePrefix !== undefined && codePrefix !== null ? sanitizeText(codePrefix, 20)?.toUpperCase().trim() : '';
 
-            // Step B: Set kode baru final berurutan
-            for (let i = 0; i < activeUnits.length; i++) {
-              const u = activeUnits[i];
-              const newCode = `${cleanPrefix}${String(startNum + i).padStart(4, '0')}`;
-              await sql`
-                UPDATE "TWMSDaishaCatalog"
-                SET "UnitCode" = ${newCode}, "UpdateDate" = NOW()
-                WHERE "Id" = ${u.Id}
-              `;
-            }
-          }
-        }
+        // Periksa apakah Daisha ini memiliki varian
+        const [variantCheck] = await tx`
+          SELECT COUNT(*)::int as count 
+          FROM "TWMSDaishaCatalog" 
+          WHERE "IsActive" = TRUE 
+            AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
+            AND "SizeSpec" IS NOT NULL AND "SizeSpec" != 'NONE'
+        `;
+        const hasVariants = (variantCheck?.count || 0) > 0;
 
-        // 2. Sinkronkan jumlah populasi unit jika diubah
-        if (totalUnits !== undefined && !isNaN(totalUnits) && totalUnits >= 0) {
-          if (totalUnits > currentCount) {
-            const needed = totalUnits - currentCount;
-            await insertNewDaishaUnits(
-              newName, 
-              seksi || 'Building', 
-              cleanPrefix || oldCodePrefix || null, 
-              needed, 
-              'NONE',
-              currentCount + 1
+        // Sinkronkan prefix dan populasi unit HANYA untuk Daisha yang tidak menggunakan sistem varian
+        if (!hasVariants) {
+          // Ambil seluruh unit aktif saat ini
+          const activeUnits = await tx`
+            SELECT "Id", "UnitCode"
+            FROM "TWMSDaishaCatalog"
+            WHERE "IsActive" = TRUE AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
+            ORDER BY "Id" ASC
+          `;
+          const currentCount = activeUnits.length;
+          const targetIds = activeUnits.map((u) => u.Id);
+
+          // 1. Rename Prefix secara atomic set-based (< 50ms) jika cleanPrefix diisi dan berbeda dari prefix unit saat ini
+          if (cleanPrefix && targetIds.length > 0) {
+            const needsRename = activeUnits.some(
+              (u) => !u.UnitCode.startsWith(cleanPrefix)
             );
-          } else if (totalUnits < currentCount) {
-            const excess = currentCount - totalUnits;
-            await sql`
-              WITH excess AS (
-                SELECT "Id" 
-                FROM "TWMSDaishaCatalog" 
-                WHERE "IsActive" = TRUE AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
-                ORDER BY "Id" DESC
-                LIMIT ${excess}
-              )
-              UPDATE "TWMSDaishaCatalog"
-              SET "IsActive" = FALSE, "UpdateDate" = NOW()
-              WHERE "Id" IN (SELECT "Id" FROM excess)
-            `;
+            if (needsRename) {
+              // Phase 1: Set temporary globally-unique codes in ONE statement to release unique constraint
+              await tx`
+                UPDATE "TWMSDaishaCatalog"
+                SET "UnitCode" = '__TMP_' || "Id"::text, "UpdateDate" = NOW()
+                WHERE "Id" = ANY(${targetIds})
+              `;
+
+              // Cari nomor urut awal yang aman dengan memeriksa seluruh database (termasuk inactive rows)
+              const otherUnits = await tx`
+                SELECT "UnitCode" FROM "TWMSDaishaCatalog"
+                WHERE "UnitCode" LIKE ${cleanPrefix + '%'}
+                  AND "Id" != ALL(${targetIds})
+              `;
+              let startNum = 1;
+              if (otherUnits.length > 0) {
+                let maxConflict = 0;
+                for (const row of otherUnits) {
+                  const match = row.UnitCode.match(/\d+$/);
+                  if (match) {
+                    const n = parseInt(match[0], 10);
+                    if (n > maxConflict) maxConflict = n;
+                  }
+                }
+                startNum = maxConflict + 1;
+              }
+
+              // Phase 2: Set kode final berurutan dalam 1 CTE statement
+              await tx`
+                WITH numbered AS (
+                  SELECT "Id", ROW_NUMBER() OVER (ORDER BY "Id" ASC) as rn
+                  FROM "TWMSDaishaCatalog"
+                  WHERE "Id" = ANY(${targetIds})
+                )
+                UPDATE "TWMSDaishaCatalog" d
+                SET "UnitCode" = ${cleanPrefix} || LPAD((n.rn + ${startNum - 1})::text, 4, '0'),
+                    "UpdateDate" = NOW()
+                FROM numbered n
+                WHERE d."Id" = n."Id"
+              `;
+            }
+          }
+
+          // 2. Sinkronkan jumlah populasi unit jika diubah
+          if (totalUnits !== undefined && !isNaN(totalUnits) && totalUnits >= 0) {
+            if (totalUnits > currentCount) {
+              const needed = totalUnits - currentCount;
+              await insertNewDaishaUnits(
+                newName, 
+                seksi || 'Building', 
+                cleanPrefix || oldCodePrefix || null, 
+                needed, 
+                'NONE',
+                currentCount + 1
+              );
+            } else if (totalUnits < currentCount) {
+              const excess = currentCount - totalUnits;
+              await tx`
+                WITH excess AS (
+                  SELECT "Id", "UnitCode" 
+                  FROM "TWMSDaishaCatalog" 
+                  WHERE "IsActive" = TRUE AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
+                  ORDER BY "Id" DESC
+                  LIMIT ${excess}
+                )
+                DELETE FROM "TWMSDaishaCatalog"
+                WHERE "Id" IN (SELECT "Id" FROM excess)
+                  AND "UnitCode" NOT IN (SELECT "UnitCode" FROM "TWMSRepairTicket" WHERE "UnitCode" IS NOT NULL)
+                  AND "UnitCode" NOT IN (SELECT "UnitCode" FROM "TWMSMaintenanceLog" WHERE "UnitCode" IS NOT NULL)
+              `;
+              await tx`
+                WITH excess AS (
+                  SELECT "Id" 
+                  FROM "TWMSDaishaCatalog" 
+                  WHERE "IsActive" = TRUE AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
+                  ORDER BY "Id" DESC
+                  LIMIT ${excess}
+                )
+                UPDATE "TWMSDaishaCatalog"
+                SET "IsActive" = FALSE, "UpdateDate" = NOW()
+                WHERE "Id" IN (SELECT "Id" FROM excess)
+              `;
+            }
           }
         }
-      }
+      });
 
       await syncDaishaMasterFromCatalog();
       invalidateMaintenanceCache();
@@ -900,116 +922,128 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama Daisha wajib ditentukan untuk varian.' }, { status: 400 });
       }
 
-      // Update nama varian (SizeSpec) di TWMSDaishaCatalog
-      if (oldUkuran && oldUkuran !== 'NONE' && newUkuran !== oldUkuran) {
-        await sql`
-          UPDATE "TWMSDaishaCatalog"
-          SET 
-            "SizeSpec" = ${newUkuran},
-            "SectionName" = COALESCE(${seksi}, "SectionName"),
-            "UpdateDate" = NOW()
-          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-            AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${oldUkuran}))
-        `;
-      }
-
-      const oldCodePrefix = sanitizeText(body.oldCodePrefix, 20)?.toUpperCase().trim() || '';
-      const cleanPrefix = codePrefix !== undefined && codePrefix !== null ? sanitizeText(codePrefix, 20)?.toUpperCase().trim() : '';
-
-      // Ambil seluruh unit aktif varian ini saat ini
-      const activeVariantUnits = await sql`
-        SELECT "Id", "UnitCode"
-        FROM "TWMSDaishaCatalog"
-        WHERE "IsActive" = TRUE 
-          AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-          AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
-        ORDER BY "Id" ASC
-      `;
-      const vCount = activeVariantUnits.length;
-
-      // 1. Rename Prefix jika cleanPrefix diisi dan berbeda dari prefix unit saat ini
-      if (cleanPrefix && activeVariantUnits.length > 0) {
-        const needsRename = activeVariantUnits.some(
-          (u) => !u.UnitCode.startsWith(cleanPrefix)
-        );
-        if (needsRename) {
-          // Step A: Berikan prefix sementara untuk mencegah tabrakan unique constraint
-          const tempPrefix = `__TMP_${Date.now()}_`;
-          for (const u of activeVariantUnits) {
-            await sql`
-              UPDATE "TWMSDaishaCatalog"
-              SET "UnitCode" = ${tempPrefix} || "Id", "UpdateDate" = NOW()
-              WHERE "Id" = ${u.Id}
-            `;
-          }
-
-          // Cari nomor urut awal yang aman jika ada unit di daisha/varian lain yang sudah memakai prefix ini
-          let startNum = 1;
-          const existingOther = await sql`
-            SELECT "UnitCode" FROM "TWMSDaishaCatalog"
-            WHERE "UnitCode" LIKE ${cleanPrefix + '%'}
-              AND "IsActive" = TRUE
-              AND ("Id" NOT IN (
-                SELECT "Id" FROM "TWMSDaishaCatalog" 
-                WHERE "IsActive" = TRUE 
-                  AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName})) 
-                  AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
-              ))
-          `;
-          if (existingOther.length > 0) {
-            let maxConflict = 0;
-            for (const row of existingOther) {
-              const match = row.UnitCode.match(/\d+$/);
-              if (match) {
-                const n = parseInt(match[0], 10);
-                if (n > maxConflict) maxConflict = n;
-              }
-            }
-            startNum = maxConflict + 1;
-          }
-
-          // Step B: Set kode baru final berurutan
-          for (let i = 0; i < activeVariantUnits.length; i++) {
-            const u = activeVariantUnits[i];
-            const newCode = `${cleanPrefix}${String(startNum + i).padStart(4, '0')}`;
-            await sql`
-              UPDATE "TWMSDaishaCatalog"
-              SET "UnitCode" = ${newCode}, "UpdateDate" = NOW()
-              WHERE "Id" = ${u.Id}
-            `;
-          }
-        }
-      }
-
-      // 2. Sinkronkan populasi unit varian jika diubah
-      if (totalUnits !== undefined && !isNaN(totalUnits) && totalUnits >= 0) {
-        if (totalUnits > vCount) {
-          await insertNewDaishaUnits(
-            daishaName, 
-            seksi || 'Building', 
-            cleanPrefix || oldCodePrefix || null, 
-            totalUnits - vCount, 
-            newUkuran,
-            vCount + 1
-          );
-        } else if (totalUnits < vCount) {
-          const excess = vCount - totalUnits;
-          await sql`
-            WITH excess AS (
-              SELECT "Id" 
-              FROM "TWMSDaishaCatalog" 
-              WHERE "IsActive" = TRUE 
-                AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-                AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
-              ORDER BY "Id" DESC
-              LIMIT ${excess}
-            )
+      await sql.begin(async (tx) => {
+        // Update nama varian (SizeSpec) di TWMSDaishaCatalog
+        if (oldUkuran && oldUkuran !== 'NONE' && newUkuran !== oldUkuran) {
+          await tx`
             UPDATE "TWMSDaishaCatalog"
-            SET "IsActive" = FALSE, "UpdateDate" = NOW()
-            WHERE "Id" IN (SELECT "Id" FROM excess)
+            SET 
+              "SizeSpec" = ${newUkuran},
+              "SectionName" = COALESCE(${seksi}, "SectionName"),
+              "UpdateDate" = NOW()
+            WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+              AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${oldUkuran}))
           `;
         }
-      }
+
+        const oldCodePrefix = sanitizeText(body.oldCodePrefix, 20)?.toUpperCase().trim() || '';
+        const cleanPrefix = codePrefix !== undefined && codePrefix !== null ? sanitizeText(codePrefix, 20)?.toUpperCase().trim() : '';
+
+        // Ambil seluruh unit aktif varian ini saat ini
+        const activeVariantUnits = await tx`
+          SELECT "Id", "UnitCode"
+          FROM "TWMSDaishaCatalog"
+          WHERE "IsActive" = TRUE 
+            AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
+          ORDER BY "Id" ASC
+        `;
+        const vCount = activeVariantUnits.length;
+        const targetIds = activeVariantUnits.map((u) => u.Id);
+
+        // 1. Rename Prefix secara atomic set-based (< 50ms) jika cleanPrefix diisi dan berbeda dari prefix unit saat ini
+        if (cleanPrefix && targetIds.length > 0) {
+          const needsRename = activeVariantUnits.some(
+            (u) => !u.UnitCode.startsWith(cleanPrefix)
+          );
+          if (needsRename) {
+            // Phase 1: Set temporary unique codes
+            await tx`
+              UPDATE "TWMSDaishaCatalog"
+              SET "UnitCode" = '__TMP_' || "Id"::text, "UpdateDate" = NOW()
+              WHERE "Id" = ANY(${targetIds})
+            `;
+
+            // Cari nomor urut awal yang aman dari seluruh database
+            const otherUnits = await tx`
+              SELECT "UnitCode" FROM "TWMSDaishaCatalog"
+              WHERE "UnitCode" LIKE ${cleanPrefix + '%'}
+                AND "Id" != ALL(${targetIds})
+            `;
+            let startNum = 1;
+            if (otherUnits.length > 0) {
+              let maxConflict = 0;
+              for (const row of otherUnits) {
+                const match = row.UnitCode.match(/\d+$/);
+                if (match) {
+                  const n = parseInt(match[0], 10);
+                  if (n > maxConflict) maxConflict = n;
+                }
+              }
+              startNum = maxConflict + 1;
+            }
+
+            // Phase 2: Set kode final berurutan dalam 1 CTE statement
+            await tx`
+              WITH numbered AS (
+                SELECT "Id", ROW_NUMBER() OVER (ORDER BY "Id" ASC) as rn
+                FROM "TWMSDaishaCatalog"
+                WHERE "Id" = ANY(${targetIds})
+              )
+              UPDATE "TWMSDaishaCatalog" d
+              SET "UnitCode" = ${cleanPrefix} || LPAD((n.rn + ${startNum - 1})::text, 4, '0'),
+                  "UpdateDate" = NOW()
+              FROM numbered n
+              WHERE d."Id" = n."Id"
+            `;
+          }
+        }
+
+        // 2. Sinkronkan populasi unit varian jika diubah
+        if (totalUnits !== undefined && !isNaN(totalUnits) && totalUnits >= 0) {
+          if (totalUnits > vCount) {
+            await insertNewDaishaUnits(
+              daishaName, 
+              seksi || 'Building', 
+              cleanPrefix || oldCodePrefix || null, 
+              totalUnits - vCount, 
+              newUkuran,
+              vCount + 1
+            );
+          } else if (totalUnits < vCount) {
+            const excess = vCount - totalUnits;
+            await tx`
+              WITH excess AS (
+                SELECT "Id", "UnitCode"
+                FROM "TWMSDaishaCatalog" 
+                WHERE "IsActive" = TRUE 
+                  AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+                  AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
+                ORDER BY "Id" DESC
+                LIMIT ${excess}
+              )
+              DELETE FROM "TWMSDaishaCatalog"
+              WHERE "Id" IN (SELECT "Id" FROM excess)
+                AND "UnitCode" NOT IN (SELECT "UnitCode" FROM "TWMSRepairTicket" WHERE "UnitCode" IS NOT NULL)
+                AND "UnitCode" NOT IN (SELECT "UnitCode" FROM "TWMSMaintenanceLog" WHERE "UnitCode" IS NOT NULL)
+            `;
+            await tx`
+              WITH excess AS (
+                SELECT "Id" 
+                FROM "TWMSDaishaCatalog" 
+                WHERE "IsActive" = TRUE 
+                  AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+                  AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
+                ORDER BY "Id" DESC
+                LIMIT ${excess}
+              )
+              UPDATE "TWMSDaishaCatalog"
+              SET "IsActive" = FALSE, "UpdateDate" = NOW()
+              WHERE "Id" IN (SELECT "Id" FROM excess)
+            `;
+          }
+        }
+      });
 
       await syncDaishaMasterFromCatalog();
       invalidateMaintenanceCache();
@@ -1333,7 +1367,17 @@ export async function DELETE(request: Request) {
             AND "SizeSpec" IS NOT NULL AND "SizeSpec" != 'NONE'
         `;
         if ((remainingVariants?.count || 0) === 0) {
-          // Tidak ada varian lain, nonaktifkan sisa unit non-varian orphan agar tidak muncul unit hantu
+          // Tidak ada varian lain, hapus sisa unit non-varian orphan yang tidak berelasi dengan tiket/log
+          await sql`
+            DELETE FROM "TWMSDaishaCatalog"
+            WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+              AND ("SizeSpec" IS NULL OR "SizeSpec" = 'NONE')
+              AND "UnitCode" NOT IN (
+                SELECT "UnitCode" FROM "TWMSRepairTicket"
+                UNION
+                SELECT "UnitCode" FROM "TWMSMaintenanceLog"
+              )
+          `;
           await sql`
             UPDATE "TWMSDaishaCatalog"
             SET "IsActive" = FALSE, "UpdateDate" = NOW()
