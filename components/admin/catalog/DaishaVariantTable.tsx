@@ -51,8 +51,16 @@ export default function DaishaVariantTable({
       </div>
 
       {variants.length === 0 ? (
-        <div className="text-slate-400 text-xs italic py-1">
-          Belum ada rincian varian terpisah. Unit ini menggunakan konfigurasi tunggal. Klik &quot;+ Varian Unit&quot; untuk memecah spesifikasi.
+        <div className="flex flex-wrap items-center justify-between gap-2 py-2 px-3 rounded-md bg-slate-50 border border-slate-200/80 text-xs text-slate-600">
+          <span>Daisha ini menggunakan 1 model standar ({daisha.totalUnits || 0} unit fisik). Butuh pembagian varian/ukuran?</span>
+          <button
+            type="button"
+            onClick={() => onOpenAddVariant(daisha)}
+            className="font-bold text-red-600 hover:text-red-800 flex items-center gap-1 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Tambah Varian Sekarang</span>
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">

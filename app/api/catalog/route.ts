@@ -700,9 +700,27 @@ export async function POST(request: Request) {
         WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${actualOldName}))
       `;
 
-      // 1. Update Prefix Kode Unit jika diisi dan ada perubahan secara instan (< 30ms) dengan PostgreSQL CTE
-      if (codePrefix && codePrefix.trim()) {
-        const cleanPrefix = codePrefix.trim().toUpperCase();
+      const oldCodePrefix = sanitizeText(body.oldCodePrefix, 20)?.toUpperCase().trim() || '';
+      const cleanPrefix = codePrefix ? sanitizeText(codePrefix, 20)?.toUpperCase().trim() : '';
+
+      // 1. Update Prefix Kode Unit HANYA jika prefix benar-benar diubah oleh pengguna
+      if (cleanPrefix && oldCodePrefix && cleanPrefix !== oldCodePrefix) {
+        await sql`
+          UPDATE "TWMSDaishaCatalog"
+          SET "UnitCode" = ${cleanPrefix} || SUBSTRING("UnitCode" FROM ${oldCodePrefix.length + 1}),
+              "UpdateDate" = NOW()
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
+            AND "IsActive" = TRUE
+            AND "UnitCode" NOT IN (
+              SELECT "UnitCode" FROM "TWMSRepairTicket"
+              UNION
+              SELECT "UnitCode" FROM "TWMSMaintenanceLog"
+            )
+            AND (${cleanPrefix} || SUBSTRING("UnitCode" FROM ${oldCodePrefix.length + 1})) NOT IN (
+              SELECT "UnitCode" FROM "TWMSDaishaCatalog"
+            )
+        `;
+      } else if (cleanPrefix && !oldCodePrefix) {
         await sql`
           WITH ranked AS (
             SELECT "Id", ROW_NUMBER() OVER (ORDER BY "Id" ASC) as rn
@@ -720,6 +738,9 @@ export async function POST(request: Request) {
               "UpdateDate" = NOW()
           FROM ranked
           WHERE u."Id" = ranked."Id"
+            AND (${cleanPrefix} || LPAD(ranked.rn::text, 4, '0')) NOT IN (
+              SELECT "UnitCode" FROM "TWMSDaishaCatalog"
+            )
         `;
       }
 
@@ -734,13 +755,32 @@ export async function POST(request: Request) {
 
         if (totalUnits > currentCount) {
           const needed = totalUnits - currentCount;
+          // Cari nomor terbesar agar unit baru tidak menghasilkan nomor duplikat
+          const [maxUnitRow] = await sql`
+            SELECT "UnitCode" 
+            FROM "TWMSDaishaCatalog" 
+            WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
+            ORDER BY "Id" DESC 
+            LIMIT 1
+          `;
+          let startNum = currentCount + 1;
+          if (maxUnitRow?.UnitCode) {
+            const numMatch = maxUnitRow.UnitCode.match(/\d+$/);
+            if (numMatch && numMatch[0]) {
+              const maxNum = parseInt(numMatch[0], 10);
+              if (!isNaN(maxNum) && maxNum >= startNum) {
+                startNum = maxNum + 1;
+              }
+            }
+          }
+
           await insertNewDaishaUnits(
             newName, 
             seksi || 'Building', 
-            codePrefix || null, 
+            cleanPrefix || oldCodePrefix || null, 
             needed, 
             'NONE', 
-            currentCount + 1
+            startNum
           );
         } else if (totalUnits < currentCount) {
           const excess = currentCount - totalUnits;
@@ -802,9 +842,28 @@ export async function POST(request: Request) {
         `;
       }
 
-      // Update prefix kode untuk varian ini jika diisi
-      if (codePrefix && codePrefix.trim()) {
-        const cleanPrefix = codePrefix.trim().toUpperCase();
+      const oldCodePrefix = sanitizeText(body.oldCodePrefix, 20)?.toUpperCase().trim() || '';
+      const cleanPrefix = codePrefix ? sanitizeText(codePrefix, 20)?.toUpperCase().trim() : '';
+
+      // Update prefix kode untuk varian ini jika benar-benar diubah
+      if (cleanPrefix && oldCodePrefix && cleanPrefix !== oldCodePrefix) {
+        await sql`
+          UPDATE "TWMSDaishaCatalog"
+          SET "UnitCode" = ${cleanPrefix} || SUBSTRING("UnitCode" FROM ${oldCodePrefix.length + 1}),
+              "UpdateDate" = NOW()
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
+            AND "IsActive" = TRUE 
+            AND "UnitCode" NOT IN (
+              SELECT "UnitCode" FROM "TWMSRepairTicket"
+              UNION
+              SELECT "UnitCode" FROM "TWMSMaintenanceLog"
+            )
+            AND (${cleanPrefix} || SUBSTRING("UnitCode" FROM ${oldCodePrefix.length + 1})) NOT IN (
+              SELECT "UnitCode" FROM "TWMSDaishaCatalog"
+            )
+        `;
+      } else if (cleanPrefix && !oldCodePrefix) {
         await sql`
           WITH ranked AS (
             SELECT "Id", ROW_NUMBER() OVER (ORDER BY "Id" ASC) as rn
@@ -823,6 +882,9 @@ export async function POST(request: Request) {
               "UpdateDate" = NOW()
           FROM ranked
           WHERE u."Id" = ranked."Id"
+            AND (${cleanPrefix} || LPAD(ranked.rn::text, 4, '0')) NOT IN (
+              SELECT "UnitCode" FROM "TWMSDaishaCatalog"
+            )
         `;
       }
 
@@ -837,7 +899,24 @@ export async function POST(request: Request) {
         `;
         const vCount = variantCountRow?.count || 0;
         if (totalUnits > vCount) {
-          await insertNewDaishaUnits(daishaName, seksi || 'Building', codePrefix || null, totalUnits - vCount, newUkuran);
+          const [maxUnitRow] = await sql`
+            SELECT "UnitCode" 
+            FROM "TWMSDaishaCatalog" 
+            WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            ORDER BY "Id" DESC 
+            LIMIT 1
+          `;
+          let startNum = vCount + 1;
+          if (maxUnitRow?.UnitCode) {
+            const numMatch = maxUnitRow.UnitCode.match(/\d+$/);
+            if (numMatch && numMatch[0]) {
+              const maxNum = parseInt(numMatch[0], 10);
+              if (!isNaN(maxNum) && maxNum >= startNum) {
+                startNum = maxNum + 1;
+              }
+            }
+          }
+          await insertNewDaishaUnits(daishaName, seksi || 'Building', cleanPrefix || oldCodePrefix || null, totalUnits - vCount, newUkuran, startNum);
         } else if (totalUnits < vCount) {
           const excess = vCount - totalUnits;
           await sql`

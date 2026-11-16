@@ -398,6 +398,7 @@ export function useCatalogManager() {
           oldUkuran: editItem.oldUkuran,
           seksi: editItem.seksi,
           codePrefix: editItem.codePrefix?.trim(),
+          oldCodePrefix: editItem.oldCodePrefix?.trim() || editItem.codePrefix?.trim(),
           totalUnits: editItem.totalUnits,
           ukuran: editItem.ukuran,
           susunan: editItem.susunan,

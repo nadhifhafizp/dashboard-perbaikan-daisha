@@ -494,6 +494,7 @@ export interface EditCatalogItemState {
   oldUkuran?: string;
   seksi?: string;
   codePrefix?: string;
+  oldCodePrefix?: string;
   totalUnits?: number;
   ukuran?: string;
   susunan?: string;

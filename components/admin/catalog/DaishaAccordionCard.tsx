@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, Tag } from 'lucide-react';
 import { DaishaTreeItem } from '@/hooks/useDaishaCatalog';
 import { EditCatalogItemState } from '../CatalogModals';
 import DaishaVariantTable from './DaishaVariantTable';
@@ -79,6 +79,16 @@ export default function DaishaAccordionCard({
         >
           <button
             type="button"
+            onClick={() => onOpenAddVariant(daisha)}
+            className="h-8 sm:h-9 px-2.5 bg-white hover:bg-red-50 text-red-700 border border-red-300 rounded font-semibold text-xs transition flex items-center gap-1 cursor-pointer"
+            title="Tambah varian spesifikasi armada"
+          >
+            <Tag className="w-3.5 h-3.5 text-red-600" />
+            <span>+ Varian</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => onOpenAddComponent(daisha)}
             className="h-8 sm:h-9 px-3 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 rounded font-semibold text-xs transition flex items-center gap-1 cursor-pointer"
             title="Tambah komponen kerusakan baru"
@@ -97,6 +107,7 @@ export default function DaishaAccordionCard({
                 oldName: daisha.name,
                 seksi: daisha.seksi,
                 codePrefix: daisha.codePrefix || '',
+                oldCodePrefix: daisha.codePrefix || '',
                 totalUnits: daisha.totalUnits || 0,
               })
             }
@@ -143,14 +154,12 @@ export default function DaishaAccordionCard({
       {/* Flat Komponen, Gejala & Varian List */}
       {isExpanded && (
         <div className="p-4 bg-slate-50 border-b border-slate-200 space-y-4">
-          {Boolean(daisha.variants && daisha.variants.length > 0) && (
-            <DaishaVariantTable
-              daisha={daisha}
-              onOpenAddVariant={onOpenAddVariant}
-              onEditVariant={onEditItem}
-              onDeleteVariant={onDeleteItem}
-            />
-          )}
+          <DaishaVariantTable
+            daisha={daisha}
+            onOpenAddVariant={onOpenAddVariant}
+            onEditVariant={onEditItem}
+            onDeleteVariant={onDeleteItem}
+          />
           <DaishaComponentTable
             daisha={daisha}
             onOpenAddSymptom={onOpenAddSymptom}
