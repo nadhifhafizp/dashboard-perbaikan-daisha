@@ -113,6 +113,7 @@ export async function insertNewDaishaUnits(
     SizeSpec: string;
     SectionName: string;
     CurrentCondition: string;
+    IsActive: boolean;
   }> = [];
 
   for (let i = startNumber; i < startNumber + totalUnits; i++) {
@@ -126,6 +127,7 @@ export async function insertNewDaishaUnits(
       SizeSpec: cleanSize || 'NONE',
       SectionName: seksi,
       CurrentCondition: 'OK',
+      IsActive: true,
     });
   }
 
@@ -134,10 +136,11 @@ export async function insertNewDaishaUnits(
     for (let i = 0; i < unitsToInsert.length; i += batchSize) {
       const chunk = unitsToInsert.slice(i, i + batchSize);
       await sql`
-        INSERT INTO "TWMSDaishaCatalog" ${sql(chunk, 'UnitCode', 'DaishaType', 'SizeSpec', 'SectionName', 'CurrentCondition')}
+        INSERT INTO "TWMSDaishaCatalog" ${sql(chunk, 'UnitCode', 'DaishaType', 'SizeSpec', 'SectionName', 'CurrentCondition', 'IsActive')}
         ON CONFLICT ("UnitCode") DO UPDATE SET
           "DaishaType" = EXCLUDED."DaishaType",
           "SectionName" = EXCLUDED."SectionName",
+          "IsActive" = TRUE,
           "UpdateDate" = NOW()
       `;
     }

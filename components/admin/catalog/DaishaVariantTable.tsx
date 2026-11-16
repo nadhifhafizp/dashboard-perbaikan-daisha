@@ -132,7 +132,7 @@ export default function DaishaVariantTable({
                       type: 'variant',
                       id: v.id,
                       daishaName: daisha.name,
-                      ukuran: v.ukuran || undefined,
+                      ukuran: v.ukuran || v.name || undefined,
                       title: `Hapus Varian: ${v.name}`,
                       description: `Apakah Anda yakin ingin menghapus varian "${v.name}"?`,
                     })

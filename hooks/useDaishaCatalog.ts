@@ -89,18 +89,14 @@ export function useDaishaCatalog() {
   const [loading, setLoading] = useState(() => !globalCatalogCache);
 
   const fetchCatalog = useCallback(async (force = false) => {
-    // Lewati jika cache masih baru (< 30 detik) dan tidak dipaksa
-    if (!force && globalCatalogCache && Date.now() - lastCatalogFetchTimestamp < 30 * 1000) {
-      return;
-    }
-
     try {
-      if (force) setLoading(true);
-      const url = force ? `/api/catalog?t=${Date.now()}` : '/api/catalog';
+      if (force || !globalCatalogCache) setLoading(true);
+      const url = `/api/catalog?t=${Date.now()}`;
       const res = await fetch(url, {
-        cache: force ? 'no-store' : 'default',
+        cache: 'no-store',
         headers: {
-          'Cache-Control': force ? 'no-cache' : 'default',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
         },
       });
       if (!res.ok) return;

@@ -143,12 +143,14 @@ export default function DaishaAccordionCard({
       {/* Flat Komponen, Gejala & Varian List */}
       {isExpanded && (
         <div className="p-4 bg-slate-50 border-b border-slate-200 space-y-4">
-          <DaishaVariantTable
-            daisha={daisha}
-            onOpenAddVariant={onOpenAddVariant}
-            onEditVariant={onEditItem}
-            onDeleteVariant={onDeleteItem}
-          />
+          {Boolean(daisha.variants && daisha.variants.length > 0) && (
+            <DaishaVariantTable
+              daisha={daisha}
+              onOpenAddVariant={onOpenAddVariant}
+              onEditVariant={onEditItem}
+              onDeleteVariant={onDeleteItem}
+            />
+          )}
           <DaishaComponentTable
             daisha={daisha}
             onOpenAddSymptom={onOpenAddSymptom}

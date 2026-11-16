@@ -263,114 +263,49 @@ export function AddVariantModal({
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-3 text-xs">
+        <form onSubmit={onSubmit} className="space-y-3.5 text-xs">
           <div>
-            <label className="font-medium text-slate-700 block mb-1">Nama Varian Spesifik</label>
+            <label className="font-bold text-slate-800 block mb-1">
+              Nama Varian / Ukuran <span className="text-red-600">*</span>
+            </label>
             <input
               type="text"
               required
-              placeholder="Contoh: Small Susun 3, Type A, dll."
+              placeholder="Contoh: Small, Medium, Large, Susun 3"
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-medium text-slate-900"
+              onChange={(e) => {
+                const val = e.target.value;
+                setForm({ ...form, name: val, ukuran: form.ukuran || val });
+              }}
+              className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-medium text-slate-900"
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-medium text-slate-700 block mb-1">Ukuran Fisik</label>
-              <select
-                value={form.ukuran}
-                onChange={(e) => setForm({ ...form, ukuran: e.target.value })}
-                className="w-full h-9 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900 bg-white"
-              >
-                <option value="">- Tanpa Ukuran -</option>
-                <option value="Small">Small (S)</option>
-                <option value="Medium">Medium (M)</option>
-                <option value="Large">Large (L)</option>
-              </select>
-            </div>
-            <div>
-              <label className="font-medium text-slate-700 block mb-1">Susunan Tingkat</label>
-              <select
-                value={form.susunan}
-                onChange={(e) => setForm({ ...form, susunan: e.target.value })}
-                className="w-full h-9 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900 bg-white"
-              >
-                <option value="">- Tanpa Susunan -</option>
-                <option value="Susun 3">Susun 3</option>
-                <option value="Susun 4">Susun 4</option>
-              </select>
-            </div>
-            <div>
-              <label className="font-medium text-slate-700 block mb-1">Sub-Tipe</label>
+              <label className="font-bold text-slate-800 block mb-1">Prefix Kode Unit</label>
               <input
                 type="text"
-                placeholder="Contoh: Type A"
-                value={form.tipe}
-                onChange={(e) => setForm({ ...form, tipe: e.target.value })}
-                className="w-full h-9 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900"
-              >
-              </input>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 pt-1">
-            <div>
-              <label className="font-medium text-slate-700 block mb-1">Prefix Nomor</label>
-              <input
-                type="text"
-                placeholder="Contoh: S30, BB-A"
+                placeholder="Contoh: S3, M3, L3"
                 value={form.codePrefix}
-                onChange={(e) => setForm({ ...form, codePrefix: e.target.value })}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-mono uppercase text-slate-900"
+                onChange={(e) => setForm({ ...form, codePrefix: e.target.value.toUpperCase() })}
+                className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-mono font-bold uppercase text-slate-900"
               />
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Awalan barcode varian</span>
             </div>
             <div>
-              <label className="font-medium text-slate-700 block mb-1">No Min Seri</label>
-              <input
-                type="number"
-                min="1"
-                value={form.minNumber || ''}
-                onChange={(e) => setForm({ ...form, minNumber: Number(e.target.value) || 1 })}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900"
-              />
-            </div>
-            <div>
-              <label className="font-medium text-slate-700 block mb-1">No Max Seri</label>
-              <input
-                type="number"
-                min="1"
-                value={form.maxNumber || ''}
-                onChange={(e) => {
-                  const max = Number(e.target.value) || 1;
-                  setForm({ ...form, maxNumber: max, totalUnits: Math.max(1, max - (form.minNumber || 1) + 1) });
-                }}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <div>
-              <label className="font-medium text-slate-700 block mb-1">Total Unit Fisik</label>
+              <label className="font-bold text-slate-800 block mb-1">
+                Jumlah Populasi Unit
+              </label>
               <input
                 type="number"
                 min="0"
+                placeholder="Contoh: 20, 50"
                 value={form.totalUnits || ''}
                 onChange={(e) => setForm({ ...form, totalUnits: Number(e.target.value) || 0 })}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-semibold text-slate-900"
+                className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-bold text-slate-900"
               />
-            </div>
-            <div>
-              <label className="font-medium text-slate-700 block mb-1">Format Rentang Seri</label>
-              <input
-                type="text"
-                placeholder="Contoh: S30001 s/d S30035"
-                value={form.rangeFormat}
-                onChange={(e) => setForm({ ...form, rangeFormat: e.target.value })}
-                className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden text-slate-900"
-              />
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Total unit armada untuk varian ini</span>
             </div>
           </div>
 
@@ -378,13 +313,13 @@ export function AddVariantModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg cursor-pointer transition"
+              className="h-9 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg cursor-pointer transition text-xs"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer transition"
+              className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg cursor-pointer transition text-xs shadow-xs"
             >
               Simpan Varian
             </button>
@@ -673,94 +608,42 @@ export function EditCatalogItemModal({
 
           {item.type === 'variant' && (
             <>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="font-medium text-slate-700 block mb-1">Ukuran</label>
-                  <select
-                    value={item.ukuran || ''}
-                    onChange={(e) => setItem({ ...item, ukuran: e.target.value })}
-                    className="w-full h-9 px-2 border border-slate-300 rounded-lg outline-hidden text-slate-900 bg-white"
-                  >
-                    <option value="">-</option>
-                    <option value="Small">Small</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Large">Large</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="font-medium text-slate-700 block mb-1">Susunan</label>
-                  <select
-                    value={item.susunan || ''}
-                    onChange={(e) => setItem({ ...item, susunan: e.target.value })}
-                    className="w-full h-9 px-2 border border-slate-300 rounded-lg outline-hidden text-slate-900 bg-white"
-                  >
-                    <option value="">-</option>
-                    <option value="Susun 3">Susun 3</option>
-                    <option value="Susun 4">Susun 4</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="font-medium text-slate-700 block mb-1">Sub-Tipe</label>
-                  <input
-                    type="text"
-                    value={item.tipe || ''}
-                    onChange={(e) => setItem({ ...item, tipe: e.target.value })}
-                    className="w-full h-9 px-2 border border-slate-300 rounded-lg outline-hidden text-slate-900"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 pt-1">
-                <div>
-                  <label className="font-medium text-slate-700 block mb-1">Prefix Kode</label>
-                  <input
-                    type="text"
-                    value={item.codePrefix || ''}
-                    onChange={(e) => setItem({ ...item, codePrefix: e.target.value })}
-                    className="w-full h-9 px-2.5 border border-slate-300 rounded-lg font-mono uppercase text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="font-medium text-slate-700 block mb-1">No Min</label>
-                  <input
-                    type="number"
-                    value={item.minNumber ?? 1}
-                    onChange={(e) => setItem({ ...item, minNumber: Number(e.target.value) || 1 })}
-                    className="w-full h-9 px-2.5 border border-slate-300 rounded-lg text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="font-medium text-slate-700 block mb-1">No Max</label>
-                  <input
-                    type="number"
-                    value={item.maxNumber ?? 1}
-                    onChange={(e) => {
-                      const max = Number(e.target.value) || 1;
-                      setItem({ ...item, maxNumber: max, totalUnits: Math.max(1, max - (item.minNumber || 1) + 1) });
-                    }}
-                    className="w-full h-9 px-2.5 border border-slate-300 rounded-lg text-slate-900"
-                  />
-                </div>
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">
+                  Ukuran / Spesifikasi Varian
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: Small, Medium, Large"
+                  value={item.ukuran || ''}
+                  onChange={(e) => setItem({ ...item, ukuran: e.target.value })}
+                  className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-medium text-slate-900"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
-                  <label className="font-medium text-slate-700 block mb-1">Total Unit Fisik</label>
-                  <input
-                    type="number"
-                    value={item.totalUnits ?? 0}
-                    onChange={(e) => setItem({ ...item, totalUnits: Number(e.target.value) || 0 })}
-                    className="w-full h-9 px-2.5 border border-slate-300 rounded-lg font-semibold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="font-medium text-slate-700 block mb-1">Format Rentang Seri</label>
+                  <label className="font-bold text-slate-800 block mb-1">Prefix Kode</label>
                   <input
                     type="text"
-                    value={item.rangeFormat || ''}
-                    onChange={(e) => setItem({ ...item, rangeFormat: e.target.value })}
-                    className="w-full h-9 px-2.5 border border-slate-300 rounded-lg text-slate-900"
+                    placeholder="Contoh: S3, M3"
+                    value={item.codePrefix || ''}
+                    onChange={(e) => setItem({ ...item, codePrefix: e.target.value.toUpperCase() })}
+                    className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-mono font-bold uppercase text-slate-900"
                   />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">Awalan barcode varian</span>
+                </div>
+                <div>
+                  <label className="font-bold text-slate-800 block mb-1">Total Unit Fisik</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Contoh: 25"
+                    value={item.totalUnits ?? 0}
+                    onChange={(e) => setItem({ ...item, totalUnits: Number(e.target.value) || 0 })}
+                    className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-bold text-slate-900"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">Total unit armada</span>
                 </div>
               </div>
             </>
