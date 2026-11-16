@@ -107,6 +107,35 @@ export async function insertNewDaishaUnits(
 
   const prefix = (codePrefix || '').trim();
   const cleanSize = (sizeSpec || 'NONE').trim().toUpperCase();
+  const actualPrefix = prefix && prefix !== 'null'
+    ? prefix
+    : `${name.replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase()}-`;
+
+  // Cari angka suffix tertinggi di database untuk prefix ini agar tidak pernah bentrok
+  let safeStartNum = Math.max(1, startNumber);
+  try {
+    const existing = await sql`
+      SELECT "UnitCode" 
+      FROM "TWMSDaishaCatalog" 
+      WHERE "UnitCode" LIKE ${actualPrefix + '%'}
+    `;
+    let maxNum = 0;
+    for (const row of existing) {
+      if (row.UnitCode) {
+        const match = row.UnitCode.match(/\d+$/);
+        if (match && match[0]) {
+          const n = parseInt(match[0], 10);
+          if (!isNaN(n) && n > maxNum) maxNum = n;
+        }
+      }
+    }
+    if (maxNum >= safeStartNum) {
+      safeStartNum = maxNum + 1;
+    }
+  } catch (err) {
+    console.error('Error finding max existing UnitCode:', err);
+  }
+
   const unitsToInsert: Array<{
     UnitCode: string;
     DaishaType: string;
@@ -116,10 +145,8 @@ export async function insertNewDaishaUnits(
     IsActive: boolean;
   }> = [];
 
-  for (let i = startNumber; i < startNumber + totalUnits; i++) {
-    const noD = prefix && prefix !== 'null'
-      ? `${prefix}${String(i).padStart(4, '0')}`
-      : `${name.replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase()}-${String(i).padStart(3, '0')}`;
+  for (let i = safeStartNum; i < safeStartNum + totalUnits; i++) {
+    const noD = `${actualPrefix}${String(i).padStart(4, '0')}`;
 
     unitsToInsert.push({
       UnitCode: noD.toUpperCase(),
@@ -139,6 +166,7 @@ export async function insertNewDaishaUnits(
         INSERT INTO "TWMSDaishaCatalog" ${sql(chunk, 'UnitCode', 'DaishaType', 'SizeSpec', 'SectionName', 'CurrentCondition', 'IsActive')}
         ON CONFLICT ("UnitCode") DO UPDATE SET
           "DaishaType" = EXCLUDED."DaishaType",
+          "SizeSpec" = EXCLUDED."SizeSpec",
           "SectionName" = EXCLUDED."SectionName",
           "IsActive" = TRUE,
           "UpdateDate" = NOW()

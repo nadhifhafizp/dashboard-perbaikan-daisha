@@ -145,7 +145,7 @@ export default function CatalogManager() {
                     codePrefix: daisha.codePrefix || '',
                     minNumber: 1,
                     maxNumber: 1,
-                    totalUnits: 1,
+                    totalUnits: 0,
                     rangeFormat: '',
                   });
                   setIsAddVariantModalOpen(true);

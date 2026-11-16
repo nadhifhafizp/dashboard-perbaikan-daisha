@@ -79,7 +79,7 @@ export function useCatalogManager() {
     codePrefix: '',
     minNumber: 1,
     maxNumber: 1,
-    totalUnits: 1,
+    totalUnits: 0,
     rangeFormat: '',
   });
   const [newComponentName, setNewComponentName] = useState('');
@@ -327,7 +327,7 @@ export function useCatalogManager() {
           daishaName: addVariantTarget.name,
           seksi: addVariantTarget.seksi,
           name: newVariantForm.name.trim(),
-          ukuran: newVariantForm.ukuran,
+          ukuran: newVariantForm.ukuran || newVariantForm.name.trim(),
           susunan: newVariantForm.susunan,
           tipe: newVariantForm.tipe,
           codePrefix: newVariantForm.codePrefix.trim(),
@@ -351,7 +351,7 @@ export function useCatalogManager() {
           codePrefix: '',
           minNumber: 1,
           maxNumber: 1,
-          totalUnits: 1,
+          totalUnits: 0,
           rangeFormat: '',
         });
         await refreshCatalog();
@@ -395,12 +395,12 @@ export function useCatalogManager() {
           oldDescription: editItem.oldDescription,
           newDescription: editItem.name.trim(),
           description: editItem.name.trim(),
-          oldUkuran: editItem.oldUkuran,
+          oldUkuran: editItem.oldUkuran || editItem.oldName || editItem.name.trim(),
           seksi: editItem.seksi,
           codePrefix: editItem.codePrefix?.trim(),
           oldCodePrefix: editItem.oldCodePrefix?.trim() || editItem.codePrefix?.trim(),
           totalUnits: editItem.totalUnits,
-          ukuran: editItem.ukuran,
+          ukuran: editItem.ukuran || editItem.name.trim(),
           susunan: editItem.susunan,
           tipe: editItem.tipe,
           minNumber: editItem.minNumber,

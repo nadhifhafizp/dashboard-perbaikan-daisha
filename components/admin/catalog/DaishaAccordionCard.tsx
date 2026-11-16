@@ -61,9 +61,13 @@ export default function DaishaAccordionCard({
                 </span>
               )}
               <h4 className="font-bold text-sm text-slate-900">{daisha.name}</h4>
-              {Boolean(daisha.totalUnits && daisha.totalUnits > 0) && (
+              {Boolean(daisha.totalUnits && daisha.totalUnits > 0) ? (
                 <span className="text-xs font-bold bg-slate-100 text-slate-800 px-2 py-0.5 rounded border border-slate-200 tabular-nums">
                   {daisha.totalUnits?.toLocaleString('id-ID')} Unit
+                </span>
+              ) : (
+                <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/60 tabular-nums">
+                  0 Unit
                 </span>
               )}
               <span className="text-xs text-slate-500 font-normal">
@@ -109,6 +113,8 @@ export default function DaishaAccordionCard({
                 codePrefix: daisha.codePrefix || '',
                 oldCodePrefix: daisha.codePrefix || '',
                 totalUnits: daisha.totalUnits || 0,
+                hasVariants: Boolean(daisha.variants && daisha.variants.length > 0),
+                variantsCount: daisha.variants?.length || 0,
               })
             }
             className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded cursor-pointer transition"
