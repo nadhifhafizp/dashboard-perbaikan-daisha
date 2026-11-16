@@ -133,12 +133,12 @@ export function AddDaishaModal({
               <label className="font-bold text-slate-800 block mb-1">Prefix Kode Unit</label>
               <input
                 type="text"
-                placeholder="Contoh: EXT-A-, FIL-B-"
+                placeholder="Opsional (misal: EXT-A-)"
                 value={form.codePrefix}
                 onChange={(e) => setForm({ ...form, codePrefix: e.target.value.toUpperCase() })}
                 className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-mono font-bold uppercase text-slate-900"
               />
-              <span className="text-[10px] text-slate-400 mt-0.5 block">Awalan nomor barcode</span>
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Bisa dikosongkan jika menggunakan varian</span>
             </div>
             <div>
               <label className="font-bold text-slate-800 block mb-1">
@@ -586,11 +586,14 @@ export function EditCatalogItemModal({
                   <label className="font-medium text-slate-700 block mb-1">Prefix Kode Unit</label>
                   <input
                     type="text"
-                    placeholder="Contoh: BAN-A-, M00, S40"
+                    placeholder="Opsional (bisa dikosongkan)"
                     value={item.codePrefix || ''}
-                    onChange={(e) => setItem({ ...item, codePrefix: e.target.value })}
+                    onChange={(e) => setItem({ ...item, codePrefix: e.target.value.toUpperCase() })}
                     className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-mono uppercase text-slate-900"
                   />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">
+                    Bisa dikosongkan jika unit diatur per varian
+                  </span>
                 </div>
                 <div>
                   <label className="font-medium text-slate-700 block mb-1">Total Unit Armada</label>

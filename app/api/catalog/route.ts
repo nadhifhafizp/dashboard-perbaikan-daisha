@@ -243,18 +243,25 @@ export async function GET(request: Request) {
       if (!r.daisha_type) continue;
       const typeKey = r.daisha_type.trim();
       if (!groupedDaisha.has(typeKey)) {
-        const canonical = findDaishaCodeSpec(typeKey);
+        const variants = sizeMap.get(typeKey.toLowerCase()) || [];
         const stats = unitMap.get(typeKey.toLowerCase());
-        let codePrefix = canonical?.codePrefix || '';
-        if (!codePrefix && stats?.sample_code) {
-          const m1 = stats.sample_code.match(/^([A-Za-z0-9\/\-]+?)(?:\d{3,5})$/);
-          if (m1 && m1[1]) {
-            codePrefix = m1[1];
-          } else {
-            const m2 = stats.sample_code.match(/^([A-Za-z\/\-]+)/);
-            if (m2 && m2[1]) codePrefix = m2[1];
+        let codePrefix = '';
+
+        // Hanya isi codePrefix induk jika Daisha TIDAK memiliki varian dan memiliki unit aktif
+        if (variants.length === 0 && (stats?.total_units || 0) > 0) {
+          const canonical = findDaishaCodeSpec(typeKey);
+          codePrefix = canonical?.codePrefix || '';
+          if (!codePrefix && stats?.sample_code) {
+            const m1 = stats.sample_code.match(/^([A-Za-z0-9\/\-]+?)(?:\d{3,5})$/);
+            if (m1 && m1[1]) {
+              codePrefix = m1[1];
+            } else {
+              const m2 = stats.sample_code.match(/^([A-Za-z\/\-]+)/);
+              if (m2 && m2[1]) codePrefix = m2[1];
+            }
           }
         }
+
         groupedDaisha.set(typeKey, {
           id: r.id,
           name: typeKey,
@@ -262,7 +269,7 @@ export async function GET(request: Request) {
           codePrefix: codePrefix,
           totalUnits: stats?.total_units || 0,
           componentsMap: new Map(),
-          variants: sizeMap.get(typeKey.toLowerCase()) || [],
+          variants: variants,
         });
       }
 
@@ -295,11 +302,15 @@ export async function GET(request: Request) {
         (k) => k.toLowerCase() === key
       );
       if (!matchFound) {
-        const canonical = findDaishaCodeSpec(stats.daisha_type);
-        let codePrefix = canonical?.codePrefix || '';
-        if (!codePrefix && stats.sample_code) {
-          const m1 = stats.sample_code.match(/^([A-Za-z0-9\/\-]+?)(?:\d{3,5})$/);
-          if (m1 && m1[1]) codePrefix = m1[1];
+        const variants = sizeMap.get(key) || [];
+        let codePrefix = '';
+        if (variants.length === 0 && (stats.total_units || 0) > 0) {
+          const canonical = findDaishaCodeSpec(stats.daisha_type);
+          codePrefix = canonical?.codePrefix || '';
+          if (!codePrefix && stats.sample_code) {
+            const m1 = stats.sample_code.match(/^([A-Za-z0-9\/\-]+?)(?:\d{3,5})$/);
+            if (m1 && m1[1]) codePrefix = m1[1];
+          }
         }
         groupedDaisha.set(stats.daisha_type, {
           id: Math.floor(Math.random() * 1000000),
@@ -308,7 +319,7 @@ export async function GET(request: Request) {
           codePrefix: codePrefix,
           totalUnits: stats.total_units || 0,
           componentsMap: new Map(),
-          variants: sizeMap.get(key) || [],
+          variants: variants,
         });
       }
     }
@@ -639,15 +650,82 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Nama Daisha wajib ditentukan.' }, { status: 400 });
       }
 
-      const [existingUnitRow] = await sql`
-        SELECT count(*)::int as count 
-        FROM "TWMSDaishaCatalog" 
-        WHERE "IsActive" = TRUE AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-      `;
-      const startNum = (existingUnitRow?.count || 0) + 1;
+      const cleanPrefix = (codePrefix || '').trim().toUpperCase();
 
-      if (totalUnits > 0) {
-        await insertNewDaishaUnits(daishaName, seksi, codePrefix || null, totalUnits, ukuran, startNum);
+      // Cek apakah ada unit unassigned (SizeSpec 'NONE' / NULL) yang sudah ada di database untuk daisha ini
+      const unassignedUnits = await sql`
+        SELECT "Id", "UnitCode" 
+        FROM "TWMSDaishaCatalog"
+        WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+          AND "IsActive" = TRUE
+          AND ("SizeSpec" IS NULL OR "SizeSpec" = 'NONE')
+        ORDER BY "Id" ASC
+        LIMIT ${totalUnits}
+      `;
+
+      if (unassignedUnits.length > 0) {
+        const idsToUpdate = unassignedUnits.map((u) => u.Id);
+        await sql`
+          UPDATE "TWMSDaishaCatalog"
+          SET "SizeSpec" = ${ukuran},
+              "SectionName" = COALESCE(${seksi}, "SectionName"),
+              "UpdateDate" = NOW()
+          WHERE "Id" = ANY(${idsToUpdate})
+        `;
+
+        if (cleanPrefix) {
+          await sql`
+            UPDATE "TWMSDaishaCatalog"
+            SET "UnitCode" = ${cleanPrefix} || LPAD(SUBSTRING("UnitCode" FROM '\\d+$')::text, 4, '0'),
+                "UpdateDate" = NOW()
+            WHERE "Id" = ANY(${idsToUpdate})
+              AND "UnitCode" NOT IN (
+                SELECT "UnitCode" FROM "TWMSRepairTicket"
+                UNION
+                SELECT "UnitCode" FROM "TWMSMaintenanceLog"
+              )
+              AND (${cleanPrefix} || LPAD(SUBSTRING("UnitCode" FROM '\\d+$')::text, 4, '0')) NOT IN (
+                SELECT "UnitCode" FROM "TWMSDaishaCatalog"
+              )
+          `;
+        }
+
+        const remainingNeeded = totalUnits - unassignedUnits.length;
+        if (remainingNeeded > 0) {
+          const [maxUnitRow] = await sql`
+            SELECT "UnitCode" 
+            FROM "TWMSDaishaCatalog" 
+            WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            ORDER BY "Id" DESC 
+            LIMIT 1
+          `;
+          let startNum = unassignedUnits.length + 1;
+          if (maxUnitRow?.UnitCode) {
+            const numMatch = maxUnitRow.UnitCode.match(/\d+$/);
+            if (numMatch && numMatch[0]) {
+              const maxNum = parseInt(numMatch[0], 10);
+              if (!isNaN(maxNum) && maxNum >= startNum) startNum = maxNum + 1;
+            }
+          }
+          await insertNewDaishaUnits(daishaName, seksi, cleanPrefix || null, remainingNeeded, ukuran, startNum);
+        }
+      } else if (totalUnits > 0) {
+        const [maxUnitRow] = await sql`
+          SELECT "UnitCode" 
+          FROM "TWMSDaishaCatalog" 
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+          ORDER BY "Id" DESC 
+          LIMIT 1
+        `;
+        let startNum = 1;
+        if (maxUnitRow?.UnitCode) {
+          const numMatch = maxUnitRow.UnitCode.match(/\d+$/);
+          if (numMatch && numMatch[0]) {
+            const maxNum = parseInt(numMatch[0], 10);
+            if (!isNaN(maxNum)) startNum = maxNum + 1;
+          }
+        }
+        await insertNewDaishaUnits(daishaName, seksi, cleanPrefix || null, totalUnits, ukuran, startNum);
       }
 
       await syncDaishaMasterFromCatalog();
@@ -789,6 +867,7 @@ export async function POST(request: Request) {
               SELECT "Id" 
               FROM "TWMSDaishaCatalog" 
               WHERE "IsActive" = TRUE AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
+                AND ("SizeSpec" IS NULL OR "SizeSpec" = 'NONE')
                 AND "UnitCode" NOT IN (
                   SELECT "UnitCode" FROM "TWMSRepairTicket"
                   UNION
