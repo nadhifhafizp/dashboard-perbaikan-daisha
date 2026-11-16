@@ -100,7 +100,8 @@ export async function insertNewDaishaUnits(
   seksi: string,
   codePrefix: string | null,
   totalUnits: number,
-  sizeSpec: string = 'NONE'
+  sizeSpec: string = 'NONE',
+  startNumber: number = 1
 ): Promise<number> {
   if (totalUnits <= 0) return 0;
 
@@ -114,7 +115,7 @@ export async function insertNewDaishaUnits(
     CurrentCondition: string;
   }> = [];
 
-  for (let i = 1; i <= totalUnits; i++) {
+  for (let i = startNumber; i < startNumber + totalUnits; i++) {
     const noD = prefix && prefix !== 'null'
       ? `${prefix}${String(i).padStart(4, '0')}`
       : `${name.replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase()}-${String(i).padStart(3, '0')}`;
@@ -133,10 +134,7 @@ export async function insertNewDaishaUnits(
     for (let i = 0; i < unitsToInsert.length; i += batchSize) {
       const chunk = unitsToInsert.slice(i, i + batchSize);
       await sql`
-        INSERT INTO "TWMSDaishaCatalog" ("UnitCode", "DaishaType", "SizeSpec", "SectionName", "CurrentCondition", "UpdateDate")
-        SELECT 
-          u."UnitCode", u."DaishaType", u."SizeSpec", u."SectionName", u."CurrentCondition", NOW()
-        FROM ${sql(chunk, 'UnitCode', 'DaishaType', 'SizeSpec', 'SectionName', 'CurrentCondition')} AS u
+        INSERT INTO "TWMSDaishaCatalog" ${sql(chunk, 'UnitCode', 'DaishaType', 'SizeSpec', 'SectionName', 'CurrentCondition')}
         ON CONFLICT ("UnitCode") DO UPDATE SET
           "DaishaType" = EXCLUDED."DaishaType",
           "SectionName" = EXCLUDED."SectionName",

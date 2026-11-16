@@ -147,6 +147,7 @@ export default function DaishaComponentTable({
                               type: 'symptom',
                               id: symptom.id,
                               name: symptom.description,
+                              oldName: symptom.description,
                               oldDescription: symptom.description,
                               daishaName: daisha.name,
                               componentName: comp.name,

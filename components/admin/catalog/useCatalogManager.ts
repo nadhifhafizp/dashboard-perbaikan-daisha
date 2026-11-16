@@ -395,6 +395,7 @@ export function useCatalogManager() {
           oldDescription: editItem.oldDescription,
           newDescription: editItem.name.trim(),
           description: editItem.name.trim(),
+          oldUkuran: editItem.oldUkuran,
           seksi: editItem.seksi,
           codePrefix: editItem.codePrefix?.trim(),
           totalUnits: editItem.totalUnits,

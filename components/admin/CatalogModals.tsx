@@ -142,14 +142,13 @@ export function AddDaishaModal({
             </div>
             <div>
               <label className="font-bold text-slate-800 block mb-1">
-                Jumlah Populasi Unit <span className="text-red-600">*</span>
+                Jumlah Populasi Unit
               </label>
               <input
                 type="number"
-                min="1"
-                required
-                placeholder="Contoh: 10, 50, 100"
-                value={form.totalUnits || ''}
+                min="0"
+                placeholder="Contoh: 0, 10, 50, 100"
+                value={form.totalUnits ?? 0}
                 onChange={(e) => setForm({ ...form, totalUnits: Number(e.target.value) || 0 })}
                 className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-bold text-slate-900"
               />
@@ -557,6 +556,7 @@ export interface EditCatalogItemState {
   daishaName?: string;
   componentName?: string;
   oldDescription?: string;
+  oldUkuran?: string;
   seksi?: string;
   codePrefix?: string;
   totalUnits?: number;

@@ -94,6 +94,7 @@ export default function DaishaAccordionCard({
                 type: 'daisha',
                 id: daisha.id,
                 name: daisha.name,
+                oldName: daisha.name,
                 seksi: daisha.seksi,
                 codePrefix: daisha.codePrefix || '',
                 totalUnits: daisha.totalUnits || 0,
