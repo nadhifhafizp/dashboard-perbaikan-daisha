@@ -59,6 +59,26 @@ function invalidateCatalogCache(): void {
   // In-memory cache is fully disabled in favor of real-time Postgres queries
 }
 
+/**
+ * Ekstraksi prefix kode dan nomor urut dari format kode Daisha apapun
+ * Contoh: "BAN-A-0312" -> { prefix: "BAN-A-", num: 312, pad: 4 }
+ *         "S30005"     -> { prefix: "S3", num: 5, pad: 4 }
+ *         "NF-08"      -> { prefix: "NF-", num: 8, pad: 2 }
+ *         "L00012"     -> { prefix: "L", num: 12, pad: 5 }
+ */
+function extractCodePrefixAndNumber(unitCode?: string | null): { prefix: string; num: number; pad: number } {
+  if (!unitCode) return { prefix: '', num: 1, pad: 4 };
+  const s = unitCode.trim();
+  const match = s.match(/^(.*?)(0*(\d+))$/);
+  if (match) {
+    const prefix = match[1];
+    const fullNumStr = match[2];
+    const num = parseInt(match[3], 10);
+    return { prefix, num, pad: fullNumStr.length };
+  }
+  return { prefix: s, num: 1, pad: 4 };
+}
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -129,29 +149,26 @@ export async function GET(request: Request) {
 
       const upperSize = (s.size || '').toUpperCase().trim();
       const isVertical = key.includes('vertical');
-      const isGtRing = key.includes('gt ring');
       let codePrefix = '';
+      let padLen = isVertical ? 5 : 4;
       let variantName = `${s.daisha_type} ${s.size}`;
 
-      if (upperSize === 'LARGE') {
-        codePrefix = 'L';
-        if (isVertical) variantName = 'Vertical-Big/Large';
-      } else if (upperSize === 'MEDIUM') {
-        codePrefix = 'M';
-        if (isVertical) variantName = 'Vertical-Medium';
-      } else if (upperSize === 'SMALL') {
-        codePrefix = 'S';
-        if (isVertical) variantName = 'Vertical-Small';
+      if (s.min_code) {
+        const parsed = extractCodePrefixAndNumber(s.min_code);
+        codePrefix = parsed.prefix;
+        if (parsed.pad > 0) padLen = parsed.pad;
       }
 
-      // Jika unit berkategori GT Ring dan min_code memiliki prefix susunan (S3, S4, M3, L3)
-      if (s.min_code) {
-        const cleanMin = s.min_code.trim().toUpperCase().replace(/[\s\-_]/g, '');
-        if (isGtRing) {
-          const gtMatch = cleanMin.match(/^([SML][34]?)/);
-          if (gtMatch && gtMatch[1]) {
-            codePrefix = gtMatch[1];
-          }
+      if (!codePrefix) {
+        if (upperSize === 'LARGE') {
+          codePrefix = 'L';
+          if (isVertical) variantName = 'Vertical-Big/Large';
+        } else if (upperSize === 'MEDIUM') {
+          codePrefix = 'M';
+          if (isVertical) variantName = 'Vertical-Medium';
+        } else if (upperSize === 'SMALL') {
+          codePrefix = 'S';
+          if (isVertical) variantName = 'Vertical-Small';
         }
       }
 
@@ -161,7 +178,7 @@ export async function GET(request: Request) {
         ukuran: s.size,
         totalUnits: s.count,
         codePrefix: codePrefix,
-        padLength: isVertical ? 5 : isGtRing ? 4 : 4,
+        padLength: padLen,
         rangeFormat: s.min_code && s.max_code ? `${s.min_code} s/d ${s.max_code}` : '',
       });
     });
@@ -249,16 +266,13 @@ export async function GET(request: Request) {
 
         // Hanya isi codePrefix induk jika Daisha TIDAK memiliki varian dan memiliki unit aktif
         if (variants.length === 0 && (stats?.total_units || 0) > 0) {
-          const canonical = findDaishaCodeSpec(typeKey);
-          codePrefix = canonical?.codePrefix || '';
-          if (!codePrefix && stats?.sample_code) {
-            const m1 = stats.sample_code.match(/^([A-Za-z0-9\/\-]+?)(?:\d{3,5})$/);
-            if (m1 && m1[1]) {
-              codePrefix = m1[1];
-            } else {
-              const m2 = stats.sample_code.match(/^([A-Za-z\/\-]+)/);
-              if (m2 && m2[1]) codePrefix = m2[1];
-            }
+          if (stats?.sample_code) {
+            const parsed = extractCodePrefixAndNumber(stats.sample_code);
+            codePrefix = parsed.prefix;
+          }
+          if (!codePrefix) {
+            const canonical = findDaishaCodeSpec(typeKey);
+            codePrefix = canonical?.codePrefix || '';
           }
         }
 
@@ -308,11 +322,13 @@ export async function GET(request: Request) {
         const variants = sizeMap.get(key) || [];
         let codePrefix = '';
         if (variants.length === 0 && (stats.total_units || 0) > 0) {
-          const canonical = findDaishaCodeSpec(stats.daisha_type);
-          codePrefix = canonical?.codePrefix || '';
-          if (!codePrefix && stats.sample_code) {
-            const m1 = stats.sample_code.match(/^([A-Za-z0-9\/\-]+?)(?:\d{3,5})$/);
-            if (m1 && m1[1]) codePrefix = m1[1];
+          if (stats.sample_code) {
+            const parsed = extractCodePrefixAndNumber(stats.sample_code);
+            codePrefix = parsed.prefix;
+          }
+          if (!codePrefix) {
+            const canonical = findDaishaCodeSpec(stats.daisha_type);
+            codePrefix = canonical?.codePrefix || '';
           }
         }
 
@@ -765,31 +781,7 @@ export async function POST(request: Request) {
       `;
 
       const oldCodePrefix = sanitizeText(body.oldCodePrefix, 20)?.toUpperCase().trim() || '';
-      const cleanPrefix = codePrefix ? sanitizeText(codePrefix, 20)?.toUpperCase().trim() : '';
-
-      // Update Prefix Kode Unit HANYA jika prefix benar-benar diubah oleh pengguna
-      if (cleanPrefix && oldCodePrefix && cleanPrefix !== oldCodePrefix) {
-        try {
-          await sql`
-            UPDATE "TWMSDaishaCatalog"
-            SET "UnitCode" = ${cleanPrefix} || SUBSTRING("UnitCode" FROM ${oldCodePrefix.length + 1}),
-                "UpdateDate" = NOW()
-            WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
-              AND "IsActive" = TRUE
-              AND "UnitCode" LIKE ${oldCodePrefix + '%'}
-              AND "UnitCode" NOT IN (
-                SELECT "UnitCode" FROM "TWMSRepairTicket"
-                UNION
-                SELECT "UnitCode" FROM "TWMSMaintenanceLog"
-              )
-              AND (${cleanPrefix} || SUBSTRING("UnitCode" FROM ${oldCodePrefix.length + 1})) NOT IN (
-                SELECT "UnitCode" FROM "TWMSDaishaCatalog"
-              )
-          `;
-        } catch (prefixErr) {
-          console.warn('Prefix rename warning:', prefixErr);
-        }
-      }
+      const cleanPrefix = codePrefix !== undefined && codePrefix !== null ? sanitizeText(codePrefix, 20)?.toUpperCase().trim() : '';
 
       // Periksa apakah Daisha ini memiliki varian
       const [variantCheck] = await sql`
@@ -801,38 +793,93 @@ export async function POST(request: Request) {
       `;
       const hasVariants = (variantCheck?.count || 0) > 0;
 
-      // Sinkronkan Jumlah Populasi Unit HANYA untuk Daisha yang tidak menggunakan sistem varian
-      if (!hasVariants && totalUnits !== undefined && !isNaN(totalUnits) && totalUnits >= 0) {
-        const [activeCountRow] = await sql`
-          SELECT count(*)::int as count 
-          FROM "TWMSDaishaCatalog" 
+      // Sinkronkan prefix dan populasi unit HANYA untuk Daisha yang tidak menggunakan sistem varian
+      if (!hasVariants) {
+        // Ambil seluruh unit aktif saat ini
+        const activeUnits = await sql`
+          SELECT "Id", "UnitCode"
+          FROM "TWMSDaishaCatalog"
           WHERE "IsActive" = TRUE AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
+          ORDER BY "Id" ASC
         `;
-        const currentCount = activeCountRow?.count || 0;
+        const currentCount = activeUnits.length;
 
-        if (totalUnits > currentCount) {
-          const needed = totalUnits - currentCount;
-          await insertNewDaishaUnits(
-            newName, 
-            seksi || 'Building', 
-            cleanPrefix || oldCodePrefix || null, 
-            needed, 
-            'NONE'
+        // 1. Rename Prefix jika cleanPrefix diisi dan berbeda dari prefix unit saat ini
+        if (cleanPrefix && activeUnits.length > 0) {
+          const needsRename = activeUnits.some(
+            (u) => !u.UnitCode.startsWith(cleanPrefix)
           );
-        } else if (totalUnits < currentCount) {
-          const excess = currentCount - totalUnits;
-          await sql`
-            WITH excess AS (
-              SELECT "Id" 
-              FROM "TWMSDaishaCatalog" 
-              WHERE "IsActive" = TRUE AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
-              ORDER BY "Id" DESC
-              LIMIT ${excess}
-            )
-            UPDATE "TWMSDaishaCatalog"
-            SET "IsActive" = FALSE, "UpdateDate" = NOW()
-            WHERE "Id" IN (SELECT "Id" FROM excess)
-          `;
+          if (needsRename) {
+            // Step A: Berikan prefix sementara untuk mencegah tabrakan unique constraint
+            const tempPrefix = `__TMP_${Date.now()}_`;
+            for (const u of activeUnits) {
+              await sql`
+                UPDATE "TWMSDaishaCatalog"
+                SET "UnitCode" = ${tempPrefix} || "Id", "UpdateDate" = NOW()
+                WHERE "Id" = ${u.Id}
+              `;
+            }
+
+            // Cari nomor urut awal yang aman jika ada unit di daisha lain yang sudah memakai prefix ini
+            let startNum = 1;
+            const existingOther = await sql`
+              SELECT "UnitCode" FROM "TWMSDaishaCatalog"
+              WHERE "UnitCode" LIKE ${cleanPrefix + '%'}
+                AND "IsActive" = TRUE
+                AND LOWER(TRIM("DaishaType")) != LOWER(TRIM(${newName}))
+            `;
+            if (existingOther.length > 0) {
+              let maxConflict = 0;
+              for (const row of existingOther) {
+                const match = row.UnitCode.match(/\d+$/);
+                if (match) {
+                  const n = parseInt(match[0], 10);
+                  if (n > maxConflict) maxConflict = n;
+                }
+              }
+              startNum = maxConflict + 1;
+            }
+
+            // Step B: Set kode baru final berurutan
+            for (let i = 0; i < activeUnits.length; i++) {
+              const u = activeUnits[i];
+              const newCode = `${cleanPrefix}${String(startNum + i).padStart(4, '0')}`;
+              await sql`
+                UPDATE "TWMSDaishaCatalog"
+                SET "UnitCode" = ${newCode}, "UpdateDate" = NOW()
+                WHERE "Id" = ${u.Id}
+              `;
+            }
+          }
+        }
+
+        // 2. Sinkronkan jumlah populasi unit jika diubah
+        if (totalUnits !== undefined && !isNaN(totalUnits) && totalUnits >= 0) {
+          if (totalUnits > currentCount) {
+            const needed = totalUnits - currentCount;
+            await insertNewDaishaUnits(
+              newName, 
+              seksi || 'Building', 
+              cleanPrefix || oldCodePrefix || null, 
+              needed, 
+              'NONE',
+              currentCount + 1
+            );
+          } else if (totalUnits < currentCount) {
+            const excess = currentCount - totalUnits;
+            await sql`
+              WITH excess AS (
+                SELECT "Id" 
+                FROM "TWMSDaishaCatalog" 
+                WHERE "IsActive" = TRUE AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
+                ORDER BY "Id" DESC
+                LIMIT ${excess}
+              )
+              UPDATE "TWMSDaishaCatalog"
+              SET "IsActive" = FALSE, "UpdateDate" = NOW()
+              WHERE "Id" IN (SELECT "Id" FROM excess)
+            `;
+          }
         }
       }
 
@@ -867,50 +914,83 @@ export async function POST(request: Request) {
       }
 
       const oldCodePrefix = sanitizeText(body.oldCodePrefix, 20)?.toUpperCase().trim() || '';
-      const cleanPrefix = codePrefix ? sanitizeText(codePrefix, 20)?.toUpperCase().trim() : '';
+      const cleanPrefix = codePrefix !== undefined && codePrefix !== null ? sanitizeText(codePrefix, 20)?.toUpperCase().trim() : '';
 
-      // Update prefix kode untuk varian ini jika benar-benar diubah
-      if (cleanPrefix && oldCodePrefix && cleanPrefix !== oldCodePrefix) {
-        try {
-          await sql`
-            UPDATE "TWMSDaishaCatalog"
-            SET "UnitCode" = ${cleanPrefix} || SUBSTRING("UnitCode" FROM ${oldCodePrefix.length + 1}),
-                "UpdateDate" = NOW()
-            WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-              AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
-              AND "IsActive" = TRUE 
-              AND "UnitCode" LIKE ${oldCodePrefix + '%'}
-              AND "UnitCode" NOT IN (
-                SELECT "UnitCode" FROM "TWMSRepairTicket"
-                UNION
-                SELECT "UnitCode" FROM "TWMSMaintenanceLog"
-              )
-              AND (${cleanPrefix} || SUBSTRING("UnitCode" FROM ${oldCodePrefix.length + 1})) NOT IN (
-                SELECT "UnitCode" FROM "TWMSDaishaCatalog"
-              )
+      // Ambil seluruh unit aktif varian ini saat ini
+      const activeVariantUnits = await sql`
+        SELECT "Id", "UnitCode"
+        FROM "TWMSDaishaCatalog"
+        WHERE "IsActive" = TRUE 
+          AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+          AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
+        ORDER BY "Id" ASC
+      `;
+      const vCount = activeVariantUnits.length;
+
+      // 1. Rename Prefix jika cleanPrefix diisi dan berbeda dari prefix unit saat ini
+      if (cleanPrefix && activeVariantUnits.length > 0) {
+        const needsRename = activeVariantUnits.some(
+          (u) => !u.UnitCode.startsWith(cleanPrefix)
+        );
+        if (needsRename) {
+          // Step A: Berikan prefix sementara untuk mencegah tabrakan unique constraint
+          const tempPrefix = `__TMP_${Date.now()}_`;
+          for (const u of activeVariantUnits) {
+            await sql`
+              UPDATE "TWMSDaishaCatalog"
+              SET "UnitCode" = ${tempPrefix} || "Id", "UpdateDate" = NOW()
+              WHERE "Id" = ${u.Id}
+            `;
+          }
+
+          // Cari nomor urut awal yang aman jika ada unit di daisha/varian lain yang sudah memakai prefix ini
+          let startNum = 1;
+          const existingOther = await sql`
+            SELECT "UnitCode" FROM "TWMSDaishaCatalog"
+            WHERE "UnitCode" LIKE ${cleanPrefix + '%'}
+              AND "IsActive" = TRUE
+              AND ("Id" NOT IN (
+                SELECT "Id" FROM "TWMSDaishaCatalog" 
+                WHERE "IsActive" = TRUE 
+                  AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName})) 
+                  AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
+              ))
           `;
-        } catch (vPrefErr) {
-          console.warn('Variant prefix update warning:', vPrefErr);
+          if (existingOther.length > 0) {
+            let maxConflict = 0;
+            for (const row of existingOther) {
+              const match = row.UnitCode.match(/\d+$/);
+              if (match) {
+                const n = parseInt(match[0], 10);
+                if (n > maxConflict) maxConflict = n;
+              }
+            }
+            startNum = maxConflict + 1;
+          }
+
+          // Step B: Set kode baru final berurutan
+          for (let i = 0; i < activeVariantUnits.length; i++) {
+            const u = activeVariantUnits[i];
+            const newCode = `${cleanPrefix}${String(startNum + i).padStart(4, '0')}`;
+            await sql`
+              UPDATE "TWMSDaishaCatalog"
+              SET "UnitCode" = ${newCode}, "UpdateDate" = NOW()
+              WHERE "Id" = ${u.Id}
+            `;
+          }
         }
       }
 
-      // Sinkronkan populasi unit varian jika diubah
+      // 2. Sinkronkan populasi unit varian jika diubah
       if (totalUnits !== undefined && !isNaN(totalUnits) && totalUnits >= 0) {
-        const [variantCountRow] = await sql`
-          SELECT count(*)::int as count 
-          FROM "TWMSDaishaCatalog" 
-          WHERE "IsActive" = TRUE 
-            AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-            AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
-        `;
-        const vCount = variantCountRow?.count || 0;
         if (totalUnits > vCount) {
           await insertNewDaishaUnits(
             daishaName, 
             seksi || 'Building', 
             cleanPrefix || oldCodePrefix || null, 
             totalUnits - vCount, 
-            newUkuran
+            newUkuran,
+            vCount + 1
           );
         } else if (totalUnits < vCount) {
           const excess = vCount - totalUnits;

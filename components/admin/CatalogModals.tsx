@@ -961,62 +961,106 @@ export function EditCatalogItemModal({
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <div>
-                    <label className="font-medium text-slate-700 block mb-1">Prefix Kode Unit</label>
-                    <input
-                      type="text"
-                      placeholder="Opsional (misal: TRL-)"
-                      value={item.codePrefix || ''}
-                      onChange={(e) => setItem({ ...item, codePrefix: e.target.value.toUpperCase() })}
-                      className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-mono uppercase text-slate-900"
-                    />
-                    <span className="text-[10px] text-slate-400 mt-0.5 block">
-                      Bisa dikosongkan jika unit diatur per varian
-                    </span>
+                <div className="space-y-3 pt-1">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-medium text-slate-700 block mb-1">Prefix Kode Unit</label>
+                      <input
+                        type="text"
+                        placeholder="Opsional (misal: TRL-)"
+                        value={item.codePrefix || ''}
+                        onChange={(e) => setItem({ ...item, codePrefix: e.target.value.toUpperCase() })}
+                        className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-mono uppercase text-slate-900"
+                      />
+                      <span className="text-[10px] text-slate-400 mt-0.5 block">
+                        Awalan kode nomor armada
+                      </span>
+                    </div>
+                    <div>
+                      <label className="font-medium text-slate-700 block mb-1">Total Unit Armada</label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Contoh: 3, 20, 50"
+                        value={item.totalUnits ?? 0}
+                        onChange={(e) => setItem({ ...item, totalUnits: Number(e.target.value) || 0 })}
+                        className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-semibold text-slate-900"
+                      />
+                      <span className="text-[10px] text-slate-400 mt-0.5 block">Jumlah armada model ini</span>
+                    </div>
                   </div>
-                  <div>
-                    <label className="font-medium text-slate-700 block mb-1">Total Unit Armada</label>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Contoh: 3, 20, 50"
-                      value={item.totalUnits ?? 0}
-                      onChange={(e) => setItem({ ...item, totalUnits: Number(e.target.value) || 0 })}
-                      className="w-full h-9 px-3 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-hidden font-semibold text-slate-900"
-                    />
-                    <span className="text-[10px] text-slate-400 mt-0.5 block">Jumlah armada model ini</span>
-                  </div>
+
+                  {item.codePrefix && (item.totalUnits ?? 0) > 0 && (
+                    <div className="p-2.5 bg-emerald-50/90 border border-emerald-200 rounded-xl space-y-1 text-xs">
+                      <div className="flex items-center justify-between text-emerald-950 font-bold">
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>Format Rentang Kode Baru:</span>
+                        </span>
+                        <span className="font-mono bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded border border-emerald-300 font-bold text-[11px]">
+                          {item.totalUnits} Unit
+                        </span>
+                      </div>
+                      <p className="font-mono font-bold text-emerald-900 bg-white/80 p-1.5 rounded border border-emerald-200 text-xs">
+                        {item.codePrefix.trim()}0001 s/d {item.codePrefix.trim()}{String(item.totalUnits).padStart(4, '0')}
+                      </p>
+                      <p className="text-[10.5px] text-emerald-800">
+                        Menyimpan perubahan akan memperbarui seluruh nomor kode unit armada ke prefix baru secara otomatis.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </>
           )}
 
           {item.type === 'variant' && (
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div>
-                <label className="font-bold text-slate-800 block mb-1">Prefix Kode Unit</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: S3, M3, TRL-"
-                  value={item.codePrefix || ''}
-                  onChange={(e) => setItem({ ...item, codePrefix: e.target.value.toUpperCase() })}
-                  className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-mono font-bold uppercase text-slate-900"
-                />
-                <span className="text-[10px] text-slate-400 mt-0.5 block">Awalan barcode varian</span>
+            <div className="space-y-3 pt-1">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-800 block mb-1">Prefix Kode Unit</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: S3, M3, TRL-"
+                    value={item.codePrefix || ''}
+                    onChange={(e) => setItem({ ...item, codePrefix: e.target.value.toUpperCase() })}
+                    className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-mono font-bold uppercase text-slate-900"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">Awalan barcode varian</span>
+                </div>
+                <div>
+                  <label className="font-bold text-slate-800 block mb-1">Total Unit Fisik</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Contoh: 3, 25"
+                    value={item.totalUnits ?? 0}
+                    onChange={(e) => setItem({ ...item, totalUnits: Number(e.target.value) || 0 })}
+                    className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-bold text-slate-900"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">Total unit armada untuk varian ini</span>
+                </div>
               </div>
-              <div>
-                <label className="font-bold text-slate-800 block mb-1">Total Unit Fisik</label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Contoh: 3, 25"
-                  value={item.totalUnits ?? 0}
-                  onChange={(e) => setItem({ ...item, totalUnits: Number(e.target.value) || 0 })}
-                  className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-bold text-slate-900"
-                />
-                <span className="text-[10px] text-slate-400 mt-0.5 block">Total unit armada untuk varian ini</span>
-              </div>
+
+              {item.codePrefix && (item.totalUnits ?? 0) > 0 && (
+                <div className="p-2.5 bg-emerald-50/90 border border-emerald-200 rounded-xl space-y-1 text-xs">
+                  <div className="flex items-center justify-between text-emerald-950 font-bold">
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Format Rentang Kode Baru Varian:</span>
+                    </span>
+                    <span className="font-mono bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded border border-emerald-300 font-bold text-[11px]">
+                      {item.totalUnits} Unit Fisik
+                    </span>
+                  </div>
+                  <p className="font-mono font-bold text-emerald-900 bg-white/80 p-1.5 rounded border border-emerald-200 text-xs">
+                    {item.codePrefix.trim()}0001 s/d {item.codePrefix.trim()}{String(item.totalUnits).padStart(4, '0')}
+                  </p>
+                  <p className="text-[10.5px] text-emerald-800">
+                    Menyimpan perubahan akan memperbarui seluruh nomor kode unit pada varian ini ke prefix baru secara otomatis.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
