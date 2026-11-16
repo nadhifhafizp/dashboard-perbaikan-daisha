@@ -3,7 +3,19 @@
 import { useState, useMemo } from 'react';
 import { useDaishaCatalog, DaishaTreeItem } from '@/hooks/useDaishaCatalog';
 import { FeedbackType } from '@/components/FeedbackModal';
-import { EditCatalogItemState } from '../CatalogModals';
+import { EditCatalogItemState, AddDaishaFormState } from '../CatalogModals';
+
+export const DEFAULT_DAISHA_FORM: AddDaishaFormState = {
+  name: '',
+  seksi: 'Building',
+  hasVariants: false,
+  codePrefix: '',
+  totalUnits: '',
+  variants: [
+    { id: '1', name: 'Tipe A', codePrefix: '', totalUnits: '' },
+    { id: '2', name: 'Tipe B', codePrefix: '', totalUnits: '' },
+  ],
+};
 
 export function useCatalogManager() {
   const { tree, seksiList, loading, refreshCatalog } = useDaishaCatalog();
@@ -65,12 +77,7 @@ export function useCatalogManager() {
 
   // Form inputs
   const [isSubmittingDaisha, setIsSubmittingDaisha] = useState(false);
-  const [newDaishaForm, setNewDaishaForm] = useState({
-    name: '',
-    seksi: 'Building',
-    codePrefix: '',
-    totalUnits: 0,
-  });
+  const [newDaishaForm, setNewDaishaForm] = useState<AddDaishaFormState>(DEFAULT_DAISHA_FORM);
   const [newVariantForm, setNewVariantForm] = useState({
     name: '',
     ukuran: '',
@@ -198,18 +205,44 @@ export function useCatalogManager() {
     e.preventDefault();
     if (!newDaishaForm.name.trim() || isSubmittingDaisha) return;
 
+    if (newDaishaForm.hasVariants) {
+      const validVariants = newDaishaForm.variants.filter((v) => v.name.trim().length > 0);
+      if (validVariants.length === 0) {
+        showFeedback(
+          'error',
+          'Varian Diperlukan',
+          'Harap isi minimal 1 nama varian pada daisha bermodel varian.'
+        );
+        return;
+      }
+    }
+
     setIsSubmittingDaisha(true);
     try {
+      const payload: Record<string, unknown> = {
+        action: 'ADD_DAISHA',
+        name: newDaishaForm.name.trim(),
+        seksi: newDaishaForm.seksi,
+        hasVariants: newDaishaForm.hasVariants,
+      };
+
+      if (newDaishaForm.hasVariants) {
+        payload.variants = newDaishaForm.variants
+          .filter((v) => v.name.trim().length > 0)
+          .map((v) => ({
+            name: v.name.trim(),
+            codePrefix: v.codePrefix.trim().toUpperCase(),
+            totalUnits: Number(v.totalUnits) || 0,
+          }));
+      } else {
+        payload.codePrefix = newDaishaForm.codePrefix.trim().toUpperCase();
+        payload.totalUnits = Number(newDaishaForm.totalUnits) || 0;
+      }
+
       const res = await fetch('/api/catalog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'ADD_DAISHA',
-          name: newDaishaForm.name.trim(),
-          seksi: newDaishaForm.seksi,
-          codePrefix: newDaishaForm.codePrefix.trim(),
-          totalUnits: newDaishaForm.totalUnits,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
 
@@ -217,17 +250,15 @@ export function useCatalogManager() {
         showFeedback('success', 'Jenis Daisha Ditambahkan', data.message);
         setIsAddDaishaModalOpen(false);
         setNewDaishaForm({
-          name: '',
-          seksi: 'Building',
-          codePrefix: '',
-          totalUnits: 0,
+          ...DEFAULT_DAISHA_FORM,
+          seksi: newDaishaForm.seksi,
         });
         await refreshCatalog();
       } else {
         showFeedback(
           'error',
           'Gagal Menambah Daisha',
-          data.error || 'Terjadi kesalahan.'
+          data.error || 'Terjadi kesalahan saat menyimpan.'
         );
       }
     } catch (err) {

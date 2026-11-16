@@ -415,12 +415,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const action = sanitizeText(body.action, 50);
 
-    // 1. Tambah jenis daisha baru
+    // 1. Tambah jenis daisha baru (Model Standar atau Multi-Varian)
     if (action === 'ADD_DAISHA') {
       const name = sanitizeText(body.name, 100);
       const seksi = sanitizeText(body.seksi, 50) || 'Building';
+      const hasVariants = Boolean(body.hasVariants);
       const codePrefix = sanitizeText(body.codePrefix, 20);
       const totalUnits = validatePositiveInt(body.totalUnits ?? 0, 'Total Unit', 0, 10000).value;
+      const variants = Array.isArray(body.variants) ? body.variants : [];
 
       if (!name) {
         return NextResponse.json({ error: 'Nama Daisha wajib diisi.' }, { status: 400 });
@@ -432,7 +434,7 @@ export async function POST(request: Request) {
         LIMIT 1
       `;
       if (existing) {
-        return NextResponse.json({ error: `Jenis Daisha "${name}" sudah ada.` }, { status: 400 });
+        return NextResponse.json({ error: `Jenis Daisha "${name}" sudah terdaftar di katalog.` }, { status: 400 });
       }
 
       const [newDaisha] = await sql`
@@ -448,11 +450,21 @@ export async function POST(request: Request) {
         role: auth.user?.role,
         status: 'SUCCESS',
         targetId: newDaisha.id,
-        details: `Nama: ${newDaisha.name}, Seksi: ${newDaisha.seksi}`,
+        details: `Nama: ${newDaisha.name}, Seksi: ${newDaisha.seksi}, Varian: ${hasVariants ? variants.length : 0}`,
       });
 
-      if (totalUnits > 0) {
-        await insertNewDaishaUnits(newDaisha.name, newDaisha.seksi, codePrefix || null, totalUnits);
+      if (hasVariants && variants.length > 0) {
+        for (const v of variants) {
+          const vName = sanitizeText(v.name, 50);
+          if (!vName) continue;
+          const vPrefix = sanitizeText(v.codePrefix, 20)?.toUpperCase().trim() || null;
+          const vUnits = validatePositiveInt(v.totalUnits ?? 0, 'Unit Varian', 0, 10000).value;
+          if (vUnits > 0) {
+            await insertNewDaishaUnits(newDaisha.name, newDaisha.seksi, vPrefix, vUnits, vName);
+          }
+        }
+      } else if (!hasVariants && totalUnits > 0) {
+        await insertNewDaishaUnits(newDaisha.name, newDaisha.seksi, codePrefix || null, totalUnits, 'NONE');
       }
 
       await syncDaishaMasterFromCatalog();
@@ -460,7 +472,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: `Jenis Daisha "${newDaisha.name}" berhasil ditambahkan.`,
+        message: `Jenis Daisha "${newDaisha.name}" berhasil ditambahkan ke Seksi ${newDaisha.seksi}.`,
         data: newDaisha,
       });
     }
@@ -660,16 +672,20 @@ export async function POST(request: Request) {
       const cleanPrefix = (codePrefix || '').trim().toUpperCase();
 
       if (totalUnits > 0) {
-        // Cek apakah ada unit unassigned (SizeSpec 'NONE' / NULL) yang sudah ada di database untuk daisha ini
-        const unassignedUnits = await sql`
-          SELECT "Id", "UnitCode" 
-          FROM "TWMSDaishaCatalog"
-          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-            AND "IsActive" = TRUE
-            AND ("SizeSpec" IS NULL OR "SizeSpec" = 'NONE')
-          ORDER BY "Id" ASC
-          LIMIT ${totalUnits}
-        `;
+        // Cek apakah ada unit unassigned (SizeSpec 'NONE' / NULL) yang prefix-nya cocok dengan varian ini
+        let unassignedUnits: Array<{ Id: number; UnitCode: string }> = [];
+        if (cleanPrefix) {
+          unassignedUnits = await sql`
+            SELECT "Id", "UnitCode" 
+            FROM "TWMSDaishaCatalog"
+            WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+              AND "IsActive" = TRUE
+              AND ("SizeSpec" IS NULL OR "SizeSpec" = 'NONE')
+              AND "UnitCode" LIKE ${cleanPrefix + '%'}
+            ORDER BY "Id" ASC
+            LIMIT ${totalUnits}
+          `;
+        }
 
         if (unassignedUnits.length > 0) {
           const idsToUpdate = unassignedUnits.map((u) => u.Id);
@@ -688,6 +704,14 @@ export async function POST(request: Request) {
         } else {
           await insertNewDaishaUnits(daishaName, seksi, cleanPrefix || null, totalUnits, ukuran);
         }
+
+        // Deaktivasi unit non-varian lama (SizeSpec NONE) agar tidak menjadi unit orphan/hantu yang tercampur
+        await sql`
+          UPDATE "TWMSDaishaCatalog"
+          SET "IsActive" = FALSE, "UpdateDate" = NOW()
+          WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            AND ("SizeSpec" IS NULL OR "SizeSpec" = 'NONE')
+        `;
       }
 
       await syncDaishaMasterFromCatalog();
@@ -802,11 +826,6 @@ export async function POST(request: Request) {
               SELECT "Id" 
               FROM "TWMSDaishaCatalog" 
               WHERE "IsActive" = TRUE AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${newName}))
-                AND "UnitCode" NOT IN (
-                  SELECT "UnitCode" FROM "TWMSRepairTicket"
-                  UNION
-                  SELECT "UnitCode" FROM "TWMSMaintenanceLog"
-                )
               ORDER BY "Id" DESC
               LIMIT ${excess}
             )
@@ -902,11 +921,6 @@ export async function POST(request: Request) {
               WHERE "IsActive" = TRUE 
                 AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
                 AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${newUkuran}))
-                AND "UnitCode" NOT IN (
-                  SELECT "UnitCode" FROM "TWMSRepairTicket"
-                  UNION
-                  SELECT "UnitCode" FROM "TWMSMaintenanceLog"
-                )
               ORDER BY "Id" DESC
               LIMIT ${excess}
             )
@@ -1080,16 +1094,11 @@ export async function DELETE(request: Request) {
           WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
         `;
 
-        // Soft-delete unit armada yang memiliki riwayat perbaikan/log
+        // Soft-delete seluruh unit armada jenis ini
         await sql`
           UPDATE "TWMSDaishaCatalog"
           SET "IsActive" = FALSE, "UpdateDate" = NOW()
           WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-            AND "UnitCode" IN (
-              SELECT "UnitCode" FROM "TWMSRepairTicket"
-              UNION
-              SELECT "UnitCode" FROM "TWMSMaintenanceLog"
-            )
         `;
 
         // Hapus permanen unit yang tidak memiliki riwayat tiket/log
@@ -1222,11 +1231,6 @@ export async function DELETE(request: Request) {
           SET "IsActive" = FALSE, "UpdateDate" = NOW()
           WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
             AND LOWER(TRIM("SizeSpec")) = LOWER(TRIM(${ukuran}))
-            AND "UnitCode" IN (
-              SELECT "UnitCode" FROM "TWMSRepairTicket"
-              UNION
-              SELECT "UnitCode" FROM "TWMSMaintenanceLog"
-            )
         `;
 
         await sql`
@@ -1239,16 +1243,29 @@ export async function DELETE(request: Request) {
               SELECT "UnitCode" FROM "TWMSMaintenanceLog"
             )
         `;
+
+        // Periksa apakah masih ada varian lain yang aktif untuk Daisha ini
+        const [remainingVariants] = await sql`
+          SELECT COUNT(*)::int as count
+          FROM "TWMSDaishaCatalog"
+          WHERE "IsActive" = TRUE 
+            AND LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+            AND "SizeSpec" IS NOT NULL AND "SizeSpec" != 'NONE'
+        `;
+        if ((remainingVariants?.count || 0) === 0) {
+          // Tidak ada varian lain, nonaktifkan sisa unit non-varian orphan agar tidak muncul unit hantu
+          await sql`
+            UPDATE "TWMSDaishaCatalog"
+            SET "IsActive" = FALSE, "UpdateDate" = NOW()
+            WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
+              AND ("SizeSpec" IS NULL OR "SizeSpec" = 'NONE')
+          `;
+        }
       } else if (daishaName) {
         await sql`
           UPDATE "TWMSDaishaCatalog"
           SET "IsActive" = FALSE, "UpdateDate" = NOW()
           WHERE LOWER(TRIM("DaishaType")) = LOWER(TRIM(${daishaName}))
-            AND "UnitCode" IN (
-              SELECT "UnitCode" FROM "TWMSRepairTicket"
-              UNION
-              SELECT "UnitCode" FROM "TWMSMaintenanceLog"
-            )
         `;
 
         await sql`

@@ -78,8 +78,13 @@ export default function CatalogManager() {
           setNewDaishaForm({
             name: '',
             seksi: 'Building',
+            hasVariants: false,
             codePrefix: '',
-            totalUnits: 0,
+            totalUnits: '',
+            variants: [
+              { id: '1', name: 'Tipe A', codePrefix: '', totalUnits: '' },
+              { id: '2', name: 'Tipe B', codePrefix: '', totalUnits: '' },
+            ],
           });
           setIsAddDaishaModalOpen(true);
         }}
@@ -129,8 +134,13 @@ export default function CatalogManager() {
                   setNewDaishaForm({
                     name: '',
                     seksi,
+                    hasVariants: false,
                     codePrefix: '',
-                    totalUnits: 0,
+                    totalUnits: '',
+                    variants: [
+                      { id: '1', name: 'Tipe A', codePrefix: '', totalUnits: '' },
+                      { id: '2', name: 'Tipe B', codePrefix: '', totalUnits: '' },
+                    ],
                   });
                   setIsAddDaishaModalOpen(true);
                 }}

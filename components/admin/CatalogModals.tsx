@@ -1,7 +1,20 @@
 'use client';
 
 import React, { useEffect, useMemo } from 'react';
-import { Layers, Wrench, Plus, Pencil, X, Tag, Building2, CheckCircle2, Loader2 } from 'lucide-react';
+import {
+  Layers,
+  Wrench,
+  Plus,
+  Pencil,
+  X,
+  Tag,
+  Building2,
+  CheckCircle2,
+  Loader2,
+  Trash2,
+  Info,
+  Sparkles,
+} from 'lucide-react';
 import { DaishaTreeItem } from '@/hooks/useDaishaCatalog';
 import { DAFTAR_SEKSI } from '@/lib/masterData';
 
@@ -16,11 +29,27 @@ function useEscapeKey(isOpen: boolean, onClose: () => void) {
   }, [isOpen, onClose]);
 }
 
+export interface VariantDraftItem {
+  id: string;
+  name: string;
+  codePrefix: string;
+  totalUnits: number | '';
+}
+
+export interface AddDaishaFormState {
+  name: string;
+  seksi: string;
+  hasVariants: boolean;
+  codePrefix: string;
+  totalUnits: number | '';
+  variants: VariantDraftItem[];
+}
+
 interface AddDaishaModalProps {
   isOpen: boolean;
   onClose: () => void;
-  form: { name: string; seksi: string; codePrefix: string; totalUnits: number };
-  setForm: React.Dispatch<React.SetStateAction<{ name: string; seksi: string; codePrefix: string; totalUnits: number }>>;
+  form: AddDaishaFormState;
+  setForm: React.Dispatch<React.SetStateAction<AddDaishaFormState>>;
   onSubmit: (e: React.FormEvent) => void;
   seksiList: string[];
   isSubmitting?: boolean;
@@ -43,43 +72,98 @@ export function AddDaishaModal({
     return Array.from(set).filter(Boolean);
   }, [seksiList]);
 
-  // Preview unit yang akan terbentuk
-  const previewText = useMemo(() => {
+  // Preview unit yang akan terbentuk untuk model standar (non-varian)
+  const singlePreviewText = useMemo(() => {
     const total = Number(form.totalUnits) || 0;
     if (total <= 0) return null;
 
     const prefix = form.codePrefix ? form.codePrefix.trim().toUpperCase() : '';
     const cleanPrefix = form.name.trim()
-      ? form.name.trim().replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase()
-      : 'DAISHA';
+      ? `${form.name.trim().replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase()}-`
+      : 'DAISHA-';
 
-    const startNum = prefix ? `${prefix}0001` : `${cleanPrefix}-001`;
-    const endNum = prefix
-      ? `${prefix}${String(total).padStart(4, '0')}`
-      : `${cleanPrefix}-${String(total).padStart(3, '0')}`;
+    const activePrefix = prefix || cleanPrefix;
+    const startNum = `${activePrefix}0001`;
+    const endNum = `${activePrefix}${String(total).padStart(4, '0')}`;
 
     return {
+      prefix: activePrefix,
       range: `${startNum} s/d ${endNum}`,
       count: total,
+      isAutoPrefix: !prefix,
     };
   }, [form.codePrefix, form.totalUnits, form.name]);
+
+  // Hitung total unit dan varian terisi untuk mode varian
+  const variantSummary = useMemo(() => {
+    const filledVariants = form.variants.filter((v) => v.name.trim().length > 0);
+    const totalUnits = form.variants.reduce((acc, v) => acc + (Number(v.totalUnits) || 0), 0);
+    return {
+      count: filledVariants.length,
+      totalUnits,
+    };
+  }, [form.variants]);
+
+  const handleAddVariantRow = () => {
+    setForm((prev) => ({
+      ...prev,
+      variants: [
+        ...prev.variants,
+        {
+          id: String(Date.now()),
+          name: '',
+          codePrefix: '',
+          totalUnits: '',
+        },
+      ],
+    }));
+  };
+
+  const handleRemoveVariantRow = (id: string) => {
+    if (form.variants.length <= 1) return;
+    setForm((prev) => ({
+      ...prev,
+      variants: prev.variants.filter((v) => v.id !== id),
+    }));
+  };
+
+  const handleUpdateVariantRow = (
+    id: string,
+    field: keyof VariantDraftItem,
+    value: string | number
+  ) => {
+    setForm((prev) => ({
+      ...prev,
+      variants: prev.variants.map((v) => {
+        if (v.id !== id) return v;
+        if (field === 'totalUnits') {
+          return { ...v, totalUnits: value === '' ? '' : Math.max(0, Number(value)) };
+        }
+        if (field === 'codePrefix') {
+          return { ...v, codePrefix: String(value).toUpperCase() };
+        }
+        return { ...v, [field]: value };
+      }),
+    }));
+  };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="bg-white rounded-xl max-w-md w-full p-5 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-white rounded-xl max-w-xl w-full p-5 shadow-xl border border-slate-200 space-y-4 max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
-              <Layers className="w-4 h-4" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+              <Layers className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900 leading-tight">
                 Registrasi Daisha Baru
               </h3>
               <p className="text-xs text-slate-500">
-                Tambah model daisha untuk Seksi <span className="font-bold text-slate-800">{form.seksi || 'Pabrik'}</span>
+                Pendaftaran jenis model armada troli untuk Seksi{' '}
+                <span className="font-bold text-slate-800">{form.seksi || 'Pabrik'}</span>
               </p>
             </div>
           </div>
@@ -92,96 +176,329 @@ export function AddDaishaModal({
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-3.5 text-xs">
-          {/* Seksi Penempatan */}
-          <div>
-            <label className="font-bold text-slate-800 block mb-1 flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-slate-500" />
-              <span>Seksi Pemilik / Penempatan Daisha</span>
-            </label>
-            <select
-              value={form.seksi}
-              onChange={(e) => setForm({ ...form, seksi: e.target.value })}
-              className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-bold text-slate-900 bg-white cursor-pointer"
-            >
-              {availableSeksiOptions.map((s) => (
-                <option key={s} value={s}>
-                  Seksi {s}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Nama / Jenis Daisha */}
-          <div>
-            <label className="font-bold text-slate-800 block mb-1">
-              Nama / Jenis Model Daisha <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Contoh: Troli Moulding, A-Truck Nagara, Palet Baru"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-medium text-slate-900"
-            />
-          </div>
-
-          {/* Prefix & Total Unit */}
-          <div className="grid grid-cols-2 gap-3 pt-0.5">
+        <form onSubmit={onSubmit} className="space-y-4 text-xs">
+          {/* Seksi & Nama Daisha */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-bold text-slate-800 block mb-1">Prefix Kode Unit</label>
-              <input
-                type="text"
-                placeholder="Opsional (misal: EXT-A-)"
-                value={form.codePrefix}
-                onChange={(e) => setForm({ ...form, codePrefix: e.target.value.toUpperCase() })}
-                className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-mono font-bold uppercase text-slate-900"
-              />
-              <span className="text-[10px] text-slate-400 mt-0.5 block">Bisa dikosongkan jika menggunakan varian</span>
+              <label className="font-bold text-slate-800 block mb-1 flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                <span>Seksi Penempatan</span>
+              </label>
+              <select
+                value={form.seksi}
+                onChange={(e) => setForm({ ...form, seksi: e.target.value })}
+                className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-bold text-slate-900 bg-white cursor-pointer"
+              >
+                {availableSeksiOptions.map((s) => (
+                  <option key={s} value={s}>
+                    Seksi {s}
+                  </option>
+                ))}
+              </select>
             </div>
+
             <div>
               <label className="font-bold text-slate-800 block mb-1">
-                Jumlah Populasi Unit
+                Nama / Jenis Model Daisha <span className="text-red-600">*</span>
               </label>
               <input
-                type="number"
-                min="0"
-                placeholder="Contoh: 0, 10, 50, 100"
-                value={form.totalUnits ?? 0}
-                onChange={(e) => setForm({ ...form, totalUnits: Number(e.target.value) || 0 })}
-                className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-bold text-slate-900"
+                type="text"
+                required
+                placeholder="Contoh: Troli Moulding, Palet Banbury"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-medium text-slate-900"
               />
-              <span className="text-[10px] text-slate-400 mt-0.5 block">Total unit fisik baru</span>
             </div>
           </div>
 
-          {/* Live Preview Box Nomor Daisha Otomatis */}
-          {previewText ? (
-            <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-emerald-950 text-xs">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Registrasi Otomatis ke Database:</span>
-              </div>
-              <p className="text-emerald-900 font-mono font-extrabold text-xs tracking-tight">
-                {previewText.range}
-              </p>
-              <p className="text-[11px] text-emerald-800">
-                Sebanyak <strong>{previewText.count} unit fisik</strong> siap digunakan dan langsung terdaftar untuk Seksi <strong>{form.seksi}</strong>.
-              </p>
+          {/* Pemilihan Sistem Varian Armada */}
+          <div>
+            <label className="font-bold text-slate-800 block mb-1.5">
+              Apakah Jenis Daisha ini memiliki Varian Ukuran / Tipe?
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, hasVariants: false }))}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
+                  !form.hasVariants
+                    ? 'border-red-600 bg-red-50/60 ring-2 ring-red-600/20'
+                    : 'border-slate-200 bg-slate-50/60 hover:bg-slate-100 text-slate-700'
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full mt-0.5 border flex items-center justify-center shrink-0 ${
+                    !form.hasVariants ? 'border-red-600 bg-red-600' : 'border-slate-300 bg-white'
+                  }`}
+                >
+                  {!form.hasVariants && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <div>
+                  <div className="font-bold text-slate-900 leading-tight">
+                    Model Standar (Tanpa Varian)
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Satu jenis fisik seragam tanpa perbedaan ukuran atau susun.
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, hasVariants: true }))}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
+                  form.hasVariants
+                    ? 'border-red-600 bg-red-50/60 ring-2 ring-red-600/20'
+                    : 'border-slate-200 bg-slate-50/60 hover:bg-slate-100 text-slate-700'
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full mt-0.5 border flex items-center justify-center shrink-0 ${
+                    form.hasVariants ? 'border-red-600 bg-red-600' : 'border-slate-300 bg-white'
+                  }`}
+                >
+                  {form.hasVariants && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <div>
+                  <div className="font-bold text-slate-900 leading-tight flex items-center gap-1.5">
+                    <span>Memiliki Ragam Varian</span>
+                    <span className="text-[10px] bg-red-100 text-red-700 font-bold px-1.5 py-0.2 rounded">
+                      Multi
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Memiliki varian ukuran (Small, Medium, Large) atau susun.
+                  </div>
+                </div>
+              </button>
             </div>
-          ) : (
-            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-slate-600">
-              <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs">
-                <CheckCircle2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span>Registrasi Fleksibel (0 Unit Awal)</span>
+          </div>
+
+          {/* KONTEN KONDISIONAL: 1. JIKA MODEL STANDAR (TANPA VARIAN) */}
+          {!form.hasVariants && (
+            <div className="space-y-3 p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-800 block mb-1">
+                    Prefix / Awalan Kode Unit
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: TRL-, EXT-A-, PALET-"
+                    value={form.codePrefix}
+                    onChange={(e) => setForm({ ...form, codePrefix: e.target.value.toUpperCase() })}
+                    className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-mono font-bold uppercase text-slate-900 bg-white"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">
+                    Awalan barcode atau kode stensil troli
+                  </span>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-800 block mb-1">
+                    Jumlah Populasi Unit Fisik
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Contoh: 10, 50, 100"
+                    value={form.totalUnits}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        totalUnits: e.target.value === '' ? '' : Math.max(0, Number(e.target.value)),
+                      })
+                    }
+                    className="w-full h-9.5 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-hidden font-bold text-slate-900 bg-white"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">
+                    Bisa diisi 0 jika unit fisik belum tiba
+                  </span>
+                </div>
               </div>
-              <p className="text-[11px] text-slate-500">
-                Daisha didaftarkan tanpa unit awal. Anda bebas menambahkan komponen & gejala kerusakan sekarang, atau mendaftarkan varian/unit fisik nanti kapan saja.
-              </p>
+
+              {/* Live Preview Box Nomor Daisha & Panduan Non-Barcode */}
+              {singlePreviewText ? (
+                <div className="p-3 bg-emerald-50/90 border border-emerald-200 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 font-bold text-emerald-950">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Rentang Kode Unit yang Akan Terdaftar:</span>
+                    </div>
+                    <span className="font-mono bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded border border-emerald-300 font-bold text-[11px]">
+                      {singlePreviewText.count} Unit Fisik
+                    </span>
+                  </div>
+
+                  <p className="text-emerald-900 font-mono font-extrabold text-xs tracking-tight bg-white/70 p-2 rounded border border-emerald-200/80">
+                    {singlePreviewText.range}
+                  </p>
+
+                  <div className="p-2 bg-emerald-100/60 rounded-lg text-[11px] text-emerald-900 space-y-0.5">
+                    <p className="font-semibold flex items-center gap-1">
+                      <Info className="w-3 h-3 text-emerald-700 shrink-0" />
+                      <span>Panduan Daisha Tanpa Barcode (Stensil Fisik):</span>
+                    </p>
+                    <p className="text-[10.5px] text-emerald-800 leading-relaxed">
+                      Jika troli ini belum memiliki label barcode, gunakan format penomoran di atas{' '}
+                      (<strong>{singlePreviewText.prefix}0001</strong> s/d{' '}
+                      <strong>{singlePreviewText.prefix}{String(singlePreviewText.count).padStart(4, '0')}</strong>)
+                      sebagai stensil cat pada bodi fisik daisha agar petugas dapat menginput laporan kerusakan dengan mudah.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-2.5 bg-white border border-slate-200 rounded-xl space-y-1 text-slate-600">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    <span>Pendaftaran Fleksibel (0 Unit Awal)</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Daisha didaftarkan ke katalog master tanpa unit fisik awal. Anda dapat langsung menginput Komponen & Gejala Kerusakan sekarang, lalu mendaftarkan nomor unit nanti.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
+          {/* KONTEN KONDISIONAL: 2. JIKA MEMILIKI VARIAN (MULTI-VARIAN REPEATER) */}
+          {form.hasVariants && (
+            <div className="space-y-3 p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-red-600" />
+                    <span>Daftar Varian untuk {form.name.trim() || 'Daisha Baru'}</span>
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Masukkan setiap varian ukuran/tipe beserta awalan kode dan jumlah unitnya.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddVariantRow}
+                  className="h-8 px-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg cursor-pointer transition text-[11px] flex items-center gap-1 shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Tambah Baris</span>
+                </button>
+              </div>
+
+              {/* Tabel / Baris Varian */}
+              <div className="space-y-2">
+                {form.variants.map((v, idx) => {
+                  const vTotal = Number(v.totalUnits) || 0;
+                  const vPrefix = v.codePrefix.trim().toUpperCase();
+                  const fallbackPrefix = form.name.trim()
+                    ? `${form.name.trim().replace(/[^A-Za-z0-9]/g, '').substring(0, 4).toUpperCase()}${idx + 1}-`
+                    : `VAR${idx + 1}-`;
+                  const activeVPrefix = vPrefix || fallbackPrefix;
+                  const rangeStr =
+                    vTotal > 0
+                      ? `${activeVPrefix}0001 s/d ${activeVPrefix}${String(vTotal).padStart(4, '0')}`
+                      : null;
+
+                  return (
+                    <div
+                      key={v.id}
+                      className="p-2.5 bg-white border border-slate-200 rounded-xl space-y-2 hover:border-slate-300 transition"
+                    >
+                      <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
+                        <span className="font-bold text-[11px] text-slate-700">
+                          Varian #{idx + 1}
+                        </span>
+                        {rangeStr && (
+                          <span className="font-mono text-[10px] bg-slate-100 text-slate-800 font-bold px-2 py-0.5 rounded border border-slate-200">
+                            {rangeStr} ({vTotal} unit)
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveVariantRow(v.id)}
+                          disabled={form.variants.length <= 1}
+                          className="w-6 h-6 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center cursor-pointer transition disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Hapus baris varian ini"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-[10.5px] font-bold text-slate-700 block mb-0.5">
+                            Nama Varian <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required={form.hasVariants}
+                            placeholder="Cth: Tipe A, Small, Susun 3"
+                            value={v.name}
+                            onChange={(e) => handleUpdateVariantRow(v.id, 'name', e.target.value)}
+                            className="w-full h-8.5 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 outline-hidden font-medium text-slate-900 text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10.5px] font-bold text-slate-700 block mb-0.5">
+                            Prefix Kode
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Cth: PLT-A-, S3"
+                            value={v.codePrefix}
+                            onChange={(e) =>
+                              handleUpdateVariantRow(v.id, 'codePrefix', e.target.value.toUpperCase())
+                            }
+                            className="w-full h-8.5 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 outline-hidden font-mono font-bold uppercase text-slate-900 text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10.5px] font-bold text-slate-700 block mb-0.5">
+                            Jumlah Unit
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Cth: 50, 100"
+                            value={v.totalUnits}
+                            onChange={(e) =>
+                              handleUpdateVariantRow(v.id, 'totalUnits', e.target.value)
+                            }
+                            className="w-full h-8.5 px-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-red-600 outline-hidden font-bold text-slate-900 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Ringkasan Total Varian */}
+              <div className="flex items-center justify-between p-2.5 bg-red-50/60 border border-red-200/80 rounded-xl text-xs">
+                <span className="font-bold text-red-950">
+                  Total Terdaftar: <strong>{variantSummary.count} Varian</strong>
+                </span>
+                <span className="font-mono font-bold bg-white text-red-700 px-2.5 py-1 rounded-lg border border-red-300 shadow-2xs">
+                  {variantSummary.totalUnits} Unit Armada Fisik
+                </span>
+              </div>
+
+              {/* Penjelasan Komponen & Gejala Seragam */}
+              <div className="p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-0.5 text-amber-900 text-[11px]">
+                <p className="font-bold flex items-center gap-1.5 text-amber-950">
+                  <Info className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                  <span>Satu Master Komponen &amp; Gejala Kerusakan:</span>
+                </p>
+                <p className="text-[10.5px] text-amber-800 leading-relaxed">
+                  Seluruh varian yang didaftarkan di atas otomatis berbagi daftar <strong>Komponen &amp; Gejala Kerusakan</strong> yang sama di level Jenis Daisha. Anda tidak perlu menginput komponen terpisah untuk masing-masing varian.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
             <button
               type="button"
@@ -201,7 +518,7 @@ export function AddDaishaModal({
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Mendaftarkan Unit...</span>
+                  <span>Mendaftarkan Daisha...</span>
                 </>
               ) : (
                 <span>Simpan &amp; Registrasikan Daisha</span>
@@ -321,6 +638,29 @@ export function AddVariantModal({
               <span className="text-[10px] text-slate-400 mt-0.5 block">Total unit armada untuk varian ini</span>
             </div>
           </div>
+
+          {/* Live Preview Box */}
+          {form.totalUnits > 0 && (
+            <div className="p-3 bg-emerald-50/90 border border-emerald-200 rounded-xl space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-emerald-950 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Preview Format Kode Unit Varian:</span>
+                </span>
+                <span className="font-mono bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded border border-emerald-300 font-bold text-[11px]">
+                  {form.totalUnits} Unit Fisik
+                </span>
+              </div>
+              <p className="text-emerald-900 font-mono font-extrabold text-xs tracking-tight bg-white/70 p-2 rounded border border-emerald-200/80">
+                {(form.codePrefix ? form.codePrefix.trim().toUpperCase() : `${daishaTarget.name.substring(0, 4).toUpperCase()}-`)}0001 s/d{' '}
+                {(form.codePrefix ? form.codePrefix.trim().toUpperCase() : `${daishaTarget.name.substring(0, 4).toUpperCase()}-`)}
+                {String(form.totalUnits).padStart(4, '0')}
+              </p>
+              <p className="text-[10.5px] text-emerald-800">
+                Format nomor di atas otomatis terdaftar ke database armada dan dapat digunakan langsung atau distensil pada bodi unit.
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
             <button
